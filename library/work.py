@@ -17,6 +17,10 @@ class Paper(Work):
 
         super().__init__()
 
+    @staticmethod
+    def _get_bibtex_entry(bibcode):
+        return ads.ExportQuery(bibcodes=bibcode).execute()
+
     def _handle_ads_url(self, url):
         self.ads_url = url
         # first get the bibcode from the URL. This is always the thing after
@@ -27,7 +31,7 @@ class Paper(Work):
 
         # the ADS package recommends using Export Query rather than the other
         # ways of getting the bibtex entry
-        self.bibtex_entry = ads.ExportQuery(bibcodes=bibcode).execute()
+        self.bibtex_entry = self._get_bibtex_entry(bibcode)
 
     def _handle_arxiv_url(self, url):
         # first get the identifier from the url
@@ -37,8 +41,8 @@ class Paper(Work):
 
         # use this to get the bibcode
         query = ads.SearchQuery(q="arXiv:{}".format(arxiv_identifier),
-                                fl=["bibcode", "bibtex"])
+                                fl=["bibcode"])
+        bibcode = list(query)[0].bibcode
 
-        article = list(query)[0]
-        self.bibtex_entry = article.bibtex
-        self.ads_url = bibcode_to_ads_url(article.bibcode)
+        self.bibtex_entry = self._get_bibtex_entry(bibcode)
+        self.ads_url = bibcode_to_ads_url(bibcode)
