@@ -1,4 +1,4 @@
-import work
+from library import work
 
 class Library(object):
     def __init__(self):
