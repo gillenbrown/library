@@ -1,8 +1,8 @@
-from library.work import Paper
-
-my_ads_url = "https://ui.adsabs.harvard.edu/abs/2018ApJ...864...94B/abstract"
-my_arxiv_url = "https://arxiv.org/abs/1804.09819"
-my_arxiv_pdf_url = "https://arxiv.org/pdf/1804.09819.pdf"
+my_bibcode = "2018ApJ...864...94B"
+my_ads_url = "https://ui.adsabs.harvard.edu/abs/{}/abstract".format(my_bibcode)
+my_arxiv_id = "1804.09819"
+my_arxiv_url = "https://arxiv.org/abs/{}".format(my_arxiv_id)
+my_arxiv_pdf_url = "https://arxiv.org/pdf/{}.pdf".format(my_arxiv_id)
 my_bibtex = ("@ARTICLE{2018ApJ...864...94B,\n"
              "       author = {{Brown}, Gillen and {Gnedin}, Oleg Y. and {Li}, Hui},\n"
              '        title = "{Nuclear Star Clusters in Cosmological Simulations}",\n'
