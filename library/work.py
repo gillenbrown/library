@@ -5,8 +5,6 @@ class Work(object):
     def __init__(self):
         return
 
-def bibcode_to_ads_url(bibcode):
-    return "https://ui.adsabs.harvard.edu/abs/{}/abstract".format(bibcode)
 
 class Paper(Work):
     def __init__(self, url):
@@ -20,6 +18,10 @@ class Paper(Work):
     @staticmethod
     def _get_bibtex_entry(bibcode):
         return ads.ExportQuery(bibcodes=bibcode).execute()
+
+    @staticmethod
+    def _bibcode_to_ads_url(bibcode):
+        return "https://ui.adsabs.harvard.edu/abs/{}/abstract".format(bibcode)
 
     def _handle_ads_url(self, url):
         self.ads_url = url
@@ -45,4 +47,4 @@ class Paper(Work):
         bibcode = list(query)[0].bibcode
 
         self.bibtex_entry = self._get_bibtex_entry(bibcode)
-        self.ads_url = bibcode_to_ads_url(bibcode)
+        self.ads_url = self._bibcode_to_ads_url(bibcode)

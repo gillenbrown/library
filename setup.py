@@ -5,7 +5,7 @@ setup(
 	version="0.0.1",
 	author="Gillen Brown",
 	author_email="gillenbrown@gmail.com",
-	packages=find_packages(),
+	packages=find_packages(exclude=["testing"]),
 	install_requires=["pytest",
 					  "ads"]
 	)
