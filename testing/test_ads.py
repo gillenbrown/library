@@ -33,4 +33,8 @@ def test_create_paper_from_arxiv_pdf():
     # same as above test, just with arxiv link to the pdf
     assert bibtex == u.my_bibtex
 
+def test_error_from_other_source():
+    with pytest.raises(ValueError):
+        ads_call.get_bibtex("www.wrong.com")
+
 #TODO: test that adding papers from one of multiple ADS links gives the same paper

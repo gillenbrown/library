@@ -1,4 +1,3 @@
-# import ads.sandbox as ads
 import ads
 
 class ADSWrapper(object):
@@ -39,10 +38,6 @@ class ADSWrapper(object):
             bibcode = list(query)[0].bibcode
             self._bibcode_from_arxiv_id[arxiv_id] = bibcode
             return bibcode
-
-    @staticmethod
-    def _bibcode_to_ads_url(bibcode):
-        return "https://ui.adsabs.harvard.edu/abs/{}/abstract".format(bibcode)
 
     def get_bibtex(self, url):
         if "ui.adsabs.harvard.edu/abs/" in url:

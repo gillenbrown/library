@@ -3,4 +3,5 @@
 
 # extra directories
 *__pycache__
-library.egg-info
+*egg*
+.coverage
