@@ -10,6 +10,6 @@ install:
   - pip install coveralls
 # command to run tests
 script:
-  - pytest --cov
+  - pytest --cov=library --cov=testing
 after_success:
   - coveralls
