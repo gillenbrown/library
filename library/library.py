@@ -1,11 +1,8 @@
-from library import work
+from library import ads_wrapper
 
 class Library(object):
     def __init__(self):
-        self.papers = []
-
-    def add_paper(self, paper_url):
-        self.papers.append(work.Paper(paper_url))
+        pass
 
 
 # follow this to generate API key https://ads.readthedocs.io/en/latest/
