@@ -31,11 +31,6 @@ class ADSWrapper(object):
 
 
     def _get_bibcode_from_arxiv(self, arxiv_id):
-        #  remove any version info
-        v_start = arxiv_id.find("v")  # returns -1 if not found
-        if v_start > 0:
-            arxiv_id = arxiv_id[:v_start]
-
         # try to get it from the cache first
         try:
             return self._bibcode_from_arxiv_id[arxiv_id]
