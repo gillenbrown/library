@@ -7,10 +7,9 @@ ads_call = ADSWrapper()
 
 
 def test_cache_no_extra_queries_bibcode():
-    # here I'll query the same pre-existing paper with multiple URLs to ensure
-    # that the caching is working as expected. I first have to make sure
-    # everything is in the cache, so I need to do all needed searches, then I
-    # can duplicate them
+    # here I'll query the same pre-existing paper with multiple URLs to ensure that
+    # the caching is working as expected. I first have to make sure everything is in
+    # the cache, so I need to do all needed searches, then I can duplicate them
     _ = ads_call.get_bibcode(u.my_arxiv_url)
     queries_start = ads_call.num_queries
     _ = ads_call.get_bibcode(u.my_ads_url)
@@ -22,10 +21,9 @@ def test_cache_no_extra_queries_bibcode():
 
 
 def test_cache_no_extra_queries_bibtex():
-    # here I'll query the same pre-existing paper twoce to make sure
-    # that the caching is working as expected. I first have to make sure
-    # everything is in the cache, so I need to do all needed searches, then I
-    # can duplicate them
+    # here I'll query the same pre-existing paper twoce to make sure that the caching
+    # is working as expected. I first have to make sure everything is in the cache,
+    # so I need to do all needed searches, then I can duplicate them
     _ = ads_call.get_bibtex(u.my_bibcode)
     queries_start = ads_call.num_queries
     _ = ads_call.get_bibcode(u.my_bibcode)
