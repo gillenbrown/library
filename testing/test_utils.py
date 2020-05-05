@@ -1,8 +1,10 @@
 my_bibcode = "2018ApJ...864...94B"
 my_ads_url = "https://ui.adsabs.harvard.edu/abs/{}/abstract".format(my_bibcode)
 my_arxiv_id = "1804.09819"
-my_arxiv_url = "https://arxiv.org/abs/{}".format(my_arxiv_id)
-my_arxiv_pdf_url = "https://arxiv.org/pdf/{}.pdf".format(my_arxiv_id)
+my_arxiv_url        = f"https://arxiv.org/abs/{my_arxiv_id}"
+my_arxiv_url_v2     = f"https://arxiv.org/abs/{my_arxiv_id}v2"
+my_arxiv_pdf_url    = f"https://arxiv.org/pdf/{my_arxiv_id}.pdf"
+my_arxiv_pdf_url_v2 = f"https://arxiv.org/pdf/{my_arxiv_id}v2.pdf"
 my_bibtex = ("@ARTICLE{2018ApJ...864...94B,\n"
              "       author = {{Brown}, Gillen and {Gnedin}, Oleg Y. and {Li}, Hui},\n"
              '        title = "{Nuclear Star Clusters in Cosmological Simulations}",\n'
