@@ -8,8 +8,10 @@ install:
   - pip install pytest
   - pip install pytest-cov
   - pip install coveralls
+  - pip install black
 # command to run tests
 script:
   - pytest --cov=library --cov=testing
+  - black --check library testing
 after_success:
   - coveralls
