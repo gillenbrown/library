@@ -24,6 +24,10 @@ def test_database_has_papers_table(db):
     names = [item["name"] for item in tables]
     assert "papers" in names
 
+def test_add_paper_length(db):
+    db.add_paper(u.my_bibcode, u.my_bibtex)
+    assert db.num_papers() == 1
+
 def test_add_get_paper(db):
     db.add_paper(u.my_bibcode, u.my_bibtex)
     assert db.get_paper(u.my_bibcode)["bibtex"] == u.my_bibtex
@@ -32,7 +36,7 @@ def test_get_paper_not_found(db):
     with pytest.raises(ValueError):
         db.get_paper("slkdfjlsdkfj")
 
-def test_no_uniques(db):
+def test_no_uniques_but_no_crash(db):
     db.add_paper(u.my_bibcode, u.my_bibtex)
-    with pytest.raises(sqlite3.IntegrityError):
-        db.add_paper(u.my_bibcode, u.my_bibtex)
+    db.add_paper(u.my_bibcode, u.my_bibtex)
+    assert db.num_papers() == 1

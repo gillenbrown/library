@@ -24,7 +24,10 @@ class Database(object):
 
 
     def add_paper(self, bibcode, bibtex):
-        self._execute("INSERT INTO papers VALUES(?,?)", (bibcode, bibtex))
+        try:
+            self._execute("INSERT INTO papers VALUES(?,?)", (bibcode, bibtex))
+        except sqlite3.IntegrityError:
+            print("Already in Library.")
 
     def get_paper(self, bibcode):
         rows = self._execute("SELECT * FROM papers WHERE bibcode=?", (bibcode,))
@@ -36,3 +39,6 @@ class Database(object):
         # just be one item, but we'll check
         assert len(rows) == 1
         return rows[0]
+
+    def num_papers(self):
+        return  len(self._execute("SELECT * FROM papers"))
