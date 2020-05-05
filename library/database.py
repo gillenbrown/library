@@ -28,6 +28,10 @@ class Database(object):
 
     def get_paper(self, bibcode):
         rows = self._execute("SELECT * FROM papers WHERE bibcode=?", (bibcode,))
+        # if we didn't find anything, tell the user
+        if len(rows) == 0:
+            raise ValueError(f"Bibcode {bibcode} not found in library!")
+
         # We've already checked that there are no duplicates, so this should
         # just be one item, but we'll check
         assert len(rows) == 1
