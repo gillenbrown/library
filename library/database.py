@@ -1,15 +1,18 @@
 import sqlite3
 import contextlib
 
+
 class Database(object):
     def __init__(self, db_file):
         self.db_file = db_file
 
-        self._execute("CREATE TABLE IF NOT EXISTS papers"
-                      "("
-                      "bibcode text PRIMARY KEY,"
-                      "bibtex text"
-                      ")")
+        self._execute(
+            "CREATE TABLE IF NOT EXISTS papers"
+            "("
+            "bibcode text PRIMARY KEY,"
+            "bibtex text"
+            ")"
+        )
 
     def _execute(self, sql, parameters=()):
         # use with statements to auto-close
@@ -20,8 +23,6 @@ class Database(object):
                 with contextlib.closing(conn.cursor()) as cursor:
                     cursor.execute(sql, parameters)
                     return cursor.fetchall()
-
-
 
     def add_paper(self, bibcode, bibtex):
         try:
@@ -35,10 +36,10 @@ class Database(object):
         if len(rows) == 0:
             raise ValueError(f"Bibcode {bibcode} not found in library!")
 
-        # We've already checked that there are no duplicates, so this should
-        # just be one item, but we'll check
+        # We've already checked that there are no duplicates, so this should just be
+        # one item, but we'll check
         assert len(rows) == 1
         return rows[0]
 
     def num_papers(self):
-        return  len(self._execute("SELECT * FROM papers"))
+        return len(self._execute("SELECT * FROM papers"))

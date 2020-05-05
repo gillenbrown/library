@@ -2,18 +2,19 @@ import re
 
 import ads
 
+
 class ADSWrapper(object):
     """
     Class representing a scholarly paper accessible through ADS.
     """
 
     def __init__(self):
-        # Since I am getting this info by querying the API, and there's a cap on
-        # the number of queries per day, I want to cache things if possible.
-        # The two things I get are the bibtext entries, obtained using the ADS
-        # bibcode, and the bibcode, obtained from the arxiv ID. I'll store those
-        # as class level dictionaries so all instances can access them. This is
-        # mostly useful for tests, when we'll access the same paper a lot
+        # Since I am getting this info by querying the API, and there's a cap on the
+        # number of queries per day, I want to cache things if possible. The two things
+        # I get are the bibtext entries, obtained using the ADS bibcode, and the
+        # bibcode, obtained from the arxiv ID. I'll store those as class level
+        # dictionaries so all instances can access them. This is mostly useful for
+        # tests, when we'll access the same paper a lot
         self._bibtexs_from_bibcode = dict()
         self._bibcode_from_arxiv_id = dict()
         self.num_queries = 0  # track this for debugging/testing purposes
@@ -23,12 +24,11 @@ class ADSWrapper(object):
             return self._bibtexs_from_bibcode[bibcode]
         except KeyError:
             self.num_queries += 1
-            # the ADS package recommends using Export Query rather than the
-            # other ways of getting the bibtex entry
+            # the ADS package recommends using Export Query rather than the other
+            # ways of getting the bibtex entry
             bibtex = ads.ExportQuery(bibcodes=bibcode).execute()
             self._bibtexs_from_bibcode[bibcode] = bibtex
             return bibtex
-
 
     def _get_bibcode_from_arxiv(self, arxiv_id):
         # try to get it from the cache first
@@ -36,8 +36,7 @@ class ADSWrapper(object):
             return self._bibcode_from_arxiv_id[arxiv_id]
         except KeyError:
             self.num_queries += 1
-            query = ads.SearchQuery(q="arXiv:{}".format(arxiv_id),
-                                            fl=["bibcode"])
+            query = ads.SearchQuery(q="arXiv:{}".format(arxiv_id), fl=["bibcode"])
             bibcode = list(query)[0].bibcode
             self._bibcode_from_arxiv_id[arxiv_id] = bibcode
             return bibcode
@@ -54,15 +53,14 @@ class ADSWrapper(object):
             arxiv_id = re.search(arxiv_id_re, identifier).group()
             return self._get_bibcode_from_arxiv(arxiv_id)
         elif "ui.adsabs.harvard.edu/abs/" in identifier:
-            # first get the bibcode from the URL. This is always the thing after
-            # "abs" in the abstract
+            # first get the bibcode from the URL. This is always the thing after "abs"
+            # in the abstract
             split_url = identifier.split("/")
             bibcode_idx = split_url.index("abs") + 1
             return split_url[bibcode_idx]
         # next check if it looks like a plain bibcode
         # # http://adsabs.github.io/help/actions/bibcode
-        # re.match only looks at the beginning of the string, where the year
-        # will be
+        # re.match only looks at the beginning of the string, where the year will be
         elif len(identifier) == 19 and re.match(year_at_front, identifier):
             return identifier
         else:
