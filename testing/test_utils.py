@@ -1,3 +1,4 @@
+tremonti_bibcode = "2004ApJ...613..898T"
 my_bibcode = "2018ApJ...864...94B"
 my_ads_url = "https://ui.adsabs.harvard.edu/abs/{}/abstract".format(my_bibcode)
 my_arxiv_id = "1804.09819"

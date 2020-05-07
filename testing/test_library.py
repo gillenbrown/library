@@ -3,7 +3,7 @@ import random
 
 import pytest
 
-from library.library import Library
+from library.lib import Library
 import test_utils as u
 
 
@@ -50,3 +50,9 @@ def test_nonexistent_paper_not_found(lib):
     lib.add_paper(u.my_bibcode)
     with pytest.raises(ValueError):
         lib.get_paper("sldfsldkfjlsdkfj")
+
+
+def test_get_all_bibcodes(lib):
+    lib.add_paper(u.my_bibcode,)
+    lib.add_paper(u.tremonti_bibcode)
+    assert lib.get_all_bibcodes() == [u.my_bibcode, u.tremonti_bibcode]

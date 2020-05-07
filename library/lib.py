@@ -27,5 +27,8 @@ class Library(object):
     def get_paper(self, bibcode):
         return self.database.get_paper(bibcode)
 
+    def get_all_bibcodes(self):
+        return self.database.get_all_bibcodes()
+
 
 # follow this to generate API key https://ads.readthedocs.io/en/latest/

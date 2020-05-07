@@ -28,8 +28,11 @@ def test_database_has_papers_table(db):
 
 
 def test_add_paper_length(db):
+    assert db.num_papers() == 0
     db.add_paper(u.my_bibcode, u.my_bibtex)
     assert db.num_papers() == 1
+    db.add_paper(u.tremonti_bibcode, "")
+    assert db.num_papers() == 2
 
 
 def test_add_get_paper(db):
@@ -46,3 +49,9 @@ def test_no_uniques_but_no_crash(db):
     db.add_paper(u.my_bibcode, u.my_bibtex)
     db.add_paper(u.my_bibcode, u.my_bibtex)
     assert db.num_papers() == 1
+
+
+def test_get_all_bibcodes(db):
+    db.add_paper(u.my_bibcode, u.my_bibtex)
+    db.add_paper(u.tremonti_bibcode, "")
+    assert db.get_all_bibcodes() == [u.my_bibcode, u.tremonti_bibcode]

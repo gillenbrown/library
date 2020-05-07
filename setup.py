@@ -6,5 +6,5 @@ setup(
     author="Gillen Brown",
     author_email="gillenbrown@gmail.com",
     packages=find_packages(exclude=["testing"]),
-    install_requires=["ads"],
+    install_requires=["ads", "pyside2"],
 )

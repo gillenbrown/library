@@ -43,3 +43,7 @@ class Database(object):
 
     def num_papers(self):
         return len(self._execute("SELECT * FROM papers"))
+
+    def get_all_bibcodes(self):
+        all_papers = self._execute("SELECT * FROM papers")
+        return [paper["bibcode"] for paper in all_papers]
