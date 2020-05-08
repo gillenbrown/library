@@ -1,5 +1,5 @@
-import os
 import random
+from pathlib import Path
 
 import pytest
 
@@ -9,11 +9,10 @@ import test_utils as u
 
 @pytest.fixture(name="lib")
 def temporary_library():
-    filename = f"{random.randint(0, 1000000000)}.db"
-    file_path = os.path.abspath(f"./{filename}")
-    db = Library(filename)
+    file_path = Path(f"{random.randint(0, 1000000000)}.db")
+    db = Library(file_path)
     yield db
-    os.remove(file_path)
+    file_path.unlink()  # removes this file
 
 
 def test_init_has_database(lib):
