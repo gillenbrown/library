@@ -241,6 +241,8 @@ if __name__ == "__main__":
     for font in fonts:
         fontDb.addApplicationFont(font)
 
+    app.setFont(QtGui.QFont("Cabin", 14))
+
     # The MainWindow class holds all the structure
     window = MainWindow(lib)
     window.resize(800, 600)
