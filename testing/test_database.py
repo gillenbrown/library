@@ -1,5 +1,5 @@
 import random
-import os
+from pathlib import Path
 
 import pytest
 
@@ -9,11 +9,10 @@ import test_utils as u
 
 @pytest.fixture(name="db")
 def temporary_db():
-    filename = f"{random.randint(0, 1000000000)}.db"
-    file_path = os.path.abspath(f"./{filename}")
-    db = Database(filename)
+    file_path = Path(f"{random.randint(0, 1000000000)}.db")
+    db = Database(file_path)
     yield db
-    os.remove(file_path)
+    file_path.unlink()  # removes this file
 
 
 def test_database_number_of_tables(db):
