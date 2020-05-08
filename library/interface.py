@@ -134,6 +134,7 @@ class SearchWidget(QWidget):
         # layout: the search bar and maybe a "Search" button.
         self.input = QLineEdit()
         self.input.setPlaceholderText("Default Text Here")
+        self.input.returnPressed.connect(self.addPaper)
 
         self.addButton = QPushButton("Add")
         self.addButton.clicked.connect(self.addPaper)
@@ -145,9 +146,7 @@ class SearchWidget(QWidget):
         self.setFixedHeight(50)
 
     def addPaper(self):
-        identifier = self.input.text()
-
-        self.lib.add_paper(identifier)
+        self.lib.add_paper(self.input.text())
 
 
 class MainWindow(QMainWindow):
