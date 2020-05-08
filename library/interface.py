@@ -5,7 +5,7 @@ This holds the GUI that will be used when the library is run. This is the script
 should be called to initialize the program.
 """
 import sys
-import os
+from pathlib import Path
 
 from PySide2.QtCore import Qt
 from PySide2 import QtGui
@@ -167,7 +167,7 @@ class MainWindow(QMainWindow):
         # Mess around with the title formatting
         self.title.setFixedHeight(60)
         self.title.setAlignment(Qt.AlignCenter)
-        newFont = QtGui.QFont("Bungee Shade", 40)
+        newFont = QtGui.QFont("Lobster", 40)
         self.title.setFont(newFont)
 
         layout.addWidget(self.title)
@@ -200,19 +200,47 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("")
 
 
+def get_fonts(directory, current_list):
+    """
+    Recursive function to get all the fonts within a directory, including all subdirs
+
+    Note that all fonts must have the `.ttf` file extension.
+
+    :param directory: Parent directory to search for fonts
+    :param current_list: List of fonts that have been found so far. This will be
+                         appended to, so that it can be modified in place, and will
+                         also be returned, so the first caller of this can get the list.
+    :return: None
+    """
+    # go through everything in this directory
+    for item in directory.iterdir():
+        # if it's a directory, recursively call this function on that directory.
+        if item.is_dir():
+            get_fonts(item, current_list)
+            # current_list will be modified in place, so we don't need to keep
+            # the returned value
+        # otherwise look for ttf files.
+        if str(item).endswith(".ttf"):
+            current_list.append(str(item))
+
+
 if __name__ == "__main__":
     if len(sys.argv) == 1:  # no specified path
-        db_path = os.path.abspath("../USER_DATA_DO_NOT_DELETE.db")
+        db_path = Path("../USER_DATA_DO_NOT_DELETE.db")
     else:
-        db_path = sys.argv[1]
+        db_path = Path(sys.argv[1])
     lib = Library(db_path)
 
     # The application is what starts QT
     app = QApplication()
-    # add my cool font
+
+    # then add all our fonts
     fontDb = QtGui.QFontDatabase()
-    fontLoc = os.path.abspath("../fonts/Bungee_Shade/BungeeShade-Regular.ttf")
-    fontDb.addApplicationFont(fontLoc)
+    # we need to initialize this list to start, as fonts found will be appended to this
+    fonts = []
+    get_fonts(Path(__file__).parent.parent / "fonts", fonts)
+    for font in fonts:
+        fontDb.addApplicationFont(font)
 
     # The MainWindow class holds all the structure
     window = MainWindow(lib)
