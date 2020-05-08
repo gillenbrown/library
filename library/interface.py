@@ -26,157 +26,98 @@ from PySide2.QtWidgets import (
 from library.lib import Library
 
 
-class LeftPanel(QWidget):
-    """
-    Class holding the information that will go on the left sidebar.
-
-    This will be the active tags.
-    """
-
-    def __init__(self, lib):
-        QWidget.__init__(self)
-        self.lib = lib
-
-        self.layout = QVBoxLayout()
-        for i in range(10):
-            self.layout.addWidget(QLabel(f"Tag {i}"))
-
-        self.setLayout(self.layout)
-
-
-class CenterPanel(QWidget):
-    """
-    Panel that holds all the paper info
-    """
-
-    def __init__(self, lib):
-        self.lib = lib
-        QWidget.__init__(self)
-
-        self.layout = QVBoxLayout()
-
-        for b in lib.get_all_bibcodes():
-            self.layout.addWidget(QLabel(b))
-
-        self.setLayout(self.layout)
-
-
-class RightPanel(QWidget):
-    def __init__(self, lib):
-        QWidget.__init__(self)
-        self.lib = lib
-
-        # Then right has the details on a given paper
-        self.layout = QVBoxLayout()
-        # We'll have many items, which we need to keep track of so we can modify them
-        self.title = QLabel("Title")
-        self.authors = QLabel("Authors")
-
-        # then add them to the layout
-        self.layout.addWidget(self.title)
-        self.layout.addWidget(self.authors)
-
-        # add dummy junk for now
-        for i in range(20):
-            self.layout.addWidget(QLabel(f"Attribute {i}"))
-
-        self.setLayout(self.layout)
-
-
-class MainBodyWidget(QSplitter):
-    """
-    This class contains the main body, where we hold the papers and the info about them.
-    """
-
-    def __init__(self, lib):
-        QSplitter.__init__(self)
-
-        # In the place where we view papers, we want a three panel interface. The left
-        # panel will show tags and other things the user can use to find papers. The
-        # center panel will show a list of papers. The right panel will show info
-        # about the paper the user has selected. Since these are laid out left to right,
-        # we use the horizontal box layout. Splitter automatically does this.
-
-        # get the widgets that will be put in here
-        self.left = LeftPanel(lib)
-        self.center = CenterPanel(lib)
-        self.right = RightPanel(lib)
-
-        # We want to add a scrollbar around all of these, so that we can scroll through
-        # the tags, papers, info, etc.
-        self.leftScroll = QScrollArea()
-        self.leftScroll.setWidget(self.left)
-        self.leftScroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-
-        self.centerScroll = QScrollArea()
-        self.centerScroll.setWidget(self.center)
-        self.centerScroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-
-        self.rightScroll = QScrollArea()
-        self.rightScroll.setWidget(self.right)
-        self.rightScroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-
-        # Then we can add these scroll objects to our layout
-        self.addWidget(self.leftScroll)
-        self.addWidget(self.centerScroll)
-        self.addWidget(self.rightScroll)
-
-
-class SearchWidget(QWidget):
-    """
-    This class is the search bar, where the use can put in URLs to search ADS
-    """
-
-    def __init__(self, lib):
-        QWidget.__init__(self)
-        self.lib = lib
-        # This is all dummy for now. But I suspect we'll want some kind of horizontal
-        # layout: the search bar and maybe a "Search" button.
-        self.input = QLineEdit()
-        self.input.setPlaceholderText("Default Text Here")
-        self.input.returnPressed.connect(self.addPaper)
-
-        self.addButton = QPushButton("Add")
-        self.addButton.clicked.connect(self.addPaper)
-
-        layout = QHBoxLayout()
-        layout.addWidget(self.input)
-        layout.addWidget(self.addButton)
-        self.setLayout(layout)
-        self.setFixedHeight(50)
-
-    def addPaper(self):
-        self.lib.add_paper(self.input.text())
-
-
 class MainWindow(QMainWindow):
     def __init__(self, lib):
         QMainWindow.__init__(self)
+
+        self.lib = lib
 
         # Start with the layout. Our main layout is two vertical components:
         # the first is the search bar, where the user can paste URLs to add to the l
         # library, and the second is the place where we show all the papers that have
         # been added.
-        layout = QVBoxLayout()
+        vBoxMain = QVBoxLayout()
 
-        self.searchBar = SearchWidget(lib)
-        self.mainBody = MainBodyWidget(lib)
+        # The title is first
         self.title = QLabel("Library")
-
         # Mess around with the title formatting
         self.title.setFixedHeight(60)
         self.title.setAlignment(Qt.AlignCenter)
-        newFont = QtGui.QFont("Lobster", 40)
-        self.title.setFont(newFont)
+        self.title.setFont(QtGui.QFont("Lobster", 40))
+        vBoxMain.addWidget(self.title)
 
-        layout.addWidget(self.title)
-        layout.addWidget(self.searchBar)
-        layout.addWidget(self.mainBody)
+        # Then comes the search bar. This is it's own horizontal layout
+        hBoxSearchBar = QHBoxLayout()
+        self.searchBar = QLineEdit()
+        self.searchBar.setPlaceholderText("Default Text Here")
+        # We'll also have an add button
+        self.addButton = QPushButton("Add")
+        # Define what to do when these things are activated. The user can either hit
+        # enter or hit the add button
+        self.searchBar.returnPressed.connect(self.addPaper)
+        self.addButton.clicked.connect(self.addPaper)
+        # have both of these quantities have a fixed height
+        self.searchBar.setFixedHeight(30)
+        self.addButton.setFixedHeight(30)
+        # Then add these to the layouts
+        hBoxSearchBar.addWidget(self.searchBar)
+        hBoxSearchBar.addWidget(self.addButton)
+        vBoxMain.addLayout(hBoxSearchBar)
+
+        # The left panel of this is the list of tags the user has. We need some dummy
+        # widgets to make the scrollbar work
+        leftPanelWidget = QWidget()
+        vBoxLeftPanel = QVBoxLayout()
+        # Add dummy tags for now
+        for i in range(10):
+            vBoxLeftPanel.addWidget(QLabel(f"Tag {i}"))
+        leftPanelWidget.setLayout(vBoxLeftPanel)
+
+        # The central panel is the list of papers
+        centerPanelWidget = QWidget()
+        vBoxCenterPanel = QVBoxLayout()
+        for b in self.lib.get_all_bibcodes():
+            vBoxCenterPanel.addWidget(QLabel(b))
+        centerPanelWidget.setLayout(vBoxCenterPanel)
+
+        # Then the right panel is the details on a given paper
+        rightPanelWidget = QWidget()
+        vBoxRightPanel = QVBoxLayout()
+        # add dummy junk for now
+        for i in range(20):
+            vBoxRightPanel.addWidget(QLabel(f"Attribute {i}"))
+        rightPanelWidget.setLayout(vBoxRightPanel)
+
+        # TODO: clean this up, see if there's a cleaner way to do this. Maybe wrapper function? Maybe less dummy widgets?
+
+        # We want to add a scrollbar around all of these, so that we can scroll through
+        # the tags, papers, info, etc.
+        leftScroll = QScrollArea()
+        leftScroll.setWidget(leftPanelWidget)
+        leftScroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+
+        centerScroll = QScrollArea()
+        centerScroll.setWidget(centerPanelWidget)
+        centerScroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+
+        rightScroll = QScrollArea()
+        rightScroll.setWidget(rightPanelWidget)
+        rightScroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+
+        # Then we have the main body. This is a bit more complex. We'll start by just
+        # initializing the layout for this, which is three panels laid horizonatlly.
+        # This is the default splitter orientation
+        splitter = QSplitter()
+        splitter.addWidget(leftScroll)
+        splitter.addWidget(centerScroll)
+        splitter.addWidget(rightScroll)
+
+        vBoxMain.addWidget(splitter)
 
         # We then have to have a dummy widget to act as the central widget. All that
         # is done here is setting the layout
         container = QWidget()
-        container.setLayout(layout)
+        container.setLayout(vBoxMain)
         self.setCentralWidget(container)
 
         # Then let's set up a menu.
@@ -197,6 +138,9 @@ class MainWindow(QMainWindow):
 
         # Set the window title
         self.setWindowTitle("")
+
+    def addPaper(self):
+        self.lib.add_paper(self.searchBar.text())
 
 
 def get_fonts(directory, current_list):
