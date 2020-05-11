@@ -21,9 +21,43 @@ from PySide2.QtWidgets import (
     QSplitter,
     QLineEdit,
     QPushButton,
+    QLayout,
 )
 
 from library.lib import Library
+
+
+class Tag(QLabel):
+    def __init__(self, tagName):
+        QLabel.__init__(self, tagName)
+        self.setFixedHeight(25)
+
+
+class ScrollArea(QScrollArea):
+    """
+    A wrapper around QScrollArea with a vertical layout, appropriate for lists
+    """
+
+    def __init__(self):
+        QScrollArea.__init__(self)
+
+        # Have a central widget with a vertical box layout
+        self.container = QWidget()
+        self.layout = QVBoxLayout()
+        # the widgets should have their fixed size, no modification
+        self.layout.setSizeConstraint(QLayout.SetFixedSize)
+        # have the spacing between them be zero. Let the widgets handle their own spaces
+        self.layout.setSpacing(0)
+
+        # Then add these layouts and widgets
+        self.container.setLayout(self.layout)
+        self.setWidget(self.container)
+        # have the scroll bar only appear when needed
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+
+    def addWidget(self, widget):
+        # add the widget to the layout
+        self.layout.addWidget(widget)
 
 
 class MainWindow(QMainWindow):
@@ -64,45 +98,23 @@ class MainWindow(QMainWindow):
         hBoxSearchBar.addWidget(self.addButton)
         vBoxMain.addLayout(hBoxSearchBar)
 
-        # The left panel of this is the list of tags the user has. We need some dummy
-        # widgets to make the scrollbar work
-        leftPanelWidget = QWidget()
-        vBoxLeftPanel = QVBoxLayout()
-        # Add dummy tags for now
+        # The left panel of this is the list of tags the user has. We'll have dummy tags
+        leftScroll = ScrollArea()
         for i in range(10):
-            vBoxLeftPanel.addWidget(QLabel(f"Tag {i}"))
-        leftPanelWidget.setLayout(vBoxLeftPanel)
+            leftScroll.addWidget(Tag(f"Tag {i}"))
 
         # The central panel is the list of papers
-        centerPanelWidget = QWidget()
-        vBoxCenterPanel = QVBoxLayout()
+        centerScroll = ScrollArea()
         for b in self.lib.get_all_bibcodes():
-            vBoxCenterPanel.addWidget(QLabel(b))
-        centerPanelWidget.setLayout(vBoxCenterPanel)
+            # for now just use the Tag class, will eventually make another Paper widget
+            centerScroll.addWidget(Tag(b))
 
         # Then the right panel is the details on a given paper
-        rightPanelWidget = QWidget()
-        vBoxRightPanel = QVBoxLayout()
+        rightScroll = ScrollArea()
         # add dummy junk for now
         for i in range(20):
-            vBoxRightPanel.addWidget(QLabel(f"Attribute {i}"))
-        rightPanelWidget.setLayout(vBoxRightPanel)
-
-        # TODO: clean this up, see if there's a cleaner way to do this. Maybe wrapper function? Maybe less dummy widgets?
-
-        # We want to add a scrollbar around all of these, so that we can scroll through
-        # the tags, papers, info, etc.
-        leftScroll = QScrollArea()
-        leftScroll.setWidget(leftPanelWidget)
-        leftScroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-
-        centerScroll = QScrollArea()
-        centerScroll.setWidget(centerPanelWidget)
-        centerScroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-
-        rightScroll = QScrollArea()
-        rightScroll.setWidget(rightPanelWidget)
-        rightScroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+            # for now just use the Tag class, will eventually make another widget
+            rightScroll.addWidget(Tag(f"Attribute {i}"))
 
         # Then we have the main body. This is a bit more complex. We'll start by just
         # initializing the layout for this, which is three panels laid horizonatlly.
@@ -112,6 +124,7 @@ class MainWindow(QMainWindow):
         splitter.addWidget(centerScroll)
         splitter.addWidget(rightScroll)
 
+        # Add this to the main layout
         vBoxMain.addWidget(splitter)
 
         # We then have to have a dummy widget to act as the central widget. All that
@@ -128,16 +141,20 @@ class MainWindow(QMainWindow):
         # Things to go in the menu
         # Calling the Quit command can't be used, as it is caught by MacOS somehow
         # I'll use "close" instead
-        exitAction = QAction("Close", self)
-        exitAction.setShortcut("Ctrl+Q")
+        self.exitAction = QAction("Close", self)
+        self.exitAction.setShortcut("Ctrl+Q")
         # have to connect this to a function to actually do something
-        exitAction.triggered.connect(QApplication.quit)
+        self.exitAction.triggered.connect(QApplication.quit)
 
         # Then add all items to the menu
-        self.file_menu.addAction(exitAction)
+        self.file_menu.addAction(self.exitAction)
 
         # Set the window title
         self.setWindowTitle("")
+
+        # and the initial window size
+        self.resize(800, 600)
+        self.show()
 
     def addPaper(self):
         self.lib.add_paper(self.searchBar.text())
@@ -189,8 +206,6 @@ if __name__ == "__main__":
 
     # The MainWindow class holds all the structure
     window = MainWindow(lib)
-    window.resize(800, 600)
-    window.show()
 
     # Execute application
     sys.exit(app.exec_())
