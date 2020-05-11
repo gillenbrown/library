@@ -1,23 +1,27 @@
+# Set up xvfb to run my tests with a GUI
+# https://docs.travis-ci.com/user/gui-and-headless-browsers/
 dist: xenial
 services:
   - xvfb
+
 language: python
 python:
   - "3.7"
-# attempted installation of needed libraries for Qt
-#before_install:
-#  - sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0
-# command to install dependencies
+# installation of needed libraries for Qt
+before_install:
+  - sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0
+# command to install my library dependencies
 install:
-  - pip install -e .  # needed to import itself
+  - pip install -e .
   - pip install pytest
   - pip install pytest-cov
   - pip install pytest-qt
   - pip install coveralls
   - pip install black
-# command to run tests
+# commands to run tests
 script:
   - pytest --cov=library --cov=testing
   - black --check library testing setup.py
+# then upload successful ones to coveralls to document coverage
 after_success:
   - coveralls
