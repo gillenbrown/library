@@ -24,7 +24,7 @@ def temporary_library():
 
 
 def test_get_all_fonts():
-    font_dir = Path("/Users/gillenb/code/library/fonts/")
+    font_dir = (Path(__file__).parent.parent / "fonts").absolute()
     true_fonts = [
         font_dir / "Bungee_Shade" / "BungeeShade-Regular.ttf",
         font_dir / "Cabin" / "Cabin-Bold.ttf",
