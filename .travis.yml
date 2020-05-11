@@ -1,7 +1,9 @@
 language: python
 python:
   - "3.7"
-
+# Install some things for pyside2: https://github.com/pytest-dev/pytest-qt/issues/266
+before_install:
+  - sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0
 # command to install dependencies
 install:
   - pip install -e .  # needed to import itself
