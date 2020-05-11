@@ -22,7 +22,7 @@ install:
 # commands to run tests
 script:
   - pytest --cov=library --cov=testing
-  - black --check library testing setup.py
+  - black --check library testing setup.py run.py
 # then upload successful ones to coveralls to document coverage
 after_success:
   - coveralls

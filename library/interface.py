@@ -31,6 +31,7 @@ class Tag(QLabel):
     def __init__(self, tagName):
         QLabel.__init__(self, tagName)
         self.setFixedHeight(25)
+        self.setFont(QtGui.QFont("Cabin", 14))
 
 
 class ScrollArea(QScrollArea):
@@ -66,6 +67,8 @@ class MainWindow(QMainWindow):
 
         self.lib = lib
 
+        self.default_font = QtGui.QFont("Cabin", 14)
+
         # Start with the layout. Our main layout is two vertical components:
         # the first is the search bar, where the user can paste URLs to add to the l
         # library, and the second is the place where we show all the papers that have
@@ -83,9 +86,11 @@ class MainWindow(QMainWindow):
         # Then comes the search bar. This is it's own horizontal layout
         hBoxSearchBar = QHBoxLayout()
         self.searchBar = QLineEdit()
-        self.searchBar.setPlaceholderText("Default Text Here")
+        self.searchBar.setPlaceholderText("Enter your paper URL or ADS bibcode here")
+        self.searchBar.setFont(self.default_font)
         # We'll also have an add button
         self.addButton = QPushButton("Add")
+        self.addButton.setFont(self.default_font)
         # Define what to do when these things are activated. The user can either hit
         # enter or hit the add button
         self.searchBar.returnPressed.connect(self.addPaper)
@@ -184,16 +189,7 @@ def get_fonts(directory, current_list):
             current_list.append(str(item))
 
 
-if __name__ == "__main__":
-    if len(sys.argv) == 1:  # no specified path
-        db_path = Path("../USER_DATA_DO_NOT_DELETE.db")
-    else:
-        db_path = Path(sys.argv[1])
-    lib = Library(db_path)
-
-    # The application is what starts QT
-    app = QApplication()
-
+def set_up_fonts():
     # then add all our fonts
     fontDb = QtGui.QFontDatabase()
     # we need to initialize this list to start, as fonts found will be appended to this
@@ -201,11 +197,3 @@ if __name__ == "__main__":
     get_fonts(Path(__file__).parent.parent / "fonts", fonts)
     for font in fonts:
         fontDb.addApplicationFont(font)
-
-    app.setFont(QtGui.QFont("Cabin", 14))
-
-    # The MainWindow class holds all the structure
-    window = MainWindow(lib)
-
-    # Execute application
-    sys.exit(app.exec_())
