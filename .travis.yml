@@ -10,7 +10,7 @@ install:
   - pip install pytest-qt
   - pip install coveralls
   - pip install black
-  - python -c 'from PyQt5.QtWidgets import QApplication; QApplication([])'
+  - python -c 'from PySide2.QtWidgets import QApplication; QApplication([])'
 # command to run tests
 script:
   - pytest --cov=library --cov=testing
