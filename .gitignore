@@ -5,6 +5,3 @@
 *__pycache__
 *egg*
 .coverage
-
-# databases
-*.db

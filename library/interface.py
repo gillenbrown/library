@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 from PySide2.QtCore import Qt
-from PySide2 import QtGui
+from PySide2.QtGui import QKeySequence, QFontDatabase, QFont
 from PySide2.QtWidgets import (
     QApplication,
     QWidget,
@@ -24,14 +24,12 @@ from PySide2.QtWidgets import (
     QLayout,
 )
 
-from library.lib import Library
-
 
 class Tag(QLabel):
     def __init__(self, tagName):
         QLabel.__init__(self, tagName)
         self.setFixedHeight(25)
-        self.setFont(QtGui.QFont("Cabin", 14))
+        self.setFont(QFont("Cabin", 14))
 
 
 class ScrollArea(QScrollArea):
@@ -67,7 +65,7 @@ class MainWindow(QMainWindow):
 
         self.lib = lib
 
-        self.default_font = QtGui.QFont("Cabin", 14)
+        self.default_font = QFont("Cabin", 14)
 
         # Start with the layout. Our main layout is two vertical components:
         # the first is the search bar, where the user can paste URLs to add to the l
@@ -80,7 +78,7 @@ class MainWindow(QMainWindow):
         # Mess around with the title formatting
         self.title.setFixedHeight(60)
         self.title.setAlignment(Qt.AlignCenter)
-        self.title.setFont(QtGui.QFont("Lobster", 40))
+        self.title.setFont(QFont("Lobster", 40))
         vBoxMain.addWidget(self.title)
 
         # Then comes the search bar. This is it's own horizontal layout
@@ -147,9 +145,9 @@ class MainWindow(QMainWindow):
         # Calling the Quit command can't be used, as it is caught by MacOS somehow
         # I'll use "close" instead
         self.exitAction = QAction("Close", self)
-        self.exitAction.setShortcut("Ctrl+Q")
+        self.exitAction.setShortcut(QKeySequence("Ctrl+q"))
         # have to connect this to a function to actually do something
-        self.exitAction.triggered.connect(QApplication.quit)
+        self.exitAction.triggered.connect(QApplication.quit())
 
         # Then add all items to the menu
         self.file_menu.addAction(self.exitAction)
@@ -191,7 +189,7 @@ def get_fonts(directory, current_list):
 
 def set_up_fonts():
     # then add all our fonts
-    fontDb = QtGui.QFontDatabase()
+    fontDb = QFontDatabase()
     # we need to initialize this list to start, as fonts found will be appended to this
     fonts = []
     get_fonts(Path(__file__).parent.parent / "fonts", fonts)
