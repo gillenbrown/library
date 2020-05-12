@@ -27,7 +27,7 @@ def temporary_library():
 
 @pytest.fixture(name="lib")
 def testing_library():
-    return Library("./testing.db")
+    return Library(Path(__file__).parent / "testing.db")
 
 
 def test_get_all_fonts():
