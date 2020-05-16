@@ -1,4 +1,5 @@
 import re
+import datetime
 
 import ads
 
@@ -15,20 +16,49 @@ class ADSWrapper(object):
         # bibcode, obtained from the arxiv ID. I'll store those as class level
         # dictionaries so all instances can access them. This is mostly useful for
         # tests, when we'll access the same paper a lot
-        self._bibtexs_from_bibcode = dict()
+        self._info_from_bibcode = dict()
         self._bibcode_from_arxiv_id = dict()
         self.num_queries = 0  # track this for debugging/testing purposes
 
-    def get_bibtex(self, bibcode):
+    def get_info(self, bibcode):
         try:
-            return self._bibtexs_from_bibcode[bibcode]
+            return self._info_from_bibcode[bibcode]
         except KeyError:
             self.num_queries += 1
-            # the ADS package recommends using Export Query rather than the other
-            # ways of getting the bibtex entry
-            bibtex = ads.ExportQuery(bibcodes=bibcode).execute()
-            self._bibtexs_from_bibcode[bibcode] = bibtex
-            return bibtex
+            # To reduce the number of queries we need to request everything ahead of
+            # time with the `fl` parameter. Even though we already have the bibcode we
+            # need to return this, as the bibtex entry won't be fetched ahead of time
+            # for some reason
+            quantities = [
+                "abstract",
+                "bibtex",
+                "bibcode",
+                "title",
+                "author",
+                "pubdate",
+                "pub",
+                "volume",
+                "page",
+            ]
+            paper = list(ads.SearchQuery(bibcode=bibcode, fl=quantities))[0]
+            # We then need to parse the info a bit, as some things are in lists for
+            # whatever reason
+            results = {
+                "abstract": paper.abstract,
+                "bibtex": paper.bibtex,
+                "bibcode": bibcode,
+                "title": paper.title[0],  # in a list for some reason
+                "authors": paper.author,  # author actually has all authors
+                "pubdate": paper.pubdate,
+                "journal": paper.pub,
+                "volume": int(paper.volume),
+                "page": int(paper.page[0]),
+            }
+
+            # store this in the cache
+            self._info_from_bibcode[bibcode] = results
+
+            return results
 
     def _get_bibcode_from_arxiv(self, arxiv_id):
         # try to get it from the cache first

@@ -1,3 +1,5 @@
+import datetime
+
 import pytest
 
 from library.ads_wrapper import ADSWrapper
@@ -20,13 +22,13 @@ def test_cache_no_extra_queries_bibcode():
     assert queries_new == queries_start
 
 
-def test_cache_no_extra_queries_bibtex():
+def test_cache_no_extra_queries_other_items():
     # here I'll query the same pre-existing paper twoce to make sure that the caching
     # is working as expected. I first have to make sure everything is in the cache,
     # so I need to do all needed searches, then I can duplicate them
-    _ = ads_call.get_bibtex(u.my_bibcode)
+    _ = ads_call.get_info(u.my_bibcode)
     queries_start = ads_call.num_queries
-    _ = ads_call.get_bibcode(u.my_bibcode)
+    _ = ads_call.get_info(u.my_bibcode)
     queries_new = ads_call.num_queries
 
     assert queries_new == queries_start
@@ -72,9 +74,44 @@ def test_bibcode_error_from_other_source():
         ads_call.get_bibcode("www.wrong.com")
 
 
-def test_get_bibtex():
-    bibtex = ads_call.get_bibtex(u.my_bibcode)
-    assert bibtex == u.my_bibtex
+def test_get_paper_info_title():
+    results = ads_call.get_info(u.my_bibcode)
+    assert results["title"] == u.my_title
+
+
+def test_get_paper_info_bibtex():
+    results = ads_call.get_info(u.my_bibcode)
+    assert results["bibtex"] == u.my_bibtex
+
+
+def test_get_paper_info_authors():
+    results = ads_call.get_info(u.my_bibcode)
+    assert results["authors"] == u.my_authors
+
+
+def test_get_paper_info_pubdate():
+    results = ads_call.get_info(u.my_bibcode)
+    assert results["pubdate"] == u.my_pubdate
+
+
+def test_get_paper_info_abstract():
+    results = ads_call.get_info(u.my_bibcode)
+    assert results["abstract"] == u.my_abstract
+
+
+def test_get_paper_info_journal():
+    results = ads_call.get_info(u.my_bibcode)
+    assert results["journal"] == u.my_journal
+
+
+def test_get_paper_info_volume():
+    results = ads_call.get_info(u.my_bibcode)
+    assert results["volume"] == u.my_volume
+
+
+def test_get_paper_info_page():
+    results = ads_call.get_info(u.my_bibcode)
+    assert results["page"] == u.my_page
 
 
 # TODO: test that adding papers from one of multiple ADS links gives the same paper

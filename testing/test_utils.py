@@ -1,4 +1,3 @@
-tremonti_bibcode = "2004ApJ...613..898T"
 my_bibcode = "2018ApJ...864...94B"
 my_ads_url = "https://ui.adsabs.harvard.edu/abs/{}/abstract".format(my_bibcode)
 my_arxiv_id = "1804.09819"
@@ -6,6 +5,35 @@ my_arxiv_url = f"https://arxiv.org/abs/{my_arxiv_id}"
 my_arxiv_url_v2 = f"https://arxiv.org/abs/{my_arxiv_id}v2"
 my_arxiv_pdf_url = f"https://arxiv.org/pdf/{my_arxiv_id}.pdf"
 my_arxiv_pdf_url_v2 = f"https://arxiv.org/pdf/{my_arxiv_id}v2.pdf"
+my_title = "Nuclear Star Clusters in Cosmological Simulations"
+my_authors = ["Brown, Gillen", "Gnedin, Oleg Y.", "Li, Hui"]
+my_pubdate = "2018-09-00"
+my_journal = "The Astrophysical Journal"
+my_volume = 864
+my_page = 94
+my_abstract = (
+    "We investigate the possible connection between the most massive globular "
+    "clusters, such as ω Cen and M54, and nuclear star clusters (NSCs) of "
+    "dwarf galaxies that exhibit similar spreads in age and metallicity. "
+    "We examine galactic nuclei in cosmological galaxy formation simulations"
+    " at z ≈ 1.5 to explore whether their age and metallicity spreads could "
+    "explain these massive globular clusters. We derive structural properties "
+    "of these nuclear regions, including mass, size, rotation, and shape. By "
+    "using theoretical supernova yields to model the supernova enrichment in "
+    "the simulations, we obtain individual elemental abundances for "
+    "Fe, O, Na, Mg, and Al. Our nuclei are systematically more metal-rich "
+    "than their host galaxies, which lie on the expected mass-metallicity "
+    "relation. Some nuclei have a spread in Fe and age comparable to the "
+    "massive globular clusters of the Milky Way, lending support to the "
+    "hypothesis that NSCs of dwarf galaxies could be the progenitors of "
+    "these objects. None of our nuclear regions contain the light element "
+    "abundance spreads that characterize globular clusters, even when a "
+    "large age spread is present. Our results demonstrate that extended "
+    "star formation history within clusters, with metal pollution provided "
+    "solely by supernova ejecta, is capable of replicating the metallicity "
+    "spreads of massive globular clusters, but still requires another "
+    "polluter to produce the light element variations. <P />"
+)
 my_bibtex = (
     "@ARTICLE{2018ApJ...864...94B,\n"
     "       author = {{Brown}, Gillen and {Gnedin}, Oleg Y. and {Li}, Hui},\n"
@@ -26,3 +54,30 @@ my_bibtex = (
     "      adsnote = {Provided by the SAO/NASA Astrophysics Data System}\n"
     "}\n\n"
 )
+
+tremonti_bibcode = "2004ApJ...613..898T"
+tremonti_bibtex = (
+    "@ARTICLE{2004ApJ...613..898T,\n"
+    "       author = {{Tremonti}, Christy A. and {Heckman}, Timothy M. and\n"
+    "         {Kauffmann}, Guinevere and {Brinchmann}, Jarle and\n"
+    "         {Charlot}, St{\\'e}phane and {White}, Simon D.~M. and {Seibert}, Mark and\n"
+    "         {Peng}, Eric W. and {Schlegel}, David J. and {Uomoto}, Alan and\n"
+    "         {Fukugita}, Masataka and {Brinkmann}, Jon},\n"
+    '        title = "{The Origin of the Mass-Metallicity Relation: Insights from 53,000 Star-forming Galaxies in the Sloan Digital Sky Survey}",\n'
+    "      journal = {\\apj},\n"
+    "     keywords = {Galaxies: Abundances, Galaxies: Evolution, Galaxies: Fundamental Parameters, Galaxies: Statistics, Astrophysics},\n"
+    "         year = 2004,\n"
+    "        month = oct,\n"
+    "       volume = {613},\n"
+    "       number = {2},\n"
+    "        pages = {898-913},\n"
+    "          doi = {10.1086/423264},\n"
+    "archivePrefix = {arXiv},\n"
+    "       eprint = {astro-ph/0405537},\n"
+    " primaryClass = {astro-ph},\n"
+    "       adsurl = {https://ui.adsabs.harvard.edu/abs/2004ApJ...613..898T},\n"
+    "      adsnote = {Provided by the SAO/NASA Astrophysics Data System}\n"
+    "}\n\n"
+)
+
+tremonti_title = "The Origin of the Mass-Metallicity Relation: Insights from 53,000 Star-forming Galaxies in the Sloan Digital Sky Survey"

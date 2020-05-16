@@ -20,12 +20,22 @@ class Library(object):
         :rtype: None
         """
         bibcode = ads_call.get_bibcode(identifier)
-        bibtex = ads_call.get_bibtex(bibcode)
+        paper_data = ads_call.get_info(bibcode)
 
-        self.database.add_paper(bibcode, bibtex)
+        self.database.add_paper(
+            bibcode,
+            paper_data["title"],
+            paper_data["authors"],
+            paper_data["pubdate"],
+            paper_data["journal"],
+            paper_data["volume"],
+            paper_data["page"],
+            paper_data["abstract"],
+            paper_data["bibtex"],
+        )
 
-    def get_paper(self, bibcode):
-        return self.database.get_paper(bibcode)
+    def get_paper_attribute(self, bibcode, attribute):
+        return self.database.get_paper_attribute(bibcode, attribute)
 
     def get_all_bibcodes(self):
         return self.database.get_all_bibcodes()
