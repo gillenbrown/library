@@ -31,7 +31,6 @@ class ADSWrapper(object):
             # for some reason
             quantities = [
                 "abstract",
-                "bibtex",
                 "bibcode",
                 "title",
                 "author",
@@ -41,11 +40,13 @@ class ADSWrapper(object):
                 "page",
             ]
             paper = list(ads.SearchQuery(bibcode=bibcode, fl=quantities))[0]
+            # Recommended to do the bibtex separately, according to the ADS library
+            bibtex = ads.ExportQuery(bibcodes=bibcode).execute()
             # We then need to parse the info a bit, as some things are in lists for
             # whatever reason
             results = {
                 "abstract": paper.abstract,
-                "bibtex": paper.bibtex,
+                "bibtex": bibtex,
                 "bibcode": bibcode,
                 "title": paper.title[0],  # in a list for some reason
                 "authors": paper.author,  # author actually has all authors
