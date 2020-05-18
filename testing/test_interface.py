@@ -19,6 +19,10 @@ import test_utils as u
 
 @pytest.fixture(name="empty_lib")
 def temporary_library():
+    """
+    Fixture to get a library at a temporary path in the current directory. This will be
+    removed once the test is done
+    """
     file_path = Path(f"{random.randint(0, 1000000000)}.db")
     db = Library(file_path)
     yield db
@@ -27,10 +31,13 @@ def temporary_library():
 
 @pytest.fixture(name="lib")
 def testing_library():
+    """
+    Fixture to get the testing database, which has some prefilled info
+    """
     return Library(Path(__file__).parent / "testing.db")
 
 
-def test_get_all_fonts():
+def test_all_fonts_are_found_by_get_fonts():
     font_dir = (Path(__file__).parent.parent / "fonts").absolute()
     true_fonts = [
         font_dir / "Bungee_Shade" / "BungeeShade-Regular.ttf",
@@ -53,8 +60,8 @@ def test_get_all_fonts():
     assert sorted(true_fonts_str) == sorted(test_fonts)
 
 
-def test_setup_fonts(qtbot):
-    """qtbot is needed to initialize the application"""
+def test_fonts_are_actually_in_the_font_database_after_set_up_fonts(qtbot):
+    # q tbot is needed to initialize the application
     fontDb = QFontDatabase()
 
     assert not fontDb.hasFamily("Lobster")
@@ -66,7 +73,7 @@ def test_setup_fonts(qtbot):
     assert fontDb.hasFamily("Cabin")
 
 
-def test_add_paper(qtbot, empty_lib):
+def test_can_add_paper_by_filling_bibcode_then_clicking_button(qtbot, empty_lib):
     assert len(empty_lib.get_all_bibcodes()) == 0
     widget = MainWindow(empty_lib)
     qtbot.addWidget(widget)
@@ -76,13 +83,24 @@ def test_add_paper(qtbot, empty_lib):
     assert u.my_bibcode in empty_lib.get_all_bibcodes()
 
 
-def test_nonemtpy_lib_setup(lib):
-    """Just tests that the testing database has some papers"""
+def test_can_add_paper_by_filling_bibcode_then_pressing_enter(qtbot, empty_lib):
+    assert len(empty_lib.get_all_bibcodes()) == 0
+    widget = MainWindow(empty_lib)
+    qtbot.addWidget(widget)
+    qtbot.keyClicks(widget.searchBar, u.my_bibcode)
+    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    assert len(empty_lib.get_all_bibcodes()) == 1
+    assert u.my_bibcode in empty_lib.get_all_bibcodes()
+
+
+def test_testing_library_was_premade_with_some_papers(lib):
     assert len(lib.get_all_bibcodes()) > 0
 
 
-def test_exit_action(qtbot, lib, monkeypatch):
+def test_can_exit_action_actually_exit_the_app(qtbot, lib, monkeypatch):
     # see https://pytest-qt.readthedocs.io/en/3.3.0/app_exit.html
+    # It's hard to actually test the menu item, so I'll skip this for now
+    # https://github.com/pytest-dev/pytest-qt/issues/195
     exit_calls = []
     monkeypatch.setattr(QApplication, "quit", lambda: exit_calls.append(1))
 
@@ -93,8 +111,10 @@ def test_exit_action(qtbot, lib, monkeypatch):
     assert exit_calls == [1]
 
 
-def test_exit_keyboard_shortcut(qtbot, lib, monkeypatch):
+def test_can_exit_keyboard_shortcut_exit_the_app(qtbot, lib, monkeypatch):
     # see https://pytest-qt.readthedocs.io/en/3.3.0/app_exit.html
+    # It's hard to actually test the menu item, so I'll skip this for now
+    # https://github.com/pytest-dev/pytest-qt/issues/195
     exit_calls = []
     monkeypatch.setattr(QApplication, "quit", lambda: exit_calls.append(1))
 
@@ -105,7 +125,3 @@ def test_exit_keyboard_shortcut(qtbot, lib, monkeypatch):
     qtbot.keyPress(widget, "q", Qt.ControlModifier)
 
     assert exit_calls == [1]
-
-
-# Testing the menu item itself is hard. I'll skip this for now
-# https://github.com/pytest-dev/pytest-qt/issues/195

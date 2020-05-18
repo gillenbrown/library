@@ -56,6 +56,45 @@ my_bibtex = (
 )
 
 tremonti_bibcode = "2004ApJ...613..898T"
+tremonti_title = "The Origin of the Mass-Metallicity Relation: Insights from 53,000 Star-forming Galaxies in the Sloan Digital Sky Survey"
+tremonti_authors = [
+    "Tremonti, Christy A.",
+    "Heckman, Timothy M.",
+    "Kauffmann, Guinevere",
+    "Brinchmann, Jarle",
+    "Charlot, Stéphane",
+    "White, Simon D. M.",
+    "Seibert, Mark",
+    "Peng, Eric W.",
+    "Schlegel, David J.",
+    "Uomoto, Alan",
+    "Fukugita, Masataka",
+    "Brinkmann, Jon",
+]
+tremonti_pubdate = "2004-10-00"
+tremonti_journal = "The Astrophysical Journal"
+tremonti_volume = 613
+tremonti_page = 898
+tremonti_abstract = (
+    "We utilize Sloan Digital Sky Survey imaging and spectroscopy of ~53,000 "
+    "star-forming galaxies at z~0.1 to study the relation between stellar mass and "
+    "gas-phase metallicity. We derive gas-phase oxygen abundances and stellar masses "
+    "using new techniques that make use of the latest stellar evolutionary synthesis "
+    "and photoionization models. We find a tight (+/-0.1 dex) correlation between "
+    "stellar mass and metallicity spanning over 3 orders of magnitude in stellar mass "
+    "and a factor of 10 in metallicity. The relation is relatively steep from "
+    "10<SUP>8.5</SUP> to 10<SUP>10.5</SUP> M<SUB>solar</SUB> "
+    "h<SUP>-2</SUP><SUB>70</SUB>, in good accord with known trends between luminosity "
+    "and metallicity, but flattens above 10<SUP>10.5</SUP> M<SUB>solar</SUB>. We use "
+    "indirect estimates of the gas mass based on the Hα luminosity to compare our data "
+    "to predictions from simple closed box chemical evolution models. We show that "
+    "metal loss is strongly anticorrelated with baryonic mass, with low-mass dwarf "
+    "galaxies being 5 times more metal depleted than L<SUP>*</SUP> galaxies at z~0.1. "
+    "Evidence for metal depletion is not confined to dwarf galaxies but is found in "
+    "galaxies with masses as high as 10<SUP>10</SUP> M<SUB>solar</SUB>. We interpret "
+    "this as strong evidence of both the ubiquity of galactic winds and their "
+    "effectiveness in removing metals from galaxy potential wells."
+)
 tremonti_bibtex = (
     "@ARTICLE{2004ApJ...613..898T,\n"
     "       author = {{Tremonti}, Christy A. and {Heckman}, Timothy M. and\n"
@@ -79,5 +118,3 @@ tremonti_bibtex = (
     "      adsnote = {Provided by the SAO/NASA Astrophysics Data System}\n"
     "}\n\n"
 )
-
-tremonti_title = "The Origin of the Mass-Metallicity Relation: Insights from 53,000 Star-forming Galaxies in the Sloan Digital Sky Survey"
