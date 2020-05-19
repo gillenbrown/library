@@ -154,6 +154,9 @@ class MainWindow(QMainWindow):
         splitter.addWidget(leftScroll)
         splitter.addWidget(centerScroll)
         splitter.addWidget(rightScroll)
+        # set the default widths of each panel, in pixels. Below we will set the width
+        # of the main window to 1000, so this should sum to that.
+        splitter.setSizes([150, 600, 250])
 
         # Add this to the main layout
         vBoxMain.addWidget(splitter)
@@ -184,7 +187,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("")
 
         # and the initial window size
-        self.resize(800, 600)
+        self.resize(1000, 600)
         self.show()
 
     def addPaper(self):
