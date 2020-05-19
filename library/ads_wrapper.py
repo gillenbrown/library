@@ -1,37 +1,56 @@
 import re
-import datetime
 
 import ads
 
 
 class ADSWrapper(object):
     """
-    Class representing a scholarly paper accessible through ADS.
+    Class used to query ADS for papers.
     """
 
     def __init__(self):
-        # Since I am getting this info by querying the API, and there's a cap on the
-        # number of queries per day, I want to cache things if possible. The two things
-        # I get are the bibtext entries, obtained using the ADS bibcode, and the
-        # bibcode, obtained from the arxiv ID. I'll store those as class level
-        # dictionaries so all instances can access them. This is mostly useful for
-        # tests, when we'll access the same paper a lot
+        """
+        Initialize the ADSWrapper object, no parameters required.
+        """
+        # Since I am getting info by querying the API, and there's a cap on the
+        # number of queries per day, I want to cache things if possible. I used the
+        # arXiv ID to get the bibcode, and then the bibcode to get various items about
+        # that paper. I'll store those things as class level dictionaries so any
+        # instances can access them. These caches are mostly useful for tests, where
+        # we access the same paper many times.
         self._info_from_bibcode = dict()
         self._bibcode_from_arxiv_id = dict()
         self.num_queries = 0  # track this for debugging/testing purposes
 
     def get_info(self, bibcode):
-        try:
+        """
+        Get many attributes of a paper identified by a bibcode.
+
+        This returns the following attributes of the paper, most of which are
+        self-explanatory:
+        - "abstract"
+        - "bibtex": The full bibtex entry for this paper from ADS.
+        - "bibcode": The ADS bibcode of the paper (what was passed in)
+        - "title"
+        - "authors": List of authors of the paper, in the format "LastName, FirstName"
+        - "pubdate": Publication date, in the format "YYYY/MM/DD" Day might be zero.
+        - "journal"
+        - "volume"
+        - "page"
+
+        :param bibcode: The bibcode of the paper.
+        :type bibcode: str
+        :return: Dictionary containing the attributes listed above.
+        :rtype: dict
+        """
+        try:  # try to get it from the cache
             return self._info_from_bibcode[bibcode]
-        except KeyError:
+        except KeyError:  # not found, need to do an actual query
             self.num_queries += 1
             # To reduce the number of queries we need to request everything ahead of
-            # time with the `fl` parameter. Even though we already have the bibcode we
-            # need to return this, as the bibtex entry won't be fetched ahead of time
-            # for some reason
+            # time with the `fl` parameter.
             quantities = [
                 "abstract",
-                "bibcode",
                 "title",
                 "author",
                 "pubdate",
@@ -62,27 +81,59 @@ class ADSWrapper(object):
             return results
 
     def _get_bibcode_from_arxiv(self, arxiv_id):
+        """
+        Get the ADS bibcode of a paper based on the arXiv ID.
+
+        :param arxiv_id: arXiv ID of the paper.
+        :type arxiv_id: str
+        :return: ADS bibcode of the paper.
+        :rtype: str
+        """
         # try to get it from the cache first
         try:
             return self._bibcode_from_arxiv_id[arxiv_id]
         except KeyError:
             self.num_queries += 1
+
             query = ads.SearchQuery(q="arXiv:{}".format(arxiv_id), fl=["bibcode"])
             bibcode = list(query)[0].bibcode
+
+            # store it in the cache
             self._bibcode_from_arxiv_id[arxiv_id] = bibcode
+
             return bibcode
 
     def get_bibcode(self, identifier):
+        """
+        Get the bibcode of a paper based on one of many ways to access a paper.
+
+        The following things are recognized:
+        - ADS bibcode
+        - ADS URL that links to the paper
+        - arXiv URL that links to the paper (either the abstract page or the pdf)
+        - arXiv ID
+
+        :param identifier: One of the following methods above for identifying a paper.
+        :type identifier: str
+        :return: The ADS bibcode of the paper referenced.
+        :rtype: str
+        """
+        # Set up a few regular expressions to identify both arXiv IDs and things with
+        # the year at the front, which is used when checking for bibcodes directly
         # https://arxiv.org/help/arxiv_identifier
         arxiv_id_re = re.compile(r"[0-9]{4}\.[0-9]{4,5}")
 
         # http://adsabs.github.io/help/actions/bibcode
         year_at_front = re.compile(r"^[0-9]{4}")
 
+        # see if it has an arXiv ID
         # re.search looks anywhere in the string
         if re.search(arxiv_id_re, identifier) is not None:
+            # get the part of the string that is the arXiv ID
             arxiv_id = re.search(arxiv_id_re, identifier).group()
+            # then run the query
             return self._get_bibcode_from_arxiv(arxiv_id)
+        # check if it looks like an ADS URL
         elif "ui.adsabs.harvard.edu/abs/" in identifier:
             # first get the bibcode from the URL. This is always the thing after "abs"
             # in the abstract
@@ -93,6 +144,7 @@ class ADSWrapper(object):
         # # http://adsabs.github.io/help/actions/bibcode
         # re.match only looks at the beginning of the string, where the year will be
         elif len(identifier) == 19 and re.match(year_at_front, identifier):
-            return identifier
+            return identifier  # they passed in the bibcode
+        # otherwise we don't know what to do
         else:
             raise ValueError("Identifier not recognized")

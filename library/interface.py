@@ -1,10 +1,3 @@
-"""
-interface.py
-
-This holds the GUI that will be used when the library is run. This is the script that
-should be called to initialize the program.
-"""
-import sys
 from pathlib import Path
 
 from PySide2.QtCore import Qt
@@ -26,7 +19,17 @@ from PySide2.QtWidgets import (
 
 
 class Tag(QLabel):
+    """
+    Class representing the tags that go in the left panel
+    """
+
     def __init__(self, tagName):
+        """
+        Create the tab object with the given name.
+
+        :param tagName: Name that will be displayed on the tag
+        :type tagName: str
+        """
         QLabel.__init__(self, tagName)
         self.setFixedHeight(25)
         self.setFont(QFont("Cabin", 14))
@@ -38,6 +41,9 @@ class ScrollArea(QScrollArea):
     """
 
     def __init__(self):
+        """
+        Setup the scroll area, no parameters needed.
+        """
         QScrollArea.__init__(self)
 
         # Have a central widget with a vertical box layout
@@ -55,22 +61,39 @@ class ScrollArea(QScrollArea):
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
 
     def addWidget(self, widget):
+        """
+        Add a widget to the list of vertical objects
+
+        :param widget: Widget to be added to the layout.
+        :type widget: QWidget
+        :return: None
+        """
         # add the widget to the layout
         self.layout.addWidget(widget)
 
 
 class MainWindow(QMainWindow):
+    """
+    Main window object holding everything needed in the interface.
+    """
+
     def __init__(self, lib):
+        """
+        Create the interface around the library passed in.
+
+        :param lib: Libray object that will be displayed in this interface.
+        :type lib: library.lib.Library
+        """
         QMainWindow.__init__(self)
 
         self.lib = lib
 
         self.default_font = QFont("Cabin", 14)
 
-        # Start with the layout. Our main layout is two vertical components:
-        # the first is the search bar, where the user can paste URLs to add to the l
-        # library, and the second is the place where we show all the papers that have
-        # been added.
+        # Start with the layout. Our main layout is three vertical components:
+        # the first is the title, second is the search bar, where the user can paste
+        # URLs to add to the library, and the third is the place where we show all
+        # the papers that have been added.
         vBoxMain = QVBoxLayout()
 
         # The title is first
@@ -81,7 +104,8 @@ class MainWindow(QMainWindow):
         self.title.setFont(QFont("Lobster", 40))
         vBoxMain.addWidget(self.title)
 
-        # Then comes the search bar. This is it's own horizontal layout
+        # Then comes the search bar. This is it's own horizontal layout, with the
+        # text box and the button to add
         hBoxSearchBar = QHBoxLayout()
         self.searchBar = QLineEdit()
         self.searchBar.setPlaceholderText("Enter your paper URL or ADS bibcode here")
@@ -101,7 +125,14 @@ class MainWindow(QMainWindow):
         hBoxSearchBar.addWidget(self.addButton)
         vBoxMain.addLayout(hBoxSearchBar)
 
-        # The left panel of this is the list of tags the user has. We'll have dummy tags
+        # Then we have the main body. This is a bit more complex. We'll start by just
+        # initializing the layout for this, which is three panels laid horizonatlly.
+        # This is the default splitter orientation
+        splitter = QSplitter()
+        # then make each of these things
+
+        # The left panel of this is the list of tags the user has.
+        # We'll have dummy tags for now
         leftScroll = ScrollArea()
         for i in range(10):
             leftScroll.addWidget(Tag(f"Tag {i}"))
@@ -110,7 +141,7 @@ class MainWindow(QMainWindow):
         centerScroll = ScrollArea()
         for b in self.lib.get_all_bibcodes():
             # for now just use the Tag class, will eventually make another Paper widget
-            centerScroll.addWidget(Tag(b))
+            centerScroll.addWidget(Tag(lib.get_paper_attribute(b, "title")))
 
         # Then the right panel is the details on a given paper
         rightScroll = ScrollArea()
@@ -119,10 +150,7 @@ class MainWindow(QMainWindow):
             # for now just use the Tag class, will eventually make another widget
             rightScroll.addWidget(Tag(f"Attribute {i}"))
 
-        # Then we have the main body. This is a bit more complex. We'll start by just
-        # initializing the layout for this, which is three panels laid horizonatlly.
-        # This is the default splitter orientation
-        splitter = QSplitter()
+        # then add each of these widgets to the central splitter
         splitter.addWidget(leftScroll)
         splitter.addWidget(centerScroll)
         splitter.addWidget(rightScroll)
@@ -160,6 +188,11 @@ class MainWindow(QMainWindow):
         self.show()
 
     def addPaper(self):
+        """
+        Add a paper to the library, taking text from the text box
+
+        :return: None, but the user's input is added to the library
+        """
         self.lib.add_paper(self.searchBar.text())
 
 
@@ -170,9 +203,11 @@ def get_fonts(directory, current_list):
     Note that all fonts must have the `.ttf` file extension.
 
     :param directory: Parent directory to search for fonts
+    :type directory: pathlib.Path
     :param current_list: List of fonts that have been found so far. This will be
                          appended to, so that it can be modified in place, and will
                          also be returned, so the first caller of this can get the list.
+    :type current_list: list
     :return: None
     """
     # go through everything in this directory
@@ -188,7 +223,11 @@ def get_fonts(directory, current_list):
 
 
 def set_up_fonts():
-    # then add all our fonts
+    """
+    Add all the found fonts to the Qt font database
+
+    :return: None, but the fonts are added to the Qt font database
+    """
     fontDb = QFontDatabase()
     # we need to initialize this list to start, as fonts found will be appended to this
     fonts = []

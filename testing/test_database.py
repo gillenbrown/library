@@ -155,3 +155,8 @@ def test_get_correct_attributes_abstract(db):
 def test_get_correct_attributes_bibtex(db):
     assert db.get_paper_attribute(u.my_bibcode, "bibtex") == u.my_bibtex
     assert db.get_paper_attribute(u.tremonti_bibcode, "bibtex") == u.tremonti_bibtex
+
+
+def test_raises_errror_if_attribute_does_not_exist(db):
+    with pytest.raises(ValueError):
+        db.get_paper_attribute(u.my_bibcode, "bad attribute")
