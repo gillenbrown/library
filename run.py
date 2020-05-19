@@ -7,9 +7,9 @@ from library import lib, interface
 
 if __name__ == "__main__":
     if len(sys.argv) == 1:  # no specified path
-        db_path = Path("../USER_DATA_DO_NOT_DELETE.db")
+        db_path = Path(__file__).parent.absolute() / "USER_DATA_DO_NOT_DELETE.db"
     else:
-        db_path = Path(sys.argv[1])
+        db_path = Path(sys.argv[1]).absolute()
     lib = lib.Library(db_path)
 
     # The application is what starts QT
