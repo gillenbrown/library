@@ -12,7 +12,7 @@ from PySide2.QtCore import Qt
 from PySide2.QtGui import QFontDatabase
 from PySide2.QtWidgets import QApplication
 
-from library.interface import MainWindow, get_fonts, set_up_fonts
+from library.interface import MainWindow, get_fonts, set_up_fonts, Paper
 from library.lib import Library
 import test_utils as u
 
@@ -125,3 +125,75 @@ def test_can_exit_keyboard_shortcut_exit_the_app(qtbot, lib, monkeypatch):
     qtbot.keyPress(widget, "q", Qt.ControlModifier)
 
     assert exit_calls == [1]
+
+
+def test_right_panel_title_is_empty_at_beginning(qtbot, lib):
+    widget = MainWindow(lib)
+    qtbot.addWidget(widget)
+    assert widget.rightPanel.titleText.text() == ""
+
+
+def test_right_panel_abstract_is_empty_at_beginning(qtbot, lib):
+    widget = MainWindow(lib)
+    qtbot.addWidget(widget)
+    assert widget.rightPanel.abstractText.text() == ""
+
+
+def test_right_panel_title_can_be_set(qtbot, lib):
+    widget = MainWindow(lib)
+    qtbot.addWidget(widget)
+    widget.rightPanel.setPaperDetails("Test Title", "")
+    assert widget.rightPanel.titleText.text() == "Test Title"
+
+
+def test_right_panel_abstract_can_be_set(qtbot, lib):
+    widget = MainWindow(lib)
+    qtbot.addWidget(widget)
+    widget.rightPanel.setPaperDetails("", "Test Abstract")
+    assert widget.rightPanel.abstractText.text() == "Test Abstract"
+
+
+def test_paper_initialization_has_correct_bibcode(qtbot, lib):
+    widget = MainWindow(lib)
+    qtbot.addWidget(widget)
+    new_paper = Paper(u.my_bibcode, lib, widget.rightPanel)
+    assert new_paper.bibcode == u.my_bibcode
+
+
+def test_paper_initialization_has_correct_title(qtbot, lib):
+    widget = MainWindow(lib)
+    qtbot.addWidget(widget)
+    new_paper = Paper(u.my_bibcode, lib, widget.rightPanel)
+    assert new_paper.title == u.my_title
+
+
+def test_paper_initialization_has_correct_abstract(qtbot, lib):
+    widget = MainWindow(lib)
+    qtbot.addWidget(widget)
+    new_paper = Paper(u.my_bibcode, lib, widget.rightPanel)
+    assert new_paper.abstract == u.my_abstract
+
+
+def test_paper_initialization_has_correct_title_in_the_text(qtbot, lib):
+    widget = MainWindow(lib)
+    qtbot.addWidget(widget)
+    new_paper = Paper(u.my_bibcode, lib, widget.rightPanel)
+    assert new_paper.titleText.text() == u.my_title
+
+
+def test_clicking_on_paper_puts_title_in_right_panel(qtbot, lib):
+    widget = MainWindow(lib)
+    qtbot.addWidget(widget)
+    rightPanel = widget.rightPanel
+    new_paper = Paper(u.my_bibcode, lib, rightPanel)
+    qtbot.mouseClick(new_paper, Qt.LeftButton)
+    assert widget.rightPanel.titleText.text() == u.my_title
+
+
+def test_clicking_on_paper_puts_abstract_in_right_panel(qtbot, lib):
+    widget = MainWindow(lib)
+    qtbot.addWidget(widget)
+    rightPanel = widget.rightPanel
+    new_paper = Paper(u.my_bibcode, lib, rightPanel)
+    qtbot.mouseClick(new_paper, Qt.LeftButton)
+    assert widget.rightPanel.abstractText.text() == u.my_abstract

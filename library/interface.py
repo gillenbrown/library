@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from PySide2.QtCore import Qt
-from PySide2.QtGui import QKeySequence, QFontDatabase, QFont
+from PySide2.QtCore import Qt, QEvent
+from PySide2.QtGui import QKeySequence, QFontDatabase, QFont, QMouseEvent
 from PySide2.QtWidgets import (
     QApplication,
     QWidget,
@@ -35,6 +35,101 @@ class Tag(QLabel):
         self.setFont(QFont("Cabin", 14))
 
 
+class Paper(QWidget):
+    """
+    Class holding paper details that goes in the central panel
+    """
+
+    def __init__(self, bibcode, lib, rightPanel):
+        """
+        Initialize the paper object, which will hold the given bibcode
+
+        :param bibcode: Bibcode of this paper
+        :type bibcode: str
+        :param lib: Library object this interface is using
+        :type lib: lib.Library
+        :param rightPanel: rightPanel object of this interface. This is only needed so
+                           we can call the update feature when this is clicked on
+        :type rightPanel: rightPanel
+        """
+        QWidget.__init__(self)
+
+        # store the information that will be needed later
+        self.bibcode = bibcode
+        self.lib = lib
+        self.rightPanel = rightPanel
+
+        # Use the library to get the details needed
+        self.title = lib.get_paper_attribute(self.bibcode, "title")
+        self.abstract = lib.get_paper_attribute(self.bibcode, "abstract")
+
+        # Then set up the layout this uses. It will be vertical with the title (for now)
+        vBox = QVBoxLayout()
+        self.titleText = QLabel(self.title)
+        self.titleText.setFont(QFont("Cabin", 16))
+
+        # then add these to the layout, then set this layout
+        vBox.addWidget(self.titleText)
+        self.setLayout(vBox)
+
+    def mousePressEvent(self, event):
+        """
+        Handle the clicks - single click will display details, double will open paper
+
+        :param event: Mouse click event object
+        :type event: PySide2.QtGui.QMouseEvent
+        :return: None
+        """
+        if event.type() is QEvent.Type.MouseButtonPress:
+            self.rightPanel.setPaperDetails(self.title, self.abstract)
+
+
+class RightPanel(QWidget):
+    """
+    The right panel area for the main window, holding paper info for a single paper
+    """
+
+    def __init__(self):
+        """
+        Initialize the right panel. This is boilerplate, nothing is passed in.
+        """
+        QWidget.__init__(self)
+
+        # This widget will have 2 main areas (for now): The title and abstract
+        # all laid out vertically
+        vBox = QVBoxLayout()
+
+        self.titleText = QLabel("")
+        self.abstractText = QLabel("")
+
+        # set text properties
+        self.titleText.setFont(QFont("Cabin", 20))
+        self.abstractText.setFont(QFont("Cabin", 14))
+
+        self.titleText.setWordWrap(True)
+        self.abstractText.setWordWrap(True)
+
+        # add these to the layout
+        vBox.addWidget(self.titleText)
+        vBox.addWidget(self.abstractText)
+
+        self.setLayout(vBox)
+
+    def setPaperDetails(self, title, abstract):
+        """
+        Update the details shown in the right panel.
+
+        :param title: Title to be shown in the right panel
+        :type title: str
+        :param abstract: Abstract to be shown in the right panel
+        :type abstract: str
+        :return: None, but the text properties are set.
+        """
+        self.titleText.setText(title)
+        self.abstractText.setText(abstract)
+        self.repaint()
+
+
 class ScrollArea(QScrollArea):
     """
     A wrapper around QScrollArea with a vertical layout, appropriate for lists
@@ -59,6 +154,7 @@ class ScrollArea(QScrollArea):
         self.setWidget(self.container)
         # have the scroll bar only appear when needed
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
 
     def addWidget(self, widget):
         """
@@ -137,18 +233,16 @@ class MainWindow(QMainWindow):
         for i in range(10):
             leftScroll.addWidget(Tag(f"Tag {i}"))
 
-        # The central panel is the list of papers
+        # The right panel is the details on a given paper
+        self.rightPanel = RightPanel()
+        rightScroll = ScrollArea()
+        rightScroll.addWidget(self.rightPanel)
+
+        # The central panel is the list of papers. This has to be set up after the
+        # right panel because the paper objects need it.
         centerScroll = ScrollArea()
         for b in self.lib.get_all_bibcodes():
-            # for now just use the Tag class, will eventually make another Paper widget
-            centerScroll.addWidget(Tag(lib.get_paper_attribute(b, "title")))
-
-        # Then the right panel is the details on a given paper
-        rightScroll = ScrollArea()
-        # add dummy junk for now
-        for i in range(20):
-            # for now just use the Tag class, will eventually make another widget
-            rightScroll.addWidget(Tag(f"Attribute {i}"))
+            centerScroll.addWidget(Paper(b, lib, self.rightPanel))
 
         # then add each of these widgets to the central splitter
         splitter.addWidget(leftScroll)
@@ -156,7 +250,7 @@ class MainWindow(QMainWindow):
         splitter.addWidget(rightScroll)
         # set the default widths of each panel, in pixels. Below we will set the width
         # of the main window to 1000, so this should sum to that.
-        splitter.setSizes([150, 600, 250])
+        splitter.setSizes([150, 550, 300])
 
         # Add this to the main layout
         vBoxMain.addWidget(splitter)
