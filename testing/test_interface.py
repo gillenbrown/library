@@ -10,7 +10,7 @@ import pytest
 import pytestqt
 from PySide2.QtCore import Qt
 from PySide2.QtGui import QFontDatabase
-from PySide2.QtWidgets import QApplication
+from PySide2.QtWidgets import QApplication, QFileDialog
 
 from library.interface import MainWindow, get_fonts, set_up_fonts, Paper
 from library.lib import Library
@@ -197,3 +197,22 @@ def test_clicking_on_paper_puts_abstract_in_right_panel(qtbot, lib):
     new_paper = Paper(u.my_bibcode, lib, rightPanel)
     qtbot.mouseClick(new_paper, Qt.LeftButton)
     assert widget.rightPanel.abstractText.text() == u.my_abstract
+
+
+def test_double_clicking_on_paper_without_pdf_link_asks_user(qtbot, lib, monkeypatch):
+    # Here we need to use monkeypatch to simulate user input
+    test_loc = "/Users/gillenb/test.pdf"
+    # create a mock function to get the file. It needs to have the filter kwarg, since
+    # that is used in the actual call
+    def mock_get_file(filter=""):
+        return test_loc
+
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
+
+    widget = MainWindow(lib)
+    qtbot.addWidget(widget)
+    # add a new paper to click on
+    rightPanel = widget.rightPanel
+    new_paper = Paper(u.my_bibcode, lib, rightPanel)
+    qtbot.mouseDClick(new_paper, Qt.LeftButton)
+    assert lib.get_paper_attribute(u.my_bibcode, "local_file") == test_loc

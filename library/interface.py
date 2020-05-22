@@ -15,6 +15,7 @@ from PySide2.QtWidgets import (
     QLineEdit,
     QPushButton,
     QLayout,
+    QFileDialog,
 )
 
 
@@ -82,6 +83,10 @@ class Paper(QWidget):
         """
         if event.type() is QEvent.Type.MouseButtonPress:
             self.rightPanel.setPaperDetails(self.title, self.abstract)
+        elif event.type() is QEvent.Type.MouseButtonDblClick:
+            file_loc = QFileDialog.getOpenFileName(filter="PDF(*.pdf)")
+            self.lib.set_paper_attribute(self.bibcode, "local_file", file_loc)
+        # nothing should be done for other click types
 
 
 class RightPanel(QWidget):

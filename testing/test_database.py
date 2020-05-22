@@ -160,3 +160,35 @@ def test_get_correct_attributes_bibtex(db):
 def test_raises_errror_if_attribute_does_not_exist(db):
     with pytest.raises(ValueError):
         db.get_paper_attribute(u.my_bibcode, "bad attribute")
+
+
+def test_local_file_is_none_before_it_is_set(db):
+    assert db.get_paper_attribute(u.my_bibcode, "local_file") == None
+    assert db.get_paper_attribute(u.tremonti_bibcode, "local_file") == None
+
+
+def test_add_attribute_file_loc_is_done_correctly(db):
+    test_loc = "/Users/gillenb/test.pdf"
+    db.set_paper_attribute(u.my_bibcode, "local_file", test_loc)
+    assert db.get_paper_attribute(u.my_bibcode, "local_file") == test_loc
+
+
+def test_raise_error_when_attempting_to_modify_nonexistent_attribute(db):
+    with pytest.raises(ValueError):
+        db.set_paper_attribute(u.my_bibcode, "slkdfsldkj", "New value")
+
+
+def test_raise_error_when_attempting_to_modify_nonexistent_bibcode(db):
+    with pytest.raises(ValueError):
+        db.set_paper_attribute("sdlkfjsldfkj", "title", "new_title")
+
+
+def test_modify_title_as_an_example_with_set_paper_attribute(db):
+    db.set_paper_attribute(u.my_bibcode, "title", "New Title")
+    assert db.get_paper_attribute(u.my_bibcode, "title") == "New Title"
+
+
+def test_modify_authors_list_with_set_paper_attribute(db):
+    new_list = ["Last, First", "Last2, First2"]
+    db.set_paper_attribute(u.my_bibcode, "authors", new_list)
+    assert db.get_paper_attribute(u.my_bibcode, "authors") == new_list

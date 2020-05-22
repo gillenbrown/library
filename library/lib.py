@@ -65,6 +65,9 @@ class Library(object):
         """
         return self.database.get_paper_attribute(bibcode, attribute)
 
+    def set_paper_attribute(self, bibcode, attribute, new_value):
+        self.database.set_paper_attribute(bibcode, attribute, new_value)
+
     def get_all_bibcodes(self):
         """
         Get the bibcodes for all papers present in the library.

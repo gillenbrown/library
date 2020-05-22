@@ -12,7 +12,7 @@ class Database(object):
     _author_sep = "&&&&"
 
     # store the columns that will be in the database.
-    colnames = [
+    colnames_set_on_paper_add = [
         "bibcode",
         "title",
         "authors",
@@ -23,6 +23,8 @@ class Database(object):
         "abstract",
         "bibtex",
     ]
+    # some columns won't be set when the paper is added, will be left NULL
+    colnames_all = colnames_set_on_paper_add + ["local_file"]
 
     def __init__(self, db_file):
         """
@@ -45,7 +47,8 @@ class Database(object):
             "volume integer,"
             "page integer,"
             "abstract text,"
-            "bibtex text"
+            "bibtex text,"
+            "local_file text"
             ")"
         )
 
@@ -103,10 +106,10 @@ class Database(object):
         try:
             # the formatting of this is kinda ugly
             # put these into the comma separated column names
-            joined_colnames = ",".join(self.colnames)
+            joined_colnames = ",".join(self.colnames_set_on_paper_add)
             # also make the appropriate amount of question marks based on the number of
             # column names. This is needed for safe parameter entry
-            question_marks = ",".join(["?"] * len(self.colnames))
+            question_marks = ",".join(["?"] * len(self.colnames_set_on_paper_add))
             # combine this together into the SQL query
             sql = f"INSERT INTO papers({joined_colnames}) VALUES({question_marks})"
             # then put the values as a tuple before passing it in, for formatting nicely
@@ -139,7 +142,7 @@ class Database(object):
         :rtype: list, str, or int
         """
         # check that the attribute is in the columns
-        if not attribute in self.colnames:
+        if not attribute in self.colnames_all:
             raise ValueError("This attribute is not in the table")
 
         # get the rows from the table where the bibtex matches.
@@ -161,6 +164,34 @@ class Database(object):
             return r_value
         else:
             return r_value.split(self._author_sep)
+
+    def set_paper_attribute(self, bibcode, attribute, new_value):
+        """
+        Set a given attribute about a given paper.
+
+        :param bibcode: Bibcode of the desired paper.
+        :type bibcode: str
+        :param attribute: Desired attribute of the paper. Needs to be one that is in the
+                          table.
+        :type attribute: str
+        :param new_value: New value for the attribute of the paper. Should be the same
+                          data type that column requires, which depends on the column.
+        :return: None
+        """
+        # check that the attribute is in the columns
+        if not attribute in self.colnames_all:
+            raise ValueError("This attribute is not in the table")
+        # and that the bibcode is in the library
+        if not bibcode in self.get_all_bibcodes():
+            raise ValueError("This paper is not in the table")
+
+        # we do have to do a check for the author list, since it's special. We'll need
+        # to put it back as a list.
+        if attribute == "authors":
+            new_value = self._author_sep.join(new_value)
+
+        sql = f"UPDATE papers SET {attribute} = ? WHERE bibcode = ?"
+        self._execute(sql, (new_value, bibcode))
 
     def num_papers(self):
         """
