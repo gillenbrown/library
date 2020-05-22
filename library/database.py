@@ -1,6 +1,11 @@
 import sqlite3
 import contextlib
 
+from library import ads_wrapper
+
+# set up the ADS wrapper object that will be used by the Library
+ads_call = ads_wrapper.ADSWrapper()
+
 
 class Database(object):
     """
@@ -74,36 +79,33 @@ class Database(object):
                     cursor.execute(sql, parameters)
                     return cursor.fetchall()
 
-    def add_paper(
-        self, bibcode, title, authors, pubdate, journal, volume, page, abstract, bibtex
-    ):
+    def add_paper(self, identifier):
         """
-        Add a paper to the database. All parameters must be passed in.
+        Add a paper to the database.
 
-        :param bibcode: The paper bibcode.
-        :type bibcode: str
-        :param title: The title of the paper.
-        :type title: str
-        :param authors: The list of authors of the paper.
-        :type authors: list
-        :param pubdate: Publication date of the paper.
-        :type pubdate: str
-        :param journal: Journal the paper was published in.
-        :type journal: str
-        :param volume: Volume of the journal the paper was published in.
-        :type volume: int
-        :param page: Page that paper was published on.
-        :type page: int
-        :param abstract: The full abstract of the paper.
-        :type abstract: str
-        :param bibtex: The full bibtex entry of the paper.
-        :type bibtex: str
+        The identifier will be parsed to get the bibcode, then the bibcode will be used
+        to get all the paper details, which will then be stored. Some attributes are
+        left null, such as location of the local file.
+
+        The following things are recognized:
+        - ADS bibcode
+        - ADS URL that links to the paper
+        - arXiv URL that links to the paper (either the abstract page or the pdf)
+        - arXiv ID
+
+        :param identifier: This can be one of many things that can be used to identify
+                           a paper, listed above.
+        :type identifier: str
         :return: None
         """
+        # call ADS to get the details
+        bibcode = ads_call.get_bibcode(identifier)
+        paper_data = ads_call.get_info(bibcode)
+
         # handle the authors - this should be passed in as a list, but we can't store it
         # as a list. Just join it all together with the unique value held above.
-        authors_write = self._author_sep.join(authors)
-        try:
+        authors_write = self._author_sep.join(paper_data["authors"])
+        try:  # will catch papers that are already in the library
             # the formatting of this is kinda ugly
             # put these into the comma separated column names
             joined_colnames = ",".join(self.colnames_set_on_paper_add)
@@ -115,14 +117,14 @@ class Database(object):
             # then put the values as a tuple before passing it in, for formatting nicely
             parameters = (
                 bibcode,
-                title,
+                paper_data["title"],
                 authors_write,
-                pubdate,
-                journal,
-                volume,
-                page,
-                abstract,
-                bibtex,
+                paper_data["pubdate"],
+                paper_data["journal"],
+                paper_data["volume"],
+                paper_data["page"],
+                paper_data["abstract"],
+                paper_data["bibtex"],
             )
             # then run this SQL
             self._execute(sql, parameters)

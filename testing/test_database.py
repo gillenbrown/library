@@ -7,34 +7,6 @@ from library.database import Database
 import test_utils as u
 
 
-def add_my_paper(some_db):
-    some_db.add_paper(
-        u.my_bibcode,
-        u.my_title,
-        u.my_authors,
-        u.my_pubdate,
-        u.my_journal,
-        u.my_volume,
-        u.my_page,
-        u.my_abstract,
-        u.my_bibtex,
-    )
-
-
-def add_tremonti_paper(some_db):
-    some_db.add_paper(
-        u.tremonti_bibcode,
-        u.tremonti_title,
-        u.tremonti_authors,
-        u.tremonti_pubdate,
-        u.tremonti_journal,
-        u.tremonti_volume,
-        u.tremonti_page,
-        u.tremonti_abstract,
-        u.tremonti_bibtex,
-    )
-
-
 @pytest.fixture(name="db_empty")
 def temporary_db():
     """
@@ -55,7 +27,7 @@ def temporary_db_one_paper():
     """
     file_path = Path(f"{random.randint(0, 1000000000)}.db")
     db = Database(file_path)
-    add_my_paper(db)
+    db.add_paper(u.my_bibcode)
     yield db
     file_path.unlink()  # removes this file
 
@@ -68,8 +40,8 @@ def temporary_db_two_papers():
     """
     file_path = Path(f"{random.randint(0, 1000000000)}.db")
     db = Database(file_path)
-    add_my_paper(db)
-    add_tremonti_paper(db)
+    db.add_paper(u.my_bibcode)
+    db.add_paper(u.tremonti_bibcode)
     yield db
     file_path.unlink()  # removes this file
 
@@ -87,14 +59,95 @@ def test_database_has_papers_table(db):
 
 def test_num_papers_is_correct_as_papers_are_added(db_empty):
     assert db_empty.num_papers() == 0
-    add_my_paper(db_empty)
+    db_empty.add_paper(u.my_bibcode)
     assert db_empty.num_papers() == 1
-    add_tremonti_paper(db_empty)
+    db_empty.add_paper(u.tremonti_bibcode)
     assert db_empty.num_papers() == 2
 
 
+def test_add_paper_from_ads_url(db_empty):
+    db_empty.add_paper(u.my_ads_url)
+    # I won't test the value, just that it found something. I'll test values below
+    assert db_empty.get_paper_attribute(u.my_bibcode, "title") is not None
+
+
+def test_add_paper_from_arvix_url(db_empty):
+    db_empty.add_paper(u.my_arxiv_url)
+    assert db_empty.get_paper_attribute(u.my_bibcode, "title") is not None
+
+
+def test_add_paper_from_arvix_url_v2(db_empty):
+    db_empty.add_paper(u.my_arxiv_url_v2)
+    assert db_empty.get_paper_attribute(u.my_bibcode, "title") is not None
+
+
+def test_add_paper_from_arxiv_id(db_empty):
+    db_empty.add_paper(u.my_arxiv_id)
+    assert db_empty.get_paper_attribute(u.my_bibcode, "title") is not None
+
+
+def test_add_paper_from_arxiv_pdf_url(db_empty):
+    db_empty.add_paper(u.my_arxiv_pdf_url)
+    assert db_empty.get_paper_attribute(u.my_bibcode, "title") is not None
+
+
+def test_add_paper_from_arxiv_pdf_url_v2(db_empty):
+    db_empty.add_paper(u.my_arxiv_pdf_url_v2)
+    assert db_empty.get_paper_attribute(u.my_bibcode, "title") is not None
+
+
+def test_add_paper_from_ads_bibcode(db_empty):
+    db_empty.add_paper(u.my_bibcode)
+    assert db_empty.get_paper_attribute(u.my_bibcode, "title") is not None
+
+
+def test_added_paper_has_correct_bibcode(db_empty):
+    db_empty.add_paper(u.my_bibcode)
+    assert db_empty.get_paper_attribute(u.my_bibcode, "bibcode") == u.my_bibcode
+
+
+def test_added_paper_has_correct_title(db_empty):
+    db_empty.add_paper(u.my_bibcode)
+    assert db_empty.get_paper_attribute(u.my_bibcode, "title") == u.my_title
+
+
+def test_added_paper_has_correct_authors(db_empty):
+    db_empty.add_paper(u.my_bibcode)
+    assert db_empty.get_paper_attribute(u.my_bibcode, "authors") == u.my_authors
+
+
+def test_added_paper_has_correct_pubdate(db_empty):
+    db_empty.add_paper(u.my_bibcode)
+    assert db_empty.get_paper_attribute(u.my_bibcode, "pubdate") == u.my_pubdate
+
+
+def test_added_paper_has_correct_journal(db_empty):
+    db_empty.add_paper(u.my_bibcode)
+    assert db_empty.get_paper_attribute(u.my_bibcode, "journal") == u.my_journal
+
+
+def test_added_paper_has_correct_volume(db_empty):
+    db_empty.add_paper(u.my_bibcode)
+    assert db_empty.get_paper_attribute(u.my_bibcode, "volume") == u.my_volume
+
+
+def test_added_paper_has_correct_page(db_empty):
+    db_empty.add_paper(u.my_bibcode)
+    assert db_empty.get_paper_attribute(u.my_bibcode, "page") == u.my_page
+
+
+def test_added_paper_has_correct_abstract(db_empty):
+    db_empty.add_paper(u.my_bibcode)
+    assert db_empty.get_paper_attribute(u.my_bibcode, "abstract") == u.my_abstract
+
+
+def test_added_paper_has_correct_bibtex(db_empty):
+    db_empty.add_paper(u.my_bibcode)
+    assert db_empty.get_paper_attribute(u.my_bibcode, "bibtex") == u.my_bibtex
+
+
 def test_bibcode_correct_after_adding_paper(db_empty):
-    add_my_paper(db_empty)
+    db_empty.add_paper(u.my_bibcode)
     assert db_empty.get_paper_attribute(u.my_bibcode, "bibcode") == u.my_bibcode
 
 
@@ -104,8 +157,8 @@ def test_error_raised_if_nonexistent_paper_is_searched_for(db_one):
 
 
 def test_same_paper_can_be_added_twice_no_crash_but_only_in_database_once(db_one):
-    add_my_paper(db_one)
-    add_my_paper(db_one)
+    db_one.add_paper(u.my_bibcode)
+    db_one.add_paper(u.my_bibcode)
     assert db_one.num_papers() == 1
 
 

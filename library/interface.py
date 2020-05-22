@@ -41,14 +41,14 @@ class Paper(QWidget):
     Class holding paper details that goes in the central panel
     """
 
-    def __init__(self, bibcode, lib, rightPanel):
+    def __init__(self, bibcode, db, rightPanel):
         """
         Initialize the paper object, which will hold the given bibcode
 
         :param bibcode: Bibcode of this paper
         :type bibcode: str
-        :param lib: Library object this interface is using
-        :type lib: lib.Library
+        :param db: Database object this interface is using
+        :type db: library.database.Database
         :param rightPanel: rightPanel object of this interface. This is only needed so
                            we can call the update feature when this is clicked on
         :type rightPanel: rightPanel
@@ -57,12 +57,16 @@ class Paper(QWidget):
 
         # store the information that will be needed later
         self.bibcode = bibcode
-        self.lib = lib
+        self.db = db
         self.rightPanel = rightPanel
 
-        # Use the library to get the details needed
-        self.title = lib.get_paper_attribute(self.bibcode, "title")
-        self.abstract = lib.get_paper_attribute(self.bibcode, "abstract")
+        # make sure this paper is actually in the database. This should never happen, but
+        # might if I do something dumb in tests
+        assert self.bibcode in self.db.get_all_bibcodes()
+
+        # Use the database to get the details needed
+        self.title = db.get_paper_attribute(self.bibcode, "title")
+        self.abstract = db.get_paper_attribute(self.bibcode, "abstract")
 
         # Then set up the layout this uses. It will be vertical with the title (for now)
         vBox = QVBoxLayout()
@@ -85,7 +89,7 @@ class Paper(QWidget):
             self.rightPanel.setPaperDetails(self.title, self.abstract)
         elif event.type() is QEvent.Type.MouseButtonDblClick:
             file_loc = QFileDialog.getOpenFileName(filter="PDF(*.pdf)")
-            self.lib.set_paper_attribute(self.bibcode, "local_file", file_loc)
+            self.db.set_paper_attribute(self.bibcode, "local_file", file_loc)
         # nothing should be done for other click types
 
 
@@ -178,22 +182,22 @@ class MainWindow(QMainWindow):
     Main window object holding everything needed in the interface.
     """
 
-    def __init__(self, lib):
+    def __init__(self, db):
         """
-        Create the interface around the library passed in.
+        Create the interface around the database passed in.
 
-        :param lib: Libray object that will be displayed in this interface.
-        :type lib: library.lib.Library
+        :param db: database object that will be displayed in this interface.
+        :type db: library.database.Database
         """
         QMainWindow.__init__(self)
 
-        self.lib = lib
+        self.db = db
 
         self.default_font = QFont("Cabin", 14)
 
         # Start with the layout. Our main layout is three vertical components:
         # the first is the title, second is the search bar, where the user can paste
-        # URLs to add to the library, and the third is the place where we show all
+        # URLs to add to the database, and the third is the place where we show all
         # the papers that have been added.
         vBoxMain = QVBoxLayout()
 
@@ -246,8 +250,8 @@ class MainWindow(QMainWindow):
         # The central panel is the list of papers. This has to be set up after the
         # right panel because the paper objects need it.
         centerScroll = ScrollArea()
-        for b in self.lib.get_all_bibcodes():
-            centerScroll.addWidget(Paper(b, lib, self.rightPanel))
+        for b in self.db.get_all_bibcodes():
+            centerScroll.addWidget(Paper(b, db, self.rightPanel))
 
         # then add each of these widgets to the central splitter
         splitter.addWidget(leftScroll)
@@ -291,11 +295,11 @@ class MainWindow(QMainWindow):
 
     def addPaper(self):
         """
-        Add a paper to the library, taking text from the text box
+        Add a paper to the database, taking text from the text box
 
-        :return: None, but the user's input is added to the library
+        :return: None, but the user's input is added to the database
         """
-        self.lib.add_paper(self.searchBar.text())
+        self.db.add_paper(self.searchBar.text())
 
 
 def get_fonts(directory, current_list):
