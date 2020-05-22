@@ -89,7 +89,9 @@ class Paper(QWidget):
             self.rightPanel.setPaperDetails(self.title, self.abstract)
         elif event.type() is QEvent.Type.MouseButtonDblClick:
             file_loc = QFileDialog.getOpenFileName(filter="PDF(*.pdf)")
-            self.db.set_paper_attribute(self.bibcode, "local_file", file_loc)
+            # If the user doesn't select anything this returns the empty string
+            if file_loc != "":
+                self.db.set_paper_attribute(self.bibcode, "local_file", file_loc)
         # nothing should be done for other click types
 
 

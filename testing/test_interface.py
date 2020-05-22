@@ -220,3 +220,25 @@ def test_double_clicking_on_paper_without_pdf_link_asks_user(
     new_paper = Paper(u.my_bibcode, empty_db, rightPanel)
     qtbot.mouseDClick(new_paper, Qt.LeftButton)
     assert empty_db.get_paper_attribute(u.my_bibcode, "local_file") == test_loc
+
+
+def test_double_clicking_on_paper_but_not_choosing_paper_doesnt_add_it(
+    qtbot, empty_db, monkeypatch
+):
+    # Here we need to use monkeypatch to simulate user input
+    # create a mock function to get the file. It needs to have the filter kwarg, since
+    # that is used in the actual call
+    def mock_get_file(filter=""):
+        return ""
+
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
+
+    widget = MainWindow(empty_db)
+    qtbot.addWidget(widget)
+    # add a paper to this empty database to match the paper object
+    empty_db.add_paper(u.my_bibcode)
+    # add a new paper to click on
+    rightPanel = widget.rightPanel
+    new_paper = Paper(u.my_bibcode, empty_db, rightPanel)
+    qtbot.mouseDClick(new_paper, Qt.LeftButton)
+    assert empty_db.get_paper_attribute(u.my_bibcode, "local_file") == None
