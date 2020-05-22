@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from PySide2.QtCore import Qt, QEvent
-from PySide2.QtGui import QKeySequence, QFontDatabase, QFont, QMouseEvent
+from PySide2.QtGui import QKeySequence, QFontDatabase, QFont, QDesktopServices
 from PySide2.QtWidgets import (
     QApplication,
     QWidget,
@@ -88,10 +88,22 @@ class Paper(QWidget):
         if event.type() is QEvent.Type.MouseButtonPress:
             self.rightPanel.setPaperDetails(self.title, self.abstract)
         elif event.type() is QEvent.Type.MouseButtonDblClick:
-            file_loc = QFileDialog.getOpenFileName(filter="PDF(*.pdf)")
-            # If the user doesn't select anything this returns the empty string
-            if file_loc != "":
-                self.db.set_paper_attribute(self.bibcode, "local_file", file_loc)
+            local_file = self.db.get_paper_attribute(self.bibcode, "local_file")
+            if self.db.get_paper_attribute(self.bibcode, "local_file") is None:
+                # if there is not a paper, we need to add it
+                local_file = QFileDialog.getOpenFileName(filter="PDF(*.pdf)")
+                # If the user doesn't select anything this returns the empty string.
+                # Otherwise this returns a two item tuple, where the first item is the
+                # absolute path to the file they picked
+                if local_file != "":
+                    local_file = local_file[0]
+                    self.db.set_paper_attribute(self.bibcode, "local_file", local_file)
+                    # we'll open this file in a minute
+                else:
+                    # the user didn't pick anything, so don't open anything
+                    return
+            # if we now have a path, open the file
+            QDesktopServices.openUrl(f"file:{local_file}")
         # nothing should be done for other click types
 
 
