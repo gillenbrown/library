@@ -236,6 +236,11 @@ def test_raise_error_when_attempting_to_modify_nonexistent_bibcode(db):
         db.set_paper_attribute("sdlkfjsldfkj", "title", "new_title")
 
 
+def test_raise_error_when_attempting_to_modify_value_with_wrong_data_type(db):
+    with pytest.raises(ValueError):
+        db.set_paper_attribute(u.my_bibcode, "title", (4, 3))
+
+
 def test_modify_title_as_an_example_with_set_paper_attribute(db):
     db.set_paper_attribute(u.my_bibcode, "title", "New Title")
     assert db.get_paper_attribute(u.my_bibcode, "title") == "New Title"

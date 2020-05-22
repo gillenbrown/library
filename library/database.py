@@ -193,7 +193,10 @@ class Database(object):
             new_value = self._author_sep.join(new_value)
 
         sql = f"UPDATE papers SET {attribute} = ? WHERE bibcode = ?"
-        self._execute(sql, (new_value, bibcode))
+        try:
+            self._execute(sql, (new_value, bibcode))
+        except sqlite3.InterfaceError:  # this is what's raised with bad data types
+            raise ValueError(f"Bad datatype for attribute {attribute}: {new_value}")
 
     def num_papers(self):
         """
