@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from library.database import Database
+from library.database import Database, PaperAlreadyInDatabaseError
 import test_utils as u
 
 
@@ -146,6 +146,12 @@ def test_added_paper_has_correct_bibtex(db_empty):
     assert db_empty.get_paper_attribute(u.my_bibcode, "bibtex") == u.my_bibtex
 
 
+def test_added_paper_returns_correct_bibcode(db_empty):
+    test_bibcode = db_empty.add_paper(u.my_ads_url)
+    assert db_empty.get_paper_attribute(u.my_bibcode, "bibcode") == test_bibcode
+    assert test_bibcode == u.my_bibcode
+
+
 def test_bibcode_correct_after_adding_paper(db_empty):
     db_empty.add_paper(u.my_bibcode)
     assert db_empty.get_paper_attribute(u.my_bibcode, "bibcode") == u.my_bibcode
@@ -156,10 +162,11 @@ def test_error_raised_if_nonexistent_paper_is_searched_for(db_one):
         db_one.get_paper_attribute(u.tremonti_bibcode, "bibcode")
 
 
-def test_same_paper_can_be_added_twice_no_crash_but_only_in_database_once(db_one):
-    db_one.add_paper(u.my_bibcode)
-    db_one.add_paper(u.my_bibcode)
-    assert db_one.num_papers() == 1
+def test_raise_custom_error_if_paper_is_already_in_database(db_empty):
+    db_empty.add_paper(u.my_bibcode)
+    with pytest.raises(PaperAlreadyInDatabaseError):
+        db_empty.add_paper(u.my_bibcode)
+    assert db_empty.num_papers() == 1
 
 
 def test_get_all_bibcodes_does_what_it_says(db):

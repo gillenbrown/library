@@ -18,6 +18,8 @@ from PySide2.QtWidgets import (
     QFileDialog,
 )
 
+from library.database import PaperAlreadyInDatabaseError
+
 
 class Tag(QLabel):
     """
@@ -191,6 +193,37 @@ class ScrollArea(QScrollArea):
         self.layout.addWidget(widget)
 
 
+class PapersListScrollArea(ScrollArea):
+    """
+    The class to be used for the central list of papers.
+
+    It's just a ScrollArea that keeps track of the papers that have been added.
+    """
+
+    def __init__(self):
+        """
+        Set up the papers list, no parameters needed
+        """
+        ScrollArea.__init__(self)
+        self.papers = []
+
+    def addPaper(self, paper):
+        """
+        Add a paper to the papers scroll area.
+
+        This adds it to the internal list of papers and puts the widget in the interface
+
+        :param paper: Paper object to be added to the list of stored papers.
+        :type paper: Paper
+        :return: None
+        """
+        # check if this paper is already in the list. This should never happen
+        assert paper.bibcode not in [p.bibcode for p in self.papers]
+
+        self.papers.append(paper)
+        self.addWidget(paper)  # calls the ScrollArea addWidget
+
+
 class MainWindow(QMainWindow):
     """
     Main window object holding everything needed in the interface.
@@ -263,13 +296,13 @@ class MainWindow(QMainWindow):
 
         # The central panel is the list of papers. This has to be set up after the
         # right panel because the paper objects need it.
-        centerScroll = ScrollArea()
+        self.papersList = PapersListScrollArea()
         for b in self.db.get_all_bibcodes():
-            centerScroll.addWidget(Paper(b, db, self.rightPanel))
+            self.papersList.addPaper(Paper(b, db, self.rightPanel))
 
         # then add each of these widgets to the central splitter
         splitter.addWidget(leftScroll)
-        splitter.addWidget(centerScroll)
+        splitter.addWidget(self.papersList)
         splitter.addWidget(rightScroll)
         # set the default widths of each panel, in pixels. Below we will set the width
         # of the main window to 1000, so this should sum to that.
@@ -309,11 +342,28 @@ class MainWindow(QMainWindow):
 
     def addPaper(self):
         """
-        Add a paper to the database, taking text from the text box
+        Add a paper to the database, taking text from the text box.
 
-        :return: None, but the user's input is added to the database
+        If what is in the text box is not recognized, the text will not be cleared, and
+        nothing will be added (obviously). If the paper is already in the library,
+        the paper will not be added but the text will be cleared.
+
+        :return: None
         """
-        self.db.add_paper(self.searchBar.text())
+        try:  # see if the user put something good
+            bibcode = self.db.add_paper(self.searchBar.text())
+        except ValueError:  # will be raised if the value isn't recognized
+            return  # don't clear the text or add anything
+        except PaperAlreadyInDatabaseError:
+            # here we do clear the search bar, but do not add the paper
+            self.searchBar.clear()
+            return
+
+        # we only get here if the addition to the database worked. If so we add the
+        # paper object, then clear the search bar
+        self.papersList.addPaper(Paper(bibcode, self.db, self.rightPanel))
+        # clear the text so another paper can be added
+        self.searchBar.clear()
 
 
 def get_fonts(directory, current_list):

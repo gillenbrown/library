@@ -147,4 +147,4 @@ class ADSWrapper(object):
             return identifier  # they passed in the bibcode
         # otherwise we don't know what to do
         else:
-            raise ValueError("Identifier not recognized")
+            raise ValueError(f"Identifier {identifier} not recognized")

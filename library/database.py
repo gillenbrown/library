@@ -7,6 +7,14 @@ from library import ads_wrapper
 ads_call = ads_wrapper.ADSWrapper()
 
 
+class PaperAlreadyInDatabaseError(Exception):
+    """
+    Custom exception that will be raised when a paper already is in the datbase.
+    """
+
+    pass
+
+
 class Database(object):
     """
     Class that handles the database access
@@ -93,10 +101,14 @@ class Database(object):
         - arXiv URL that links to the paper (either the abstract page or the pdf)
         - arXiv ID
 
+        The bibcode is returned.
+
         :param identifier: This can be one of many things that can be used to identify
                            a paper, listed above.
         :type identifier: str
-        :return: None
+        :return: bibcode, so the user knows what was added
+        :rtype: str
+        :raises: PaperAlreadyInDatabaseError if paper is already in the library
         """
         # call ADS to get the details
         bibcode = ads_call.get_bibcode(identifier)
@@ -129,7 +141,9 @@ class Database(object):
             # then run this SQL
             self._execute(sql, parameters)
         except sqlite3.IntegrityError:
-            print("Already in Library.")
+            raise PaperAlreadyInDatabaseError("Already in Library.")
+
+        return bibcode
 
     def get_paper_attribute(self, bibcode, attribute):
         """

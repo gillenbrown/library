@@ -17,6 +17,11 @@ from library.database import Database
 import test_utils as u
 
 
+def add_my_paper(qtbot, widget):
+    qtbot.keyClicks(widget.searchBar, u.my_bibcode)
+    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+
+
 @pytest.fixture(name="empty_db")
 def temporary_database():
     """
@@ -181,22 +186,78 @@ def test_paper_initialization_has_correct_title_in_the_text(qtbot, db):
     assert new_paper.titleText.text() == u.my_title
 
 
+def test_cannot_initialize_paper_thats_not_in_database(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    qtbot.addWidget(widget)
+    with pytest.raises(AssertionError):
+        Paper(u.my_bibcode, empty_db, widget.rightPanel)
+
+
+def test_all_papers_are_in_the_paper_list_at_beginning(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    for paper in widget.papersList.papers:
+        assert paper.bibcode in db.get_all_bibcodes()
+
+
+def test_adding_paper_adds_paper_to_interface(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    assert len(widget.papersList.papers) == 0
+    qtbot.addWidget(widget)
+    add_my_paper(qtbot, widget)
+    assert len(widget.papersList.papers) == 1
+
+
+def test_adding_paper_adds_correct_paper_to_interface(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    qtbot.addWidget(widget)
+    add_my_paper(qtbot, widget)
+    assert widget.papersList.papers[0].bibcode == u.my_bibcode
+
+
+def test_adding_paper_clears_search_bar_if_successful(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    qtbot.addWidget(widget)
+    add_my_paper(qtbot, widget)
+    assert widget.searchBar.text() == ""
+
+
+def test_adding_paper_does_not_clear_search_bar_if_not_successful(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    assert len(widget.papersList.papers) == 0
+    qtbot.addWidget(widget)
+    qtbot.keyClicks(widget.searchBar, "nonsense")
+    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    assert widget.searchBar.text() == "nonsense"
+
+
+def test_paper_cannot_be_added_twice(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    assert len(widget.papersList.papers) == 0
+    qtbot.addWidget(widget)
+    add_my_paper(qtbot, widget)
+    assert len(widget.papersList.papers) == 1
+    # add it again
+    add_my_paper(qtbot, widget)
+    assert len(widget.papersList.papers) == 1
+
+
 def test_clicking_on_paper_puts_title_in_right_panel(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
-    rightPanel = widget.rightPanel
-    new_paper = Paper(u.my_bibcode, db, rightPanel)
-    qtbot.mouseClick(new_paper, Qt.LeftButton)
-    assert widget.rightPanel.titleText.text() == u.my_title
+    # get one of the papers, not sure which
+    paper = widget.papersList.papers[0]
+    qtbot.mouseClick(paper, Qt.LeftButton)
+    assert widget.rightPanel.titleText.text() in [u.my_title, u.tremonti_title]
 
 
 def test_clicking_on_paper_puts_abstract_in_right_panel(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
-    rightPanel = widget.rightPanel
-    new_paper = Paper(u.my_bibcode, db, rightPanel)
-    qtbot.mouseClick(new_paper, Qt.LeftButton)
-    assert widget.rightPanel.abstractText.text() == u.my_abstract
+    # get one of the papers, not sure which
+    paper = widget.papersList.papers[0]
+    qtbot.mouseClick(paper, Qt.LeftButton)
+    assert widget.rightPanel.abstractText.text() in [u.my_abstract, u.tremonti_abstract]
 
 
 def test_double_clicking_on_paper_without_local_file_asks_user(
@@ -213,12 +274,9 @@ def test_double_clicking_on_paper_without_local_file_asks_user(
 
     widget = MainWindow(empty_db)
     qtbot.addWidget(widget)
-    # add a paper to this empty database to match the paper object
-    empty_db.add_paper(u.my_bibcode)
-    # add a new paper to click on
-    rightPanel = widget.rightPanel
-    new_paper = Paper(u.my_bibcode, empty_db, rightPanel)
-    qtbot.mouseDClick(new_paper, Qt.LeftButton)
+    # add a paper to this empty database to make the paper object
+    add_my_paper(qtbot, widget)
+    qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
     assert empty_db.get_paper_attribute(u.my_bibcode, "local_file") == test_loc
 
 
@@ -235,12 +293,9 @@ def test_double_clicking_on_paper_without_local_file_but_not_choosing_doesnt_add
 
     widget = MainWindow(empty_db)
     qtbot.addWidget(widget)
-    # add a paper to this empty database to match the paper object
-    empty_db.add_paper(u.my_bibcode)
-    # add a new paper to click on
-    rightPanel = widget.rightPanel
-    new_paper = Paper(u.my_bibcode, empty_db, rightPanel)
-    qtbot.mouseDClick(new_paper, Qt.LeftButton)
+    # add a paper to this empty database to make the paper object
+    add_my_paper(qtbot, widget)
+    qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
     assert empty_db.get_paper_attribute(u.my_bibcode, "local_file") == None
 
 
@@ -254,14 +309,10 @@ def test_double_clicking_on_paper_with_local_file_opens_it(
 
     widget = MainWindow(empty_db)
     qtbot.addWidget(widget)
-    # add a paper to this empty database to match the paper object
-    empty_db.add_paper(u.my_bibcode)
-    # and add the local file
+    # add a paper to this empty database to make the paper object
+    add_my_paper(qtbot, widget)
     empty_db.set_paper_attribute(u.my_bibcode, "local_file", test_loc)
-    # add a new paper to click on
-    rightPanel = widget.rightPanel
-    new_paper = Paper(u.my_bibcode, empty_db, rightPanel)
-    qtbot.mouseDClick(new_paper, Qt.LeftButton)
+    qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
     # since this already has a URL it should be added
     assert open_calls == [f"file:{test_loc}"]
 
@@ -282,12 +333,9 @@ def test_double_clicking_on_paper_without_local_file_selects_and_opens_it(
 
     widget = MainWindow(empty_db)
     qtbot.addWidget(widget)
-    # add a paper to this empty database to match the paper object
-    empty_db.add_paper(u.my_bibcode)  # do not add file location
-    # add a new paper to click on
-    rightPanel = widget.rightPanel
-    new_paper = Paper(u.my_bibcode, empty_db, rightPanel)
-    qtbot.mouseDClick(new_paper, Qt.LeftButton)
+    # add a paper to this empty database to make the paper object
+    add_my_paper(qtbot, widget)  # do not add file location
+    qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
     assert open_calls == [f"file:{test_loc}"]
 
 
@@ -306,10 +354,7 @@ def test_dclicking_on_paper_without_local_file_but_not_choosing_doesnt_add_or_op
 
     widget = MainWindow(empty_db)
     qtbot.addWidget(widget)
-    # add a paper to this empty database to match the paper object
-    empty_db.add_paper(u.my_bibcode)
-    # add a new paper to click on
-    rightPanel = widget.rightPanel
-    new_paper = Paper(u.my_bibcode, empty_db, rightPanel)
-    qtbot.mouseDClick(new_paper, Qt.LeftButton)
+    # add a paper to this empty database to make the paper object
+    add_my_paper(qtbot, widget)  # do not add file location
+    qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
     assert open_calls == []
