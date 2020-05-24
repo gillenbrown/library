@@ -257,3 +257,48 @@ def test_modify_authors_list_with_set_paper_attribute(db):
     new_list = ["Last, First", "Last2, First2"]
     db.set_paper_attribute(u.my_bibcode, "authors", new_list)
     assert db.get_paper_attribute(u.my_bibcode, "authors") == new_list
+
+
+def test_cite_string_one_author(db):
+    db.set_paper_attribute(u.my_bibcode, "authors", ["Brown, Gillen"])
+    true_cite_string = f"Brown, 2018, ApJ, {u.my_volume}, {u.my_page}"
+    assert db.get_cite_string(u.my_bibcode) == true_cite_string
+
+
+def test_cite_string_two_authors(db):
+    new_authors = ["Brown, Gillen", "Gnedin, Oleg Y."]
+    db.set_paper_attribute(u.my_bibcode, "authors", new_authors)
+    true_cite_string = f"Brown, Gnedin, 2018, ApJ, {u.my_volume}, {u.my_page}"
+    assert db.get_cite_string(u.my_bibcode) == true_cite_string
+
+
+def test_cite_string_three_authors(db):
+    # my paper already has three authors
+    true_cite_string = f"Brown, Gnedin, Li, 2018, ApJ, {u.my_volume}, {u.my_page}"
+    assert db.get_cite_string(u.my_bibcode) == true_cite_string
+
+
+def test_cite_string_four_authors_uses_et_al(db):
+    new_authors = ["Brown, Gillen", "Gnedin, Oleg Y.", "Li, Hui", "Author, Test"]
+    db.set_paper_attribute(u.my_bibcode, "authors", new_authors)
+    true_cite_string = f"Brown et al., 2018, ApJ, {u.my_volume}, {u.my_page}"
+    assert db.get_cite_string(u.my_bibcode) == true_cite_string
+
+
+def test_cite_string_many_authors_uses_et_al(db):
+    true_cite_string = (
+        f"Tremonti et al., 2004, ApJ, " f"{u.tremonti_volume}, {u.tremonti_page}"
+    )
+    assert db.get_cite_string(u.tremonti_bibcode) == true_cite_string
+
+
+def test_cite_string_apj_is_shortened(db):
+    true_cite_string = f"Brown, Gnedin, Li, 2018, ApJ, {u.my_volume}, {u.my_page}"
+    assert db.get_cite_string(u.my_bibcode) == true_cite_string
+
+
+def test_cite_string_mnras_is_shortened_test_paper(db):
+    test_bibcode = "2003MNRAS.344.1000B"
+    db.add_paper(test_bibcode)
+    true_cite_string = f"Bruzual, Charlot, 2003, MNRAS, 344, 1000"
+    assert db.get_cite_string(test_bibcode) == true_cite_string

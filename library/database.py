@@ -230,3 +230,48 @@ class Database(object):
         """
         papers = self._execute("SELECT bibcode FROM papers")
         return [p["bibcode"] for p in papers]
+
+    def get_cite_string(self, bibcode):
+        """
+        Get the short citation string for a given paper.
+
+        This takes the form {authors}, {year}, {journal}, {volume}, {page}
+
+        If there are 3 or fewer authors all are shown (just their last names), while
+        if there are 4 or more the text reads {first author last name}, et al.
+
+        :param bibcode: Bibcode to get the citation string for.
+        :type bibcode: str
+        :return: Cite string for this paper
+        :rtype: str
+        """
+        authors = self.get_paper_attribute(bibcode, "authors")
+        # get the author last names. The format of the names is firstname, lastname
+        # so splitting by comma works
+        authors_last_names = [a.split(",")[0] for a in authors]
+        # if we have lot of authors, just show the first with et al.
+        if len(authors_last_names) > 3:
+            authors_str = f"{authors_last_names[0]} et al."
+        else:  # three or less authors, show them all
+            authors_str = ", ".join(authors_last_names)
+
+        # the journal may have an abbreviation
+        journal = self.get_paper_attribute(bibcode, "journal")
+        abbreviations = {
+            "The Astrophysical Journal": "ApJ",
+            "Monthly Notices of the Royal Astronomical Society": "MNRAS",
+        }
+        if journal in abbreviations:
+            journal = abbreviations[journal]
+
+        # the publication date has the year first, separated by dashes
+        year = self.get_paper_attribute(bibcode, "pubdate").split("-")[0]
+
+        # Then join everything together
+        return (
+            f"{authors_str}, "
+            f"{year}, "
+            f"{journal}, "
+            f"{self.get_paper_attribute(bibcode, 'volume')}, "
+            f"{self.get_paper_attribute(bibcode, 'page')}"
+        )
