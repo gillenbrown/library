@@ -302,3 +302,28 @@ def test_cite_string_mnras_is_shortened_test_paper(db):
     db.add_paper(test_bibcode)
     true_cite_string = f"Bruzual, Charlot, 2003, MNRAS, 344, 1000"
     assert db.get_cite_string(test_bibcode) == true_cite_string
+
+
+def test_can_add_new_tag_column_and_it_is_false_for_all_papers(db):
+    db.add_new_tag("test_tag")
+    for bibcode in db.get_all_bibcodes():
+        assert db.paper_has_tag(bibcode, "test_tag") is False
+
+
+def test_cannot_access_tags_from_get_paper_attribute(db):
+    db.add_new_tag("test_tag")
+    with pytest.raises(ValueError):
+        db.get_paper_attribute(u.my_bibcode, "test_tag")
+
+
+def test_can_add_tag_to_a_paper(db):
+    db.add_new_tag("test_tag")
+    assert db.paper_has_tag(u.my_bibcode, "test_tag") is False
+    db.tag_paper(u.my_bibcode, "test_tag")
+    assert db.paper_has_tag(u.my_bibcode, "test_tag") is True
+
+
+def test_can_add_tag_to_a_paper_and_only_that_paper_tagged(db):
+    db.add_new_tag("test_tag")
+    db.tag_paper(u.my_bibcode, "test_tag")
+    assert db.paper_has_tag(u.tremonti_bibcode, "test_tag") is False

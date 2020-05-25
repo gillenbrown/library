@@ -37,7 +37,7 @@ class Database(object):
         "bibtex",
     ]
     # some columns won't be set when the paper is added, will be left NULL
-    colnames_all = colnames_set_on_paper_add + ["local_file"]
+    colnames_data = colnames_set_on_paper_add + ["local_file"]
 
     def __init__(self, db_file):
         """
@@ -64,6 +64,8 @@ class Database(object):
             "local_file text"
             ")"
         )
+
+        self.colnames_tags = []
 
     def _execute(self, sql, parameters=()):
         """
@@ -158,7 +160,9 @@ class Database(object):
         :rtype: list, str, or int
         """
         # check that the attribute is in the columns
-        if not attribute in self.colnames_all:
+        if (attribute not in self.colnames_data) and (
+            attribute not in self.colnames_tags
+        ):
             raise ValueError("This attribute is not in the table")
 
         # get the rows from the table where the bibtex matches.
@@ -195,7 +199,9 @@ class Database(object):
         :return: None
         """
         # check that the attribute is in the columns
-        if not attribute in self.colnames_all:
+        if (attribute not in self.colnames_data) and (
+            attribute not in self.colnames_tags
+        ):
             raise ValueError("This attribute is not in the table")
         # and that the bibcode is in the library
         if not bibcode in self.get_all_bibcodes():
@@ -275,3 +281,44 @@ class Database(object):
             f"{self.get_paper_attribute(bibcode, 'volume')}, "
             f"{self.get_paper_attribute(bibcode, 'page')}"
         )
+
+    def add_new_tag(self, tag_name):
+        """
+        Add a new tag option to the database, but does not add it to any papers.
+
+        :param tag_name: Name of the tag to add
+        :type tag_name: str
+        :return: None
+        """
+        # all tags will start with "tag" in the database
+        self._execute(
+            f"ALTER TABLE papers "
+            f"ADD COLUMN tag_{tag_name} INTEGER NOT NULL "
+            f"DEFAULT 0;"
+        )
+        self.colnames_tags.append(f"tag_{tag_name}")
+
+    def paper_has_tag(self, bibcode, tag_name):
+        """
+        See if a paper has a given tag.
+
+        :param bibcode: The bibcode of the paper to be searched
+        :type bibcode: str
+        :param tag_name: The name of the tag to check.
+        :type tag_name: str
+        :return: Whether or not this tag is applied to this paper/
+        :rtype: bool
+        """
+        return self.get_paper_attribute(bibcode, f"tag_{tag_name}") == 1
+
+    def tag_paper(self, bibcode, tag_name):
+        """
+        Add the given tag to the given paper
+
+        :param bibcode: Bibcode of the paper to add the tag to
+        :type bibcode: str
+        :param tag_name: Tag name to add to this paper
+        :type tag_name: str
+        :return: None
+        """
+        self.set_paper_attribute(bibcode, f"tag_{tag_name}", 1)
