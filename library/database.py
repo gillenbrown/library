@@ -307,11 +307,15 @@ class Database(object):
         """
         # convert the tag name
         internal_tag = self._to_internal_tag_name(tag_name)
-        self._execute(
-            f"ALTER TABLE papers "
-            f"ADD COLUMN {internal_tag} INTEGER NOT NULL "
-            f"DEFAULT 0;"
-        )
+        try:
+            self._execute(
+                f"ALTER TABLE papers "
+                f"ADD COLUMN {internal_tag} INTEGER NOT NULL "
+                f"DEFAULT 0;"
+            )
+        except sqlite3.OperationalError:  # will happen if the tag is already in there
+            raise ValueError("Tag already in database!")
+
         self.colnames_tags.append(internal_tag)
 
     def paper_has_tag(self, bibcode, tag_name):
