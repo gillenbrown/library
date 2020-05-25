@@ -30,7 +30,6 @@ class Tag(QLabel):
         """
         Create the tab object with the given name.
 
-        :param tagName: Name that will be displayed on the tag
         :type tagName: str
         """
         QLabel.__init__(self, tagName)

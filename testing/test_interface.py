@@ -78,6 +78,93 @@ def test_fonts_are_actually_in_the_font_database_after_set_up_fonts(qtbot):
     assert fontDb.hasFamily("Cabin")
 
 
+def test_window_initial_width(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    qtbot.addWidget(widget)
+    assert widget.size().width() == 1000
+
+
+def test_window_initial_height(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    qtbot.addWidget(widget)
+    assert widget.size().height() == 600
+
+
+def test_title_is_has_text_saying_library(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    qtbot.addWidget(widget)
+    assert widget.title.text() == "Library"
+
+
+def test_title_is_centered(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    qtbot.addWidget(widget)
+    assert widget.title.alignment() == Qt.AlignCenter
+
+
+def test_title_is_lobster_font(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    qtbot.addWidget(widget)
+    assert widget.title.font().family() == "Lobster"
+
+
+def test_title_is_correct_font_size(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    qtbot.addWidget(widget)
+    assert widget.title.font().pointSize() == 40
+
+
+def test_title_has_correct_height_in_pixels(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    qtbot.addWidget(widget)
+    assert widget.title.height() == 60
+
+
+def test_search_bar_has_placeholder_text(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    qtbot.addWidget(widget)
+    text = "Enter your paper URL or ADS bibcode here"
+    assert widget.searchBar.placeholderText() == text
+
+
+def test_search_bar_has_correct_font_family(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    qtbot.addWidget(widget)
+    assert widget.searchBar.font().family() == "Cabin"
+
+
+def test_search_bar_has_correct_font_size(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    qtbot.addWidget(widget)
+    assert widget.searchBar.font().pointSize() == 14
+
+
+def test_add_button_has_correct_font_family(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    qtbot.addWidget(widget)
+    assert widget.addButton.font().family() == "Cabin"
+
+
+def test_add_button_has_correct_font_size(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    qtbot.addWidget(widget)
+    assert widget.addButton.font().pointSize() == 14
+
+
+def test_add_button_and_search_bar_have_almost_same_height(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    qtbot.addWidget(widget)
+    height_ratio = widget.addButton.height() / widget.searchBar.height()
+    assert 0.8 < height_ratio < 1.3
+
+
+def test_add_button_and_search_bar_are_much_shorter_than_title(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    qtbot.addWidget(widget)
+    assert widget.addButton.height() < 0.6 * widget.title.height()
+    assert widget.searchBar.height() < 0.6 * widget.title.height()
+
+
 def test_can_add_paper_by_filling_bibcode_then_clicking_button(qtbot, empty_db):
     assert len(empty_db.get_all_bibcodes()) == 0
     widget = MainWindow(empty_db)
@@ -144,6 +231,60 @@ def test_right_panel_cite_text_is_empty_at_beginning(qtbot, db):
     assert widget.rightPanel.citeText.text() == ""
 
 
+def test_right_panel_title_text_has_correct_font_family(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    assert widget.rightPanel.titleText.font().family() == "Cabin"
+
+
+def test_right_panel_cite_text_has_correct_font_family(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    assert widget.rightPanel.citeText.font().family() == "Cabin"
+
+
+def test_right_panel_abstract_text_has_correct_font_family(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    assert widget.rightPanel.abstractText.font().family() == "Cabin"
+
+
+def test_right_panel_title_text_has_correct_font_size(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    assert widget.rightPanel.titleText.font().pointSize() == 20
+
+
+def test_right_panel_cite_text_has_correct_font_size(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    assert widget.rightPanel.citeText.font().pointSize() == 16
+
+
+def test_right_panel_abstract_text_has_correct_font_size(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    assert widget.rightPanel.abstractText.font().pointSize() == 14
+
+
+def test_right_panel_title_text_has_word_wrap_on(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    assert widget.rightPanel.titleText.wordWrap()
+
+
+def test_right_panel_cite_text_has_word_wrap_on(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    assert widget.rightPanel.citeText.wordWrap()
+
+
+def test_right_panel_abstract_text_has_word_wrap_on(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    assert widget.rightPanel.abstractText.wordWrap()
+
+
 def test_right_panel_abstract_is_placeholder_at_beginning(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
@@ -207,6 +348,38 @@ def test_paper_initialization_has_correct_title_in_the_text(qtbot, db):
     assert new_paper.titleText.text() == u.my_title
 
 
+def test_paper_title_has_correct_font_family(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    # get one of the papers, not sure which
+    paper = widget.papersList.papers[0]
+    assert paper.titleText.font().family() == "Cabin"
+
+
+def test_paper_cite_text_has_correct_font_family(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    # get one of the papers, not sure which
+    paper = widget.papersList.papers[0]
+    assert paper.citeText.font().family() == "Cabin"
+
+
+def test_paper_title_has_correct_font_size(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    # get one of the papers, not sure which
+    paper = widget.papersList.papers[0]
+    assert paper.titleText.font().pointSize() == 16
+
+
+def test_paper_cite_string_has_correct_font_size(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    # get one of the papers, not sure which
+    paper = widget.papersList.papers[0]
+    assert paper.citeText.font().pointSize() == 12
+
+
 def test_paper_initialization_has_correct_cite_string_in_the_text(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
@@ -259,6 +432,14 @@ def test_adding_paper_does_not_clear_search_bar_if_not_successful(qtbot, empty_d
     assert widget.searchBar.text() == "nonsense"
 
 
+def test_adding_paper_does_clear_search_bar_if_already_in_library(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.keyClicks(widget.searchBar, u.my_bibcode)
+    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    assert widget.searchBar.text() == ""
+
+
 def test_paper_cannot_be_added_twice(qtbot, empty_db):
     widget = MainWindow(empty_db)
     assert len(widget.papersList.papers) == 0
@@ -268,6 +449,14 @@ def test_paper_cannot_be_added_twice(qtbot, empty_db):
     # add it again
     add_my_paper(qtbot, widget)
     assert len(widget.papersList.papers) == 1
+
+
+def test_duplicate_in_internal_paper_list_raises_error(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    new_paper = Paper(u.my_bibcode, db, widget.rightPanel)
+    with pytest.raises(AssertionError):
+        widget.papersList.addPaper(new_paper)
 
 
 def test_clicking_on_paper_puts_title_in_right_panel(qtbot, db):
