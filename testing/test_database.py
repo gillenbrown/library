@@ -328,3 +328,10 @@ def test_can_add_tag_to_a_paper_and_only_that_paper_tagged(db):
     db.add_new_tag("test_tag")
     db.tag_paper(u.my_bibcode, "test_tag")
     assert db.paper_has_tag(u.tremonti_bibcode, "test_tag") is False
+
+
+def test_can_add_tag_with_spaces_to_a_paper(db):
+    db.add_new_tag("test tag")
+    assert db.paper_has_tag(u.my_bibcode, "test tag") is False
+    db.tag_paper(u.my_bibcode, "test tag")
+    assert db.paper_has_tag(u.my_bibcode, "test tag") is True

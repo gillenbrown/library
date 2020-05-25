@@ -282,6 +282,21 @@ class Database(object):
             f"{self.get_paper_attribute(bibcode, 'page')}"
         )
 
+    @classmethod
+    def _to_internal_tag_name(self, tag_name):
+        """
+        Parses a user-supplied tag name into the internal name that will be used in
+        the database
+
+        Here we replace spaces with a unique separator, and put "tag" at the beginning
+
+        :param tag_name: User supplied tag name
+        :type tag_name: str
+        :return: The useful internal tag name for this tag
+        :rtype: str
+        """
+        return f"tag_{tag_name.replace(' ', 'abcdefghijklmnopqrstuvwxyz')}"
+
     def add_new_tag(self, tag_name):
         """
         Add a new tag option to the database, but does not add it to any papers.
@@ -290,13 +305,14 @@ class Database(object):
         :type tag_name: str
         :return: None
         """
-        # all tags will start with "tag" in the database
+        # convert the tag name
+        internal_tag = self._to_internal_tag_name(tag_name)
         self._execute(
             f"ALTER TABLE papers "
-            f"ADD COLUMN tag_{tag_name} INTEGER NOT NULL "
+            f"ADD COLUMN {internal_tag} INTEGER NOT NULL "
             f"DEFAULT 0;"
         )
-        self.colnames_tags.append(f"tag_{tag_name}")
+        self.colnames_tags.append(internal_tag)
 
     def paper_has_tag(self, bibcode, tag_name):
         """
@@ -309,7 +325,8 @@ class Database(object):
         :return: Whether or not this tag is applied to this paper/
         :rtype: bool
         """
-        return self.get_paper_attribute(bibcode, f"tag_{tag_name}") == 1
+        internal_tag = self._to_internal_tag_name(tag_name)
+        return self.get_paper_attribute(bibcode, internal_tag) == 1
 
     def tag_paper(self, bibcode, tag_name):
         """
@@ -321,4 +338,4 @@ class Database(object):
         :type tag_name: str
         :return: None
         """
-        self.set_paper_attribute(bibcode, f"tag_{tag_name}", 1)
+        self.set_paper_attribute(bibcode, self._to_internal_tag_name(tag_name), 1)
