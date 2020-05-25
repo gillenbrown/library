@@ -69,14 +69,19 @@ class Paper(QWidget):
         # Use the database to get the details needed
         self.title = db.get_paper_attribute(self.bibcode, "title")
         self.abstract = db.get_paper_attribute(self.bibcode, "abstract")
+        self.citeString = db.get_cite_string(self.bibcode)
 
         # Then set up the layout this uses. It will be vertical with the title (for now)
         vBox = QVBoxLayout()
         self.titleText = QLabel(self.title)
         self.titleText.setFont(QFont("Cabin", 16))
 
+        self.citeText = QLabel(self.citeString)
+        self.citeText.setFont(QFont("Cabin", 12))
+
         # then add these to the layout, then set this layout
         vBox.addWidget(self.titleText)
+        vBox.addWidget(self.citeText)
         self.setLayout(vBox)
 
     def mousePressEvent(self, event):

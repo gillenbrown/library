@@ -186,6 +186,13 @@ def test_paper_initialization_has_correct_title_in_the_text(qtbot, db):
     assert new_paper.titleText.text() == u.my_title
 
 
+def test_paper_initialization_has_correct_cite_string_in_the_text(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    new_paper = Paper(u.my_bibcode, db, widget.rightPanel)
+    assert new_paper.citeText.text() == db.get_cite_string(u.my_bibcode)
+
+
 def test_cannot_initialize_paper_thats_not_in_database(qtbot, empty_db):
     widget = MainWindow(empty_db)
     qtbot.addWidget(widget)
