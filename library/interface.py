@@ -274,9 +274,14 @@ class MainWindow(QMainWindow):
         splitter = QSplitter()
         # then make each of these things
 
-        # The left panel of this is the list of tags the user has.
-        # We'll have dummy tags for now
-        # leftScroll = ScrollArea()
+        # The left panel of this is the list of tags the user has, plus the button to
+        # add a new tag to the database
+        leftScroll = ScrollArea()
+        self.addTagBar = QLineEdit()
+        self.addTagBar.setFont(QFont("Cabin", 14))
+        self.addTagBar.setPlaceholderText("Add a new tag here")
+        self.addTagBar.returnPressed.connect(self.addTag)
+        leftScroll.addWidget(self.addTagBar)
         # for i in range(10):
         #     leftScroll.addWidget(QLabel(f"Tag {i}"))
 
@@ -292,7 +297,7 @@ class MainWindow(QMainWindow):
             self.papersList.addPaper(Paper(b, db, self.rightPanel))
 
         # then add each of these widgets to the central splitter
-        # splitter.addWidget(leftScroll)
+        splitter.addWidget(leftScroll)
         splitter.addWidget(self.papersList)
         splitter.addWidget(rightScroll)
 
@@ -350,6 +355,25 @@ class MainWindow(QMainWindow):
         self.papersList.addPaper(Paper(bibcode, self.db, self.rightPanel))
         # clear the text so another paper can be added
         self.searchBar.clear()
+
+    def addTag(self):
+        """
+        Adds a tag to the database, taking the name from the text box.
+
+        The text will be cleared if the tag was successfully added, which will only not
+        be the case if the tag is already in the database.
+
+        :return: None
+        """
+        #
+        try:
+            self.db.add_new_tag(self.addTagBar.text())
+        except ValueError:  # this tag is already in the database
+            return
+
+        # if we got here we had no error, so it was successfully added and we should
+        # clear the text box
+        self.addTagBar.clear()
 
 
 def get_fonts(directory, current_list):

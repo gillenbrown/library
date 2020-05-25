@@ -34,6 +34,20 @@ def temporary_database():
     file_path.unlink()  # removes this file
 
 
+@pytest.fixture(name="db_temp")
+def temporary_database_with_papers():
+    """
+    Fixture to get a database at a temporary path in the current directory. This will be
+    removed once the test is done
+    """
+    file_path = Path(f"{random.randint(0, 1000000000)}.db")
+    db = Database(file_path)
+    db.add_paper(u.my_bibcode)
+    db.add_paper(u.tremonti_bibcode)
+    yield db
+    file_path.unlink()  # removes this file
+
+
 @pytest.fixture(name="db")
 def testing_database():
     """
@@ -588,3 +602,50 @@ def test_dclicking_on_paper_without_local_file_but_not_choosing_doesnt_add_or_op
     add_my_paper(qtbot, widget)  # do not add file location
     qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
     assert open_calls == []
+
+
+def test_add_tag_text_bar_has_correct_font_size(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    qtbot.addWidget(widget)
+    assert widget.addTagBar.font().pointSize() == 14
+
+
+def test_add_tag_text_bar_has_correct_font_family(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    qtbot.addWidget(widget)
+    assert widget.addTagBar.font().family() == "Cabin"
+
+
+def test_add_tag_text_bar_has_correct_placeholder_text(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    qtbot.addWidget(widget)
+    text = "Add a new tag here"
+    assert widget.addTagBar.placeholderText() == text
+
+
+def test_can_add_tag_by_filling_tag_name_then_pressing_enter(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.keyClicks(widget.addTagBar, "Test Tag")
+    qtbot.keyPress(widget.addTagBar, Qt.Key_Enter)
+    assert db_temp.paper_has_tag(u.my_bibcode, "Test Tag") is False
+
+
+def test_tag_name_entry_is_cleared_after_successful_entry(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.keyClicks(widget.addTagBar, "Test Tag")
+    qtbot.keyPress(widget.addTagBar, Qt.Key_Enter)
+    # this has been tested to work
+    assert widget.addTagBar.text() == ""
+
+
+def test_tag_name_entry_is_not_cleared_after_duplicate_tag_attempt(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.keyClicks(widget.addTagBar, "Test Tag")
+    qtbot.keyPress(widget.addTagBar, Qt.Key_Enter)
+    # this has been tested to work and now be clear, so try it again
+    qtbot.keyClicks(widget.addTagBar, "Test Tag")
+    qtbot.keyPress(widget.addTagBar, Qt.Key_Enter)
+    assert widget.addTagBar.text() == "Test Tag"
