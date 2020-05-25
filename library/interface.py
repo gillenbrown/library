@@ -21,22 +21,6 @@ from PySide2.QtWidgets import (
 from library.database import PaperAlreadyInDatabaseError
 
 
-class Tag(QLabel):
-    """
-    Class representing the tags that go in the left panel
-    """
-
-    def __init__(self, tagName):
-        """
-        Create the tab object with the given name.
-
-        :type tagName: str
-        """
-        QLabel.__init__(self, tagName)
-        self.setFixedHeight(25)
-        self.setFont(QFont("Cabin", 14))
-
-
 class Paper(QWidget):
     """
     Class holding paper details that goes in the central panel
@@ -108,7 +92,8 @@ class Paper(QWidget):
                 else:
                     # the user didn't pick anything, so don't open anything
                     return
-            # if we now have a path, open the file
+            # if we now have a path, open the file. We get here whether we had to ask
+            # the user or now
             QDesktopServices.openUrl(f"file:{local_file}")
         # nothing should be done for other click types
 
@@ -163,7 +148,6 @@ class RightPanel(QWidget):
         self.titleText.setText(title)
         self.citeText.setText(citeText)
         self.abstractText.setText(abstract)
-        self.repaint()
 
 
 class ScrollArea(QScrollArea):
@@ -180,17 +164,13 @@ class ScrollArea(QScrollArea):
         # Have a central widget with a vertical box layout
         self.container = QWidget()
         self.layout = QVBoxLayout()
-        # the widgets should have their fixed size, no modification
+        # the widgets should have their fixed size, no modification. This is also
+        # needed to get them to show up, I believe to stop this from having zero size?
         self.layout.setSizeConstraint(QLayout.SetFixedSize)
-        # have the spacing between them be zero. Let the widgets handle their own spaces
-        self.layout.setSpacing(0)
 
         # Then add these layouts and widgets
         self.container.setLayout(self.layout)
         self.setWidget(self.container)
-        # have the scroll bar only appear when needed
-        self.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
 
     def addWidget(self, widget):
         """
@@ -251,8 +231,6 @@ class MainWindow(QMainWindow):
 
         self.db = db
 
-        self.default_font = QFont("Cabin", 14)
-
         # Start with the layout. Our main layout is three vertical components:
         # the first is the title, second is the search bar, where the user can paste
         # URLs to add to the database, and the third is the place where we show all
@@ -272,17 +250,19 @@ class MainWindow(QMainWindow):
         hBoxSearchBar = QHBoxLayout()
         self.searchBar = QLineEdit()
         self.searchBar.setPlaceholderText("Enter your paper URL or ADS bibcode here")
-        self.searchBar.setFont(self.default_font)
+        self.searchBar.setFont(QFont("Cabin", 14))
         # We'll also have an add button
         self.addButton = QPushButton("Add")
-        self.addButton.setFont(self.default_font)
+        self.addButton.setFont(QFont("Cabin", 14))
         # Define what to do when these things are activated. The user can either hit
         # enter or hit the add button
         self.searchBar.returnPressed.connect(self.addPaper)
         self.addButton.clicked.connect(self.addPaper)
-        # have both of these quantities have a fixed height
+        # have both of these quantities have a fixed height. These values are chosen to
+        # make it look nice. They aren't the same size since the bounding boxes aren't
+        # quite the same relative to the shown borders for whatever reason
         self.searchBar.setFixedHeight(30)
-        self.addButton.setFixedHeight(30)
+        self.addButton.setFixedHeight(35)
         # Then add these to the layouts
         hBoxSearchBar.addWidget(self.searchBar)
         hBoxSearchBar.addWidget(self.addButton)
@@ -296,9 +276,9 @@ class MainWindow(QMainWindow):
 
         # The left panel of this is the list of tags the user has.
         # We'll have dummy tags for now
-        leftScroll = ScrollArea()
-        for i in range(10):
-            leftScroll.addWidget(Tag(f"Tag {i}"))
+        # leftScroll = ScrollArea()
+        # for i in range(10):
+        #     leftScroll.addWidget(QLabel(f"Tag {i}"))
 
         # The right panel is the details on a given paper
         self.rightPanel = RightPanel()
@@ -312,12 +292,9 @@ class MainWindow(QMainWindow):
             self.papersList.addPaper(Paper(b, db, self.rightPanel))
 
         # then add each of these widgets to the central splitter
-        splitter.addWidget(leftScroll)
+        # splitter.addWidget(leftScroll)
         splitter.addWidget(self.papersList)
         splitter.addWidget(rightScroll)
-        # set the default widths of each panel, in pixels. Below we will set the width
-        # of the main window to 1000, so this should sum to that.
-        splitter.setSizes([150, 550, 300])
 
         # Add this to the main layout
         vBoxMain.addWidget(splitter)
@@ -335,17 +312,15 @@ class MainWindow(QMainWindow):
 
         # Things to go in the menu
         # Calling the Quit command can't be used, as it is caught by MacOS somehow
-        # I'll use "close" instead
+        # I'll use "close" instead. This does automatically use the keyboard shortcut
+        # ctrl+q to exit
         self.exitAction = QAction("Close", self)
-        self.exitAction.setShortcut(QKeySequence("Ctrl+q"))
+        self.exitAction.setShortcut(QKeySequence("Ctrl+q"))  # to be clear
         # have to connect this to a function to actually do something
         self.exitAction.triggered.connect(QApplication.quit())
 
         # Then add all items to the menu
         self.file_menu.addAction(self.exitAction)
-
-        # Set the window title
-        self.setWindowTitle("")
 
         # and the initial window size
         self.resize(1000, 600)
