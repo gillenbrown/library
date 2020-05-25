@@ -21,6 +21,17 @@ from PySide2.QtWidgets import (
 from library.database import PaperAlreadyInDatabaseError
 
 
+class Tag(QLabel):
+    """
+    Class holding a tag that goes in the left panel
+    """
+
+    def __init__(self, tagName):
+        QLabel.__init__(self, tagName)
+        self.name = tagName
+        self.setFont(QFont("Cabin", 14))
+
+
 class Paper(QWidget):
     """
     Class holding paper details that goes in the central panel
@@ -215,6 +226,38 @@ class PapersListScrollArea(ScrollArea):
         self.addWidget(paper)  # calls the ScrollArea addWidget
 
 
+class TagsListScrollArea(ScrollArea):
+    """
+    The class to be used for the left hand side list of tags.
+
+    It's just a ScrollArea that keeps track of the tags that have been added, almost
+    identical to PapersListScrollArea
+    """
+
+    def __init__(self):
+        """
+        Set up the papers list, no parameters needed
+        """
+        ScrollArea.__init__(self)
+        self.tags = []
+
+    def addTag(self, tag):
+        """
+        Add a tag to the tags scroll area.
+
+        This adds it to the internal list of tags and puts the widget in the interface
+
+        :param tag: Tag object to be added to the list of stored tags.
+        :type tag: Tag
+        :return: None
+        """
+        # check if this tag is already in the list. This should never happen
+        assert tag.name not in [t.name for t in self.tags]
+
+        self.tags.append(tag)
+        self.addWidget(tag)  # calls the ScrollArea addWidget
+
+
 class MainWindow(QMainWindow):
     """
     Main window object holding everything needed in the interface.
@@ -275,15 +318,22 @@ class MainWindow(QMainWindow):
         # then make each of these things
 
         # The left panel of this is the list of tags the user has, plus the button to
-        # add a new tag to the database
-        leftScroll = ScrollArea()
+        # add a new tag to the database. These are laid out vertically! We want that
+        # button to always be there.
+        leftVBox = QVBoxLayout()
         self.addTagBar = QLineEdit()
         self.addTagBar.setFont(QFont("Cabin", 14))
         self.addTagBar.setPlaceholderText("Add a new tag here")
         self.addTagBar.returnPressed.connect(self.addTag)
-        leftScroll.addWidget(self.addTagBar)
-        # for i in range(10):
-        #     leftScroll.addWidget(QLabel(f"Tag {i}"))
+        leftVBox.addWidget(self.addTagBar)
+
+        self.tagsList = TagsListScrollArea()
+        for t in self.db.get_all_tags():
+            self.tagsList.addTag(Tag(t))
+        leftVBox.addWidget(self.tagsList)
+        # make a dummy container to hold this layout
+        leftContainer = QWidget()
+        leftContainer.setLayout(leftVBox)
 
         # The right panel is the details on a given paper
         self.rightPanel = RightPanel()
@@ -297,7 +347,7 @@ class MainWindow(QMainWindow):
             self.papersList.addPaper(Paper(b, db, self.rightPanel))
 
         # then add each of these widgets to the central splitter
-        splitter.addWidget(leftScroll)
+        splitter.addWidget(leftContainer)
         splitter.addWidget(self.papersList)
         splitter.addWidget(rightScroll)
 
@@ -367,7 +417,9 @@ class MainWindow(QMainWindow):
         """
         #
         try:
-            self.db.add_new_tag(self.addTagBar.text())
+            tagName = self.addTagBar.text()
+            self.db.add_new_tag(tagName)
+            self.tagsList.addTag(Tag(tagName))
         except ValueError:  # this tag is already in the database
             return
 

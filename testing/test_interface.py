@@ -12,7 +12,7 @@ from PySide2.QtCore import Qt
 from PySide2.QtGui import QFontDatabase, QDesktopServices
 from PySide2.QtWidgets import QApplication, QFileDialog
 
-from library.interface import MainWindow, get_fonts, set_up_fonts, Paper
+from library.interface import MainWindow, get_fonts, set_up_fonts, Paper, Tag
 from library.database import Database
 import test_utils as u
 
@@ -201,6 +201,10 @@ def test_can_add_paper_by_filling_bibcode_then_pressing_enter(qtbot, empty_db):
 
 def test_testing_database_was_premade_with_some_papers(db):
     assert len(db.get_all_bibcodes()) > 0
+
+
+def test_testing_database_was_premade_with_some_tags(db):
+    assert len(db.get_all_tags()) > 0
 
 
 def test_can_exit_action_actually_exit_the_app(qtbot, db, monkeypatch):
@@ -631,6 +635,15 @@ def test_can_add_tag_by_filling_tag_name_then_pressing_enter(qtbot, db_temp):
     assert db_temp.paper_has_tag(u.my_bibcode, "Test Tag") is False
 
 
+def test_can_add_tag_to_list_by_filling_tag_name_then_pressing_enter(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.keyClicks(widget.addTagBar, "Test Tag")
+    qtbot.keyPress(widget.addTagBar, Qt.Key_Enter)
+    tag_names = [t.name for t in widget.tagsList.tags]
+    assert "Test Tag" in tag_names
+
+
 def test_tag_name_entry_is_cleared_after_successful_entry(qtbot, db_temp):
     widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
@@ -649,3 +662,44 @@ def test_tag_name_entry_is_not_cleared_after_duplicate_tag_attempt(qtbot, db_tem
     qtbot.keyClicks(widget.addTagBar, "Test Tag")
     qtbot.keyPress(widget.addTagBar, Qt.Key_Enter)
     assert widget.addTagBar.text() == "Test Tag"
+
+
+def test_all_tags_in_database_are_in_the_tag_list_at_beginning(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    tags_list = [t.name for t in widget.tagsList.tags]
+    assert sorted(tags_list) == sorted(db.get_all_tags())
+
+
+def test_tag_has_correct_name(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    # get one of the tags, not sure which
+    tag = widget.tagsList.tags[0]
+    assert tag.text() == tag.name
+
+
+def test_tag_has_correct_font_family(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    # get one of the tags, not sure which
+    tag = widget.tagsList.tags[0]
+    assert tag.font().family() == "Cabin"
+
+
+def test_tag_has_correct_font_size(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    # get one of the tags, not sure which
+    tag = widget.tagsList.tags[0]
+    assert tag.font().family() == "Cabin"
+
+
+def test_duplicate_in_internal_tags_list_raises_error(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.keyClicks(widget.addTagBar, "Test Tag")
+    qtbot.keyPress(widget.addTagBar, Qt.Key_Enter)
+    new_tag = Tag("Test Tag")
+    with pytest.raises(AssertionError):
+        widget.tagsList.addTag(new_tag)

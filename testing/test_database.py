@@ -341,3 +341,10 @@ def test_cannot_add_duplicate_tag_to_database(db):
     db.add_new_tag("test")
     with pytest.raises(ValueError):
         db.add_new_tag("test")
+
+
+def test_get_all_tags(db):
+    new_tags = ["test1", "test3", "Test with Space", "tag_tag_tag_tag"]
+    for t in new_tags:
+        db.add_new_tag(t)
+    assert sorted(db.get_all_tags()) == sorted(new_tags)

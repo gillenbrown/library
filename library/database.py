@@ -65,8 +65,6 @@ class Database(object):
             ")"
         )
 
-        self.colnames_tags = []
-
     def _execute(self, sql, parameters=()):
         """
         Execute a given command to the database.
@@ -161,7 +159,7 @@ class Database(object):
         """
         # check that the attribute is in the columns
         if (attribute not in self.colnames_data) and (
-            attribute not in self.colnames_tags
+            attribute not in self._get_all_tags_internal()
         ):
             raise ValueError("This attribute is not in the table")
 
@@ -200,7 +198,7 @@ class Database(object):
         """
         # check that the attribute is in the columns
         if (attribute not in self.colnames_data) and (
-            attribute not in self.colnames_tags
+            attribute not in self._get_all_tags_internal()
         ):
             raise ValueError("This attribute is not in the table")
         # and that the bibcode is in the library
@@ -316,8 +314,6 @@ class Database(object):
         except sqlite3.OperationalError:  # will happen if the tag is already in there
             raise ValueError("Tag already in database!")
 
-        self.colnames_tags.append(internal_tag)
-
     def paper_has_tag(self, bibcode, tag_name):
         """
         See if a paper has a given tag.
@@ -343,3 +339,37 @@ class Database(object):
         :return: None
         """
         self.set_paper_attribute(bibcode, self._to_internal_tag_name(tag_name), 1)
+
+    def _get_all_tags_internal(self):
+        """
+        Get the names of all tags in the database, in the internal format.
+
+        :return: List of all tags stored in the database
+        :rtype: list
+        """
+        # first we do a dummy query where we can just get the column names. We can't
+        # use _execute for this because it doesn't return what we need. But this
+        # duplicates part of that
+        # use with statements to auto-close
+        with contextlib.closing(sqlite3.connect(self.db_file)) as conn:
+            with conn:  # auto commits changes to the database
+                with contextlib.closing(conn.cursor()) as cursor:
+                    cursor.execute("select * from papers where 1=0;")
+                    return [d[0] for d in cursor.description if d[0].startswith("tag_")]
+
+    def get_all_tags(self):
+        """
+        Get the names of all tags in the database.
+
+        :return: List of tags that are stored in the database
+        :rtype: list
+        """
+        nice_tags = []
+        for tag in self._get_all_tags_internal():
+            # these are in the ugly internal format, undo that
+            # first get rid of only the first instance of tag_, which is put at the
+            # beginning by the internal format
+            tag = tag.replace("tag_", "", 1)
+            tag = tag.replace("abcdefghijklmnopqrstuvwxyz", " ")
+            nice_tags.append(tag)
+        return nice_tags
