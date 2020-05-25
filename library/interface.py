@@ -93,7 +93,7 @@ class Paper(QWidget):
         :return: None
         """
         if event.type() is QEvent.Type.MouseButtonPress:
-            self.rightPanel.setPaperDetails(self.title, self.abstract)
+            self.rightPanel.setPaperDetails(self.title, self.citeString, self.abstract)
         elif event.type() is QEvent.Type.MouseButtonDblClick:
             local_file = self.db.get_paper_attribute(self.bibcode, "local_file")
             if self.db.get_paper_attribute(self.bibcode, "local_file") is None:
@@ -130,32 +130,39 @@ class RightPanel(QWidget):
         vBox = QVBoxLayout()
 
         self.titleText = QLabel("")
+        self.citeText = QLabel("")
         self.abstractText = QLabel("")
 
         # set text properties
         self.titleText.setFont(QFont("Cabin", 20))
+        self.citeText.setFont(QFont("Cabin", 16))
         self.abstractText.setFont(QFont("Cabin", 14))
 
         self.titleText.setWordWrap(True)
+        self.citeText.setWordWrap(True)
         self.abstractText.setWordWrap(True)
 
         # add these to the layout
         vBox.addWidget(self.titleText)
+        vBox.addWidget(self.citeText)
         vBox.addWidget(self.abstractText)
 
         self.setLayout(vBox)
 
-    def setPaperDetails(self, title, abstract):
+    def setPaperDetails(self, title, citeText, abstract):
         """
         Update the details shown in the right panel.
 
         :param title: Title to be shown in the right panel
         :type title: str
+        :param citeText: The short citation string to show in the right panel
+        :type citeText: str
         :param abstract: Abstract to be shown in the right panel
         :type abstract: str
         :return: None, but the text properties are set.
         """
         self.titleText.setText(title)
+        self.citeText.setText(citeText)
         self.abstractText.setText(abstract)
         self.repaint()
 

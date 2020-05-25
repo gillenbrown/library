@@ -138,6 +138,12 @@ def test_right_panel_title_is_empty_at_beginning(qtbot, db):
     assert widget.rightPanel.titleText.text() == ""
 
 
+def test_right_panel_cite_text_is_empty_at_beginning(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    assert widget.rightPanel.citeText.text() == ""
+
+
 def test_right_panel_abstract_is_empty_at_beginning(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
@@ -147,14 +153,21 @@ def test_right_panel_abstract_is_empty_at_beginning(qtbot, db):
 def test_right_panel_title_can_be_set(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
-    widget.rightPanel.setPaperDetails("Test Title", "")
+    widget.rightPanel.setPaperDetails("Test Title", "", "")
     assert widget.rightPanel.titleText.text() == "Test Title"
+
+
+def test_right_panel_cite_text_can_be_set(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    widget.rightPanel.setPaperDetails("", "Test cite text", "")
+    assert widget.rightPanel.citeText.text() == "Test cite text"
 
 
 def test_right_panel_abstract_can_be_set(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
-    widget.rightPanel.setPaperDetails("", "Test Abstract")
+    widget.rightPanel.setPaperDetails("", "", "Test Abstract")
     assert widget.rightPanel.abstractText.text() == "Test Abstract"
 
 
@@ -256,6 +269,19 @@ def test_clicking_on_paper_puts_title_in_right_panel(qtbot, db):
     paper = widget.papersList.papers[0]
     qtbot.mouseClick(paper, Qt.LeftButton)
     assert widget.rightPanel.titleText.text() in [u.my_title, u.tremonti_title]
+
+
+def test_clicking_on_paper_puts_cite_string_in_right_panel(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    # get one of the papers, not sure which
+    paper = widget.papersList.papers[0]
+    qtbot.mouseClick(paper, Qt.LeftButton)
+    possible_cites = [
+        db.get_cite_string(u.my_bibcode),
+        db.get_cite_string(u.tremonti_bibcode),
+    ]
+    assert widget.rightPanel.citeText.text() in possible_cites
 
 
 def test_clicking_on_paper_puts_abstract_in_right_panel(qtbot, db):
