@@ -298,10 +298,11 @@ def test_cite_string_apj_is_shortened(db):
 
 
 def test_cite_string_mnras_is_shortened_test_paper(db):
-    test_bibcode = "2003MNRAS.344.1000B"
-    db.add_paper(test_bibcode)
-    true_cite_string = f"Bruzual, Charlot, 2003, MNRAS, 344, 1000"
-    assert db.get_cite_string(test_bibcode) == true_cite_string
+    db.set_paper_attribute(
+        u.my_bibcode, "journal", "Monthly Notices of the Royal Astronomical Society"
+    )
+    true_cite_string = f"Brown, Gnedin, Li, 2018, MNRAS, {u.my_volume}, {u.my_page}"
+    assert db.get_cite_string(u.my_bibcode) == true_cite_string
 
 
 def test_can_add_new_tag_column_and_it_is_false_for_all_papers(db):
