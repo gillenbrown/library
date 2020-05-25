@@ -144,10 +144,11 @@ def test_right_panel_cite_text_is_empty_at_beginning(qtbot, db):
     assert widget.rightPanel.citeText.text() == ""
 
 
-def test_right_panel_abstract_is_empty_at_beginning(qtbot, db):
+def test_right_panel_abstract_is_placeholder_at_beginning(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
-    assert widget.rightPanel.abstractText.text() == ""
+    true_text = "Click on a paper to show its details here"
+    assert widget.rightPanel.abstractText.text() == true_text
 
 
 def test_right_panel_title_can_be_set(qtbot, db):

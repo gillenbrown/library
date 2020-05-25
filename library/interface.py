@@ -131,7 +131,7 @@ class RightPanel(QWidget):
 
         self.titleText = QLabel("")
         self.citeText = QLabel("")
-        self.abstractText = QLabel("")
+        self.abstractText = QLabel("Click on a paper to show its details here")
 
         # set text properties
         self.titleText.setFont(QFont("Cabin", 20))
