@@ -186,6 +186,13 @@ def test_paper_initialization_has_correct_title(qtbot, db):
     assert new_paper.title == u.my_title
 
 
+def test_paper_initialization_has_correct_cite_string(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    new_paper = Paper(u.my_bibcode, db, widget.rightPanel)
+    assert db.get_cite_string(u.my_bibcode) == new_paper.citeString
+
+
 def test_paper_initialization_has_correct_abstract(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
@@ -214,11 +221,11 @@ def test_cannot_initialize_paper_thats_not_in_database(qtbot, empty_db):
         Paper(u.my_bibcode, empty_db, widget.rightPanel)
 
 
-def test_all_papers_are_in_the_paper_list_at_beginning(qtbot, db):
+def test_all_papers_in_database_are_in_the_paper_list_at_beginning(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
-    for paper in widget.papersList.papers:
-        assert paper.bibcode in db.get_all_bibcodes()
+    papers_list_bibcodes = [p.bibcode for p in widget.papersList.papers]
+    assert sorted(papers_list_bibcodes) == sorted(db.get_all_bibcodes())
 
 
 def test_adding_paper_adds_paper_to_interface(qtbot, empty_db):
