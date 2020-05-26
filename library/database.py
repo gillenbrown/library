@@ -340,6 +340,18 @@ class Database(object):
         """
         self.set_paper_attribute(bibcode, self._to_internal_tag_name(tag_name), 1)
 
+    def untag_paper(self, bibcode, tag_name):
+        """
+        Remove the given tag to the given paper
+
+        :param bibcode: Bibcode of the paper to remove the tag from
+        :type bibcode: str
+        :param tag_name: Tag name to remove from this paper
+        :type tag_name: str
+        :return: None
+        """
+        self.set_paper_attribute(bibcode, self._to_internal_tag_name(tag_name), 0)
+
     def _get_all_tags_internal(self):
         """
         Get the names of all tags in the database, in the internal format.

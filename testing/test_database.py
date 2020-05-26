@@ -337,6 +337,14 @@ def test_can_add_tag_with_spaces_to_a_paper(db):
     assert db.paper_has_tag(u.my_bibcode, "test tag") is True
 
 
+def test_can_remove_tag_from_a_paper(db):
+    db.add_new_tag("test")
+    db.tag_paper(u.my_bibcode, "test")
+    assert db.paper_has_tag(u.my_bibcode, "test") is True
+    db.untag_paper(u.my_bibcode, "test")
+    assert db.paper_has_tag(u.my_bibcode, "test") is False
+
+
 def test_cannot_add_duplicate_tag_to_database(db):
     db.add_new_tag("test")
     with pytest.raises(ValueError):
