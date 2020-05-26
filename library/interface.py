@@ -87,7 +87,14 @@ class Paper(QWidget):
         :return: None
         """
         if event.type() is QEvent.Type.MouseButtonPress:
-            self.rightPanel.setPaperDetails(self.title, self.citeString, self.abstract)
+            # We get the tags now, since they may change, and we don't want to store
+            # them at initialization
+            self.rightPanel.setPaperDetails(
+                self.title,
+                self.citeString,
+                self.abstract,
+                self.db.get_paper_tags(self.bibcode),
+            )
         elif event.type() is QEvent.Type.MouseButtonDblClick:
             local_file = self.db.get_paper_attribute(self.bibcode, "local_file")
             if self.db.get_paper_attribute(self.bibcode, "local_file") is None:
@@ -127,24 +134,28 @@ class RightPanel(QWidget):
         self.titleText = QLabel("")
         self.citeText = QLabel("")
         self.abstractText = QLabel("Click on a paper to show its details here")
+        self.tagText = QLabel("")
 
         # set text properties
         self.titleText.setFont(QFont("Cabin", 20))
         self.citeText.setFont(QFont("Cabin", 16))
         self.abstractText.setFont(QFont("Cabin", 14))
+        self.tagText.setFont(QFont("Cabin", 14))
 
         self.titleText.setWordWrap(True)
         self.citeText.setWordWrap(True)
         self.abstractText.setWordWrap(True)
+        self.tagText.setWordWrap(True)
 
         # add these to the layout
         vBox.addWidget(self.titleText)
         vBox.addWidget(self.citeText)
         vBox.addWidget(self.abstractText)
+        vBox.addWidget(self.tagText)
 
         self.setLayout(vBox)
 
-    def setPaperDetails(self, title, citeText, abstract):
+    def setPaperDetails(self, title, citeText, abstract, tagsList):
         """
         Update the details shown in the right panel.
 
@@ -154,11 +165,14 @@ class RightPanel(QWidget):
         :type citeText: str
         :param abstract: Abstract to be shown in the right panel
         :type abstract: str
+        :param tagsList: List of tags to be shown in the right panel.
+        :type tagsList: list
         :return: None, but the text properties are set.
         """
         self.titleText.setText(title)
         self.citeText.setText(citeText)
         self.abstractText.setText(abstract)
+        self.tagText.setText(f"Tags: {', '.join(tagsList)}")
 
 
 class ScrollArea(QScrollArea):

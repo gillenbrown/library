@@ -249,6 +249,19 @@ def test_right_panel_cite_text_is_empty_at_beginning(qtbot, db):
     assert widget.rightPanel.citeText.text() == ""
 
 
+def test_right_panel_abstract_is_placeholder_at_beginning(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    true_text = "Click on a paper to show its details here"
+    assert widget.rightPanel.abstractText.text() == true_text
+
+
+def test_right_panel_tags_is_empty_at_beginning(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    assert widget.rightPanel.tagText.text() == ""
+
+
 def test_right_panel_title_text_has_correct_font_family(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
@@ -265,6 +278,12 @@ def test_right_panel_abstract_text_has_correct_font_family(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
     assert widget.rightPanel.abstractText.font().family() == "Cabin"
+
+
+def test_right_panel_tag_text_has_correct_font_family(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    assert widget.rightPanel.tagText.font().family() == "Cabin"
 
 
 def test_right_panel_title_text_has_correct_font_size(qtbot, db):
@@ -285,6 +304,12 @@ def test_right_panel_abstract_text_has_correct_font_size(qtbot, db):
     assert widget.rightPanel.abstractText.font().pointSize() == 14
 
 
+def test_right_panel_tag_text_has_correct_font_size(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    assert widget.rightPanel.tagText.font().pointSize() == 14
+
+
 def test_right_panel_title_text_has_word_wrap_on(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
@@ -303,32 +328,38 @@ def test_right_panel_abstract_text_has_word_wrap_on(qtbot, db):
     assert widget.rightPanel.abstractText.wordWrap()
 
 
-def test_right_panel_abstract_is_placeholder_at_beginning(qtbot, db):
+def test_right_panel_tag_text_has_word_wrap_on(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
-    true_text = "Click on a paper to show its details here"
-    assert widget.rightPanel.abstractText.text() == true_text
+    assert widget.rightPanel.tagText.wordWrap()
 
 
 def test_right_panel_title_can_be_set(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
-    widget.rightPanel.setPaperDetails("Test Title", "", "")
+    widget.rightPanel.setPaperDetails("Test Title", "", "", [""])
     assert widget.rightPanel.titleText.text() == "Test Title"
 
 
 def test_right_panel_cite_text_can_be_set(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
-    widget.rightPanel.setPaperDetails("", "Test cite text", "")
+    widget.rightPanel.setPaperDetails("", "Test cite text", "", [""])
     assert widget.rightPanel.citeText.text() == "Test cite text"
 
 
 def test_right_panel_abstract_can_be_set(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
-    widget.rightPanel.setPaperDetails("", "", "Test Abstract")
+    widget.rightPanel.setPaperDetails("", "", "Test Abstract", [""])
     assert widget.rightPanel.abstractText.text() == "Test Abstract"
+
+
+def test_right_panel_tags_can_be_set(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    widget.rightPanel.setPaperDetails("", "", "", ["Tag 1", "Test", "ABC"])
+    assert widget.rightPanel.tagText.text() == "Tags: Tag 1, Test, ABC"
 
 
 def test_paper_initialization_has_correct_bibcode(qtbot, db):
@@ -506,6 +537,26 @@ def test_clicking_on_paper_puts_abstract_in_right_panel(qtbot, db):
     paper = widget.papersList.papers[0]
     qtbot.mouseClick(paper, Qt.LeftButton)
     assert widget.rightPanel.abstractText.text() in [u.my_abstract, u.tremonti_abstract]
+
+
+def test_clicking_on_paper_puts_tags_in_right_panel(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    # Add some tags to the database - this is tested below
+    for tag in ["T1", "T2", "T3", "T4", "T5"]:
+        qtbot.keyClicks(widget.tagsList.addTagBar, tag)
+        qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+
+    # get one of the papers, not sure which
+    paper = widget.papersList.papers[0]
+    # add one of the tags to this paper - this is done through the database, not the
+    # actual adding tags functionality - that will be tested below
+    db_temp.tag_paper(paper.bibcode, "T1")
+    db_temp.tag_paper(paper.bibcode, "T3")
+    db_temp.tag_paper(paper.bibcode, "T5")
+    # then click on the paper
+    qtbot.mouseClick(paper, Qt.LeftButton)
+    assert widget.rightPanel.tagText.text() == "Tags: T1, T3, T5"
 
 
 def test_double_clicking_on_paper_without_local_file_asks_user(
