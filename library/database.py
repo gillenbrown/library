@@ -383,7 +383,9 @@ class Database(object):
             with conn:  # auto commits changes to the database
                 with contextlib.closing(conn.cursor()) as cursor:
                     cursor.execute("select * from papers where 1=0;")
-                    return [d[0] for d in cursor.description if d[0].startswith("tag_")]
+                    return sorted(
+                        [d[0] for d in cursor.description if d[0].startswith("tag_")]
+                    )
 
     def get_all_tags(self):
         """

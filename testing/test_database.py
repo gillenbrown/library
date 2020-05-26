@@ -351,11 +351,11 @@ def test_cannot_add_duplicate_tag_to_database(db):
         db.add_new_tag("test")
 
 
-def test_get_all_tags(db):
+def test_get_all_tags_is_sorted(db):
     new_tags = ["test1", "test3", "Test with Space", "tag_tag_tag_tag"]
     for t in new_tags:
         db.add_new_tag(t)
-    assert sorted(db.get_all_tags()) == sorted(new_tags)
+    assert db.get_all_tags() == sorted(new_tags)
 
 
 def test_get_all_tags_on_a_paper_is_correct(db):
@@ -365,4 +365,4 @@ def test_get_all_tags_on_a_paper_is_correct(db):
     db.tag_paper(u.my_bibcode, "1")
     db.tag_paper(u.my_bibcode, "3")
     db.tag_paper(u.my_bibcode, "B")
-    assert sorted(db.get_paper_tags(u.my_bibcode)) == sorted(["1", "3", "B"])
+    assert db.get_paper_tags(u.my_bibcode) == ["1", "3", "B"]
