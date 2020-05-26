@@ -356,3 +356,13 @@ def test_get_all_tags(db):
     for t in new_tags:
         db.add_new_tag(t)
     assert sorted(db.get_all_tags()) == sorted(new_tags)
+
+
+def test_get_all_tags_on_a_paper_is_correct(db):
+    for t in ["1", "2", "3", "A", "B", "C"]:
+        db.add_new_tag(t)
+
+    db.tag_paper(u.my_bibcode, "1")
+    db.tag_paper(u.my_bibcode, "3")
+    db.tag_paper(u.my_bibcode, "B")
+    assert sorted(db.get_paper_tags(u.my_bibcode)) == sorted(["1", "3", "B"])

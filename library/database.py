@@ -280,8 +280,8 @@ class Database(object):
             f"{self.get_paper_attribute(bibcode, 'page')}"
         )
 
-    @classmethod
-    def _to_internal_tag_name(self, tag_name):
+    @staticmethod
+    def _to_internal_tag_name(tag_name):
         """
         Parses a user-supplied tag name into the internal name that will be used in
         the database
@@ -294,6 +294,22 @@ class Database(object):
         :rtype: str
         """
         return f"tag_{tag_name.replace(' ', 'abcdefghijklmnopqrstuvwxyz')}"
+
+    @staticmethod
+    def _undo_internal_tag_name(internal_tag_name):
+        """
+        Parses the intertal tag name into a regular name that the user sees
+
+        :param internal_tag_name: Tag in the database
+        :type internal_tag_name: str
+        :return: The human-friendly tag name
+        :rtype: str
+        """
+        # first get rid of only the first instance of tag_, which is put at the
+        # beginning by the internal format, then throw away the alphabet
+        return internal_tag_name.replace("tag_", "", 1).replace(
+            "abcdefghijklmnopqrstuvwxyz", " "
+        )
 
     def add_new_tag(self, tag_name):
         """
@@ -376,12 +392,15 @@ class Database(object):
         :return: List of tags that are stored in the database
         :rtype: list
         """
-        nice_tags = []
-        for tag in self._get_all_tags_internal():
-            # these are in the ugly internal format, undo that
-            # first get rid of only the first instance of tag_, which is put at the
-            # beginning by the internal format
-            tag = tag.replace("tag_", "", 1)
-            tag = tag.replace("abcdefghijklmnopqrstuvwxyz", " ")
-            nice_tags.append(tag)
-        return nice_tags
+        return [self._undo_internal_tag_name(t) for t in self._get_all_tags_internal()]
+
+    def get_paper_tags(self, bibcode):
+        """
+        Get all the tags applied to a given paper
+
+        :param bibcode: Bibcode of the paper to get the tags of
+        :type bibcode: str
+        :return: List of tags that this paper has
+        :rtype: list
+        """
+        return [t for t in self.get_all_tags() if self.paper_has_tag(bibcode, t)]
