@@ -234,12 +234,16 @@ class TagsListScrollArea(ScrollArea):
     identical to PapersListScrollArea
     """
 
-    def __init__(self):
+    def __init__(self, addTagBar):
         """
         Set up the papers list, no parameters needed
         """
         ScrollArea.__init__(self)
         self.tags = []
+        self.addTagBar = addTagBar
+
+        # put the tag bar at the top of the list
+        self.addWidget(self.addTagBar)  # calls ScrollArea addWidget
 
     def addTag(self, tag):
         """
@@ -318,22 +322,14 @@ class MainWindow(QMainWindow):
         # then make each of these things
 
         # The left panel of this is the list of tags the user has, plus the button to
-        # add a new tag to the database. These are laid out vertically! We want that
-        # button to always be there.
-        leftVBox = QVBoxLayout()
-        self.addTagBar = QLineEdit()
-        self.addTagBar.setFont(QFont("Cabin", 14))
-        self.addTagBar.setPlaceholderText("Add a new tag here")
-        self.addTagBar.returnPressed.connect(self.addTag)
-        leftVBox.addWidget(self.addTagBar)
-
-        self.tagsList = TagsListScrollArea()
+        # add papers, which will go at the top of that list
+        addTagBar = QLineEdit()
+        addTagBar.setFont(QFont("Cabin", 14))
+        addTagBar.setPlaceholderText("Add a new tag here")
+        addTagBar.returnPressed.connect(self.addTag)
+        self.tagsList = TagsListScrollArea(addTagBar)
         for t in self.db.get_all_tags():
             self.tagsList.addTag(Tag(t))
-        leftVBox.addWidget(self.tagsList)
-        # make a dummy container to hold this layout
-        leftContainer = QWidget()
-        leftContainer.setLayout(leftVBox)
 
         # The right panel is the details on a given paper
         self.rightPanel = RightPanel()
@@ -347,7 +343,7 @@ class MainWindow(QMainWindow):
             self.papersList.addPaper(Paper(b, db, self.rightPanel))
 
         # then add each of these widgets to the central splitter
-        splitter.addWidget(leftContainer)
+        splitter.addWidget(self.tagsList)
         splitter.addWidget(self.papersList)
         splitter.addWidget(rightScroll)
 
@@ -417,7 +413,7 @@ class MainWindow(QMainWindow):
         """
         #
         try:
-            tagName = self.addTagBar.text()
+            tagName = self.tagsList.addTagBar.text()
             self.db.add_new_tag(tagName)
             self.tagsList.addTag(Tag(tagName))
         except ValueError:  # this tag is already in the database
@@ -425,7 +421,7 @@ class MainWindow(QMainWindow):
 
         # if we got here we had no error, so it was successfully added and we should
         # clear the text box
-        self.addTagBar.clear()
+        self.tagsList.addTagBar.clear()
 
 
 def get_fonts(directory, current_list):
