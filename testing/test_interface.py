@@ -754,3 +754,12 @@ def test_duplicate_in_internal_tags_list_raises_error(qtbot, db_temp):
     new_tag = Tag("Test Tag")
     with pytest.raises(AssertionError):
         widget.tagsList.addTag(new_tag)
+
+
+def test_right_panel_tags_should_list_all_tags_in_database(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    # get all tags in both the list and database, then check that they're the same
+    db_tags = db.get_all_tags()
+    list_tags = [t.text() for t in widget.rightPanel.tagCheckboxes.tags]
+    assert sorted(db_tags) == sorted(list_tags)

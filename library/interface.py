@@ -16,6 +16,7 @@ from PySide2.QtWidgets import (
     QPushButton,
     QLayout,
     QFileDialog,
+    QCheckBox,
 )
 
 from library.database import PaperAlreadyInDatabaseError
@@ -121,14 +122,18 @@ class RightPanel(QWidget):
     The right panel area for the main window, holding paper info for a single paper
     """
 
-    def __init__(self):
+    def __init__(self, tagCheckboxes):
         """
-        Initialize the right panel. This is boilerplate, nothing is passed in.
+        Initialize the right panel. Most is boilerplate, but we need the checkboxes
+
+        :param tagCheckboxes: The checkbox object the user will select tags from.
+        :type tagCheckboxes: TagsCheckboxList
         """
         QWidget.__init__(self)
 
-        # This widget will have 2 main areas (for now): The title and abstract
-        # all laid out vertically
+        self.tagCheckboxes = tagCheckboxes
+
+        # This widget will have several main areas, all laid out vertically
         vBox = QVBoxLayout()
 
         self.titleText = QLabel("")
@@ -152,6 +157,7 @@ class RightPanel(QWidget):
         vBox.addWidget(self.citeText)
         vBox.addWidget(self.abstractText)
         vBox.addWidget(self.tagText)
+        vBox.addWidget(self.tagCheckboxes)
 
         self.setLayout(vBox)
 
@@ -245,7 +251,7 @@ class TagsListScrollArea(ScrollArea):
     The class to be used for the left hand side list of tags.
 
     It's just a ScrollArea that keeps track of the tags that have been added, almost
-    identical to PapersListScrollArea
+    identical to PapersListScrollArea, except that it has a text area to add tags.
     """
 
     def __init__(self, addTagBar):
@@ -274,6 +280,32 @@ class TagsListScrollArea(ScrollArea):
 
         self.tags.append(tag)
         self.addWidget(tag)  # calls the ScrollArea addWidget
+
+
+class TagsCheckboxList(QWidget):
+    """
+    Class holding the list of tag checkboxes that will go in the right panel
+    """
+
+    def __init__(self, db):
+        """
+        Initialize the list, getting the tags from the database
+
+        :param db: Database object this interface is using
+        :type db: library.database.Database
+        """
+        QWidget.__init__(self)
+
+        # store a list of tags that are in the list
+        self.tags = []
+        vBox = QVBoxLayout()
+        # go through the database and add checkboxes for each tag there.
+        for t in db.get_all_tags():
+            this_tag_checkbox = QCheckBox(t)
+            self.tags.append(this_tag_checkbox)
+            vBox.addWidget(this_tag_checkbox)
+        # then add this so it shows up
+        self.setLayout(vBox)
 
 
 class MainWindow(QMainWindow):
@@ -345,8 +377,10 @@ class MainWindow(QMainWindow):
         for t in self.db.get_all_tags():
             self.tagsList.addTag(Tag(t))
 
-        # The right panel is the details on a given paper
-        self.rightPanel = RightPanel()
+        # The right panel is the details on a given paper. It holds the tags list,
+        # which we need to initialize first
+        self.tagsCheckboxList = TagsCheckboxList(self.db)
+        self.rightPanel = RightPanel(self.tagsCheckboxList)
         rightScroll = ScrollArea()
         rightScroll.addWidget(self.rightPanel)
 
