@@ -339,60 +339,11 @@ def test_right_panel_tag_text_has_word_wrap_on(qtbot, db):
     assert widget.rightPanel.tagText.wordWrap()
 
 
-def test_right_panel_title_can_be_set(qtbot, db):
-    widget = MainWindow(db)
-    qtbot.addWidget(widget)
-    widget.rightPanel.setPaperDetails("Test Title", "", "", [""])
-    assert widget.rightPanel.titleText.text() == "Test Title"
-
-
-def test_right_panel_cite_text_can_be_set(qtbot, db):
-    widget = MainWindow(db)
-    qtbot.addWidget(widget)
-    widget.rightPanel.setPaperDetails("", "Test cite text", "", [""])
-    assert widget.rightPanel.citeText.text() == "Test cite text"
-
-
-def test_right_panel_abstract_can_be_set(qtbot, db):
-    widget = MainWindow(db)
-    qtbot.addWidget(widget)
-    widget.rightPanel.setPaperDetails("", "", "Test Abstract", [""])
-    assert widget.rightPanel.abstractText.text() == "Test Abstract"
-
-
-def test_right_panel_tags_can_be_set(qtbot, db):
-    widget = MainWindow(db)
-    qtbot.addWidget(widget)
-    widget.rightPanel.setPaperDetails("", "", "", ["Tag 1", "Test", "ABC"])
-    assert widget.rightPanel.tagText.text() == "Tags: Tag 1, Test, ABC"
-
-
 def test_paper_initialization_has_correct_bibcode(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
     new_paper = Paper(u.my_bibcode, db, widget.rightPanel)
     assert new_paper.bibcode == u.my_bibcode
-
-
-def test_paper_initialization_has_correct_title(qtbot, db):
-    widget = MainWindow(db)
-    qtbot.addWidget(widget)
-    new_paper = Paper(u.my_bibcode, db, widget.rightPanel)
-    assert new_paper.title == u.my_title
-
-
-def test_paper_initialization_has_correct_cite_string(qtbot, db):
-    widget = MainWindow(db)
-    qtbot.addWidget(widget)
-    new_paper = Paper(u.my_bibcode, db, widget.rightPanel)
-    assert db.get_cite_string(u.my_bibcode) == new_paper.citeString
-
-
-def test_paper_initialization_has_correct_abstract(qtbot, db):
-    widget = MainWindow(db)
-    qtbot.addWidget(widget)
-    new_paper = Paper(u.my_bibcode, db, widget.rightPanel)
-    assert new_paper.abstract == u.my_abstract
 
 
 def test_paper_initialization_has_correct_title_in_the_text(qtbot, db):

@@ -61,17 +61,12 @@ class Paper(QWidget):
         # might if I do something dumb in tests
         assert self.bibcode in self.db.get_all_bibcodes()
 
-        # Use the database to get the details needed
-        self.title = db.get_paper_attribute(self.bibcode, "title")
-        self.abstract = db.get_paper_attribute(self.bibcode, "abstract")
-        self.citeString = db.get_cite_string(self.bibcode)
-
         # Then set up the layout this uses. It will be vertical with the title (for now)
         vBox = QVBoxLayout()
-        self.titleText = QLabel(self.title)
+        self.titleText = QLabel(self.db.get_paper_attribute(self.bibcode, "title"))
         self.titleText.setFont(QFont("Cabin", 16))
 
-        self.citeText = QLabel(self.citeString)
+        self.citeText = QLabel(self.db.get_cite_string(self.bibcode))
         self.citeText.setFont(QFont("Cabin", 12))
 
         # then add these to the layout, then set this layout
@@ -88,14 +83,8 @@ class Paper(QWidget):
         :return: None
         """
         if event.type() is QEvent.Type.MouseButtonPress:
-            # We get the tags now, since they may change, and we don't want to store
-            # them at initialization
-            self.rightPanel.setPaperDetails(
-                self.title,
-                self.citeString,
-                self.abstract,
-                self.db.get_paper_tags(self.bibcode),
-            )
+            # Pass the bibcode on to the right panel
+            self.rightPanel.setPaperDetails(self.bibcode)
         elif event.type() is QEvent.Type.MouseButtonDblClick:
             local_file = self.db.get_paper_attribute(self.bibcode, "local_file")
             if self.db.get_paper_attribute(self.bibcode, "local_file") is None:
@@ -122,16 +111,21 @@ class RightPanel(QWidget):
     The right panel area for the main window, holding paper info for a single paper
     """
 
-    def __init__(self, tagCheckboxes):
+    def __init__(self, tagCheckboxes, db):
         """
-        Initialize the right panel. Most is boilerplate, but we need the checkboxes
+        Initialize the right panel.
 
         :param tagCheckboxes: The checkbox object the user will select tags from.
         :type tagCheckboxes: TagsCheckboxList
+        :param db: Database object this interface is using
+        :type db: library.database.Database
         """
         QWidget.__init__(self)
 
+        self.db = db
         self.tagCheckboxes = tagCheckboxes
+
+        self.bibcode = ""  # will be set later
 
         # This widget will have several main areas, all laid out vertically
         vBox = QVBoxLayout()
@@ -161,23 +155,20 @@ class RightPanel(QWidget):
 
         self.setLayout(vBox)
 
-    def setPaperDetails(self, title, citeText, abstract, tagsList):
+    def setPaperDetails(self, bibcode):
         """
         Update the details shown in the right panel.
 
-        :param title: Title to be shown in the right panel
-        :type title: str
-        :param citeText: The short citation string to show in the right panel
-        :type citeText: str
-        :param abstract: Abstract to be shown in the right panel
-        :type abstract: str
-        :param tagsList: List of tags to be shown in the right panel.
-        :type tagsList: list
+        :param bibcode: Bibcode of the paper. The bibcode will not appear, but it will
+                        be used to query the details from the database.
+        :type bibcode: str
         :return: None, but the text properties are set.
         """
-        self.titleText.setText(title)
-        self.citeText.setText(citeText)
-        self.abstractText.setText(abstract)
+        self.bibcode = bibcode
+        self.titleText.setText(self.db.get_paper_attribute(self.bibcode, "title"))
+        self.citeText.setText(self.db.get_cite_string(self.bibcode))
+        self.abstractText.setText(self.db.get_paper_attribute(self.bibcode, "abstract"))
+        tagsList = self.db.get_paper_tags(self.bibcode)
         self.tagText.setText(f"Tags: {', '.join(tagsList)}")
         # Go through and set the checkboxes to match the tags the paper has
         for tag in self.tagCheckboxes.tags:
@@ -386,7 +377,7 @@ class MainWindow(QMainWindow):
         # The right panel is the details on a given paper. It holds the tags list,
         # which we need to initialize first
         self.tagsCheckboxList = TagsCheckboxList(self.db)
-        self.rightPanel = RightPanel(self.tagsCheckboxList)
+        self.rightPanel = RightPanel(self.tagsCheckboxList, self.db)
         rightScroll = ScrollArea()
         rightScroll.addWidget(self.rightPanel)
 
