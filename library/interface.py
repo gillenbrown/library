@@ -179,6 +179,12 @@ class RightPanel(QWidget):
         self.citeText.setText(citeText)
         self.abstractText.setText(abstract)
         self.tagText.setText(f"Tags: {', '.join(tagsList)}")
+        # Go through and set the checkboxes to match the tags the paper has
+        for tag in self.tagCheckboxes.tags:
+            if tag.text() in tagsList:
+                tag.setChecked(True)
+            else:
+                tag.setChecked(False)
 
 
 class ScrollArea(QScrollArea):

@@ -207,6 +207,11 @@ def test_testing_database_was_premade_with_some_tags(db):
     assert len(db.get_all_tags()) > 0
 
 
+def test_testing_database_has_at_least_one_tag_on_each_paper(db):
+    for b in db.get_all_bibcodes():
+        assert len(db.get_paper_tags(b)) > 0
+
+
 def test_can_exit_action_actually_exit_the_app(qtbot, db, monkeypatch):
     # see https://pytest-qt.readthedocs.io/en/3.3.0/app_exit.html
     # It's hard to actually test the menu item, so I'll skip this for now
@@ -763,3 +768,17 @@ def test_right_panel_tags_should_list_all_tags_in_database(qtbot, db):
     db_tags = db.get_all_tags()
     list_tags = [t.text() for t in widget.rightPanel.tagCheckboxes.tags]
     assert sorted(db_tags) == sorted(list_tags)
+
+
+def test_right_panel_tags_checked_match_paper_that_is_selected(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    # get a random paper, we already tested that it has at least one tag
+    paper = widget.papersList.papers[0]
+    qtbot.mouseClick(paper, Qt.LeftButton)
+    # go through each checkbox to verify the tag
+    for tag in widget.rightPanel.tagCheckboxes.tags:
+        if db.paper_has_tag(paper.bibcode, tag.text()):
+            assert tag.isChecked()
+        else:
+            assert not tag.isChecked()
