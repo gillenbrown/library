@@ -6,7 +6,9 @@ services:
 
 language: python
 python:
+  - "3.6"
   - "3.7"
+  - "3.8"
 # installation of needed libraries for Qt
 # https://github.com/pytest-dev/pytest-qt/issues/266
 before_install:
