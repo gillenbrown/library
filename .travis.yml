@@ -13,8 +13,7 @@ python:
 # Also here:
 #https://github.com/qutebrowser/qutebrowser/issues/5237#issuecomment-625448697
 before_install:
-  - sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 
-# command to install my library dependencies
+  - sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0  libxcb-xinerama0
 install:
   - pip install -e .
   - pip install pytest
