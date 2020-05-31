@@ -717,7 +717,7 @@ def test_right_panel_tags_should_list_all_tags_in_database(qtbot, db):
     qtbot.addWidget(widget)
     # get all tags in both the list and database, then check that they're the same
     db_tags = db.get_all_tags()
-    list_tags = [t.text() for t in widget.rightPanel.tagCheckboxes.tags]
+    list_tags = [t.text() for t in widget.rightPanel.tags]
     assert sorted(db_tags) == sorted(list_tags)
 
 
@@ -728,8 +728,56 @@ def test_right_panel_tags_checked_match_paper_that_is_selected(qtbot, db):
     paper = widget.papersList.papers[0]
     qtbot.mouseClick(paper, Qt.LeftButton)
     # go through each checkbox to verify the tag
-    for tag in widget.rightPanel.tagCheckboxes.tags:
+    for tag in widget.rightPanel.tags:
         if db.paper_has_tag(paper.bibcode, tag.text()):
             assert tag.isChecked()
         else:
             assert not tag.isChecked()
+
+
+def test_checking_tag_in_checklist_adds_tag_to_paper_in_database(qtbot, db_temp):
+    # add some tags to this database
+    for tag in ["T1", "T2", "T3", "T4", "T5"]:
+        db_temp.add_new_tag(tag)
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    # get one of the papers, not sure which, then click on it
+    paper = widget.papersList.papers[0]
+    qtbot.mouseClick(paper, Qt.LeftButton)
+    # this will show the tags in the right panel. Click on a few
+    to_check = ["T1", "T3", "T4"]
+    for tag_item in widget.rightPanel.tags:
+        if tag_item.text() in to_check:
+            tag_item.setChecked(True)
+    # Then check that these tags are listen in the database
+    for tag in db_temp.get_all_tags():
+        if tag in to_check:
+            assert db_temp.paper_has_tag(paper.bibcode, tag) is True
+        else:
+            assert db_temp.paper_has_tag(paper.bibcode, tag) is False
+
+
+def test_unchecking_tag_in_checklist_removes_tag_from_paper_in_database(qtbot, db_temp):
+    # add some tags to this database
+    for tag in ["T1", "T2", "T3", "T4", "T5"]:
+        db_temp.add_new_tag(tag)
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    # get one of the papers, not sure which, then click on it
+    paper = widget.papersList.papers[0]
+    # add all tags to this paper
+    for tag in db_temp.get_all_tags():
+        db_temp.tag_paper(paper.bibcode, tag)
+    # click on the paper to show it in the right panel
+    qtbot.mouseClick(paper, Qt.LeftButton)
+    # click on the tags we want to remove
+    to_uncheck = ["T1", "T3", "T4"]
+    for tag_item in widget.rightPanel.tags:
+        if tag_item.text() in to_uncheck:
+            tag_item.setChecked(False)
+    # Then check that these tags are listen in the database
+    for tag in db_temp.get_all_tags():
+        if tag in to_uncheck:
+            assert db_temp.paper_has_tag(paper.bibcode, tag) is False
+        else:
+            assert db_temp.paper_has_tag(paper.bibcode, tag) is True
