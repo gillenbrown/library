@@ -15,8 +15,8 @@ python:
 before_install:
   - sudo apt-get install -y libxkbcommon-x11-0
   - sudo apt-get install -y libxcb-icccm4
-#  - sudo apt-get install -y libxcb-image0
-  - sudo apt-get install -y libxcb-keysyms1
+  - sudo apt-get install -y libxcb-image0
+#  - sudo apt-get install -y libxcb-keysyms1
   - sudo apt-get install -y libxcb-randr0
   - sudo apt-get install -y libxcb-render-util0
   - sudo apt-get install -y libxcb-xinerama0
