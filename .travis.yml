@@ -11,7 +11,7 @@ python:
 # installation of needed libraries for Qt
 # https://github.com/pytest-dev/pytest-qt/issues/266
 before_install:
-  - sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0
+  - sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0
 # command to install my library dependencies
 install:
   - pip install -e .
