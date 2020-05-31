@@ -12,7 +12,7 @@ from PySide2.QtCore import Qt
 from PySide2.QtGui import QFontDatabase, QDesktopServices
 from PySide2.QtWidgets import QApplication, QFileDialog
 
-from library.interface import MainWindow, get_fonts, set_up_fonts, Paper, Tag
+from library.interface import MainWindow, get_fonts, set_up_fonts, Paper, LeftPanelTag
 from library.database import Database
 import test_utils as u
 
@@ -707,7 +707,7 @@ def test_duplicate_in_internal_tags_list_raises_error(qtbot, db_temp):
     qtbot.addWidget(widget)
     qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
     qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
-    new_tag = Tag("Test Tag")
+    new_tag = LeftPanelTag("Test Tag")
     with pytest.raises(AssertionError):
         widget.tagsList.addTag(new_tag)
 

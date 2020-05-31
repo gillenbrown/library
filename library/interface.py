@@ -22,7 +22,7 @@ from PySide2.QtWidgets import (
 from library.database import PaperAlreadyInDatabaseError
 
 
-class Tag(QLabel):
+class LeftPanelTag(QLabel):
     """
     Class holding a tag that goes in the left panel
     """
@@ -317,7 +317,7 @@ class TagsListScrollArea(ScrollArea):
         This adds it to the internal list of tags and puts the widget in the interface
 
         :param tag: Tag object to be added to the list of stored tags.
-        :type tag: Tag
+        :type tag: LeftPanelTag
         :return: None
         """
         # check if this tag is already in the list. This should never happen
@@ -394,7 +394,7 @@ class MainWindow(QMainWindow):
         addTagBar.returnPressed.connect(self.addTag)
         self.tagsList = TagsListScrollArea(addTagBar)
         for t in self.db.get_all_tags():
-            self.tagsList.addTag(Tag(t))
+            self.tagsList.addTag(LeftPanelTag(t))
 
         # The right panel is the details on a given paper. It holds the tags list,
         # which we need to initialize first
@@ -481,7 +481,7 @@ class MainWindow(QMainWindow):
         try:
             tagName = self.tagsList.addTagBar.text()
             self.db.add_new_tag(tagName)
-            self.tagsList.addTag(Tag(tagName))
+            self.tagsList.addTag(LeftPanelTag(tagName))
         except ValueError:  # this tag is already in the database
             return
 
