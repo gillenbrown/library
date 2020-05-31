@@ -56,6 +56,28 @@ def testing_database():
     return Database(Path(__file__).parent / "testing.db")
 
 
+def test_testing_database_was_premade_with_some_papers(db):
+    assert len(db.get_all_bibcodes()) > 0
+
+
+def test_testing_database_was_premade_with_some_tags(db):
+    assert len(db.get_all_tags()) > 0
+
+
+def test_testing_database_has_at_least_one_tag_on_each_paper(db):
+    for b in db.get_all_bibcodes():
+        assert len(db.get_paper_tags(b)) > 0
+
+
+def test_testing_database_has_each_tag_on_at_least_one_paper(db):
+    for t in db.get_all_tags():
+        tag_used = False
+        for b in db.get_all_bibcodes():
+            if t in db.get_paper_tags(b):
+                tag_used = True
+        assert tag_used
+
+
 def test_all_fonts_are_found_by_get_fonts():
     font_dir = (Path(__file__).parent.parent / "fonts").absolute()
     true_fonts = [
@@ -197,19 +219,6 @@ def test_can_add_paper_by_filling_bibcode_then_pressing_enter(qtbot, empty_db):
     qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
     assert len(empty_db.get_all_bibcodes()) == 1
     assert u.my_bibcode in empty_db.get_all_bibcodes()
-
-
-def test_testing_database_was_premade_with_some_papers(db):
-    assert len(db.get_all_bibcodes()) > 0
-
-
-def test_testing_database_was_premade_with_some_tags(db):
-    assert len(db.get_all_tags()) > 0
-
-
-def test_testing_database_has_at_least_one_tag_on_each_paper(db):
-    for b in db.get_all_bibcodes():
-        assert len(db.get_paper_tags(b)) > 0
 
 
 def test_can_exit_action_actually_exit_the_app(qtbot, db, monkeypatch):
@@ -615,6 +624,13 @@ def test_dclicking_on_paper_without_local_file_but_not_choosing_doesnt_add_or_op
     assert open_calls == []
 
 
+def test_get_tags_from_paper_object_is_correct(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    paper = widget.papersList.papers[0]
+    assert paper.getTags() == db.get_paper_tags(paper.bibcode)
+
+
 def test_add_tag_text_bar_has_correct_font_size(qtbot, empty_db):
     widget = MainWindow(empty_db)
     qtbot.addWidget(widget)
@@ -707,7 +723,7 @@ def test_duplicate_in_internal_tags_list_raises_error(qtbot, db_temp):
     qtbot.addWidget(widget)
     qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
     qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
-    new_tag = LeftPanelTag("Test Tag")
+    new_tag = LeftPanelTag("Test Tag", widget.papersList)
     with pytest.raises(AssertionError):
         widget.tagsList.addTag(new_tag)
 
@@ -781,3 +797,24 @@ def test_unchecking_tag_in_checklist_removes_tag_from_paper_in_database(qtbot, d
             assert db_temp.paper_has_tag(paper.bibcode, tag) is False
         else:
             assert db_temp.paper_has_tag(paper.bibcode, tag) is True
+
+
+def test_all_papers_start_not_hidden(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    for paper in widget.papersList.papers:
+        assert not paper.isHidden()
+
+
+def test_clicking_on_tag_in_left_panel_hides_papers(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    # get a tag from the left panel to click on
+    left_tag = widget.tagsList.tags[0]
+    qtbot.mouseClick(left_tag, Qt.LeftButton)
+    # then check the tags that are in shown papers
+    for paper in widget.papersList.papers:
+        if left_tag.text() in db.get_paper_tags(paper.bibcode):
+            assert paper.isHidden() is False
+        else:
+            assert paper.isHidden() is True

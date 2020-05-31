@@ -27,10 +27,36 @@ class LeftPanelTag(QLabel):
     Class holding a tag that goes in the left panel
     """
 
-    def __init__(self, tagName):
+    def __init__(self, tagName, papersList):
+        """
+        Initialize a tag that goes in the left panel.
+
+        We need to get the papersList so that we can hide papers when a user clicks
+        on a tag.
+
+        :param tagName: Name of the tag to show.
+        :type tagName: str
+        :param papersList: Papers list objects
+        :type papersList: PapersListScrollArea
+        """
         QLabel.__init__(self, tagName)
         self.name = tagName
         self.setFont(QFont("Cabin", 14))
+        self.papersList = papersList
+
+    def mousePressEvent(self, _):
+        """
+        When the tag is clicked on, show the papers with that tag in the central panel
+
+        :param _: Dummy parameter that contains the event type. Not used here, we do
+                  the same thing for every click type.
+        :return: None
+        """
+        for paper in self.papersList.papers:
+            if self.name in paper.getTags():
+                paper.show()
+            else:
+                paper.hide()
 
 
 class Paper(QWidget):
@@ -104,6 +130,15 @@ class Paper(QWidget):
             # the user or now
             QDesktopServices.openUrl(f"file:{local_file}")
         # nothing should be done for other click types
+
+    def getTags(self):
+        """
+        Return the list of tags this paper has. This is used by the tags list.
+
+        :return: List of tags
+        :rtype: list
+        """
+        return self.db.get_paper_tags(self.bibcode)
 
 
 class TagCheckBox(QCheckBox):
@@ -386,16 +421,6 @@ class MainWindow(QMainWindow):
         splitter = QSplitter()
         # then make each of these things
 
-        # The left panel of this is the list of tags the user has, plus the button to
-        # add papers, which will go at the top of that list
-        addTagBar = QLineEdit()
-        addTagBar.setFont(QFont("Cabin", 14))
-        addTagBar.setPlaceholderText("Add a new tag here")
-        addTagBar.returnPressed.connect(self.addTag)
-        self.tagsList = TagsListScrollArea(addTagBar)
-        for t in self.db.get_all_tags():
-            self.tagsList.addTag(LeftPanelTag(t))
-
         # The right panel is the details on a given paper. It holds the tags list,
         # which we need to initialize first
         self.rightPanel = RightPanel(self.db)
@@ -407,6 +432,17 @@ class MainWindow(QMainWindow):
         self.papersList = PapersListScrollArea()
         for b in self.db.get_all_bibcodes():
             self.papersList.addPaper(Paper(b, db, self.rightPanel))
+
+        # The left panel of this is the list of tags the user has, plus the button to
+        # add papers, which will go at the top of that list. This has to go after the
+        # center panel since the tags need to access the paper list
+        addTagBar = QLineEdit()
+        addTagBar.setFont(QFont("Cabin", 14))
+        addTagBar.setPlaceholderText("Add a new tag here")
+        addTagBar.returnPressed.connect(self.addTag)
+        self.tagsList = TagsListScrollArea(addTagBar)
+        for t in self.db.get_all_tags():
+            self.tagsList.addTag(LeftPanelTag(t, self.papersList))
 
         # then add each of these widgets to the central splitter
         splitter.addWidget(self.tagsList)
@@ -481,7 +517,7 @@ class MainWindow(QMainWindow):
         try:
             tagName = self.tagsList.addTagBar.text()
             self.db.add_new_tag(tagName)
-            self.tagsList.addTag(LeftPanelTag(tagName))
+            self.tagsList.addTag(LeftPanelTag(tagName, self.papersList))
         except ValueError:  # this tag is already in the database
             return
 
