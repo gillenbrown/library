@@ -13,8 +13,7 @@ python:
 # Also here:
 #https://github.com/qutebrowser/qutebrowser/issues/5237#issuecomment-625448697
 before_install:
-#  - sudo apt-get install -y libdbus-1-3
-  - sudo apt-get install -y libxkbcommon-x11-0
+#  - sudo apt-get install -y libxkbcommon-x11-0
   - sudo apt-get install -y libxcb-icccm4
   - sudo apt-get install -y libxcb-image0
   - sudo apt-get install -y libxcb-keysyms1
