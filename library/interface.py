@@ -331,19 +331,26 @@ class TagsListScrollArea(ScrollArea):
     The class to be used for the left hand side list of tags.
 
     It's just a ScrollArea that keeps track of the tags that have been added, almost
-    identical to PapersListScrollArea, except that it has a text area to add tags.
+    identical to PapersListScrollArea, except that it has a text area to add tags, and
+    a button to show all papers.
     """
 
-    def __init__(self, addTagBar):
+    def __init__(self, addTagBar, papersList):
         """
         Set up the papers list, no parameters needed
         """
         ScrollArea.__init__(self)
         self.tags = []
         self.addTagBar = addTagBar
+        self.papersList = papersList
+
+        # Make the button to show all the papers in the list
+        self.showAllButton = QPushButton("Show All")
+        self.showAllButton.clicked.connect(self.showAllPapers)
 
         # put the tag bar at the top of the list
         self.addWidget(self.addTagBar)  # calls ScrollArea addWidget
+        self.addWidget(self.showAllButton)
 
     def addTag(self, tag):
         """
@@ -360,6 +367,15 @@ class TagsListScrollArea(ScrollArea):
 
         self.tags.append(tag)
         self.addWidget(tag)  # calls the ScrollArea addWidget
+
+    def showAllPapers(self):
+        """
+        Show all the papers in the central papers list.
+
+        :return: None
+        """
+        for paper in self.papersList.papers:
+            paper.show()
 
 
 class MainWindow(QMainWindow):
@@ -440,7 +456,7 @@ class MainWindow(QMainWindow):
         addTagBar.setFont(QFont("Cabin", 14))
         addTagBar.setPlaceholderText("Add a new tag here")
         addTagBar.returnPressed.connect(self.addTag)
-        self.tagsList = TagsListScrollArea(addTagBar)
+        self.tagsList = TagsListScrollArea(addTagBar, self.papersList)
         for t in self.db.get_all_tags():
             self.tagsList.addTag(LeftPanelTag(t, self.papersList))
 

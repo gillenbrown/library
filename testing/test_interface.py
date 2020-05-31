@@ -818,3 +818,16 @@ def test_clicking_on_tag_in_left_panel_hides_papers(qtbot, db):
             assert paper.isHidden() is False
         else:
             assert paper.isHidden() is True
+
+
+def test_clicking_on_show_all_button_shows_all_papers(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    # First click on a tag to restrict the number of papers shown
+    left_tag = widget.tagsList.tags[0]
+    qtbot.mouseClick(left_tag, Qt.LeftButton)
+    # then click on the button to show all
+    qtbot.mouseClick(widget.tagsList.showAllButton, Qt.LeftButton)
+    # then check that all are shown
+    for paper in widget.papersList.papers:
+        assert paper.isHidden() is False
