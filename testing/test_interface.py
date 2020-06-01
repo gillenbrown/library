@@ -831,3 +831,103 @@ def test_clicking_on_show_all_button_shows_all_papers(qtbot, db):
     # then check that all are shown
     for paper in widget.papersList.papers:
         assert paper.isHidden() is False
+
+
+def test_tags_selection_checkboxes_is_hidden_at_beginning(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    for tag in widget.rightPanel.tags:
+        assert tag.isHidden() is True
+
+
+def test_tags_selection_edit_button_is_hidden_at_beginning(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    assert widget.rightPanel.editTagsButton.isHidden() is True
+
+
+def test_tags_selection_done_editing_button_is_hidden_at_beginning(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    assert widget.rightPanel.doneEditingTagsButton.isHidden() is True
+
+
+def test_tags_selection_edit_button_appears_when_paper_clicked(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    assert widget.rightPanel.editTagsButton.isHidden() is False
+
+
+def test_tags_selection_done_editing_button_doesnt_appear_when_paper_clicked(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    assert widget.rightPanel.doneEditingTagsButton.isHidden() is True
+
+
+def test_tags_selection_checkboxes_doesnt_appear_when_paper_clicked(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    for tag in widget.rightPanel.tags:
+        assert tag.isHidden() is True
+
+
+def test_tags_selection_edit_button_is_hidden_when_pressed(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    # make button appear. I'm not sure why the delay is needed, but if fails without it
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton, delay=100)
+    qtbot.mouseClick(widget.rightPanel.editTagsButton, Qt.LeftButton, delay=100)
+    assert widget.rightPanel.editTagsButton.isHidden() is True
+
+
+def test_tags_selection_done_editing_buttons_is_shown_when_edit_is_pressed(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    # make button appear. I'm not sure why the delay is needed, but if fails without it
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton, delay=100)
+    qtbot.mouseClick(widget.rightPanel.editTagsButton, Qt.LeftButton, delay=100)
+    assert widget.rightPanel.doneEditingTagsButton.isHidden() is False
+
+
+def test_tags_selection_edit_button_shown_again_when_done_editing_pressed(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    # make button appear. I'm not sure why the delay is needed, but if fails without it
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton, delay=100)
+    qtbot.mouseClick(widget.rightPanel.editTagsButton, Qt.LeftButton, delay=100)
+    qtbot.mouseClick(widget.rightPanel.doneEditingTagsButton, Qt.LeftButton, delay=100)
+    assert widget.rightPanel.editTagsButton.isHidden() is False
+
+
+def test_tags_selection_done_editing_button_is_hidden_when_pressed(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    # make button appear. I'm not sure why the delay is needed, but if fails without it
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton, delay=100)
+    qtbot.mouseClick(widget.rightPanel.editTagsButton, Qt.LeftButton, delay=100)
+    qtbot.mouseClick(widget.rightPanel.doneEditingTagsButton, Qt.LeftButton, delay=100)
+    assert widget.rightPanel.doneEditingTagsButton.isHidden() is True
+
+
+def test_tags_selection_checkboxes_are_unhidden_when_edit_is_pressed(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    # make button appear. I'm not sure why the delay is needed, but if fails without it
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton, delay=100)
+    qtbot.mouseClick(widget.rightPanel.editTagsButton, Qt.LeftButton, delay=100)
+    for tag in widget.rightPanel.tags:
+        assert tag.isHidden() is False
+
+
+def test_tags_selection_checkboxes_are_hidden_when_done_editing(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    # make button appear. I'm not sure why the delay is needed, but if fails without it
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton, delay=100)
+    qtbot.mouseClick(widget.rightPanel.editTagsButton, Qt.LeftButton, delay=100)
+    qtbot.mouseClick(widget.rightPanel.doneEditingTagsButton, Qt.LeftButton, delay=100)
+    for tag in widget.rightPanel.tags:
+        assert tag.isHidden() is True

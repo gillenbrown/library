@@ -194,6 +194,16 @@ class RightPanel(QWidget):
         self.citeText = QLabel("")
         self.abstractText = QLabel("Click on a paper to show its details here")
         self.tagText = QLabel("")
+        # have buttons to hide and show the list of tag checkboxes
+        self.editTagsButton = QPushButton("Edit Tags")
+        self.doneEditingTagsButton = QPushButton("Done Editing Tags")
+        # then add their functionality when clicked
+        self.editTagsButton.clicked.connect(self.enableTagEditing)
+        self.doneEditingTagsButton.clicked.connect(self.doneTagEditing)
+        # both of these should be hidden at the beginning
+        self.editTagsButton.hide()
+        self.doneEditingTagsButton.hide()
+
         # the Tags List has a bit of setup
         self.tags = []  # store the tags that are in there
         vBoxTags = QVBoxLayout()
@@ -202,6 +212,8 @@ class RightPanel(QWidget):
             this_tag_checkbox = TagCheckBox(t, self)
             self.tags.append(this_tag_checkbox)
             vBoxTags.addWidget(this_tag_checkbox)
+            # hide all tags at the beginning
+            this_tag_checkbox.hide()
 
         # set text properties
         self.titleText.setFont(QFont("Cabin", 20))
@@ -219,6 +231,8 @@ class RightPanel(QWidget):
         vBox.addWidget(self.citeText)
         vBox.addWidget(self.abstractText)
         vBox.addWidget(self.tagText)
+        vBox.addWidget(self.editTagsButton)
+        vBox.addWidget(self.doneEditingTagsButton)
         vBox.addLayout(vBoxTags)
 
         self.setLayout(vBox)
@@ -244,6 +258,35 @@ class RightPanel(QWidget):
                 tag.setChecked(True)
             else:
                 tag.setChecked(False)
+
+        # then make the edit tags button appear, since it will be hidden at the start
+        self.editTagsButton.show()
+
+    def enableTagEditing(self):
+        """
+        Show the tag selection boxes and the done editing button.
+
+        Inverse of `doneTagEditing`
+
+        :return: None
+        """
+        self.editTagsButton.hide()
+        self.doneEditingTagsButton.show()
+        for tag in self.tags:
+            tag.show()
+
+    def doneTagEditing(self):
+        """
+        Hide the tag selection boxes and the done editing button.
+
+        Inverse of `enableTagEditing`
+
+        :return: None
+        """
+        self.editTagsButton.show()
+        self.doneEditingTagsButton.hide()
+        for tag in self.tags:
+            tag.hide()
 
     def changeTags(self, tagName, checked):
         """
@@ -444,7 +487,8 @@ class MainWindow(QMainWindow):
         rightScroll.addWidget(self.rightPanel)
 
         # The central panel is the list of papers. This has to be set up after the
-        # right panel because the paper objects need it.
+        # right panel because the paper objects need it, and before the left panel
+        # because the tags need this panel
         self.papersList = PapersListScrollArea()
         for b in self.db.get_all_bibcodes():
             self.papersList.addPaper(Paper(b, db, self.rightPanel))
