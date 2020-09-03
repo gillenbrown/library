@@ -112,3 +112,43 @@ def test_get_correct_paper_volume():
 def test_get_correct_paper_page():
     results = ads_call.get_info(u.my_bibcode)
     assert results["page"] == u.my_page
+
+
+def test_get_correct_paper_title_unpublished():
+    results = ads_call.get_info(u.forbes_bibcode)
+    assert results["title"] == u.forbes_title
+
+
+def test_get_correct_paper_bibtex_unpublished():
+    results = ads_call.get_info(u.forbes_bibcode)
+    assert results["bibtex"] == u.forbes_bibtex
+
+
+def test_get_correct_paper_authors_unpublished():
+    results = ads_call.get_info(u.forbes_bibcode)
+    assert results["authors"] == u.forbes_authors
+
+
+def test_get_correct_paper_pubdate_unpublished():
+    results = ads_call.get_info(u.forbes_bibcode)
+    assert results["pubdate"] == u.forbes_pubdate
+
+
+def test_get_correct_paper_abstract_unpublished():
+    results = ads_call.get_info(u.forbes_bibcode)
+    assert results["abstract"] == u.forbes_abstract
+
+
+def test_get_correct_paper_journal_unpublished():
+    results = ads_call.get_info(u.forbes_bibcode)
+    assert results["journal"] == u.forbes_journal
+
+
+def test_get_correct_paper_volume_unpublished():
+    results = ads_call.get_info(u.forbes_bibcode)
+    assert results["volume"] == u.forbes_volume
+
+
+def test_get_correct_paper_page_unpublished():
+    results = ads_call.get_info(u.forbes_bibcode)
+    assert results["page"] == u.forbes_page

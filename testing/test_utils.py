@@ -118,3 +118,41 @@ tremonti_bibtex = (
     "      adsnote = {Provided by the SAO/NASA Astrophysics Data System}\n"
     "}\n\n"
 )
+
+forbes_url = "https://ui.adsabs.harvard.edu/abs/2020arXiv200314327F/abstract"
+forbes_bibcode = "2020arXiv200314327F"
+forbes_title = (
+    "A PDF PSA, or Never gonna set_xscale again -- guilty feats with logarithms"
+)
+forbes_bibtex = (
+    "@ARTICLE{2020arXiv200314327F,\n"
+    "       author = {{Forbes}, John C.},\n"
+    '        title = "{A PDF PSA, or Never gonna set\_xscale again -- guilty feats with logarithms}",\n'
+    "      journal = {arXiv e-prints},\n"
+    "     keywords = {Astrophysics - Cosmology and Nongalactic Astrophysics, Astrophysics - Instrumentation and Methods for Astrophysics},\n"
+    "         year = 2020,\n"
+    "        month = mar,\n"
+    "          eid = {arXiv:2003.14327},\n"
+    "        pages = {arXiv:2003.14327},\n"
+    "archivePrefix = {arXiv},\n"
+    "       eprint = {2003.14327},\n"
+    " primaryClass = {astro-ph.CO},\n"
+    "       adsurl = {https://ui.adsabs.harvard.edu/abs/2020arXiv200314327F},\n"
+    "      adsnote = {Provided by the SAO/NASA Astrophysics Data System}\n"
+    "}\n\n"
+)
+forbes_authors = ["Forbes, John C."]
+forbes_pubdate = "2020-03-00"
+forbes_abstract = (
+    "In the course of doing astronomy, one often encounters plots of densities, for "
+    "example probability densities, flux densities, and mass functions. "
+    "Quite frequently the ordinate of these diagrams is plotted logarithmically to "
+    "accommodate a large dynamic range. In this situation, I argue that it is critical "
+    "to adjust the density appropriately, rather than simply setting the x-scale to "
+    "`log' in your favorite plotting code. I will demonstrate the basic issue with a "
+    "pedagogical example, then mention a few common plots where this may arise, and "
+    "finally some possible exceptions to the rule."
+)
+forbes_journal = "arXiv e-prints"
+forbes_volume = -1
+forbes_page = -1

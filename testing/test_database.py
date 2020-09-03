@@ -101,6 +101,11 @@ def test_add_paper_from_ads_bibcode(db_empty):
     assert db_empty.get_paper_attribute(u.my_bibcode, "title") is not None
 
 
+def test_add_unpublished_paper_from_ads_bibcode(db_empty):
+    db_empty.add_paper(u.forbes_bibcode)
+    assert db_empty.get_paper_attribute(u.forbes_bibcode, "title") is not None
+
+
 def test_added_paper_has_correct_bibcode(db_empty):
     db_empty.add_paper(u.my_bibcode)
     assert db_empty.get_paper_attribute(u.my_bibcode, "bibcode") == u.my_bibcode
@@ -144,6 +149,53 @@ def test_added_paper_has_correct_abstract(db_empty):
 def test_added_paper_has_correct_bibtex(db_empty):
     db_empty.add_paper(u.my_bibcode)
     assert db_empty.get_paper_attribute(u.my_bibcode, "bibtex") == u.my_bibtex
+
+
+def test_added_unpublished_paper_has_correct_bibcode(db_empty):
+    db_empty.add_paper(u.forbes_bibcode)
+    assert db_empty.get_paper_attribute(u.forbes_bibcode, "bibcode") == u.forbes_bibcode
+
+
+def test_added_unpublished_paper_has_correct_title(db_empty):
+    db_empty.add_paper(u.forbes_bibcode)
+    assert db_empty.get_paper_attribute(u.forbes_bibcode, "title") == u.forbes_title
+
+
+def test_added_unpublished_paper_has_correct_authors(db_empty):
+    db_empty.add_paper(u.forbes_bibcode)
+    assert db_empty.get_paper_attribute(u.forbes_bibcode, "authors") == u.forbes_authors
+
+
+def test_added_unpublished_paper_has_correct_pubdate(db_empty):
+    db_empty.add_paper(u.forbes_bibcode)
+    assert db_empty.get_paper_attribute(u.forbes_bibcode, "pubdate") == u.forbes_pubdate
+
+
+def test_added_unpublished_paper_has_correct_journal(db_empty):
+    db_empty.add_paper(u.forbes_bibcode)
+    assert db_empty.get_paper_attribute(u.forbes_bibcode, "journal") == u.forbes_journal
+
+
+def test_added_unpublished_paper_has_correct_volume(db_empty):
+    db_empty.add_paper(u.forbes_bibcode)
+    assert db_empty.get_paper_attribute(u.forbes_bibcode, "volume") == u.forbes_volume
+
+
+def test_added_unpublished_paper_has_correct_page(db_empty):
+    db_empty.add_paper(u.forbes_bibcode)
+    assert db_empty.get_paper_attribute(u.forbes_bibcode, "page") == u.forbes_page
+
+
+def test_added_unpublished_paper_has_correct_abstract(db_empty):
+    db_empty.add_paper(u.forbes_bibcode)
+    assert (
+        db_empty.get_paper_attribute(u.forbes_bibcode, "abstract") == u.forbes_abstract
+    )
+
+
+def test_added_unpublished_paper_has_correct_bibtex(db_empty):
+    db_empty.add_paper(u.forbes_bibcode)
+    assert db_empty.get_paper_attribute(u.forbes_bibcode, "bibtex") == u.forbes_bibtex
 
 
 def test_added_paper_returns_correct_bibcode(db_empty):

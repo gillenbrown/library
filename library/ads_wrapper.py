@@ -61,8 +61,18 @@ class ADSWrapper(object):
             paper = list(ads.SearchQuery(bibcode=bibcode, fl=quantities))[0]
             # Recommended to do the bibtex separately, according to the ADS library
             bibtex = ads.ExportQuery(bibcodes=bibcode).execute()
-            # We then need to parse the info a bit, as some things are in lists for
-            # whatever reason
+            # parse the volume and page data, which are not present if the paper is
+            # not actually published
+            if paper.volume is None:
+                volume = -1
+            else:
+                volume = int(paper.volume)
+            # page might be an arXiv string, which means it's unpublished
+            if "arXiv" in paper.page[0]:
+                page = -1
+            else:
+                page = int(paper.page[0])
+            # We can then put these into a dictionary to return
             results = {
                 "abstract": paper.abstract,
                 "bibtex": bibtex,
@@ -71,8 +81,8 @@ class ADSWrapper(object):
                 "authors": paper.author,  # author actually has all authors
                 "pubdate": paper.pubdate,
                 "journal": paper.pub,
-                "volume": int(paper.volume),
-                "page": int(paper.page[0]),
+                "volume": volume,
+                "page": page,
             }
 
             # store this in the cache
