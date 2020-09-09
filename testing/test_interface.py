@@ -551,7 +551,7 @@ def test_double_clicking_on_paper_without_local_file_but_not_choosing_doesnt_add
     # create a mock function to get the file. It needs to have the filter kwarg, since
     # that is used in the actual call
     def mock_get_file(filter=""):
-        return ""
+        return ("", "")
 
     monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
 
@@ -610,7 +610,7 @@ def test_dclicking_on_paper_without_local_file_but_not_choosing_doesnt_add_or_op
     # create a mock function to get the file. It needs to have the filter kwarg, since
     # that is used in the actual call
     def mock_get_file(filter=""):
-        return ""
+        return ("", "")
 
     monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
     open_calls = []
