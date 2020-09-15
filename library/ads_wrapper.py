@@ -57,10 +57,17 @@ class ADSWrapper(object):
                 "pub",
                 "volume",
                 "page",
+                "identifier",
             ]
             paper = list(ads.SearchQuery(bibcode=bibcode, fl=quantities))[0]
             # Recommended to do the bibtex separately, according to the ADS library
             bibtex = ads.ExportQuery(bibcodes=bibcode).execute()
+            # parse the list of identifiers to get the arXiv id. The default value is
+            # a message that the paper is not on the arXiv
+            arxiv_id = "Not on the arXiv"
+            for identifier in paper.identifier:
+                if identifier.startswith("arXiv:"):
+                    arxiv_id = identifier.split(":")[-1]
             # parse the volume and page data, which are not present if the paper is
             # not actually published
             if paper.volume is None:
@@ -72,9 +79,13 @@ class ADSWrapper(object):
                 page = -1
             else:
                 page = int(paper.page[0])
+            # some papers don't have an abstract (B2FH for example)
+            abstract = paper.abstract
+            if abstract is None:
+                abstract = ""
             # We can then put these into a dictionary to return
             results = {
-                "abstract": paper.abstract,
+                "abstract": abstract,
                 "bibtex": bibtex,
                 "bibcode": bibcode,
                 "title": paper.title[0],  # in a list for some reason
@@ -83,6 +94,7 @@ class ADSWrapper(object):
                 "journal": paper.pub,
                 "volume": volume,
                 "page": page,
+                "arxiv_id": arxiv_id,
             }
 
             # store this in the cache

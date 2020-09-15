@@ -114,6 +114,11 @@ def test_get_correct_paper_page():
     assert results["page"] == u.my_page
 
 
+def test_get_correct_paper_arxiv_id():
+    results = ads_call.get_info(u.my_bibcode)
+    assert results["arxiv_id"] == u.my_arxiv_id
+
+
 def test_get_correct_paper_title_unpublished():
     results = ads_call.get_info(u.forbes_bibcode)
     assert results["title"] == u.forbes_title
@@ -152,3 +157,53 @@ def test_get_correct_paper_volume_unpublished():
 def test_get_correct_paper_page_unpublished():
     results = ads_call.get_info(u.forbes_bibcode)
     assert results["page"] == u.forbes_page
+
+
+def test_get_correct_paper_arxiv_id_unpublished():
+    results = ads_call.get_info(u.forbes_bibcode)
+    assert results["arxiv_id"] == u.forbes_arxiv_id
+
+
+def test_get_correct_paper_title_not_on_arxiv():
+    results = ads_call.get_info(u.b2fh_bibcode)
+    assert results["title"] == u.b2fh_title
+
+
+def test_get_correct_paper_bibtex_not_on_arxiv():
+    results = ads_call.get_info(u.b2fh_bibcode)
+    assert results["bibtex"] == u.b2fh_bibtex
+
+
+def test_get_correct_paper_authors_not_on_arxiv():
+    results = ads_call.get_info(u.b2fh_bibcode)
+    assert results["authors"] == u.b2fh_authors
+
+
+def test_get_correct_paper_pubdate_not_on_arxiv():
+    results = ads_call.get_info(u.b2fh_bibcode)
+    assert results["pubdate"] == u.b2fh_pubdate
+
+
+def test_get_correct_paper_abstract_not_on_arxiv():
+    results = ads_call.get_info(u.b2fh_bibcode)
+    assert results["abstract"] == u.b2fh_abstract
+
+
+def test_get_correct_paper_journal_not_on_arxiv():
+    results = ads_call.get_info(u.b2fh_bibcode)
+    assert results["journal"] == u.b2fh_journal
+
+
+def test_get_correct_paper_volume_not_on_arxiv():
+    results = ads_call.get_info(u.b2fh_bibcode)
+    assert results["volume"] == u.b2fh_volume
+
+
+def test_get_correct_paper_page_not_on_arxiv():
+    results = ads_call.get_info(u.b2fh_bibcode)
+    assert results["page"] == u.b2fh_page
+
+
+def test_get_correct_paper_arxiv_id_not_on_arxiv():
+    results = ads_call.get_info(u.b2fh_bibcode)
+    assert results["arxiv_id"] == "Not on the arXiv"

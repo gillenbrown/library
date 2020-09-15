@@ -151,6 +151,11 @@ def test_added_paper_has_correct_bibtex(db_empty):
     assert db_empty.get_paper_attribute(u.my_bibcode, "bibtex") == u.my_bibtex
 
 
+def test_added_paper_has_correct_arxiv_id(db_empty):
+    db_empty.add_paper(u.my_bibcode)
+    assert db_empty.get_paper_attribute(u.my_bibcode, "arxiv_id") == u.my_arxiv_id
+
+
 def test_added_unpublished_paper_has_correct_bibcode(db_empty):
     db_empty.add_paper(u.forbes_bibcode)
     assert db_empty.get_paper_attribute(u.forbes_bibcode, "bibcode") == u.forbes_bibcode
@@ -196,6 +201,65 @@ def test_added_unpublished_paper_has_correct_abstract(db_empty):
 def test_added_unpublished_paper_has_correct_bibtex(db_empty):
     db_empty.add_paper(u.forbes_bibcode)
     assert db_empty.get_paper_attribute(u.forbes_bibcode, "bibtex") == u.forbes_bibtex
+
+
+def test_added_unpublished_paper_has_correct_arxiv_id(db_empty):
+    db_empty.add_paper(u.forbes_bibcode)
+    assert (
+        db_empty.get_paper_attribute(u.forbes_bibcode, "arxiv_id") == u.forbes_arxiv_id
+    )
+
+
+def test_added_not_on_arxiv_paper_has_correct_bibcode(db_empty):
+    db_empty.add_paper(u.b2fh_bibcode)
+    assert db_empty.get_paper_attribute(u.b2fh_bibcode, "bibcode") == u.b2fh_bibcode
+
+
+def test_added_not_on_arxiv_paper_has_correct_title(db_empty):
+    db_empty.add_paper(u.b2fh_bibcode)
+    assert db_empty.get_paper_attribute(u.b2fh_bibcode, "title") == u.b2fh_title
+
+
+def test_added_not_on_arxiv_paper_has_correct_authors(db_empty):
+    db_empty.add_paper(u.b2fh_bibcode)
+    assert db_empty.get_paper_attribute(u.b2fh_bibcode, "authors") == u.b2fh_authors
+
+
+def test_added_not_on_arxiv_paper_has_correct_pubdate(db_empty):
+    db_empty.add_paper(u.b2fh_bibcode)
+    assert db_empty.get_paper_attribute(u.b2fh_bibcode, "pubdate") == u.b2fh_pubdate
+
+
+def test_added_not_on_arxiv_paper_has_correct_journal(db_empty):
+    db_empty.add_paper(u.b2fh_bibcode)
+    assert db_empty.get_paper_attribute(u.b2fh_bibcode, "journal") == u.b2fh_journal
+
+
+def test_added_not_on_arxiv_paper_has_correct_volume(db_empty):
+    db_empty.add_paper(u.b2fh_bibcode)
+    assert db_empty.get_paper_attribute(u.b2fh_bibcode, "volume") == u.b2fh_volume
+
+
+def test_added_not_on_arxiv_paper_has_correct_page(db_empty):
+    db_empty.add_paper(u.b2fh_bibcode)
+    assert db_empty.get_paper_attribute(u.b2fh_bibcode, "page") == u.b2fh_page
+
+
+def test_added_not_on_arxiv_paper_has_correct_abstract(db_empty):
+    db_empty.add_paper(u.b2fh_bibcode)
+    assert db_empty.get_paper_attribute(u.b2fh_bibcode, "abstract") == u.b2fh_abstract
+
+
+def test_added_not_on_arxiv_paper_has_correct_bibtex(db_empty):
+    db_empty.add_paper(u.b2fh_bibcode)
+    assert db_empty.get_paper_attribute(u.b2fh_bibcode, "bibtex") == u.b2fh_bibtex
+
+
+def test_added_not_on_arxiv_paper_has_correct_arxiv_id(db_empty):
+    db_empty.add_paper(u.b2fh_bibcode)
+    assert (
+        db_empty.get_paper_attribute(u.b2fh_bibcode, "arxiv_id") == "Not on the arXiv"
+    )
 
 
 def test_added_paper_returns_correct_bibcode(db_empty):

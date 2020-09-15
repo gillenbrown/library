@@ -121,6 +121,7 @@ tremonti_bibtex = (
 
 forbes_url = "https://ui.adsabs.harvard.edu/abs/2020arXiv200314327F/abstract"
 forbes_bibcode = "2020arXiv200314327F"
+forbes_arxiv_id = "2003.14327"
 forbes_title = (
     "A PDF PSA, or Never gonna set_xscale again -- guilty feats with logarithms"
 )
@@ -156,3 +157,34 @@ forbes_abstract = (
 forbes_journal = "arXiv e-prints"
 forbes_volume = -1
 forbes_page = -1
+
+b2fh_url = "https://ui.adsabs.harvard.edu/abs/1957RvMP...29..547B/abstract"
+b2fh_bibcode = "1957RvMP...29..547B"
+b2fh_title = "Synthesis of the Elements in Stars"
+b2fh_bibtex = (
+    "@ARTICLE{1957RvMP...29..547B,\n"
+    "       author = {{Burbidge}, E. Margaret and {Burbidge}, G.~R. and {Fowler}, William A. and\n"
+    "         {Hoyle}, F.},\n"
+    '        title = "{Synthesis of the Elements in Stars}",\n'
+    "      journal = {Reviews of Modern Physics},\n"
+    "         year = 1957,\n"
+    "        month = jan,\n"
+    "       volume = {29},\n"
+    "       number = {4},\n"
+    "        pages = {547-650},\n"
+    "          doi = {10.1103/RevModPhys.29.547},\n"
+    "       adsurl = {https://ui.adsabs.harvard.edu/abs/1957RvMP...29..547B},\n"
+    "      adsnote = {Provided by the SAO/NASA Astrophysics Data System}\n"
+    "}\n\n"
+)
+b2fh_authors = [
+    "Burbidge, E. Margaret",
+    "Burbidge, G. R.",
+    "Fowler, William A.",
+    "Hoyle, F.",
+]
+b2fh_pubdate = "1957-00-00"
+b2fh_abstract = ""
+b2fh_journal = "Reviews of Modern Physics"
+b2fh_volume = 29
+b2fh_page = 547

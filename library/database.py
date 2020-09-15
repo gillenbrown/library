@@ -35,6 +35,7 @@ class Database(object):
         "page",
         "abstract",
         "bibtex",
+        "arxiv_id",
     ]
     # some columns won't be set when the paper is added, will be left NULL
     colnames_data = colnames_set_on_paper_add + ["local_file"]
@@ -61,6 +62,7 @@ class Database(object):
             "page integer,"
             "abstract text,"
             "bibtex text,"
+            "arxiv_id text,"
             "local_file text"
             ")"
         )
@@ -137,6 +139,7 @@ class Database(object):
                 paper_data["page"],
                 paper_data["abstract"],
                 paper_data["bibtex"],
+                paper_data["arxiv_id"],
             )
             # then run this SQL
             self._execute(sql, parameters)
