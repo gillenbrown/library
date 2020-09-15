@@ -262,6 +262,19 @@ class Database(object):
         else:  # three or less authors, show them all
             authors_str = ", ".join(authors_last_names)
 
+        # the publication date has the year first, separated by dashes
+        year = self.get_paper_attribute(bibcode, "pubdate").split("-")[0]
+
+        # treat unpublished papers differently than published ones
+        if self.get_paper_attribute(bibcode, "page") == -1:  # this is unpublished
+            return (
+                f"{authors_str}, "
+                f"{year}, "
+                f"arXiv:{self.get_paper_attribute(bibcode, 'arxiv_id')}"
+            )
+
+        # implicit else clause here since we return inside the if loop. This handles
+        # published papers
         # the journal may have an abbreviation
         journal = self.get_paper_attribute(bibcode, "journal")
         abbreviations = {
@@ -270,9 +283,6 @@ class Database(object):
         }
         if journal in abbreviations:
             journal = abbreviations[journal]
-
-        # the publication date has the year first, separated by dashes
-        year = self.get_paper_attribute(bibcode, "pubdate").split("-")[0]
 
         # Then join everything together
         return (

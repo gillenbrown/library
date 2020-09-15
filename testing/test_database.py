@@ -421,6 +421,12 @@ def test_cite_string_mnras_is_shortened_test_paper(db):
     assert db.get_cite_string(u.my_bibcode) == true_cite_string
 
 
+def test_cite_string_unpublished(db):
+    db.add_paper(u.forbes_bibcode)
+    true_cite_string = "Forbes, 2020, arXiv:2003.14327"
+    assert db.get_cite_string(u.forbes_bibcode) == true_cite_string
+
+
 def test_can_add_new_tag_column_and_it_is_false_for_all_papers(db):
     db.add_new_tag("test_tag")
     for bibcode in db.get_all_bibcodes():
