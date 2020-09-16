@@ -188,3 +188,6 @@ b2fh_abstract = ""
 b2fh_journal = "Reviews of Modern Physics"
 b2fh_volume = 29
 b2fh_page = 547
+
+krumholz_url = "https://ui.adsabs.harvard.edu/abs/2019ARA%26A..57..227K/abstract"
+krumholz_bibcode = "2019ARA&A..57..227K"

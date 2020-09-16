@@ -39,6 +39,11 @@ def test_get_correct_bibcode_from_ads_url():
     assert bibcode == u.my_bibcode
 
 
+def test_get_correct_bibcode_from_ads_url_with_and_symbol():
+    bibcode = ads_call.get_bibcode(u.krumholz_url)
+    assert bibcode == u.krumholz_bibcode
+
+
 def test_get_correct_bibcode_from_ads_bibcode():
     bibcode = ads_call.get_bibcode(u.my_bibcode)
     assert bibcode == u.my_bibcode

@@ -161,7 +161,9 @@ class ADSWrapper(object):
             # in the abstract
             split_url = identifier.split("/")
             bibcode_idx = split_url.index("abs") + 1
-            return split_url[bibcode_idx]
+            bibcode = split_url[bibcode_idx]
+            # sometimes there's the placeholder for the and sign in the URL
+            return bibcode.replace("%26", "&")
         # next check if it looks like a plain bibcode
         # # http://adsabs.github.io/help/actions/bibcode
         # re.match only looks at the beginning of the string, where the year will be
