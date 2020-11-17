@@ -32,7 +32,7 @@ my_abstract = (
     "star formation history within clusters, with metal pollution provided "
     "solely by supernova ejecta, is capable of replicating the metallicity "
     "spreads of massive globular clusters, but still requires another "
-    "polluter to produce the light element variations. <P />"
+    "polluter to produce the light element variations."
 )
 my_bibtex = (
     "@ARTICLE{2018ApJ...864...94B,\n"

@@ -9,7 +9,7 @@ import random
 import pytest
 import pytestqt
 from PySide2.QtCore import Qt
-from PySide2.QtGui import QFontDatabase, QDesktopServices
+from PySide2.QtGui import QFontDatabase, QDesktopServices, QGuiApplication
 from PySide2.QtWidgets import QApplication, QFileDialog
 
 from library.interface import MainWindow, get_fonts, set_up_fonts, Paper, LeftPanelTag
@@ -931,3 +931,33 @@ def test_tags_selection_checkboxes_are_hidden_when_done_editing(qtbot, db):
     qtbot.mouseClick(widget.rightPanel.doneEditingTagsButton, Qt.LeftButton, delay=100)
     for tag in widget.rightPanel.tags:
         assert tag.isHidden() is True
+
+
+def test_clicking_bibtex_button_copies_bibtex(qtbot, db, monkeypatch):
+    # Here we need to use monkeypatch to simulate the clipboard
+    clipboard = QGuiApplication.clipboard()
+    texts = []
+    monkeypatch.setattr(clipboard, "setText", lambda x: texts.append(x))
+
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    # get one of the papers in the right panel
+    paper = widget.papersList.papers[0]
+    qtbot.mouseClick(paper, Qt.LeftButton)
+    # then click on the bibtext button
+    qtbot.mouseClick(widget.rightPanel.copyBibtexButton, Qt.LeftButton)
+    assert len(texts) == 1
+    assert texts[0] in [u.my_bibtex, u.tremonti_bibtex]
+
+
+def test_copy_bibtex_button_hidden_at_beginning(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    assert widget.rightPanel.copyBibtexButton.isHidden() is True
+
+
+def test_copy_bibtex_button_appears_when_paper_clicked(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    assert widget.rightPanel.copyBibtexButton.isHidden() is False

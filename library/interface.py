@@ -1,7 +1,13 @@
 from pathlib import Path
 
 from PySide2.QtCore import Qt, QEvent
-from PySide2.QtGui import QKeySequence, QFontDatabase, QFont, QDesktopServices
+from PySide2.QtGui import (
+    QKeySequence,
+    QFontDatabase,
+    QFont,
+    QDesktopServices,
+    QGuiApplication,
+)
 from PySide2.QtWidgets import (
     QApplication,
     QWidget,
@@ -196,6 +202,7 @@ class RightPanel(QWidget):
         self.titleText = QLabel("")
         self.citeText = QLabel("")
         self.abstractText = QLabel("Click on a paper to show its details here")
+        self.copyBibtexButton = QPushButton("Copy Bibtex entry to clipboard")
         self.tagText = QLabel("")
         # have buttons to hide and show the list of tag checkboxes
         self.editTagsButton = QPushButton("Edit Tags")
@@ -203,9 +210,11 @@ class RightPanel(QWidget):
         # then add their functionality when clicked
         self.editTagsButton.clicked.connect(self.enableTagEditing)
         self.doneEditingTagsButton.clicked.connect(self.doneTagEditing)
-        # both of these should be hidden at the beginning
+        self.copyBibtexButton.clicked.connect(self.copyBibtex)
+        # all of these should be hidden at the beginning
         self.editTagsButton.hide()
         self.doneEditingTagsButton.hide()
+        self.copyBibtexButton.hide()
 
         # the Tags List has a bit of setup
         self.tags = []  # store the tags that are in there
@@ -233,6 +242,7 @@ class RightPanel(QWidget):
         vBox.addWidget(self.titleText)
         vBox.addWidget(self.citeText)
         vBox.addWidget(self.abstractText)
+        vBox.addWidget(self.copyBibtexButton)
         vBox.addWidget(self.tagText)
         vBox.addWidget(self.editTagsButton)
         vBox.addWidget(self.doneEditingTagsButton)
@@ -262,8 +272,10 @@ class RightPanel(QWidget):
             else:
                 tag.setChecked(False)
 
-        # then make the edit tags button appear, since it will be hidden at the start
+        # then make the edit tags and copy Bibtex buttons appear, since they will be
+        # hidden at the start
         self.editTagsButton.show()
+        self.copyBibtexButton.show()
 
     def enableTagEditing(self):
         """
@@ -305,6 +317,16 @@ class RightPanel(QWidget):
             self.db.tag_paper(self.bibcode, tagName)
         else:
             self.db.untag_paper(self.bibcode, tagName)
+
+    def copyBibtex(self):
+        """
+        Put the text from the selected paper's Bibtex entry into the clipboard
+
+        :return: None, but the text is copied to the clipboard
+        :rtype: None
+        """
+        this_bibtex = self.db.get_paper_attribute(self.bibcode, "bibtex")
+        QGuiApplication.clipboard().setText(this_bibtex)
 
 
 class ScrollArea(QScrollArea):
