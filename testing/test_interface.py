@@ -961,3 +961,36 @@ def test_copy_bibtex_button_appears_when_paper_clicked(qtbot, db):
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     assert widget.rightPanel.copyBibtexButton.isHidden() is False
+
+
+def test_delete_paper_button_hidden_at_beginning(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    assert widget.rightPanel.deletePaperButton.isHidden() is True
+
+
+def test_delete_paper_button_appears_when_paper_clicked(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    assert widget.rightPanel.deletePaperButton.isHidden() is False
+
+
+def test_delete_paper_button_delets_paper_from_database_when_pressed(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    paper = widget.papersList.papers[0]
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.deletePaperButton, Qt.LeftButton)
+    # check that it's not in the database anymore
+    with pytest.raises(ValueError):
+        db_temp.get_paper_attribute(paper.bibcode, "title")
+
+
+def test_delete_paper_button_is_red(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    # need to click on paper so the button shows up
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    stylesheet = widget.rightPanel.deletePaperButton.styleSheet()
+    assert stylesheet == "background-color: #FFCCCC;"

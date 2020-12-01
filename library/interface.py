@@ -203,6 +203,7 @@ class RightPanel(QWidget):
         self.citeText = QLabel("")
         self.abstractText = QLabel("Click on a paper to show its details here")
         self.copyBibtexButton = QPushButton("Copy Bibtex entry to clipboard")
+        self.deletePaperButton = QPushButton("Delete this paper")
         self.tagText = QLabel("")
         # have buttons to hide and show the list of tag checkboxes
         self.editTagsButton = QPushButton("Edit Tags")
@@ -211,10 +212,12 @@ class RightPanel(QWidget):
         self.editTagsButton.clicked.connect(self.enableTagEditing)
         self.doneEditingTagsButton.clicked.connect(self.doneTagEditing)
         self.copyBibtexButton.clicked.connect(self.copyBibtex)
+        self.deletePaperButton.clicked.connect(self.deletePaper)
         # all of these should be hidden at the beginning
         self.editTagsButton.hide()
         self.doneEditingTagsButton.hide()
         self.copyBibtexButton.hide()
+        self.deletePaperButton.hide()
 
         # the Tags List has a bit of setup
         self.tags = []  # store the tags that are in there
@@ -233,6 +236,9 @@ class RightPanel(QWidget):
         self.abstractText.setFont(QFont("Cabin", 14))
         self.tagText.setFont(QFont("Cabin", 14))
 
+        # make delete button red
+        self.deletePaperButton.setStyleSheet("background-color: #FFCCCC;")
+
         self.titleText.setWordWrap(True)
         self.citeText.setWordWrap(True)
         self.abstractText.setWordWrap(True)
@@ -247,6 +253,7 @@ class RightPanel(QWidget):
         vBox.addWidget(self.editTagsButton)
         vBox.addWidget(self.doneEditingTagsButton)
         vBox.addLayout(vBoxTags)
+        vBox.addWidget(self.deletePaperButton)
 
         self.setLayout(vBox)
 
@@ -276,6 +283,7 @@ class RightPanel(QWidget):
         # hidden at the start
         self.editTagsButton.show()
         self.copyBibtexButton.show()
+        self.deletePaperButton.show()
 
     def enableTagEditing(self):
         """
@@ -327,6 +335,14 @@ class RightPanel(QWidget):
         """
         this_bibtex = self.db.get_paper_attribute(self.bibcode, "bibtex")
         QGuiApplication.clipboard().setText(this_bibtex)
+
+    def deletePaper(self):
+        """
+        Delete this paper from the database
+
+        :return: None, but the text is copied to the clipboard
+        """
+        self.db.delete_paper(self.bibcode)
 
 
 class ScrollArea(QScrollArea):
