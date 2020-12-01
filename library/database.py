@@ -419,3 +419,14 @@ class Database(object):
         :rtype: list
         """
         return [t for t in self.get_all_tags() if self.paper_has_tag(bibcode, t)]
+
+    def delete_paper(self, bibcode):
+        """
+        Delete a given paper from the database.
+
+        :param bibcode: Bibcode of the paper to delete from the database.
+        :return: None
+        """
+        # create the SQL code with question marks as the placeholder
+        sql = f"DELETE FROM papers WHERE bibcode = ?"
+        self._execute(sql, (bibcode,))

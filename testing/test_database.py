@@ -488,3 +488,16 @@ def test_get_all_tags_on_a_paper_is_correct(db):
     db.tag_paper(u.my_bibcode, "3")
     db.tag_paper(u.my_bibcode, "B")
     assert db.get_paper_tags(u.my_bibcode) == ["1", "3", "B"]
+
+
+def test_delete_paper_removes_one(db):
+    assert db.num_papers() == 2
+    db.delete_paper(u.my_bibcode)
+    assert db.num_papers() == 1
+
+
+def test_delete_paper_removes_correct_one(db):
+    db.delete_paper(u.my_bibcode)
+    # test that the paper left is not mine
+    with pytest.raises(ValueError):
+        db.get_paper_attribute(u.my_bibcode, "title")
