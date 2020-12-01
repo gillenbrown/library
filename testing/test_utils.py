@@ -97,14 +97,16 @@ tremonti_abstract = (
 )
 tremonti_bibtex = (
     "@ARTICLE{2004ApJ...613..898T,\n"
-    "       author = {{Tremonti}, Christy A. and {Heckman}, Timothy M. and\n"
-    "         {Kauffmann}, Guinevere and {Brinchmann}, Jarle and\n"
-    "         {Charlot}, St{\\'e}phane and {White}, Simon D.~M. and {Seibert}, Mark and\n"
-    "         {Peng}, Eric W. and {Schlegel}, David J. and {Uomoto}, Alan and\n"
-    "         {Fukugita}, Masataka and {Brinkmann}, Jon},\n"
-    '        title = "{The Origin of the Mass-Metallicity Relation: Insights from 53,000 Star-forming Galaxies in the Sloan Digital Sky Survey}",\n'
+    "       author = {{Tremonti}, Christy A. and {Heckman}, Timothy M. and "
+    "{Kauffmann}, Guinevere and {Brinchmann}, Jarle and {Charlot}, St{\\'e}phane "
+    "and {White}, Simon D.~M. and {Seibert}, Mark and {Peng}, Eric W. and "
+    "{Schlegel}, David J. and {Uomoto}, Alan and {Fukugita}, Masataka and "
+    "{Brinkmann}, Jon},\n"
+    '        title = "{The Origin of the Mass-Metallicity Relation: Insights from '
+    '53,000 Star-forming Galaxies in the Sloan Digital Sky Survey}",\n'
     "      journal = {\\apj},\n"
-    "     keywords = {Galaxies: Abundances, Galaxies: Evolution, Galaxies: Fundamental Parameters, Galaxies: Statistics, Astrophysics},\n"
+    "     keywords = {Galaxies: Abundances, Galaxies: Evolution, Galaxies: "
+    "Fundamental Parameters, Galaxies: Statistics, Astrophysics},\n"
     "         year = 2004,\n"
     "        month = oct,\n"
     "       volume = {613},\n"
@@ -163,8 +165,8 @@ b2fh_bibcode = "1957RvMP...29..547B"
 b2fh_title = "Synthesis of the Elements in Stars"
 b2fh_bibtex = (
     "@ARTICLE{1957RvMP...29..547B,\n"
-    "       author = {{Burbidge}, E. Margaret and {Burbidge}, G.~R. and {Fowler}, William A. and\n"
-    "         {Hoyle}, F.},\n"
+    "       author = {{Burbidge}, E. Margaret and {Burbidge}, G.~R. and {Fowler}, "
+    "William A. and {Hoyle}, F.},\n"
     '        title = "{Synthesis of the Elements in Stars}",\n'
     "      journal = {Reviews of Modern Physics},\n"
     "         year = 1957,\n"
