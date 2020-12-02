@@ -963,34 +963,85 @@ def test_copy_bibtex_button_appears_when_paper_clicked(qtbot, db):
     assert widget.rightPanel.copyBibtexButton.isHidden() is False
 
 
-def test_delete_paper_button_hidden_at_beginning(qtbot, db):
+def test_first_delete_paper_button_hidden_at_beginning(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
-    assert widget.rightPanel.deletePaperButton.isHidden() is True
+    assert widget.rightPanel.firstDeletePaperButton.isHidden() is True
 
 
-def test_delete_paper_button_appears_when_paper_clicked(qtbot, db):
+def test_second_delete_paper_button_hidden_at_beginning(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    assert widget.rightPanel.secondDeletePaperButton.isHidden() is True
+
+
+def test_first_delete_paper_button_appears_when_paper_clicked(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
-    assert widget.rightPanel.deletePaperButton.isHidden() is False
+    assert widget.rightPanel.firstDeletePaperButton.isHidden() is False
 
 
-def test_delete_paper_button_delets_paper_from_database_when_pressed(qtbot, db_temp):
+def test_second_delete_paper_button_does_not_appear_when_paper_clicked(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    assert widget.rightPanel.secondDeletePaperButton.isHidden() is True
+
+
+def test_second_delete_paper_button_appears_when_first_clicked(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
+    assert widget.rightPanel.secondDeletePaperButton.isHidden() is False
+
+
+def test_first_delete_paper_button_disappears_when_clicked(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
+    assert widget.rightPanel.firstDeletePaperButton.isHidden() is True
+
+
+def test_first_delete_buttons_reset_when_on_new_paper(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
+    qtbot.mouseClick(widget.papersList.papers[1], Qt.LeftButton)
+    assert widget.rightPanel.firstDeletePaperButton.isHidden() is False
+
+
+def test_second_delete_buttons_reset_when_on_new_paper(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
+    qtbot.mouseClick(widget.papersList.papers[1], Qt.LeftButton)
+    assert widget.rightPanel.secondDeletePaperButton.isHidden() is True
+
+
+def test_second_delete_paper_button_deletes_paper_from_database_when_pressed(
+    qtbot, db_temp
+):
     widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     paper = widget.papersList.papers[0]
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
-    qtbot.mouseClick(widget.rightPanel.deletePaperButton, Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.secondDeletePaperButton, Qt.LeftButton)
     # check that it's not in the database anymore
     with pytest.raises(ValueError):
         db_temp.get_paper_attribute(paper.bibcode, "title")
 
 
-def test_delete_paper_button_is_red(qtbot, db):
+def test_second_delete_paper_button_is_red(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
     # need to click on paper so the button shows up
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
-    stylesheet = widget.rightPanel.deletePaperButton.styleSheet()
+    qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
+    stylesheet = widget.rightPanel.secondDeletePaperButton.styleSheet()
     assert stylesheet == "background-color: #FFCCCC;"

@@ -203,7 +203,8 @@ class RightPanel(QWidget):
         self.citeText = QLabel("")
         self.abstractText = QLabel("Click on a paper to show its details here")
         self.copyBibtexButton = QPushButton("Copy Bibtex entry to clipboard")
-        self.deletePaperButton = QPushButton("Delete this paper")
+        self.firstDeletePaperButton = QPushButton("Delete this paper")
+        self.secondDeletePaperButton = QPushButton("Are you sure?")
         self.tagText = QLabel("")
         # have buttons to hide and show the list of tag checkboxes
         self.editTagsButton = QPushButton("Edit Tags")
@@ -212,12 +213,14 @@ class RightPanel(QWidget):
         self.editTagsButton.clicked.connect(self.enableTagEditing)
         self.doneEditingTagsButton.clicked.connect(self.doneTagEditing)
         self.copyBibtexButton.clicked.connect(self.copyBibtex)
-        self.deletePaperButton.clicked.connect(self.deletePaper)
+        self.firstDeletePaperButton.clicked.connect(self.revealSecondDeleteButton)
+        self.secondDeletePaperButton.clicked.connect(self.deletePaper)
         # all of these should be hidden at the beginning
         self.editTagsButton.hide()
         self.doneEditingTagsButton.hide()
         self.copyBibtexButton.hide()
-        self.deletePaperButton.hide()
+        self.firstDeletePaperButton.hide()
+        self.secondDeletePaperButton.hide()
 
         # the Tags List has a bit of setup
         self.tags = []  # store the tags that are in there
@@ -237,7 +240,7 @@ class RightPanel(QWidget):
         self.tagText.setFont(QFont("Cabin", 14))
 
         # make delete button red
-        self.deletePaperButton.setStyleSheet("background-color: #FFCCCC;")
+        self.secondDeletePaperButton.setStyleSheet("background-color: #FFCCCC;")
 
         self.titleText.setWordWrap(True)
         self.citeText.setWordWrap(True)
@@ -253,7 +256,8 @@ class RightPanel(QWidget):
         vBox.addWidget(self.editTagsButton)
         vBox.addWidget(self.doneEditingTagsButton)
         vBox.addLayout(vBoxTags)
-        vBox.addWidget(self.deletePaperButton)
+        vBox.addWidget(self.firstDeletePaperButton)
+        vBox.addWidget(self.secondDeletePaperButton)
 
         self.setLayout(vBox)
 
@@ -283,7 +287,9 @@ class RightPanel(QWidget):
         # hidden at the start
         self.editTagsButton.show()
         self.copyBibtexButton.show()
-        self.deletePaperButton.show()
+        self.firstDeletePaperButton.show()
+        # also hide the second button if it was shown
+        self.secondDeletePaperButton.hide()
 
     def enableTagEditing(self):
         """
@@ -336,11 +342,20 @@ class RightPanel(QWidget):
         this_bibtex = self.db.get_paper_attribute(self.bibcode, "bibtex")
         QGuiApplication.clipboard().setText(this_bibtex)
 
+    def revealSecondDeleteButton(self):
+        """
+        Hides the first delete button, reveals the second
+
+        :return: None, but the buttons are shifted
+        """
+        self.firstDeletePaperButton.hide()
+        self.secondDeletePaperButton.show()
+
     def deletePaper(self):
         """
         Delete this paper from the database
 
-        :return: None, but the text is copied to the clipboard
+        :return: None, but the paper is deleted
         """
         self.db.delete_paper(self.bibcode)
 
