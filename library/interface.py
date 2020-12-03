@@ -195,13 +195,16 @@ class RightPanel(QWidget):
 
         self.db = db
         self.bibcode = ""  # will be set later
+        self.papersList = None  # will be set by the papersList initializer, which
+        # will have this passed in to it
 
         # This widget will have several main areas, all laid out vertically
         vBox = QVBoxLayout()
 
+        # for clarity set text to empty, the default values will be set below
         self.titleText = QLabel("")
         self.citeText = QLabel("")
-        self.abstractText = QLabel("Click on a paper to show its details here")
+        self.abstractText = QLabel("")
         self.copyBibtexButton = QPushButton("Copy Bibtex entry to clipboard")
         self.firstDeletePaperButton = QPushButton("Delete this paper")
         self.secondDeletePaperButton = QPushButton("Are you sure?")
@@ -215,12 +218,9 @@ class RightPanel(QWidget):
         self.copyBibtexButton.clicked.connect(self.copyBibtex)
         self.firstDeletePaperButton.clicked.connect(self.revealSecondDeleteButton)
         self.secondDeletePaperButton.clicked.connect(self.deletePaper)
-        # all of these should be hidden at the beginning
-        self.editTagsButton.hide()
-        self.doneEditingTagsButton.hide()
-        self.copyBibtexButton.hide()
-        self.firstDeletePaperButton.hide()
-        self.secondDeletePaperButton.hide()
+
+        # handle the initial state
+        self.resetPaperDetails()
 
         # the Tags List has a bit of setup
         self.tags = []  # store the tags that are in there
@@ -260,6 +260,24 @@ class RightPanel(QWidget):
         vBox.addWidget(self.secondDeletePaperButton)
 
         self.setLayout(vBox)
+
+    def resetPaperDetails(self):
+        """
+        Set the details in the right panel to be the default when no paper is shown
+
+        :return: None, but the text properties are set
+        """
+        self.titleText.setText("")
+        self.citeText.setText("")
+        self.abstractText.setText("Click on a paper to show its details here")
+        self.tagText.setText("")
+
+        # all of the buttons
+        self.editTagsButton.hide()
+        self.doneEditingTagsButton.hide()
+        self.copyBibtexButton.hide()
+        self.firstDeletePaperButton.hide()
+        self.secondDeletePaperButton.hide()
 
     def setPaperDetails(self, bibcode):
         """
@@ -355,9 +373,11 @@ class RightPanel(QWidget):
         """
         Delete this paper from the database
 
-        :return: None, but the paper is deleted
+        :return: None, but the paper is deleted and text reset
         """
         self.db.delete_paper(self.bibcode)
+        self.resetPaperDetails()  # clean up right panel
+        self.papersList.deletePaper(self.bibcode)  # remove this frm the center panel
 
 
 class ScrollArea(QScrollArea):
@@ -401,28 +421,56 @@ class PapersListScrollArea(ScrollArea):
     It's just a ScrollArea that keeps track of the papers that have been added.
     """
 
-    def __init__(self):
+    def __init__(self, db, rightPanel):
         """
-        Set up the papers list, no parameters needed
+        Set up the papers list
+
+        Stores the database and right panel, which are used by the paper objects
+        themselves
+
+        :param db: Database object this interface is using
+        :type db: library.database.Database
+        :param rightPanel: rightPanel object of this interface. This is only needed so
+                           we can call the update feature when this is clicked on
+        :type rightPanel: rightPanel
         """
         ScrollArea.__init__(self)
         self.papers = []
 
-    def addPaper(self, paper):
+        self.rightPanel = rightPanel
+        self.db = db
+        rightPanel.papersList = self
+
+    def addPaper(self, bibcode):
         """
         Add a paper to the papers scroll area.
 
         This adds it to the internal list of papers and puts the widget in the interface
 
-        :param paper: Paper object to be added to the list of stored papers.
-        :type paper: Paper
+        :param bibcode: Bibcode of the paper to be added
+        :type bibcode: str
         :return: None
         """
         # check if this paper is already in the list. This should never happen
-        assert paper.bibcode not in [p.bibcode for p in self.papers]
+        assert bibcode not in [p.bibcode for p in self.papers]
 
+        # create the paper object, than add to the list and center panel
+        paper = Paper(bibcode, self.db, self.rightPanel)
         self.papers.append(paper)
         self.addWidget(paper)  # calls the ScrollArea addWidget
+
+    def deletePaper(self, bibcode):
+        """
+        Delete a paper from this list of papers
+
+        :param bibcode: Bibcode of the paper to delete
+        :return: None, but the paper is deleted from the list
+        """
+        for paper in self.papers:
+            if paper.bibcode == bibcode:
+                paper.hide()  # just to be safe
+                self.papers.remove(paper)
+                del paper
 
 
 class TagsListScrollArea(ScrollArea):
@@ -545,9 +593,9 @@ class MainWindow(QMainWindow):
         # The central panel is the list of papers. This has to be set up after the
         # right panel because the paper objects need it, and before the left panel
         # because the tags need this panel
-        self.papersList = PapersListScrollArea()
+        self.papersList = PapersListScrollArea(db, self.rightPanel)
         for b in self.db.get_all_bibcodes():
-            self.papersList.addPaper(Paper(b, db, self.rightPanel))
+            self.papersList.addPaper(b)
 
         # The left panel of this is the list of tags the user has, plus the button to
         # add papers, which will go at the top of that list. This has to go after the
@@ -616,7 +664,7 @@ class MainWindow(QMainWindow):
 
         # we only get here if the addition to the database worked. If so we add the
         # paper object, then clear the search bar
-        self.papersList.addPaper(Paper(bibcode, self.db, self.rightPanel))
+        self.papersList.addPaper(bibcode)
         # clear the text so another paper can be added
         self.searchBar.clear()
 
