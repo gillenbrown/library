@@ -18,7 +18,7 @@ import test_utils as u
 
 
 def add_my_paper(qtbot, widget):
-    qtbot.keyClicks(widget.searchBar, u.my_bibcode)
+    qtbot.keyClicks(widget.searchBar, u.mine.bibcode)
     qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
 
 
@@ -42,8 +42,8 @@ def temporary_database_with_papers():
     """
     file_path = Path(f"{random.randint(0, 1000000000)}.db")
     db = Database(file_path)
-    db.add_paper(u.my_bibcode)
-    db.add_paper(u.tremonti_bibcode)
+    db.add_paper(u.mine.bibcode)
+    db.add_paper(u.tremonti.bibcode)
     yield db
     file_path.unlink()  # removes this file
 
@@ -205,20 +205,20 @@ def test_can_add_paper_by_filling_bibcode_then_clicking_button(qtbot, empty_db):
     assert len(empty_db.get_all_bibcodes()) == 0
     widget = MainWindow(empty_db)
     qtbot.addWidget(widget)
-    qtbot.keyClicks(widget.searchBar, u.my_bibcode)
+    qtbot.keyClicks(widget.searchBar, u.mine.bibcode)
     qtbot.mouseClick(widget.addButton, Qt.LeftButton)
     assert len(empty_db.get_all_bibcodes()) == 1
-    assert u.my_bibcode in empty_db.get_all_bibcodes()
+    assert u.mine.bibcode in empty_db.get_all_bibcodes()
 
 
 def test_can_add_paper_by_filling_bibcode_then_pressing_enter(qtbot, empty_db):
     assert len(empty_db.get_all_bibcodes()) == 0
     widget = MainWindow(empty_db)
     qtbot.addWidget(widget)
-    qtbot.keyClicks(widget.searchBar, u.my_bibcode)
+    qtbot.keyClicks(widget.searchBar, u.mine.bibcode)
     qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
     assert len(empty_db.get_all_bibcodes()) == 1
-    assert u.my_bibcode in empty_db.get_all_bibcodes()
+    assert u.mine.bibcode in empty_db.get_all_bibcodes()
 
 
 def test_can_exit_action_actually_exit_the_app(qtbot, db, monkeypatch):
@@ -351,15 +351,15 @@ def test_right_panel_tag_text_has_word_wrap_on(qtbot, db):
 def test_paper_initialization_has_correct_bibcode(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
-    new_paper = Paper(u.my_bibcode, db, widget.rightPanel)
-    assert new_paper.bibcode == u.my_bibcode
+    new_paper = Paper(u.mine.bibcode, db, widget.rightPanel)
+    assert new_paper.bibcode == u.mine.bibcode
 
 
 def test_paper_initialization_has_correct_title_in_the_text(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
-    new_paper = Paper(u.my_bibcode, db, widget.rightPanel)
-    assert new_paper.titleText.text() == u.my_title
+    new_paper = Paper(u.mine.bibcode, db, widget.rightPanel)
+    assert new_paper.titleText.text() == u.mine.title
 
 
 def test_paper_title_has_correct_font_family(qtbot, db):
@@ -397,15 +397,15 @@ def test_paper_cite_string_has_correct_font_size(qtbot, db):
 def test_paper_initialization_has_correct_cite_string_in_the_text(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
-    new_paper = Paper(u.my_bibcode, db, widget.rightPanel)
-    assert new_paper.citeText.text() == db.get_cite_string(u.my_bibcode)
+    new_paper = Paper(u.mine.bibcode, db, widget.rightPanel)
+    assert new_paper.citeText.text() == db.get_cite_string(u.mine.bibcode)
 
 
 def test_cannot_initialize_paper_thats_not_in_database(qtbot, empty_db):
     widget = MainWindow(empty_db)
     qtbot.addWidget(widget)
     with pytest.raises(AssertionError):
-        Paper(u.my_bibcode, empty_db, widget.rightPanel)
+        Paper(u.mine.bibcode, empty_db, widget.rightPanel)
 
 
 def test_all_papers_in_database_are_in_the_paper_list_at_beginning(qtbot, db):
@@ -427,7 +427,7 @@ def test_adding_paper_adds_correct_paper_to_interface(qtbot, empty_db):
     widget = MainWindow(empty_db)
     qtbot.addWidget(widget)
     add_my_paper(qtbot, widget)
-    assert widget.papersList.papers[0].bibcode == u.my_bibcode
+    assert widget.papersList.papers[0].bibcode == u.mine.bibcode
 
 
 def test_adding_paper_clears_search_bar_if_successful(qtbot, empty_db):
@@ -449,7 +449,7 @@ def test_adding_paper_does_not_clear_search_bar_if_not_successful(qtbot, empty_d
 def test_adding_paper_does_clear_search_bar_if_already_in_library(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
-    qtbot.keyClicks(widget.searchBar, u.my_bibcode)
+    qtbot.keyClicks(widget.searchBar, u.mine.bibcode)
     qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
     assert widget.searchBar.text() == ""
 
@@ -468,7 +468,7 @@ def test_paper_cannot_be_added_twice(qtbot, empty_db):
 def test_duplicate_in_internal_paper_list_raises_error(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
-    new_paper = Paper(u.my_bibcode, db, widget.rightPanel)
+    new_paper = Paper(u.mine.bibcode, db, widget.rightPanel)
     with pytest.raises(AssertionError):
         widget.papersList.addPaper(new_paper)
 
@@ -479,7 +479,7 @@ def test_clicking_on_paper_puts_title_in_right_panel(qtbot, db):
     # get one of the papers, not sure which
     paper = widget.papersList.papers[0]
     qtbot.mouseClick(paper, Qt.LeftButton)
-    assert widget.rightPanel.titleText.text() in [u.my_title, u.tremonti_title]
+    assert widget.rightPanel.titleText.text() in [u.mine.title, u.tremonti.title]
 
 
 def test_clicking_on_paper_puts_cite_string_in_right_panel(qtbot, db):
@@ -489,8 +489,8 @@ def test_clicking_on_paper_puts_cite_string_in_right_panel(qtbot, db):
     paper = widget.papersList.papers[0]
     qtbot.mouseClick(paper, Qt.LeftButton)
     possible_cites = [
-        db.get_cite_string(u.my_bibcode),
-        db.get_cite_string(u.tremonti_bibcode),
+        db.get_cite_string(u.mine.bibcode),
+        db.get_cite_string(u.tremonti.bibcode),
     ]
     assert widget.rightPanel.citeText.text() in possible_cites
 
@@ -501,7 +501,10 @@ def test_clicking_on_paper_puts_abstract_in_right_panel(qtbot, db):
     # get one of the papers, not sure which
     paper = widget.papersList.papers[0]
     qtbot.mouseClick(paper, Qt.LeftButton)
-    assert widget.rightPanel.abstractText.text() in [u.my_abstract, u.tremonti_abstract]
+    assert widget.rightPanel.abstractText.text() in [
+        u.mine.abstract,
+        u.tremonti.abstract,
+    ]
 
 
 def test_clicking_on_paper_puts_tags_in_right_panel(qtbot, db_temp):
@@ -541,7 +544,7 @@ def test_double_clicking_on_paper_without_local_file_asks_user(
     # add a paper to this empty database to make the paper object
     add_my_paper(qtbot, widget)
     qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
-    assert empty_db.get_paper_attribute(u.my_bibcode, "local_file") == test_loc
+    assert empty_db.get_paper_attribute(u.mine.bibcode, "local_file") == test_loc
 
 
 def test_double_clicking_on_paper_without_local_file_but_not_choosing_doesnt_add_it(
@@ -560,7 +563,7 @@ def test_double_clicking_on_paper_without_local_file_but_not_choosing_doesnt_add
     # add a paper to this empty database to make the paper object
     add_my_paper(qtbot, widget)
     qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
-    assert empty_db.get_paper_attribute(u.my_bibcode, "local_file") == None
+    assert empty_db.get_paper_attribute(u.mine.bibcode, "local_file") == None
 
 
 def test_double_clicking_on_paper_with_local_file_opens_it(
@@ -575,7 +578,7 @@ def test_double_clicking_on_paper_with_local_file_opens_it(
     qtbot.addWidget(widget)
     # add a paper to this empty database to make the paper object
     add_my_paper(qtbot, widget)
-    empty_db.set_paper_attribute(u.my_bibcode, "local_file", test_loc)
+    empty_db.set_paper_attribute(u.mine.bibcode, "local_file", test_loc)
     qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
     # since this already has a URL it should be added
     assert open_calls == [f"file:{test_loc}"]
@@ -655,7 +658,7 @@ def test_can_add_tag_by_filling_tag_name_then_pressing_enter(qtbot, db_temp):
     qtbot.addWidget(widget)
     qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
     qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
-    assert db_temp.paper_has_tag(u.my_bibcode, "Test Tag") is False
+    assert db_temp.paper_has_tag(u.mine.bibcode, "Test Tag") is False
 
 
 def test_can_add_tag_to_list_by_filling_tag_name_then_pressing_enter(qtbot, db_temp):
@@ -947,7 +950,7 @@ def test_clicking_bibtex_button_copies_bibtex(qtbot, db, monkeypatch):
     # then click on the bibtext button
     qtbot.mouseClick(widget.rightPanel.copyBibtexButton, Qt.LeftButton)
     assert len(texts) == 1
-    assert texts[0] in [u.my_bibtex, u.tremonti_bibtex]
+    assert texts[0] in [u.mine.bibtex, u.tremonti.bibtex]
 
 
 def test_copy_bibtex_button_hidden_at_beginning(qtbot, db):
