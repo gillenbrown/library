@@ -286,6 +286,7 @@ class Database(object):
         abbreviations = {
             "The Astrophysical Journal": "ApJ",
             "Monthly Notices of the Royal Astronomical Society": "MNRAS",
+            "Astronomy and Astrophysics": "A&A",
         }
         if journal in abbreviations:
             journal = abbreviations[journal]

@@ -432,9 +432,9 @@ def test_cite_string_unpublished(db):
     assert db.get_cite_string(u.forbes.bibcode) == true_cite_string
 
 
-def test_cite_string_nonnumeric_page(db):
+def test_cite_string_nonnumeric_page_and_a_and_a_journal_shortened(db):
     db.add_paper(u.marks.bibcode)
-    true_cite_string = "Marks, Kroupa, 2012, Astronomy and Astrophysics, 543, A8"
+    true_cite_string = "Marks, Kroupa, 2012, A&A, 543, A8"
     assert db.get_cite_string(u.marks.bibcode) == true_cite_string
 
 
