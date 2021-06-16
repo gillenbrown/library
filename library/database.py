@@ -59,7 +59,7 @@ class Database(object):
             "pubdate text,"
             "journal text,"
             "volume integer,"
-            "page integer,"
+            "page text,"
             "abstract text,"
             "bibtex text,"
             "arxiv_id text,"
@@ -179,12 +179,18 @@ class Database(object):
         assert len(rows) == 1
         # then get the value from this row
         r_value = rows[0][attribute]
-        # we do have to do a check for the author list, since it's special. We'll need
-        # to put it back as a list.
-        if attribute != "authors":
-            return r_value
-        else:
+        # we do have to do a check for a couple attributes, since they're special.
+        # Authors list needs to be put back as a list
+        if attribute == "authors":
             return r_value.split(self._author_sep)
+        # page needs to be put back to an integer, if it is able
+        elif attribute == "page":
+            try:
+                return int(r_value)
+            except ValueError:  # strings cannot be converted
+                return r_value
+        else:  # no modification needed
+            return r_value
 
     def set_paper_attribute(self, bibcode, attribute, new_value):
         """

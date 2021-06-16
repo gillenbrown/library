@@ -227,3 +227,10 @@ krumholz = TestPaper(
     url="https://ui.adsabs.harvard.edu/abs/2019ARA%26A..57..227K/abstract",
     bibcode="2019ARA&A..57..227K",
 )
+
+# Marks Kroupa 2012 is one paper that has has a non-numeric page number
+marks = TestPaper(
+    url="https://ui.adsabs.harvard.edu/abs/2012A%26A...543A...8M/abstract",
+    bibcode="2012A&A...543A...8M",
+    page="A8",
+)

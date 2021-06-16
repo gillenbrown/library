@@ -212,3 +212,8 @@ def test_get_correct_paper_page_not_on_arxiv():
 def test_get_correct_paper_arxiv_id_not_on_arxiv():
     results = ads_call.get_info(u.bbfh.bibcode)
     assert results["arxiv_id"] == "Not on the arXiv"
+
+
+def test_get_correct_page_nonnumeric_page():
+    results = ads_call.get_info(u.marks.bibcode)
+    assert results["page"] == u.marks.page

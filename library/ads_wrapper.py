@@ -78,7 +78,11 @@ class ADSWrapper(object):
             if "arXiv" in paper.page[0]:
                 page = -1
             else:
-                page = int(paper.page[0])
+                # some papers have integer pages, others have letters
+                try:
+                    page = int(paper.page[0])
+                except ValueError:  # converting letters to an int
+                    page = paper.page[0]
             # some papers don't have an abstract (B2FH for example)
             abstract = paper.abstract
             if abstract is None:

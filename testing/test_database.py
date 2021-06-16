@@ -262,6 +262,11 @@ def test_added_not_on_arxiv_paper_has_correct_arxiv_id(db_empty):
     )
 
 
+def test_added_nonnumeric_page_paper_has_correct_page(db_empty):
+    db_empty.add_paper(u.marks.bibcode)
+    assert db_empty.get_paper_attribute(u.marks.bibcode, "page") == u.marks.page
+
+
 def test_added_paper_returns_correct_bibcode(db_empty):
     test_bibcode = db_empty.add_paper(u.mine.ads_url)
     assert db_empty.get_paper_attribute(u.mine.bibcode, "bibcode") == test_bibcode
@@ -425,6 +430,12 @@ def test_cite_string_unpublished(db):
     db.add_paper(u.forbes.bibcode)
     true_cite_string = "Forbes, 2020, arXiv:2003.14327"
     assert db.get_cite_string(u.forbes.bibcode) == true_cite_string
+
+
+def test_cite_string_nonnumeric_page(db):
+    db.add_paper(u.marks.bibcode)
+    true_cite_string = "Marks, Kroupa, 2012, Astronomy and Astrophysics, 543, A8"
+    assert db.get_cite_string(u.marks.bibcode) == true_cite_string
 
 
 def test_can_add_new_tag_column_and_it_is_false_for_all_papers(db):
