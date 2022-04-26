@@ -273,11 +273,12 @@ class Database(object):
 
         # treat unpublished papers differently than published ones
         if self.get_paper_attribute(bibcode, "page") == -1:  # this is unpublished
-            return (
-                f"{authors_str}, "
-                f"{year}, "
-                f"arXiv:{self.get_paper_attribute(bibcode, 'arxiv_id')}"
-            )
+            # Include the arXiv ID if it's there, otherwise don't include that at all
+            arxiv_id = self.get_paper_attribute(bibcode, "arxiv_id")
+            if arxiv_id == "Not on the arXiv":
+                return f"{authors_str}, {year}"
+            else:
+                return f"{authors_str}, {year}, arXiv:{arxiv_id}"
 
         # implicit else clause here since we return inside the if loop. This handles
         # published papers

@@ -438,6 +438,12 @@ def test_cite_string_nonnumeric_page_and_a_and_a_journal_shortened(db):
     assert db.get_cite_string(u.marks.bibcode) == true_cite_string
 
 
+def test_cite_string_no_page_no_arxiv(db):
+    db.add_paper(u.grasha_thesis.bibcode)
+    true_cite_string = "Grasha, 2018"
+    assert db.get_cite_string(u.grasha_thesis.bibcode) == true_cite_string
+
+
 def test_can_add_new_tag_column_and_it_is_false_for_all_papers(db):
     db.add_new_tag("test_tag")
     for bibcode in db.get_all_bibcodes():
