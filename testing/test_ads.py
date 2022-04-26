@@ -34,6 +34,11 @@ def test_cache_no_extra_queries_for_same_full_info_from_bibcode_query():
     assert queries_new == queries_start
 
 
+# ======================================================================================
+#
+# Test getting bibcodes from various URLs
+#
+# ======================================================================================
 def test_get_correct_bibcode_from_ads_url():
     bibcode = ads_call.get_bibcode(u.mine.ads_url)
     assert bibcode == u.mine.bibcode
@@ -79,6 +84,11 @@ def test_raises_error_for_unrecognized_identifier():
         ads_call.get_bibcode("www.wrong.com")
 
 
+# ======================================================================================
+#
+# Test getting various paper attributes from bibcodes
+#
+# ======================================================================================
 def test_get_correct_paper_title():
     results = ads_call.get_info(u.mine.bibcode)
     assert results["title"] == u.mine.title
@@ -217,3 +227,8 @@ def test_get_correct_paper_arxiv_id_not_on_arxiv():
 def test_get_correct_page_nonnumeric_page():
     results = ads_call.get_info(u.marks.bibcode)
     assert results["page"] == u.marks.page
+
+
+def test_get_correct_page_when_no_page():
+    results = ads_call.get_info(u.grasha_thesis.bibcode)
+    assert results["page"] == u.grasha_thesis.page

@@ -234,3 +234,9 @@ marks = TestPaper(
     bibcode="2012A&A...543A...8M",
     page="A8",
 )
+
+grasha_thesis = TestPaper(
+    url="https://ui.adsabs.harvard.edu/abs/2018PhDT........36G/abstract",
+    bibcode="2018PhDT........36G",
+    page=-1,
+)

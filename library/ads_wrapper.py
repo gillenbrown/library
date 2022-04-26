@@ -74,8 +74,9 @@ class ADSWrapper(object):
                 volume = -1
             else:
                 volume = int(paper.volume)
-            # page might be an arXiv string, which means it's unpublished
-            if "arXiv" in paper.page[0]:
+            # Some things, like PhD theses, have no page at all returned by ADS.
+            # Also, the page might be an arXiv string, which means it's unpublished.
+            if paper.page is None or "arXiv" in paper.page[0]:
                 page = -1
             else:
                 # some papers have integer pages, others have letters
