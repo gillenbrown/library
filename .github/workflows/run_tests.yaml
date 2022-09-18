@@ -7,6 +7,8 @@ jobs:
       ADS_DEV_KEY: ${{ secrets.ADS_DEV_KEY }}
     steps:
       - uses: actions/checkout@v3
+      # use XVFB to make qt tests headless
+      - uses: GabrielBB/xvfb-action@v1
       # installation of needed libraries for Qt
       # https://github.com/pytest-dev/pytest-qt/issues/266
       # Also here:
@@ -22,10 +24,7 @@ jobs:
       - run: pip install pytest
       - run: pip install pytest-cov
       - run: pip install pytest-qt
-      # use XVFB to make qt tests headless
-      - uses: GabrielBB/xvfb-action@v1
-      - with:
-        - run: pytest --cov=library --cov=testing
+      - run: pytest --cov=library --cov=testing
   black:
     runs-on: ubuntu-latest
     steps:
