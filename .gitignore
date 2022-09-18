@@ -1,8 +1,10 @@
 # user's data
 USER_DATA_DO_NOT_DELETE.db
 
-# pycharm junk
+# pycharm and vscode junk
 .idea
+.env
+.vscode
 
 # extra directories
 *__pycache__
