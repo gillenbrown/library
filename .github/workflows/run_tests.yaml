@@ -5,8 +5,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '14'
-      - run: npm install -g bats
-      - run: bats -v
+      - run: - pip install -e .
+      - run: pip install pytest
+      - run: pip install pytest-cov
+      - run: pip install pytest-qt
+      
+      - run: - pytest --cov=library --cov=testing
+  black:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: pip install black
+      - run: black --check library testing setup.py run.py
