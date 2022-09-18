@@ -10,6 +10,7 @@ jobs:
       - uses: jurplel/install-qt-action@v3
       - run: pip install -e .
       - run: pip install pytest
+      - run: pip install coverage
       - run: pip install pytest-qt
       - name: pytest
         uses: GabrielBB/xvfb-action@v1
