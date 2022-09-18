@@ -20,16 +20,7 @@ jobs:
         uses: jurplel/install-qt-action@v3
       - name: install library
         run: pip install -e .[test]
-      - name: install coverage
-        run: pip install coverage
       - name: run pytest
         uses: GabrielBB/xvfb-action@v1
         with:
-          run: coverage run -m pytest
-      - name: make lcov file for Coveralls upload
-        run: coverage lcov -i
-      - name: upload to Coveralls
-        uses: coverallsapp/github-action@master
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          path-to-lcov: coverage.lcov
+          run: python -m pytest
