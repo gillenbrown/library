@@ -12,11 +12,10 @@ jobs:
       - run: pip install pytest
       - run: pip install pytest-cov
       - run: pip install pytest-qt
-      - run: pytest --cov=library --cov=testing
-      # - name: run headless test
-      #   uses: GabrielBB/xvfb-action@v1
-      #   with:
-      #     run: pytest --cov=library --cov=testing
+      - name: run headless test
+        uses: GabrielBB/xvfb-action@v1
+        with:
+          run: pytest --cov=library --cov=testing
   black:
     runs-on: ubuntu-latest
     steps:
