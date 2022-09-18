@@ -24,7 +24,8 @@ jobs:
       - run: pip install pytest-qt
       # use XVFB to make qt tests headless
       - uses: GabrielBB/xvfb-action@v1
-      - run: pytest --cov=library --cov=testing
+      - with:
+        - run: pytest --cov=library --cov=testing
   black:
     runs-on: ubuntu-latest
     steps:
