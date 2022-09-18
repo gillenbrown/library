@@ -22,10 +22,8 @@ jobs:
       - run: pip install pytest
       - run: pip install pytest-cov
       - run: pip install pytest-qt
-      # make the display variable work so qt can be headless 
-      # https://stackoverflow.com/questions/60535350/getting-a-core-dumped-python-m-pytest-error-running-pytest-in-jenkins-when
-      - run: sudo xhost +si:localuser:runner
-      - run: export DISPLAY=:0.0 
+      # use XVFB to make qt tests headless
+      - uses: GabrielBB/xvfb-action@v1
       - run: pytest --cov=library --cov=testing
   black:
     runs-on: ubuntu-latest
