@@ -5,11 +5,16 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
     runs-on: ${{ matrix.os }}
     env: 
       ADS_DEV_KEY: ${{ secrets.ADS_DEV_KEY }}
     steps:
       - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
       - uses: jurplel/install-qt-action@v3
       - run: pip install -e .[test]
       - run: pip install coverage
