@@ -1,0 +1,9 @@
+name: black-code-style
+on: [push]
+jobs:
+  black:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: pip install black
+      - run: black --check library testing setup.py run.py
