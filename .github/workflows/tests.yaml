@@ -15,7 +15,10 @@ jobs:
       - name: pytest
         uses: GabrielBB/xvfb-action@v1
         with:
-          run: pytest --cov=library --cov=testing
+          # run: pytest --cov=library --cov=testing
+          run: coverage run -m pytest
+      - name: make lcov
+        run: coverage lcov -i
       - name: Coveralls
         uses: coverallsapp/github-action@master
         with:
