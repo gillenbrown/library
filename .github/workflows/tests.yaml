@@ -4,7 +4,7 @@ jobs:
   tests:
     strategy:
       matrix:
-        os: [ubuntu-latest, mac-latest]
+        os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     env: 
       ADS_DEV_KEY: ${{ secrets.ADS_DEV_KEY }}
