@@ -245,7 +245,7 @@ def test_can_exit_keyboard_shortcut_exit_the_app(qtbot, db, monkeypatch):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
     widget.show()  # needed to activate keyboard shortcuts
-    qtbot.waitForWindowShown(widget)
+    qtbot.waitExposed(widget)
     qtbot.keyPress(widget, "q", Qt.ControlModifier)
 
     assert exit_calls == [1]
