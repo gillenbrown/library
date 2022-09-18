@@ -10,21 +10,25 @@ jobs:
     env: 
       ADS_DEV_KEY: ${{ secrets.ADS_DEV_KEY }}
     steps:
-      - uses: actions/checkout@v3
+      - name: checkout
+        uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      - uses: jurplel/install-qt-action@v3
-      - run: pip install -e .[test]
-      - run: pip install coverage
-      - name: pytest
+      - name: install Qt
+        uses: jurplel/install-qt-action@v3
+      - name: install library
+        run: pip install -e .[test]
+      - name: install coverage
+        run: pip install coverage
+      - name: run pytest
         uses: GabrielBB/xvfb-action@v1
         with:
           run: coverage run -m pytest
-      - name: make lcov
+      - name: make lcov file for Coveralls upload
         run: coverage lcov -i
-      - name: Coveralls
+      - name: upload to Coveralls
         uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
