@@ -518,3 +518,31 @@ def test_delete_paper_removes_correct_one(db):
     # test that the paper left is not mine
     with pytest.raises(ValueError):
         db.get_paper_attribute(u.mine.bibcode, "title")
+
+
+def test_delete_tag_removed_from_db(db):
+    db.add_new_tag("test_tag")
+    assert db.get_all_tags() == ["test_tag"]
+    db.delete_tag("test_tag")
+    assert db.get_all_tags() == []
+
+
+def test_delete_tag_raises_error_if_not_exist(db):
+    with pytest.raises(ValueError):
+        db.delete_tag("test_tag")
+
+
+def test_delete_nonexistent_tag_doesnt_mess_up_others(db):
+    tags = ["1", "2", "3", "A", "B", "C"]
+    for t in tags:
+        db.add_new_tag(t)
+    with pytest.raises(ValueError):
+        db.delete_tag("test_tag")
+    assert db.get_all_tags() == tags
+
+
+def test_delete_tag_removes_it_from_papers(db):
+    db.add_new_tag("test_tag")
+    db.tag_paper(u.mine.bibcode, "test_tag")
+    db.delete_tag("test_tag")
+    assert db.get_paper_tags(u.mine.bibcode) == []

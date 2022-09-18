@@ -351,6 +351,20 @@ class Database(object):
         except sqlite3.OperationalError:  # will happen if the tag is already in there
             raise ValueError("Tag already in database!")
 
+    def delete_tag(self, tag_name):
+        """
+        Remove a tag from the database
+
+        :param tag_name: The name of the tag to be removed
+        :type tag_name: str
+        :return: None
+        """
+        internal_tag = self._to_internal_tag_name(tag_name)
+        try:
+            self._execute(f"ALTER TABLE papers DROP COLUMN {internal_tag}")
+        except sqlite3.OperationalError:  # will happen if this tag does not exist
+            raise ValueError("Tag does not exist!")
+
     def paper_has_tag(self, bibcode, tag_name):
         """
         See if a paper has a given tag.
