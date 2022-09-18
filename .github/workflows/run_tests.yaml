@@ -7,17 +7,7 @@ jobs:
       ADS_DEV_KEY: ${{ secrets.ADS_DEV_KEY }}
     steps:
       - uses: actions/checkout@v3
-      # installation of needed libraries for Qt
-      # https://github.com/pytest-dev/pytest-qt/issues/266
-      # Also here:
-      #https://github.com/qutebrowser/qutebrowser/issues/5237#issuecomment-625448697
-      - run: sudo apt-get install -y libxkbcommon-x11-0
-      - run: sudo apt-get install -y libxcb-icccm4
-      - run: sudo apt-get install -y libxcb-image0
-      - run: sudo apt-get install -y libxcb-keysyms1
-      - run: sudo apt-get install -y libxcb-randr0
-      - run: sudo apt-get install -y libxcb-render-util0
-      - run: sudo apt-get install -y libxcb-xinerama0
+      - uses: jurplel/install-qt-action@v3
       - run: pip install -e .
       - run: pip install pytest
       - run: pip install pytest-cov
