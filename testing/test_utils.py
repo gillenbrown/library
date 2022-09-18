@@ -1,6 +1,6 @@
 # Have a class to store the various attributes to test
 # stolen from https://stackoverflow.com/a/23689767
-class TestPaper(dict):
+class PaperDict(dict):
     """dot.notation access to dictionary attributes"""
 
     __getattr__ = dict.get
@@ -9,7 +9,7 @@ class TestPaper(dict):
 
 
 # Use my paper as the main testing paper.
-mine = TestPaper(
+mine = PaperDict(
     bibcode="2018ApJ...864...94B",
     ads_url="https://ui.adsabs.harvard.edu/abs/2018ApJ...864...94B/abstract",
     arxiv_id="1804.09819",
@@ -71,7 +71,7 @@ mine = TestPaper(
 )
 
 # Also use Tremonti et al. 2004 as a test paper
-tremonti = TestPaper(
+tremonti = PaperDict(
     bibcode="2004ApJ...613..898T",
     title=(
         "The Origin of the Mass-Metallicity Relation: Insights from 53,000 "
@@ -144,7 +144,7 @@ tremonti = TestPaper(
 )
 
 # John Forbes has a paper that's on the arXiv only, with no journal
-forbes = TestPaper(
+forbes = PaperDict(
     url="https://ui.adsabs.harvard.edu/abs/2020arXiv200314327F/abstract",
     bibcode="2020arXiv200314327F",
     arxiv_id="2003.14327",
@@ -154,7 +154,7 @@ forbes = TestPaper(
     bibtex=(
         "@ARTICLE{2020arXiv200314327F,\n"
         "       author = {{Forbes}, John C.},\n"
-        '        title = "{A PDF PSA, or Never gonna set\_xscale again -- guilty '
+        '        title = "{A PDF PSA, or Never gonna set\\_xscale again -- guilty '
         'feats with logarithms}",\n'
         "      journal = {arXiv e-prints},\n"
         "     keywords = {Astrophysics - Cosmology and Nongalactic Astrophysics, "
@@ -188,7 +188,7 @@ forbes = TestPaper(
 )
 
 # BBFH was before the arXiv, so it has no arXiv info
-bbfh = TestPaper(
+bbfh = PaperDict(
     url="https://ui.adsabs.harvard.edu/abs/1957RvMP...29..547B/abstract",
     bibcode="1957RvMP...29..547B",
     title="Synthesis of the Elements in Stars",
@@ -223,19 +223,19 @@ bbfh = TestPaper(
 
 # Krumholz 2019 review is a test of Annual Reviews, which has an at symbol, which
 # causes issues
-krumholz = TestPaper(
+krumholz = PaperDict(
     url="https://ui.adsabs.harvard.edu/abs/2019ARA%26A..57..227K/abstract",
     bibcode="2019ARA&A..57..227K",
 )
 
 # Marks Kroupa 2012 is one paper that has has a non-numeric page number
-marks = TestPaper(
+marks = PaperDict(
     url="https://ui.adsabs.harvard.edu/abs/2012A%26A...543A...8M/abstract",
     bibcode="2012A&A...543A...8M",
     page="A8",
 )
 
-grasha_thesis = TestPaper(
+grasha_thesis = PaperDict(
     url="https://ui.adsabs.harvard.edu/abs/2018PhDT........36G/abstract",
     bibcode="2018PhDT........36G",
     page=-1,
