@@ -1,4 +1,5 @@
 [![Tests](https://github.com/gillenbrown/library/actions/workflows/tests.yaml/badge.svg)](https://github.com/gillenbrown/library/actions/workflows/tests.yaml)
+[![Coverage Status](https://coveralls.io/repos/github/gillenbrown/library/badge.svg)](https://coveralls.io/github/gillenbrown/library)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Black Code Style](https://github.com/gillenbrown/library/actions/workflows/black-code-style.yaml/badge.svg)](https://github.com/gillenbrown/library/actions/workflows/black-code-style.yaml)
 
