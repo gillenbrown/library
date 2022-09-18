@@ -1,4 +1,4 @@
-name: black-code-style
+name: Black Code Style
 on: [push]
 jobs:
   black:
