@@ -19,8 +19,6 @@ jobs:
         uses: jurplel/install-qt-action@v3
       - name: install library
         run: pip install -e .[test]
-      - name: install coverage
-        run: pip install coverage
       - name: run pytest
         uses: GabrielBB/xvfb-action@v1
         with:
