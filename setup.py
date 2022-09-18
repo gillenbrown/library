@@ -7,5 +7,6 @@ setup(
     author_email="gillenbrown@gmail.com",
     packages=find_packages(exclude=["testing"]),
     install_requires=["ads", "pyside2"],
+    extras_require={"test": ["pytest", "pytest-qt"]},
     python_requires=">=3.7",
 )
