@@ -3,6 +3,11 @@ import contextlib
 
 from library import ads_wrapper
 
+# validate that SQLite is of an appropriate version. I need at least 3.35.0 to use the
+# syntax to delete columns
+assert int(sqlite3.sqlite_version.split(".")[0]) >= 3
+assert int(sqlite3.sqlite_version.split(".")[1]) >= 35
+
 # set up the ADS wrapper object that will be used by the Library
 ads_call = ads_wrapper.ADSWrapper()
 
@@ -361,13 +366,10 @@ class Database(object):
         """
         internal_tag = self._to_internal_tag_name(tag_name)
         try:
-            # This syntax requires sqlite3>=3.35.0
+            # This syntax requires sqlite3>=3.35.0. I checked this at the top
             self._execute(f"ALTER TABLE papers DROP COLUMN {internal_tag}")
         except sqlite3.OperationalError:  # will happen if this tag does not exist
-            # may also raise because of syntax error on old version of sqlite3.
-
-            raise RuntimeError(sqlite3.sqlite_version)
-            # raise ValueError("Tag does not exist!")
+            raise ValueError("Tag does not exist!")
 
     def paper_has_tag(self, bibcode, tag_name):
         """
