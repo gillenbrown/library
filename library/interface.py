@@ -482,7 +482,14 @@ class TagsListScrollArea(ScrollArea):
     a button to show all papers.
     """
 
-    def __init__(self, addTagBar, papersList):
+    def __init__(
+        self,
+        addTagBar,
+        papersList,
+        firstDeleteTagEntry,
+        secondDeleteTagButton,
+        secondDeleteTagCancelButton,
+    ):
         """
         Set up the papers list, no parameters needed
         """
@@ -497,6 +504,9 @@ class TagsListScrollArea(ScrollArea):
 
         # put the tag bar at the top of the list
         self.addWidget(self.addTagBar)  # calls ScrollArea addWidget
+        self.addWidget(firstDeleteTagEntry)
+        self.addWidget(secondDeleteTagButton)
+        self.addWidget(secondDeleteTagCancelButton)
         self.addWidget(self.showAllButton)
 
     def addTag(self, tag):
@@ -604,7 +614,32 @@ class MainWindow(QMainWindow):
         addTagBar.setFont(QFont("Cabin", 14))
         addTagBar.setPlaceholderText("Add a new tag here")
         addTagBar.returnPressed.connect(self.addTag)
-        self.tagsList = TagsListScrollArea(addTagBar, self.papersList)
+
+        # Then set up the buttons to remove tags. We'll have three buttons. The first
+        # will be a text entry box for the user to specify which tag to delete, then
+        # a confirm and cancel button
+        self.firstDeleteTagEntry = QLineEdit()
+        self.firstDeleteTagEntry.setPlaceholderText(
+            "Enter a tag's name here to delete it"
+        )
+        self.firstDeleteTagEntry.returnPressed.connect(self.revealSecondDeleteButton)
+        self.secondDeleteTagButton = QPushButton("")
+        self.secondDeleteTagButton.clicked.connect(self.confirmTagDeletion)
+        self.secondDeleteTagButton.setStyleSheet("background-color: #FFCCCC;")
+        self.secondDeleteTagButton.hide()
+        self.secondDeleteTagCancelButton = QPushButton("")
+        self.secondDeleteTagCancelButton.clicked.connect(self.cancelTagDeletion)
+        self.secondDeleteTagCancelButton.setStyleSheet("background-color: #FFCCCC;")
+        self.secondDeleteTagCancelButton.hide()
+
+        # Then set up the final tagsList object
+        self.tagsList = TagsListScrollArea(
+            addTagBar,
+            self.papersList,
+            self.firstDeleteTagEntry,
+            self.secondDeleteTagButton,
+            self.secondDeleteTagCancelButton,
+        )
         for t in self.db.get_all_tags():
             self.tagsList.addTag(LeftPanelTag(t, self.papersList))
 
@@ -688,6 +723,65 @@ class MainWindow(QMainWindow):
         # if we got here we had no error, so it was successfully added and we should
         # clear the text box
         self.tagsList.addTagBar.clear()
+
+    def revealSecondDeleteButton(self):
+        """
+        When the first tag deletion entry is entered, figure out what to do.
+
+        If the entry is a valid tag, show the next two buttons. Otherwise reset it.
+        :return: None
+        """
+        # check that the entered text is valid. If not, reset
+        tag_to_delete = self.firstDeleteTagEntry.text()
+        if tag_to_delete not in self.db.get_all_tags():
+            self.cancelTagDeletion()
+            return
+        # if it is valid, show the next button and put the appropriate text on them
+        self.firstDeleteTagEntry.hide()
+        self.secondDeleteTagButton.show()
+        self.secondDeleteTagButton.setText(
+            f'Click to confirm deletion of tag "{tag_to_delete}"'
+        )
+        self.secondDeleteTagCancelButton.show()
+        self.secondDeleteTagCancelButton.setText(
+            f'Click to cancel the deletion of tag "{tag_to_delete}"'
+        )
+
+    def confirmTagDeletion(self):
+        """
+        Delete a tag from the database
+
+        This assumes that the text in the firstDeleteTagEntry is a valid tag. That
+        should be error checked previously, as we shouldn't let the user confirm the
+        deletion of an invalid tag.
+
+        :return: None
+        """
+        tag_to_delete = self.firstDeleteTagEntry.text()
+        # delete from database
+        self.db.delete_tag(tag_to_delete)
+        # find the tag to remove it from the interface
+        for tag in self.tagsList.tags:
+            if tag.text() == tag_to_delete:
+                tag.hide()  # just to be safe
+                self.tagsList.tags.remove(tag)
+                del tag
+        # then reset the boxes
+        self.cancelTagDeletion()
+
+    def cancelTagDeletion(self):
+        """
+        Reset the tag cancel buttons.
+
+        This can be done after deleting a tag or if that deletion is cancelled, since
+        in either version we want to reset the buttons.
+
+        :return: None
+        """
+        self.firstDeleteTagEntry.show()
+        self.firstDeleteTagEntry.setText("")
+        self.secondDeleteTagButton.hide()
+        self.secondDeleteTagCancelButton.hide()
 
 
 def get_fonts(directory, current_list):
