@@ -5,7 +5,9 @@ name: Coverage
 on: [push]
 jobs:
   coverage:
-    runs-on: ubuntu-latest
+    # I would like to use ubuntu-latest, but it uses 20.04, which has an older
+    # version of SQLite that does not support removing columns.
+    runs-on: ubuntu-22.04
     env: 
       ADS_DEV_KEY: ${{ secrets.ADS_DEV_KEY }}
     steps:
