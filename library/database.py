@@ -361,9 +361,13 @@ class Database(object):
         """
         internal_tag = self._to_internal_tag_name(tag_name)
         try:
+            # This syntax requires sqlite3>=3.35.0
             self._execute(f"ALTER TABLE papers DROP COLUMN {internal_tag}")
         except sqlite3.OperationalError:  # will happen if this tag does not exist
-            raise ValueError("Tag does not exist!")
+            # may also raise because of syntax error on old version of sqlite3.
+
+            raise RuntimeError(sqlite3.sqlite_version)
+            # raise ValueError("Tag does not exist!")
 
     def paper_has_tag(self, bibcode, tag_name):
         """
