@@ -15,17 +15,21 @@ Then you can install the Pyton application. I haven't yet made a simple executab
 
 ```
 git clone https://github.com/gillenbrown/library.git
-pip install -e .
-```
-If you want to run the tests (to make sure everything works on your system), install it as:
-```
 pip install -e .[test]
 ```
-If you use zsh you'll need quotes: ```pip install -e ".[test]"```. This will also install the dependencies needed to run the tests. To run the test themselves, navigate to the main repository directory and run `python -m pytest`. When the tests run, the interface may appear a few times, but that is temporary and part of the tests. The tests should all pass (I automatically run all tests on both Linux and Mac with Github Actions), but if they don't, reach out and I'll help you figure out what's going wrong. 
+I recommend including the `[test]` flag to install the dependencies needed to run the tests, so you can validate that everything is working on your system (note that if you use zsh, you'll need quotes: ```pip install -e ".[test]"```). To run the tests, navigate to the main repository directory and run 
+```
+python -m pytest
+```
+When the tests run, the interface may appear a few times, but that is temporary and part of the tests. The tests should all pass, but if they don't, reach out and I'll help you figure out what's going wrong. 
 
 # Running the Application
 
-To run the application, simply run the `run.py` script: `python run.py`. You'll probably want to run this in a screen session or just move the process to the background to get your terminal back. 
+To run the application, simply run the `run.py` script: 
+```
+python run.py
+```
+You'll probably want to run this in a screen session or just move the process to the background to get your terminal back. 
 
 # Acknowledgements
 <a href="https://www.flaticon.com/free-icons/book" title="book icons">Book icons created by Icongeek26 - Flaticon</a>
