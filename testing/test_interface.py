@@ -1433,3 +1433,32 @@ def test_done_editing_button_is_hidden_when_paper_clicked(qtbot, db_temp_tags):
     qtbot.mouseClick(widget.papersList.papers[1], Qt.LeftButton)
     # the tag edit checkboxes should all be hidden
     assert widget.rightPanel.doneEditingTagsButton.isHidden()
+
+
+def test_newly_added_tags_appear_in_right_panel(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    # first add a tag
+    qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
+    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    # then look at the tags in the right panel
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton, delay=100)
+    assert "Test Tag" in [t.text() for t in widget.rightPanel.tags]
+
+
+def test_adding_tags_doesnt_duplicate_tags_in_right_panel(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    # first add a tag
+    qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
+    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    # then look at the tags in the right panel
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton, delay=100)
+    assert ["Test Tag"] == [t.text() for t in widget.rightPanel.tags]
+
+    # add another tag, then check again
+    qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag 2")
+    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    # then look at the tags in the right panel
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton, delay=100)
+    assert ["Test Tag", "Test Tag 2"] == [t.text() for t in widget.rightPanel.tags]

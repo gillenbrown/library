@@ -224,14 +224,8 @@ class RightPanel(QWidget):
 
         # the Tags List has a bit of setup
         self.tags = []  # store the tags that are in there
-        vBoxTags = QVBoxLayout()
-        # go through the database and add checkboxes for each tag there.
-        for t in self.db.get_all_tags():
-            this_tag_checkbox = TagCheckBox(t, self)
-            self.tags.append(this_tag_checkbox)
-            vBoxTags.addWidget(this_tag_checkbox)
-            # hide all tags at the beginning
-            this_tag_checkbox.hide()
+        self.vBoxTags = QVBoxLayout()
+        self.populate_tags()
 
         # set text properties
         self.titleText.setFont(QFont("Cabin", 20))
@@ -255,11 +249,30 @@ class RightPanel(QWidget):
         vBox.addWidget(self.tagText)
         vBox.addWidget(self.editTagsButton)
         vBox.addWidget(self.doneEditingTagsButton)
-        vBox.addLayout(vBoxTags)
+        vBox.addLayout(self.vBoxTags)
         vBox.addWidget(self.firstDeletePaperButton)
         vBox.addWidget(self.secondDeletePaperButton)
 
         self.setLayout(vBox)
+
+    def populate_tags(self):
+        """
+        Reset the list of tags shown in the right panel, to account for any new ones
+
+        :return: None
+        """
+        # first clean up the current tags, make sure they're gone from the interface
+        for t in self.tags:
+            t.hide()
+            del t
+        self.tags = []
+        # go through the database and add checkboxes for each tag there.
+        for t in self.db.get_all_tags():
+            this_tag_checkbox = TagCheckBox(t, self)
+            self.tags.append(this_tag_checkbox)
+            self.vBoxTags.addWidget(this_tag_checkbox)
+            # hide all tags at the beginning
+            this_tag_checkbox.hide()
 
     def resetPaperDetails(self):
         """
@@ -295,6 +308,7 @@ class RightPanel(QWidget):
         tagsList = self.db.get_paper_tags(self.bibcode)
         self.tagText.setText(f"Tags: {', '.join(tagsList)}")
         # Go through and set the checkboxes to match the tags the paper has
+        self.populate_tags()
         for tag in self.tags:
             tag.hide()
             if tag.text() in tagsList:
