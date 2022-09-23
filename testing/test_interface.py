@@ -1410,4 +1410,26 @@ def test_invalid_tag_delete_entry_keeps_second_cancel_hidden(qtbot, db_temp_tags
     assert widget.secondDeleteTagCancelButton.isHidden() is True
 
 
-# TODO: make text area wider
+def test_tag_checkboxes_are_hidden_when_paper_clicked(qtbot, db_temp_tags):
+    widget = MainWindow(db_temp_tags)
+    qtbot.addWidget(widget)
+    # click on a paper, then click the edit tags button
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.editTagsButton, Qt.LeftButton)
+    # click on a different paper
+    qtbot.mouseClick(widget.papersList.papers[1], Qt.LeftButton)
+    # the tag edit checkboxes should all be hidden
+    for t in widget.rightPanel.tags:
+        assert t.isHidden()
+
+
+def test_done_editing_button_is_hidden_when_paper_clicked(qtbot, db_temp_tags):
+    widget = MainWindow(db_temp_tags)
+    qtbot.addWidget(widget)
+    # click on a paper, then click the edit tags button
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.editTagsButton, Qt.LeftButton)
+    # click on a different paper
+    qtbot.mouseClick(widget.papersList.papers[1], Qt.LeftButton)
+    # the tag edit checkboxes should all be hidden
+    assert widget.rightPanel.doneEditingTagsButton.isHidden()

@@ -296,6 +296,7 @@ class RightPanel(QWidget):
         self.tagText.setText(f"Tags: {', '.join(tagsList)}")
         # Go through and set the checkboxes to match the tags the paper has
         for tag in self.tags:
+            tag.hide()
             if tag.text() in tagsList:
                 tag.setChecked(True)
             else:
@@ -304,6 +305,7 @@ class RightPanel(QWidget):
         # then make the edit tags and copy Bibtex buttons appear, since they will be
         # hidden at the start
         self.editTagsButton.show()
+        self.doneEditingTagsButton.hide()
         self.copyBibtexButton.show()
         self.firstDeletePaperButton.show()
         # also hide the second button if it was shown
