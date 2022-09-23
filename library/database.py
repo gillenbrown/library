@@ -151,6 +151,11 @@ class Database(object):
         except sqlite3.IntegrityError:
             raise PaperAlreadyInDatabaseError("Already in Library.")
 
+        # Add the unread tag if it's in the database
+        for t in self.get_all_tags():
+            if t.lower() == "unread":
+                self.tag_paper(bibcode, t)
+
         return bibcode
 
     def get_paper_attribute(self, bibcode, attribute):

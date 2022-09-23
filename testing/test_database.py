@@ -546,3 +546,16 @@ def test_delete_tag_removes_it_from_papers(db):
     db.tag_paper(u.mine.bibcode, "test_tag")
     db.delete_tag("test_tag")
     assert db.get_paper_tags(u.mine.bibcode) == []
+
+
+def test_papers_unread_when_added(db_empty):
+    db_empty.add_new_tag("Unread")
+    db_empty.add_paper(u.mine.bibcode)
+    assert db_empty.get_paper_tags(u.mine.bibcode) == ["Unread"]
+
+
+@pytest.mark.parametrize("tag", ["unread", "Unread", "UNREAD", "UnReAd"])
+def test_papers_unread_when_added_capitalization(db_empty, tag):
+    db_empty.add_new_tag(tag)
+    db_empty.add_paper(u.mine.bibcode)
+    assert db_empty.get_paper_tags(u.mine.bibcode) == [tag]
