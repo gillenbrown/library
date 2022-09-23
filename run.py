@@ -2,12 +2,14 @@ import sys
 from pathlib import Path
 
 from PySide2.QtWidgets import QApplication
+from PySide2.QtGui import QIcon
 
 from library import database, interface
 
 if __name__ == "__main__":
+    home_path = Path(__file__).parent.absolute()
     if len(sys.argv) == 1:  # no specified path
-        db_path = Path(__file__).parent.absolute() / "USER_DATA_DO_NOT_DELETE.db"
+        db_path = home_path / "USER_DATA_DO_NOT_DELETE.db"
     else:
         db_path = Path(sys.argv[1]).absolute()
     db = database.Database(db_path)
@@ -17,6 +19,9 @@ if __name__ == "__main__":
 
     # then set up the fonts
     interface.set_up_fonts()
+
+    # set up app icon
+    app.setWindowIcon(QIcon(str(home_path / "icon.png")))
 
     # The MainWindow class holds all the structure
     window = interface.MainWindow(db)
