@@ -6,3 +6,5 @@
 
 # library
 An attempt to implement a citation manager (in the style of ADS Libraries or Mendeney) designed for astronomy.
+
+<a href="https://www.flaticon.com/free-icons/book" title="book icons">Book icons created by Icongeek26 - Flaticon</a>
