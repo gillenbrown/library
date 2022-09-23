@@ -9,7 +9,7 @@ from library import database, interface
 
 # Add this to be sure the interface shows up on Mac
 # https://apple.stackexchange.com/q/413361
-os.environ['QT_MAC_WANTS_LAYER'] = '1'
+os.environ["QT_MAC_WANTS_LAYER"] = "1"
 
 if __name__ == "__main__":
     home_path = Path(__file__).parent.absolute()
