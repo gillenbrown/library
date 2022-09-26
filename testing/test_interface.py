@@ -118,16 +118,14 @@ def test_all_fonts_are_found_by_get_fonts():
 
 
 def test_fonts_are_actually_in_the_font_database_after_set_up_fonts(qtbot):
-    # q tbot is needed to initialize the application
-    fontDb = QFontDatabase()
-
-    assert not fontDb.hasFamily("Lobster")
-    assert not fontDb.hasFamily("Cabin")
+    # qtbot is needed to initialize the application
+    assert not QFontDatabase.hasFamily("Lobster")
+    assert not QFontDatabase.hasFamily("Cabin")
 
     set_up_fonts()
 
-    assert fontDb.hasFamily("Lobster")
-    assert fontDb.hasFamily("Cabin")
+    assert QFontDatabase.hasFamily("Lobster")
+    assert QFontDatabase.hasFamily("Cabin")
 
 
 def test_window_initial_width(qtbot, empty_db):
