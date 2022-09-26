@@ -33,7 +33,7 @@ class LeftPanelTag(QLabel):
     Class holding a tag that goes in the left panel
     """
 
-    def __init__(self, tagName, papersList):
+    def __init__(self, tagName, papersList, tagsList):
         """
         Initialize a tag that goes in the left panel.
 
@@ -44,11 +44,16 @@ class LeftPanelTag(QLabel):
         :type tagName: str
         :param papersList: Papers list objects
         :type papersList: PapersListScrollArea
+        :param tagsList: The parent list of tags.
+        :type tagsList: TagsListScrollArea
         """
         QLabel.__init__(self, tagName)
         self.name = tagName
         self.setFont(QFont("Cabin", 14))
         self.papersList = papersList
+        self.tagsList = tagsList
+        # this starts unhighlighted
+        self.unhighlight()
 
     def mousePressEvent(self, _):
         """
@@ -64,10 +69,42 @@ class LeftPanelTag(QLabel):
             else:
                 paper.hide()
 
+        # Visually highlight this tag, and remove highlighting on other tags
+        for tag in self.tagsList.tags:
+            tag.unhighlight()
+        self.tagsList.showAllButton.unhighlight()
+        self.highlight()
+
+    def highlight(self):
+        """
+        Visually highlight this tag
+
+        :return: None
+        """
+        self.setStyleSheet("background-color: #CCCCCC;")
+
+    def unhighlight(self):
+        """
+        Remove the visual highlighting for this tag
+
+        :return: None
+        """
+        self.setStyleSheet("background-color: #ECECEC;")
+
 
 class LeftPanelTagShowAll(LeftPanelTag):
-    def __init__(self, papersList):
-        super().__init__("All Papers", papersList)
+    def __init__(self, papersList, tagsList):
+        """
+        Create the button to show all papers, regardless of tag
+
+        :param papersList: Papers list objects
+        :type papersList: PapersListScrollArea
+        :param tagsList: The parent list of tags.
+        :type tagsList: TagsListScrollArea
+        """
+        super().__init__("All Papers", papersList, tagsList)
+        # this starts highlighted
+        self.highlight()
 
     def mousePressEvent(self, _):
         """
@@ -77,6 +114,10 @@ class LeftPanelTagShowAll(LeftPanelTag):
         """
         for paper in self.papersList.papers:
             paper.show()
+        # Visually highlight this tag, and remove highlighting on other tags
+        for tag in self.tagsList.tags:
+            tag.unhighlight()
+        self.highlight()
 
 
 class Paper(QWidget):
@@ -532,7 +573,7 @@ class TagsListScrollArea(ScrollArea):
         self.papersList = papersList
 
         # Make the button to show all the papers in the list
-        self.showAllButton = LeftPanelTagShowAll(papersList)
+        self.showAllButton = LeftPanelTagShowAll(papersList, self)
 
         # put the tag bar at the top of the list
         self.addWidget(self.addTagButton)  # calls ScrollArea addWidget
@@ -683,7 +724,7 @@ class MainWindow(QMainWindow):
             self.thirdDeleteTagCancelButton,
         )
         for t in self.db.get_all_tags():
-            self.tagsList.addTag(LeftPanelTag(t, self.papersList))
+            self.tagsList.addTag(LeftPanelTag(t, self.papersList, self.tagsList))
 
         # then add each of these widgets to the central splitter
         splitter.addWidget(self.tagsList)
@@ -767,7 +808,7 @@ class MainWindow(QMainWindow):
         try:
             tagName = self.addTagBar.text()
             self.db.add_new_tag(tagName)
-            self.tagsList.addTag(LeftPanelTag(tagName, self.papersList))
+            self.tagsList.addTag(LeftPanelTag(tagName, self.papersList, self.tagsList))
         except ValueError:  # this tag is already in the database
             return
 

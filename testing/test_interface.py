@@ -803,7 +803,7 @@ def test_duplicate_in_internal_tags_list_raises_error(qtbot, db_temp):
     qtbot.addWidget(widget)
     qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
     qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
-    new_tag = LeftPanelTag("Test Tag", widget.papersList)
+    new_tag = LeftPanelTag("Test Tag", widget.papersList, widget.tagsList)
     with pytest.raises(AssertionError):
         widget.tagsList.addTag(new_tag)
 
@@ -898,6 +898,69 @@ def test_clicking_on_tag_in_left_panel_hides_papers(qtbot, db):
             assert paper.isHidden() is False
         else:
             assert paper.isHidden() is True
+
+
+def test_show_all_tags_button_starts_highlighted(qtbot, db_temp_tags):
+    widget = MainWindow(db_temp_tags)
+    qtbot.addWidget(widget)
+    # get a tag from the left panel to click on
+    assert widget.tagsList.showAllButton.styleSheet() == "background-color: #CCCCCC;"
+
+
+def test_all_tags_start_unhighlighted(qtbot, db_temp_tags):
+    widget = MainWindow(db_temp_tags)
+    qtbot.addWidget(widget)
+    # get a tag from the left panel to click on
+    for tag in widget.tagsList.tags:
+        assert tag.styleSheet() == "background-color: #ECECEC;"
+
+
+def test_clicking_on_tag_in_left_panel_highlights_tag_text(qtbot, db_temp_tags):
+    widget = MainWindow(db_temp_tags)
+    qtbot.addWidget(widget)
+    # get a tag from the left panel to click on
+    tag = widget.tagsList.tags[0]
+    qtbot.mouseClick(tag, Qt.LeftButton)
+    assert tag.styleSheet() == "background-color: #CCCCCC;"
+
+
+def test_clicking_on_show_all_in_left_panel_highlights_tag_text(qtbot, db_temp_tags):
+    widget = MainWindow(db_temp_tags)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.tagsList.showAllButton, Qt.LeftButton)
+    assert widget.tagsList.showAllButton.styleSheet() == "background-color: #CCCCCC;"
+
+
+def test_clicking_on_tag_in_left_panel_unlights_others(qtbot, db_temp_tags):
+    widget = MainWindow(db_temp_tags)
+    qtbot.addWidget(widget)
+    # Click on one tag, then another
+    for tag in widget.tagsList.tags:
+        qtbot.mouseClick(tag, Qt.LeftButton)
+        for tag_comp in widget.tagsList.tags:
+            if tag.text() == tag_comp.text():
+                assert tag_comp.styleSheet() == "background-color: #CCCCCC;"
+            else:
+                assert tag_comp.styleSheet() == "background-color: #ECECEC;"
+
+
+def test_clicking_on_show_all_in_left_panel_unlights_others(qtbot, db_temp_tags):
+    widget = MainWindow(db_temp_tags)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.tagsList.showAllButton, Qt.LeftButton)
+    for tag in widget.tagsList.tags:
+        assert tag.styleSheet() == "background-color: #ECECEC;"
+
+
+def test_newly_added_tag_is_unhighlighted(qtbot, db_temp_tags):
+    widget = MainWindow(db_temp_tags)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.tagsList.addTagBar, "newly added tag")
+    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    for tag in widget.tagsList.tags:
+        if tag.text() == "newly added tag":
+            assert tag.styleSheet() == "background-color: #ECECEC;"
 
 
 def test_show_all_button_fontsize(qtbot, db):
