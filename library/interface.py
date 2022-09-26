@@ -646,19 +646,26 @@ class MainWindow(QMainWindow):
         # a confirm and cancel button
         self.firstDeleteTagButton = QPushButton("Delete a tag")
         self.firstDeleteTagButton.clicked.connect(self.revealSecondTagDeleteEntry)
+        self.firstDeleteTagButton.setFont(QFont("Cabin", 14))
+
         self.secondDeleteTagEntry = QLineEdit()
         self.secondDeleteTagEntry.setPlaceholderText("Tag to delete")
         self.secondDeleteTagEntry.returnPressed.connect(
             self.revealThirdTagDeleteButtons
         )
+        self.secondDeleteTagEntry.setFont(QFont("Cabin", 14))
         self.secondDeleteTagEntry.hide()
+
         self.thirdDeleteTagButton = QPushButton("")
         self.thirdDeleteTagButton.clicked.connect(self.confirmTagDeletion)
         self.thirdDeleteTagButton.setStyleSheet("background-color: #FFCCCC;")
+        self.thirdDeleteTagButton.setFont(QFont("Cabin", 14))
         self.thirdDeleteTagButton.hide()
+
         self.thirdDeleteTagCancelButton = QPushButton("")
         self.thirdDeleteTagCancelButton.clicked.connect(self.cancelTagDeletion)
         self.thirdDeleteTagCancelButton.setStyleSheet("background-color: #FFCCCC;")
+        self.thirdDeleteTagCancelButton.setFont(QFont("Cabin", 14))
         self.thirdDeleteTagCancelButton.hide()
 
         # Then set up the final tagsList object

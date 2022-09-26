@@ -1234,6 +1234,18 @@ def test_first_delete_tag_button_shown_at_beginning(qtbot, db_temp_tags):
     assert widget.firstDeleteTagButton.isHidden() is False
 
 
+def test_first_delete_tag_button_has_correct_font_size(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    qtbot.addWidget(widget)
+    assert widget.firstDeleteTagButton.font().pointSize() == 14
+
+
+def test_first_delete_tag_button_has_correct_font_family(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    qtbot.addWidget(widget)
+    assert widget.firstDeleteTagButton.font().family() == "Cabin"
+
+
 def test_first_delete_tag_button_has_correct_text(qtbot, db_temp_tags):
     widget = MainWindow(db_temp_tags)
     qtbot.addWidget(widget)
@@ -1258,6 +1270,20 @@ def test_clicking_first_tag_delete_button_hides_first_button(qtbot, db_temp_tags
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     assert widget.firstDeleteTagButton.isHidden() is True
+
+
+def test_second_delete_tag_button_has_correct_font_size(qtbot, db_temp_tags):
+    widget = MainWindow(db_temp_tags)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
+    assert widget.secondDeleteTagEntry.font().pointSize() == 14
+
+
+def test_second_delete_tag_button_has_correct_font_family(qtbot, db_temp_tags):
+    widget = MainWindow(db_temp_tags)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
+    assert widget.secondDeleteTagEntry.font().family() == "Cabin"
 
 
 def test_second_delete_tag_entry_has_placeholder_text(qtbot, db_temp_tags):
@@ -1307,6 +1333,42 @@ def test_third_delete_tag_cancel_button_appears_when_first_entry_done(
     qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
     assert widget.thirdDeleteTagCancelButton.isHidden() is False
+
+
+def test_third_delete_tag_button_has_correct_font_size(qtbot, db_temp_tags):
+    widget = MainWindow(db_temp_tags)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
+    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    assert widget.thirdDeleteTagButton.font().pointSize() == 14
+
+
+def test_third_delete_tag_button_has_correct_font_family(qtbot, db_temp_tags):
+    widget = MainWindow(db_temp_tags)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
+    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    assert widget.thirdDeleteTagButton.font().family() == "Cabin"
+
+
+def test_third_delete_tag_cancel_button_has_correct_font_size(qtbot, db_temp_tags):
+    widget = MainWindow(db_temp_tags)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
+    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    assert widget.thirdDeleteTagCancelButton.font().pointSize() == 14
+
+
+def test_third_delete_tag_cancel_button_has_correct_font_family(qtbot, db_temp_tags):
+    widget = MainWindow(db_temp_tags)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
+    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    assert widget.thirdDeleteTagCancelButton.font().family() == "Cabin"
 
 
 def test_third_delete_tag_button_is_red(qtbot, db_temp_tags):
