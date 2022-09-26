@@ -650,28 +650,70 @@ def test_get_tags_from_paper_object_is_correct(qtbot, db):
     assert paper.getTags() == db.get_paper_tags(paper.bibcode)
 
 
+def test_add_tag_button_is_shown_at_beginning(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    qtbot.addWidget(widget)
+    assert widget.tagsList.addTagButton.isHidden() is False
+
+
+def test_add_tag_text_button_has_correct_font_size(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    qtbot.addWidget(widget)
+    assert widget.tagsList.addTagButton.font().pointSize() == 14
+
+
+def test_add_tag_text_button_has_correct_font_family(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    qtbot.addWidget(widget)
+    assert widget.tagsList.addTagButton.font().family() == "Cabin"
+
+
+def test_add_tag_text_bar_is_hidden_at_beginning(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    qtbot.addWidget(widget)
+    assert widget.tagsList.addTagBar.isHidden() is True
+
+
+def test_clicking_add_tag_button_hides_button(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
+    assert widget.tagsList.addTagButton.isHidden() is True
+
+
+def test_clicking_add_tag_button_shows_text_entry(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
+    assert widget.tagsList.addTagBar.isHidden() is False
+
+
 def test_add_tag_text_bar_has_correct_font_size(qtbot, empty_db):
     widget = MainWindow(empty_db)
     qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     assert widget.tagsList.addTagBar.font().pointSize() == 14
 
 
 def test_add_tag_text_bar_has_correct_font_family(qtbot, empty_db):
     widget = MainWindow(empty_db)
     qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     assert widget.tagsList.addTagBar.font().family() == "Cabin"
 
 
 def test_add_tag_text_bar_has_correct_placeholder_text(qtbot, empty_db):
     widget = MainWindow(empty_db)
     qtbot.addWidget(widget)
-    text = "Add a new tag here"
+    qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
+    text = "Tag name"
     assert widget.tagsList.addTagBar.placeholderText() == text
 
 
 def test_can_add_tag_by_filling_tag_name_then_pressing_enter(qtbot, db_temp):
     widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
     qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
     assert db_temp.paper_has_tag(u.mine.bibcode, "Test Tag") is False
@@ -680,6 +722,7 @@ def test_can_add_tag_by_filling_tag_name_then_pressing_enter(qtbot, db_temp):
 def test_can_add_tag_to_list_by_filling_tag_name_then_pressing_enter(qtbot, db_temp):
     widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
     qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
     tag_names = [t.name for t in widget.tagsList.tags]
@@ -689,15 +732,35 @@ def test_can_add_tag_to_list_by_filling_tag_name_then_pressing_enter(qtbot, db_t
 def test_tag_name_entry_is_cleared_after_successful_entry(qtbot, db_temp):
     widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
     qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
     # this has been tested to work
     assert widget.tagsList.addTagBar.text() == ""
 
 
+def test_tag_name_entry_is_hidden_after_successful_entry(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
+    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    assert widget.tagsList.addTagBar.isHidden() is True
+
+
+def test_tag_name_button_is_shown_after_successful_entry(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
+    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    assert widget.tagsList.addTagButton.isHidden() is False
+
+
 def test_tag_name_entry_is_not_cleared_after_duplicate_tag_attempt(qtbot, db_temp):
     widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
     qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
     # this has been tested to work and now be clear, so try it again

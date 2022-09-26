@@ -500,6 +500,7 @@ class TagsListScrollArea(ScrollArea):
 
     def __init__(
         self,
+        addTagButton,
         addTagBar,
         papersList,
         firstDeleteTagButton,
@@ -512,6 +513,7 @@ class TagsListScrollArea(ScrollArea):
         """
         ScrollArea.__init__(self)
         self.tags = []
+        self.addTagButton = addTagButton
         self.addTagBar = addTagBar
         self.papersList = papersList
 
@@ -520,7 +522,8 @@ class TagsListScrollArea(ScrollArea):
         self.showAllButton.clicked.connect(self.showAllPapers)
 
         # put the tag bar at the top of the list
-        self.addWidget(self.addTagBar)  # calls ScrollArea addWidget
+        self.addWidget(self.addTagButton)  # calls ScrollArea addWidget
+        self.addWidget(self.addTagBar)
         self.addWidget(firstDeleteTagButton)
         self.addWidget(secondDeleteTagEntry)
         self.addWidget(thirdDeleteTagButton)
@@ -628,10 +631,14 @@ class MainWindow(QMainWindow):
         # The left panel of this is the list of tags the user has, plus the button to
         # add papers, which will go at the top of that list. This has to go after the
         # center panel since the tags need to access the paper list
-        addTagBar = QLineEdit()
-        addTagBar.setFont(QFont("Cabin", 14))
-        addTagBar.setPlaceholderText("Add a new tag here")
-        addTagBar.returnPressed.connect(self.addTag)
+        self.addTagButton = QPushButton("Add a tag")
+        self.addTagButton.setFont(QFont("Cabin", 14))
+        self.addTagButton.clicked.connect(self.showAddTagBar)
+        self.addTagBar = QLineEdit()
+        self.addTagBar.setFont(QFont("Cabin", 14))
+        self.addTagBar.setPlaceholderText("Tag name")
+        self.addTagBar.returnPressed.connect(self.addTag)
+        self.addTagBar.hide()
 
         # Then set up the buttons to remove tags. We'll have four buttons. The first
         # will be a button to click to start the process of deleting a tag. Next
@@ -656,7 +663,8 @@ class MainWindow(QMainWindow):
 
         # Then set up the final tagsList object
         self.tagsList = TagsListScrollArea(
-            addTagBar,
+            self.addTagButton,
+            self.addTagBar,
             self.papersList,
             self.firstDeleteTagButton,
             self.secondDeleteTagEntry,
@@ -726,6 +734,15 @@ class MainWindow(QMainWindow):
         # clear the text so another paper can be added
         self.searchBar.clear()
 
+    def showAddTagBar(self):
+        """
+        When the add tag button is clicked, hide that and show the text entry bar
+
+        :return: None
+        """
+        self.addTagButton.hide()
+        self.addTagBar.show()
+
     def addTag(self):
         """
         Adds a tag to the database, taking the name from the text box.
@@ -737,15 +754,17 @@ class MainWindow(QMainWindow):
         """
         #
         try:
-            tagName = self.tagsList.addTagBar.text()
+            tagName = self.addTagBar.text()
             self.db.add_new_tag(tagName)
             self.tagsList.addTag(LeftPanelTag(tagName, self.papersList))
         except ValueError:  # this tag is already in the database
             return
 
         # if we got here we had no error, so it was successfully added and we should
-        # clear the text box
-        self.tagsList.addTagBar.clear()
+        # clear the text box and reset the buttons
+        self.addTagBar.clear()
+        self.addTagBar.hide()
+        self.addTagButton.show()
 
     def revealSecondTagDeleteEntry(self):
         """
