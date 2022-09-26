@@ -1,0 +1,39 @@
+QPushButton {
+    background-color: #ECECEC;
+    font-family: Cabin;
+    font-size: 14pt;
+}
+
+QLabel {
+    font-family: Cabin;
+    font-size: 14pt;
+}
+
+QLabel#big_title {
+    font-family: Lobster;
+    font-size: 40pt;
+}
+
+QLabel#center_panel_paper_title{
+    font-size: 16pt
+}
+
+QLabel#center_panel_cite_string{
+    font-size: 12pt
+}
+
+QLabel#right_panel_paper_title{
+    font-size: 20pt
+}
+
+QLabel#right_panel_cite_text{
+    font-size: 16pt
+}
+
+QLabel#right_panel_abstract_text{
+    font-size: 14pt
+}
+
+QLabel#right_panel_tagText{
+    font-size: 14pt
+}

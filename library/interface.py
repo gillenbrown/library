@@ -151,10 +151,11 @@ class Paper(QWidget):
         # Then set up the layout this uses. It will be vertical with the title (for now)
         vBox = QVBoxLayout()
         self.titleText = QLabel(self.db.get_paper_attribute(self.bibcode, "title"))
-        self.titleText.setFont(QFont("Cabin", 16))
-
         self.citeText = QLabel(self.db.get_cite_string(self.bibcode))
-        self.citeText.setFont(QFont("Cabin", 12))
+
+        # name these for stylesheets
+        self.titleText.setObjectName("center_panel_paper_title")
+        self.citeText.setObjectName("center_panel_cite_string")
 
         # then add these to the layout, then set this layout
         vBox.addWidget(self.titleText)
@@ -264,6 +265,12 @@ class RightPanel(QWidget):
         self.firstDeletePaperButton = QPushButton("Delete this paper")
         self.secondDeletePaperButton = QPushButton("Are you sure?")
         self.tagText = QLabel("")
+        # set names for use with stylesheets
+        self.titleText.setObjectName("right_panel_paper_title")
+        self.citeText.setObjectName("right_panel_cite_text")
+        self.abstractText.setObjectName("right_panel_abstract_text")
+        self.tagText.setObjectName("right_panel_tagText")
+
         # have buttons to hide and show the list of tag checkboxes
         self.editTagsButton = QPushButton("Edit Tags")
         self.doneEditingTagsButton = QPushButton("Done Editing Tags")
@@ -281,12 +288,6 @@ class RightPanel(QWidget):
         self.tags = []  # store the tags that are in there
         self.vBoxTags = QVBoxLayout()
         self.populate_tags()
-
-        # set text properties
-        self.titleText.setFont(QFont("Cabin", 20))
-        self.citeText.setFont(QFont("Cabin", 16))
-        self.abstractText.setFont(QFont("Cabin", 14))
-        self.tagText.setFont(QFont("Cabin", 14))
 
         # make delete button red
         self.secondDeletePaperButton.setStyleSheet("background-color: #FFCCCC;")
@@ -615,6 +616,10 @@ class MainWindow(QMainWindow):
         """
         QMainWindow.__init__(self)
 
+        # Set up default stylesheets
+        with open(Path(__file__).parent / "style.qss", "r") as style_file:
+            self.setStyleSheet(style_file.read())
+
         self.db = db
 
         # Start with the layout. Our main layout is three vertical components:
@@ -625,6 +630,7 @@ class MainWindow(QMainWindow):
 
         # The title is first
         self.title = QLabel("Library")
+        self.title.setObjectName("big_title")
         # Mess around with the title formatting
         self.title.setFixedHeight(60)
         self.title.setAlignment(Qt.AlignCenter)
