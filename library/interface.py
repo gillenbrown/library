@@ -65,6 +65,20 @@ class LeftPanelTag(QLabel):
                 paper.hide()
 
 
+class LeftPanelTagShowAll(LeftPanelTag):
+    def __init__(self, papersList):
+        super().__init__("All Papers", papersList)
+
+    def mousePressEvent(self, _):
+        """
+        When this is clicked on, show all papers
+
+        :return: None
+        """
+        for paper in self.papersList.papers:
+            paper.show()
+
+
 class Paper(QWidget):
     """
     Class holding paper details that goes in the central panel
@@ -518,8 +532,7 @@ class TagsListScrollArea(ScrollArea):
         self.papersList = papersList
 
         # Make the button to show all the papers in the list
-        self.showAllButton = QPushButton("Show All")
-        self.showAllButton.clicked.connect(self.showAllPapers)
+        self.showAllButton = LeftPanelTagShowAll(papersList)
 
         # put the tag bar at the top of the list
         self.addWidget(self.addTagButton)  # calls ScrollArea addWidget
@@ -545,15 +558,6 @@ class TagsListScrollArea(ScrollArea):
 
         self.tags.append(tag)
         self.addWidget(tag)  # calls the ScrollArea addWidget
-
-    def showAllPapers(self):
-        """
-        Show all the papers in the central papers list.
-
-        :return: None
-        """
-        for paper in self.papersList.papers:
-            paper.show()
 
 
 class MainWindow(QMainWindow):

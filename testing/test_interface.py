@@ -902,6 +902,24 @@ def test_clicking_on_tag_in_left_panel_hides_papers(qtbot, db):
             assert paper.isHidden() is True
 
 
+def test_show_all_button_fontsize(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    assert widget.tagsList.showAllButton.font().pointSize() == 14
+
+
+def test_show_all_button_has_correct_font_family(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    qtbot.addWidget(widget)
+    assert widget.tagsList.showAllButton.font().family() == "Cabin"
+
+
+def test_show_all_button_has_correct_text(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    qtbot.addWidget(widget)
+    assert widget.tagsList.showAllButton.text() == "All Papers"
+
+
 def test_clicking_on_show_all_button_shows_all_papers(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
