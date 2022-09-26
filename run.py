@@ -32,4 +32,4 @@ if __name__ == "__main__":
     window = interface.MainWindow(db)
 
     # Execute application
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
