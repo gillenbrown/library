@@ -7,7 +7,7 @@ from PySide6.QtGui import (
     QFont,
     QDesktopServices,
     QGuiApplication,
-    QAction
+    QAction,
 )
 from PySide6.QtWidgets import (
     QApplication,
