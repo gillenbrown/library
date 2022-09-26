@@ -2,8 +2,8 @@ import sys
 import os
 from pathlib import Path
 
-from PySide2.QtWidgets import QApplication
-from PySide2.QtGui import QIcon
+from PySide6.QtWidgets import QApplication
+from PySide6.QtGui import QIcon
 
 from library import database, interface
 

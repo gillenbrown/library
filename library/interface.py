@@ -1,18 +1,18 @@
 from pathlib import Path
 
-from PySide2.QtCore import Qt, QEvent
-from PySide2.QtGui import (
+from PySide6.QtCore import Qt, QEvent
+from PySide6.QtGui import (
     QKeySequence,
     QFontDatabase,
     QFont,
     QDesktopServices,
     QGuiApplication,
+    QAction
 )
-from PySide2.QtWidgets import (
+from PySide6.QtWidgets import (
     QApplication,
     QWidget,
     QMainWindow,
-    QAction,
     QVBoxLayout,
     QHBoxLayout,
     QLabel,

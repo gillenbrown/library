@@ -8,9 +8,9 @@ import random
 
 import pytest
 import pytestqt
-from PySide2.QtCore import Qt
-from PySide2.QtGui import QFontDatabase, QDesktopServices, QGuiApplication
-from PySide2.QtWidgets import QApplication, QFileDialog
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFontDatabase, QDesktopServices, QGuiApplication
+from PySide6.QtWidgets import QApplication, QFileDialog
 
 from library.interface import MainWindow, get_fonts, set_up_fonts, Paper, LeftPanelTag
 from library.database import Database
