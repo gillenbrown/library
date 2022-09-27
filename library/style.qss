@@ -1,5 +1,9 @@
 QPushButton {
-    background-color: #ECECEC;
+    font-family: Cabin;
+    font-size: 14pt;
+}
+
+QLineEdit{
     font-family: Cabin;
     font-size: 14pt;
 }
@@ -36,4 +40,24 @@ QLabel#right_panel_abstract_text{
 
 QLabel#right_panel_tagText{
     font-size: 14pt
+}
+
+LeftPanelTag[is_highlighted=true]{
+    background-color: #CCCCCC
+}
+
+LeftPanelTag[is_highlighted=false]{
+    background-color: #ECECEC
+}
+
+QPushButton#secondDeletePaperButton{
+    background-color: #FFCCCC
+}
+
+QPushButton#thirdDeleteTagButton{
+    background-color: #FFCCCC
+}
+
+QPushButton#thirdDeleteTagCancelButton{
+    background-color: #FFCCCC
 }

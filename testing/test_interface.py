@@ -903,8 +903,7 @@ def test_clicking_on_tag_in_left_panel_hides_papers(qtbot, db):
 def test_show_all_tags_button_starts_highlighted(qtbot, db_temp_tags):
     widget = MainWindow(db_temp_tags)
     qtbot.addWidget(widget)
-    # get a tag from the left panel to click on
-    assert widget.tagsList.showAllButton.styleSheet() == "background-color: #CCCCCC;"
+    assert widget.tagsList.showAllButton.property("is_highlighted") is True
 
 
 def test_all_tags_start_unhighlighted(qtbot, db_temp_tags):
@@ -912,7 +911,7 @@ def test_all_tags_start_unhighlighted(qtbot, db_temp_tags):
     qtbot.addWidget(widget)
     # get a tag from the left panel to click on
     for tag in widget.tagsList.tags:
-        assert tag.styleSheet() == "background-color: #ECECEC;"
+        assert tag.property("is_highlighted") is False
 
 
 def test_clicking_on_tag_in_left_panel_highlights_tag_text(qtbot, db_temp_tags):
@@ -921,14 +920,14 @@ def test_clicking_on_tag_in_left_panel_highlights_tag_text(qtbot, db_temp_tags):
     # get a tag from the left panel to click on
     tag = widget.tagsList.tags[0]
     qtbot.mouseClick(tag, Qt.LeftButton)
-    assert tag.styleSheet() == "background-color: #CCCCCC;"
+    assert tag.property("is_highlighted") is True
 
 
 def test_clicking_on_show_all_in_left_panel_highlights_tag_text(qtbot, db_temp_tags):
     widget = MainWindow(db_temp_tags)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.tagsList.showAllButton, Qt.LeftButton)
-    assert widget.tagsList.showAllButton.styleSheet() == "background-color: #CCCCCC;"
+    assert widget.tagsList.showAllButton.property("is_highlighted") is True
 
 
 def test_clicking_on_tag_in_left_panel_unlights_others(qtbot, db_temp_tags):
@@ -939,9 +938,9 @@ def test_clicking_on_tag_in_left_panel_unlights_others(qtbot, db_temp_tags):
         qtbot.mouseClick(tag, Qt.LeftButton)
         for tag_comp in widget.tagsList.tags:
             if tag.text() == tag_comp.text():
-                assert tag_comp.styleSheet() == "background-color: #CCCCCC;"
+                assert tag_comp.property("is_highlighted") is True
             else:
-                assert tag_comp.styleSheet() == "background-color: #ECECEC;"
+                assert tag_comp.property("is_highlighted") is False
 
 
 def test_clicking_on_show_all_in_left_panel_unlights_others(qtbot, db_temp_tags):
@@ -949,7 +948,7 @@ def test_clicking_on_show_all_in_left_panel_unlights_others(qtbot, db_temp_tags)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.tagsList.showAllButton, Qt.LeftButton)
     for tag in widget.tagsList.tags:
-        assert tag.styleSheet() == "background-color: #ECECEC;"
+        assert tag.property("is_highlighted") is False
 
 
 def test_newly_added_tag_is_unhighlighted(qtbot, db_temp_tags):
@@ -960,7 +959,7 @@ def test_newly_added_tag_is_unhighlighted(qtbot, db_temp_tags):
     qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
     for tag in widget.tagsList.tags:
         if tag.text() == "newly added tag":
-            assert tag.styleSheet() == "background-color: #ECECEC;"
+            assert tag.property("is_highlighted") is False
 
 
 def test_show_all_button_fontsize(qtbot, db):
@@ -1150,16 +1149,6 @@ def test_second_delete_paper_button_appears_when_first_clicked(qtbot, db):
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
     assert widget.rightPanel.secondDeletePaperButton.isHidden() is False
-
-
-def test_second_delete_paper_button_is_red(qtbot, db):
-    widget = MainWindow(db)
-    qtbot.addWidget(widget)
-    # need to click on paper so the button shows up
-    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
-    qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
-    stylesheet = widget.rightPanel.secondDeletePaperButton.styleSheet()
-    assert stylesheet == "background-color: #FFCCCC;"
 
 
 def test_first_delete_paper_button_disappears_when_clicked(qtbot, db):
@@ -1448,26 +1437,6 @@ def test_third_delete_tag_cancel_button_has_correct_font_family(qtbot, db_temp_t
     qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
     assert widget.thirdDeleteTagCancelButton.font().family() == "Cabin"
-
-
-def test_third_delete_tag_button_is_red(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
-    qtbot.addWidget(widget)
-    qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
-    stylesheet = widget.thirdDeleteTagButton.styleSheet()
-    assert stylesheet == "background-color: #FFCCCC;"
-
-
-def test_third_delete_tag_cancel_button_is_red(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
-    qtbot.addWidget(widget)
-    qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
-    stylesheet = widget.thirdDeleteTagCancelButton.styleSheet()
-    assert stylesheet == "background-color: #FFCCCC;"
 
 
 def test_third_delete_tag_button_text_is_accurate(qtbot, db_temp_tags):

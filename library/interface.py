@@ -49,7 +49,6 @@ class LeftPanelTag(QLabel):
         """
         QLabel.__init__(self, tagName)
         self.name = tagName
-        self.setFont(QFont("Cabin", 14))
         self.papersList = papersList
         self.tagsList = tagsList
         # this starts unhighlighted
@@ -81,7 +80,10 @@ class LeftPanelTag(QLabel):
 
         :return: None
         """
-        self.setStyleSheet("background-color: #CCCCCC;")
+        # The stylesheets use the highlighted feature to
+        self.setProperty("is_highlighted", True)
+        self.style().unpolish(self)
+        self.style().polish(self)
 
     def unhighlight(self):
         """
@@ -89,7 +91,9 @@ class LeftPanelTag(QLabel):
 
         :return: None
         """
-        self.setStyleSheet("background-color: #ECECEC;")
+        self.setProperty("is_highlighted", False)
+        self.style().unpolish(self)
+        self.style().polish(self)
 
 
 class LeftPanelTagShowAll(LeftPanelTag):
@@ -264,6 +268,7 @@ class RightPanel(QWidget):
         self.copyBibtexButton = QPushButton("Copy Bibtex entry to clipboard")
         self.firstDeletePaperButton = QPushButton("Delete this paper")
         self.secondDeletePaperButton = QPushButton("Are you sure?")
+        self.secondDeletePaperButton.setObjectName("secondDeletePaperButton")  # style
         self.tagText = QLabel("")
         # set names for use with stylesheets
         self.titleText.setObjectName("right_panel_paper_title")
@@ -288,9 +293,6 @@ class RightPanel(QWidget):
         self.tags = []  # store the tags that are in there
         self.vBoxTags = QVBoxLayout()
         self.populate_tags()
-
-        # make delete button red
-        self.secondDeletePaperButton.setStyleSheet("background-color: #FFCCCC;")
 
         self.titleText.setWordWrap(True)
         self.citeText.setWordWrap(True)
@@ -634,7 +636,6 @@ class MainWindow(QMainWindow):
         # Mess around with the title formatting
         self.title.setFixedHeight(60)
         self.title.setAlignment(Qt.AlignCenter)
-        self.title.setFont(QFont("Lobster", 40))
         vBoxMain.addWidget(self.title)
 
         # Then comes the search bar. This is it's own horizontal layout, with the
@@ -642,10 +643,8 @@ class MainWindow(QMainWindow):
         hBoxSearchBar = QHBoxLayout()
         self.searchBar = QLineEdit()
         self.searchBar.setPlaceholderText("Enter your paper URL or ADS bibcode here")
-        self.searchBar.setFont(QFont("Cabin", 14))
         # We'll also have an add button
         self.addButton = QPushButton("Add")
-        self.addButton.setFont(QFont("Cabin", 14))
         # Define what to do when these things are activated. The user can either hit
         # enter or hit the add button
         self.searchBar.returnPressed.connect(self.addPaper)
@@ -683,10 +682,8 @@ class MainWindow(QMainWindow):
         # add papers, which will go at the top of that list. This has to go after the
         # center panel since the tags need to access the paper list
         self.addTagButton = QPushButton("Add a tag")
-        self.addTagButton.setFont(QFont("Cabin", 14))
         self.addTagButton.clicked.connect(self.showAddTagBar)
         self.addTagBar = QLineEdit()
-        self.addTagBar.setFont(QFont("Cabin", 14))
         self.addTagBar.setPlaceholderText("Tag name")
         self.addTagBar.returnPressed.connect(self.addTag)
         self.addTagBar.hide()
@@ -697,26 +694,22 @@ class MainWindow(QMainWindow):
         # a confirm and cancel button
         self.firstDeleteTagButton = QPushButton("Delete a tag")
         self.firstDeleteTagButton.clicked.connect(self.revealSecondTagDeleteEntry)
-        self.firstDeleteTagButton.setFont(QFont("Cabin", 14))
 
         self.secondDeleteTagEntry = QLineEdit()
         self.secondDeleteTagEntry.setPlaceholderText("Tag to delete")
         self.secondDeleteTagEntry.returnPressed.connect(
             self.revealThirdTagDeleteButtons
         )
-        self.secondDeleteTagEntry.setFont(QFont("Cabin", 14))
         self.secondDeleteTagEntry.hide()
 
         self.thirdDeleteTagButton = QPushButton("")
         self.thirdDeleteTagButton.clicked.connect(self.confirmTagDeletion)
-        self.thirdDeleteTagButton.setStyleSheet("background-color: #FFCCCC;")
-        self.thirdDeleteTagButton.setFont(QFont("Cabin", 14))
+        self.thirdDeleteTagButton.setObjectName("thirdDeleteTagButton")  # for style
         self.thirdDeleteTagButton.hide()
 
         self.thirdDeleteTagCancelButton = QPushButton("")
         self.thirdDeleteTagCancelButton.clicked.connect(self.cancelTagDeletion)
-        self.thirdDeleteTagCancelButton.setStyleSheet("background-color: #FFCCCC;")
-        self.thirdDeleteTagCancelButton.setFont(QFont("Cabin", 14))
+        self.thirdDeleteTagCancelButton.setObjectName("thirdDeleteTagCancelButton")
         self.thirdDeleteTagCancelButton.hide()
 
         # Then set up the final tagsList object
