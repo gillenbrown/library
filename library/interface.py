@@ -246,6 +246,8 @@ class Paper(QWidget):
         :return: None
         """
         qss_trigger(self, "is_highlighted", True)
+        qss_trigger(self.titleText, "is_highlighted", True)
+        qss_trigger(self.citeText, "is_highlighted", True)
 
     def unhighlight(self):
         """
@@ -254,6 +256,8 @@ class Paper(QWidget):
         :return: None
         """
         qss_trigger(self, "is_highlighted", False)
+        qss_trigger(self.titleText, "is_highlighted", False)
+        qss_trigger(self.citeText, "is_highlighted", False)
 
 
 class TagCheckBox(QCheckBox):

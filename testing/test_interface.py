@@ -550,11 +550,29 @@ def test_clicking_on_paper_highlights_it_in_center_panel(qtbot, db):
     assert paper.property("is_highlighted") is True
 
 
+def test_clicking_on_paper_highlights_its_text_it_in_center_panel(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    # get one of the papers, not sure which
+    paper = widget.papersList.papers[0]
+    qtbot.mouseClick(paper, Qt.LeftButton)
+    assert paper.titleText.property("is_highlighted") is True
+    assert paper.citeText.property("is_highlighted") is True
+
+
 def test_all_papers_are_unhilighted_to_start(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
     for paper in widget.papersList.papers:
         assert paper.property("is_highlighted") is False
+
+
+def test_all_papers_text_are_unhilighted_to_start(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    for paper in widget.papersList.papers:
+        assert paper.titleText.property("is_highlighted") is False
+        assert paper.citeText.property("is_highlighted") is False
 
 
 def test_papers_are_unhighlighted_when_others_clicked(qtbot, db):
@@ -568,6 +586,21 @@ def test_papers_are_unhighlighted_when_others_clicked(qtbot, db):
                 assert paper_test.property("is_highlighted") is True
             else:
                 assert paper_test.property("is_highlighted") is False
+
+
+def test_paper_texts_are_unhighlighted_when_others_clicked(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    assert len(widget.papersList.papers) > 1
+    for paper_click in widget.papersList.papers:
+        qtbot.mouseClick(paper_click, Qt.LeftButton)
+        for paper_test in widget.papersList.papers:
+            if paper_test.titleText == paper_click.titleText:
+                assert paper_test.titleText.property("is_highlighted") is True
+                assert paper_test.citeText.property("is_highlighted") is True
+            else:
+                assert paper_test.titleText.property("is_highlighted") is False
+                assert paper_test.citeText.property("is_highlighted") is False
 
 
 def test_double_clicking_on_paper_without_local_file_asks_user(

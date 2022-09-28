@@ -1,33 +1,23 @@
-QPushButton {
+/*be explicit about default background color*/
+QWidget{
+    background-color: #ECECEC;
     font-family: Cabin;
     font-size: 14pt;
 }
 
+/* change color of some widgets */
 QLineEdit{
-    font-family: Cabin;
-    font-size: 14pt;
-}
-
-QLabel {
-    font-family: Cabin;
-    font-size: 14pt;
-}
-
-QLabel#big_title {
-    font-family: Lobster;
-    font-size: 40pt;
-}
-
-Paper[is_highlighted=true]{
-    padding-left: 1pt;
-    border-left: 3px solid black;
     background-color: #F7F7F7;
 }
 
-Paper[is_highlighted=false]{
-    padding-left: 1pt;
-    border-left: 3px solid #ECECEC;
-    background-color: #ECECEC;
+QPushButton{
+    background-color: #F7F7F7;
+}
+
+/* Make the title really big, and some other text larger too */
+QLabel#big_title {
+    font-family: Lobster;
+    font-size: 40pt;
 }
 
 QLabel#center_panel_paper_title{
@@ -54,6 +44,37 @@ QLabel#right_panel_tagText{
     font-size: 14pt;
 }
 
+/* Make the selected paper change color. The text needs to be adjusted too */
+/* since it inherite the default grey background */
+Paper[is_highlighted=true]{
+    padding-left: 1pt;
+    border-left: 3px solid black;
+    background-color: #F7F7F7;
+}
+
+Paper[is_highlighted=false]{
+    padding-left: 1pt;
+    border-left: 3px solid #ECECEC;
+    background-color: #ECECEC;
+}
+
+QLabel#center_panel_paper_title[is_highlighted=true]{
+    background-color: #F7F7F7;
+}
+
+QLabel#center_panel_paper_title[is_highlighted=false]{
+    background-color: #ECECEC;
+}
+
+QLabel#center_panel_cite_string[is_highlighted=true]{
+    background-color: #F7F7F7;
+}
+
+QLabel#center_panel_cite_string[is_highlighted=false]{
+    background-color: #ECECEC;
+}
+
+/* Make the tags change color when selected */
 LeftPanelTag[is_highlighted=true]{
     padding-left: 1pt;
     border-left: 3px solid black;
@@ -68,6 +89,7 @@ LeftPanelTag[is_highlighted=false]{
     font-weight: normal;
 }
 
+/* Make some buttons that delete papers or tags red, to warn the user */
 QPushButton#secondDeletePaperButton{
     background-color: #FFCCCC;
 }
