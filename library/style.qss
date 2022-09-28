@@ -43,10 +43,14 @@ QLabel#right_panel_tagText{
 }
 
 LeftPanelTag[is_highlighted=true]{
-    background-color: #CCCCCC;
+    padding-left: 1pt;
+    border-left: 3px solid black;
+    background-color: #F7F7F7;
 }
 
 LeftPanelTag[is_highlighted=false]{
+    padding-left: 1pt;
+    border-left: 3px solid #ECECEC;
     background-color: #ECECEC;
 }
 
