@@ -129,7 +129,7 @@ class Paper(QWidget):
     Class holding paper details that goes in the central panel
     """
 
-    def __init__(self, bibcode, db, rightPanel):
+    def __init__(self, bibcode, db, rightPanel, papersList):
         """
         Initialize the paper object, which will hold the given bibcode
 
@@ -140,6 +140,10 @@ class Paper(QWidget):
         :param rightPanel: rightPanel object of this interface. This is only needed so
                            we can call the update feature when this is clicked on
         :type rightPanel: rightPanel
+        :param papersList: The list of papers that this paper will be added to. This is
+                           needed so we can unhighlight all other papers when one is
+                           selected
+        :type papersList: PapersListScrollArea
         """
         QWidget.__init__(self)
 
@@ -147,6 +151,7 @@ class Paper(QWidget):
         self.bibcode = bibcode
         self.db = db
         self.rightPanel = rightPanel
+        self.papersList = papersList
 
         # make sure this paper is actually in the database. This should never happen, but
         # might if I do something dumb in tests
@@ -160,6 +165,12 @@ class Paper(QWidget):
         # name these for stylesheets
         self.titleText.setObjectName("center_panel_paper_title")
         self.citeText.setObjectName("center_panel_cite_string")
+
+        # make sure the paper is unhighlighted. This first thing ensures that changes
+        # are actually shown in the interface. Not sure why this is not automatically
+        # set
+        self.setAttribute(Qt.WA_StyledBackground, True)
+        self.unhighlight()
 
         # then add these to the layout, then set this layout
         vBox.addWidget(self.titleText)
@@ -177,6 +188,12 @@ class Paper(QWidget):
         if event.type() is QEvent.Type.MouseButtonPress:
             # Pass the bibcode on to the right panel
             self.rightPanel.setPaperDetails(self.bibcode)
+            # unhighlight all papers
+            for paper in self.papersList.papers:
+                paper.unhighlight()
+            # then highlight this paper
+            self.highlight()
+
         elif event.type() is QEvent.Type.MouseButtonDblClick:
             local_file = self.db.get_paper_attribute(self.bibcode, "local_file")
             if local_file is None:
@@ -208,6 +225,28 @@ class Paper(QWidget):
         :rtype: list
         """
         return self.db.get_paper_tags(self.bibcode)
+
+    def highlight(self):
+        """
+        Visually highlight this paper in the interface
+
+        :return: None
+        """
+        # This just triggers a different QSS set, so we need to redraw this
+        self.setProperty("is_highlighted", True)
+        self.style().unpolish(self)
+        self.style().polish(self)
+
+    def unhighlight(self):
+        """
+        Remove visual highlighting froom this paper in the interface
+
+        :return: None
+        """
+        # This just triggers a different QSS set, so we need to redraw this
+        self.setProperty("is_highlighted", False)
+        self.style().unpolish(self)
+        self.style().polish(self)
 
 
 class TagCheckBox(QCheckBox):
@@ -529,7 +568,7 @@ class PapersListScrollArea(ScrollArea):
         assert bibcode not in [p.bibcode for p in self.papers]
 
         # create the paper object, than add to the list and center panel
-        paper = Paper(bibcode, self.db, self.rightPanel)
+        paper = Paper(bibcode, self.db, self.rightPanel, self)
         self.papers.append(paper)
         self.addWidget(paper)  # calls the ScrollArea addWidget
 

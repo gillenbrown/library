@@ -365,14 +365,14 @@ def test_right_panel_tag_text_has_word_wrap_on(qtbot, db):
 def test_paper_initialization_has_correct_bibcode(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
-    new_paper = Paper(u.mine.bibcode, db, widget.rightPanel)
+    new_paper = Paper(u.mine.bibcode, db, widget.rightPanel, widget.papersList)
     assert new_paper.bibcode == u.mine.bibcode
 
 
 def test_paper_initialization_has_correct_title_in_the_text(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
-    new_paper = Paper(u.mine.bibcode, db, widget.rightPanel)
+    new_paper = Paper(u.mine.bibcode, db, widget.rightPanel, widget.papersList)
     assert new_paper.titleText.text() == u.mine.title
 
 
@@ -411,7 +411,7 @@ def test_paper_cite_string_has_correct_font_size(qtbot, db):
 def test_paper_initialization_has_correct_cite_string_in_the_text(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
-    new_paper = Paper(u.mine.bibcode, db, widget.rightPanel)
+    new_paper = Paper(u.mine.bibcode, db, widget.rightPanel, widget.papersList)
     assert new_paper.citeText.text() == db.get_cite_string(u.mine.bibcode)
 
 
@@ -419,7 +419,7 @@ def test_cannot_initialize_paper_thats_not_in_database(qtbot, empty_db):
     widget = MainWindow(empty_db)
     qtbot.addWidget(widget)
     with pytest.raises(AssertionError):
-        Paper(u.mine.bibcode, empty_db, widget.rightPanel)
+        Paper(u.mine.bibcode, empty_db, widget.rightPanel, widget.papersList)
 
 
 def test_all_papers_in_database_are_in_the_paper_list_at_beginning(qtbot, db):
@@ -482,7 +482,7 @@ def test_paper_cannot_be_added_twice(qtbot, empty_db):
 def test_duplicate_in_internal_paper_list_raises_error(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
-    new_paper = Paper(u.mine.bibcode, db, widget.rightPanel)
+    new_paper = Paper(u.mine.bibcode, db, widget.rightPanel, widget.papersList)
     with pytest.raises(AssertionError):
         widget.papersList.addPaper(new_paper)
 
@@ -539,6 +539,35 @@ def test_clicking_on_paper_puts_tags_in_right_panel(qtbot, db_temp):
     # then click on the paper
     qtbot.mouseClick(paper, Qt.LeftButton)
     assert widget.rightPanel.tagText.text() == "Tags: T1, T3, T5"
+
+
+def test_clicking_on_paper_highlights_it_in_center_panel(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    # get one of the papers, not sure which
+    paper = widget.papersList.papers[0]
+    qtbot.mouseClick(paper, Qt.LeftButton)
+    assert paper.property("is_highlighted") is True
+
+
+def test_all_papers_are_unhilighted_to_start(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    for paper in widget.papersList.papers:
+        assert paper.property("is_highlighted") is False
+
+
+def test_papers_are_unhighlighted_when_others_clicked(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    assert len(widget.papersList.papers) > 1
+    for paper_click in widget.papersList.papers:
+        qtbot.mouseClick(paper_click, Qt.LeftButton)
+        for paper_test in widget.papersList.papers:
+            if paper_test.titleText == paper_click.titleText:
+                assert paper_test.property("is_highlighted") is True
+            else:
+                assert paper_test.property("is_highlighted") is False
 
 
 def test_double_clicking_on_paper_without_local_file_asks_user(
