@@ -19,45 +19,45 @@ QLabel#big_title {
 }
 
 QLabel#center_panel_paper_title{
-    font-size: 16pt
+    font-size: 16pt;
 }
 
 QLabel#center_panel_cite_string{
-    font-size: 12pt
+    font-size: 12pt;
 }
 
 QLabel#right_panel_paper_title{
-    font-size: 20pt
+    font-size: 20pt;
 }
 
 QLabel#right_panel_cite_text{
-    font-size: 16pt
+    font-size: 16pt;
 }
 
 QLabel#right_panel_abstract_text{
-    font-size: 14pt
+    font-size: 14pt;
 }
 
 QLabel#right_panel_tagText{
-    font-size: 14pt
+    font-size: 14pt;
 }
 
 LeftPanelTag[is_highlighted=true]{
-    background-color: #CCCCCC
+    background-color: #CCCCCC;
 }
 
 LeftPanelTag[is_highlighted=false]{
-    background-color: #ECECEC
+    background-color: #ECECEC;
 }
 
 QPushButton#secondDeletePaperButton{
-    background-color: #FFCCCC
+    background-color: #FFCCCC;
 }
 
 QPushButton#thirdDeleteTagButton{
-    background-color: #FFCCCC
+    background-color: #FFCCCC;
 }
 
 QPushButton#thirdDeleteTagCancelButton{
-    background-color: #FFCCCC
+    background-color: #FFCCCC;
 }
