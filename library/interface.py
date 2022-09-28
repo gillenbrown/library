@@ -28,6 +28,24 @@ from PySide6.QtWidgets import (
 from library.database import PaperAlreadyInDatabaseError
 
 
+def qss_trigger(object, property, value):
+    """
+    Trigger a change in QSS by setting a property and redrawing the object.
+
+    :param object: Qt object to change the properties of
+    :type object: QWidget
+    :param property: The name of the property to set. This needs to match what is
+                     set in the QSS file (e.g. Paper[is_highlighted=false]{...}
+                     would use `is_highlighted` here and False for `value`
+    :type property: str
+    :param value: The value to set for the given property
+    :return: None
+    """
+    object.setProperty(property, value)
+    object.style().unpolish(object)
+    object.style().polish(object)
+
+
 class LeftPanelTag(QLabel):
     """
     Class holding a tag that goes in the left panel
@@ -80,10 +98,7 @@ class LeftPanelTag(QLabel):
 
         :return: None
         """
-        # The stylesheets use the highlighted feature to
-        self.setProperty("is_highlighted", True)
-        self.style().unpolish(self)
-        self.style().polish(self)
+        qss_trigger(self, "is_highlighted", True)
 
     def unhighlight(self):
         """
@@ -91,9 +106,7 @@ class LeftPanelTag(QLabel):
 
         :return: None
         """
-        self.setProperty("is_highlighted", False)
-        self.style().unpolish(self)
-        self.style().polish(self)
+        qss_trigger(self, "is_highlighted", False)
 
 
 class LeftPanelTagShowAll(LeftPanelTag):
@@ -232,10 +245,7 @@ class Paper(QWidget):
 
         :return: None
         """
-        # This just triggers a different QSS set, so we need to redraw this
-        self.setProperty("is_highlighted", True)
-        self.style().unpolish(self)
-        self.style().polish(self)
+        qss_trigger(self, "is_highlighted", True)
 
     def unhighlight(self):
         """
@@ -243,10 +253,7 @@ class Paper(QWidget):
 
         :return: None
         """
-        # This just triggers a different QSS set, so we need to redraw this
-        self.setProperty("is_highlighted", False)
-        self.style().unpolish(self)
-        self.style().polish(self)
+        qss_trigger(self, "is_highlighted", False)
 
 
 class TagCheckBox(QCheckBox):
