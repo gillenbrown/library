@@ -189,6 +189,7 @@ class Paper(QWidget):
         vBox.addWidget(self.titleText)
         vBox.addWidget(self.citeText)
         self.setLayout(vBox)
+        self.layout().setSpacing(2)
 
     def mousePressEvent(self, event):
         """

@@ -5,13 +5,22 @@ QWidget{
     font-size: 14pt;
 }
 
-/* change color of some widgets */
+/* tweak appearance of some widgets */
 QLineEdit{
     background-color: #F7F7F7;
+    border-radius: 0.5em;
+    padding-left: 0.5em;
 }
 
 QPushButton{
     background-color: #F7F7F7;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+    border: 1px solid #BBBBBB;
+    border-radius: 0.5em;
+}
+QPushButton:hover {
+  border: 1px solid black;
 }
 
 /* Make the title really big, and some other text larger too */
