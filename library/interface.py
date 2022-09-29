@@ -414,13 +414,13 @@ class RightPanel(QWidget):
         self.titleText.setText(self.db.get_paper_attribute(self.bibcode, "title"))
         self.citeText.setText(self.db.get_cite_string(self.bibcode))
         self.abstractText.setText(self.db.get_paper_attribute(self.bibcode, "abstract"))
-        tagsList = self.db.get_paper_tags(self.bibcode)
-        self.tagText.setText(f"Tags: {', '.join(tagsList)}")
+        self.update_tag_text()
+
         # Go through and set the checkboxes to match the tags the paper has
         self.populate_tags()
         for tag in self.tags:
             tag.hide()
-            if tag.text() in tagsList:
+            if tag.text() in self.db.get_paper_tags(self.bibcode):
                 tag.setChecked(True)
             else:
                 tag.setChecked(False)
@@ -433,6 +433,15 @@ class RightPanel(QWidget):
         self.firstDeletePaperButton.show()
         # also hide the second button if it was shown
         self.secondDeletePaperButton.hide()
+
+    def update_tag_text(self):
+        """
+        Put the appropriate tags in the list of tags this paper has
+
+        :return: None
+        """
+        tags_list = self.db.get_paper_tags(self.bibcode)
+        self.tagText.setText(f"Tags: {', '.join(tags_list)}")
 
     def enableTagEditing(self):
         """
@@ -459,6 +468,8 @@ class RightPanel(QWidget):
         self.doneEditingTagsButton.hide()
         for tag in self.tags:
             tag.hide()
+        # Also update the text shown to the user
+        self.update_tag_text()
 
     def changeTags(self, tagName, checked):
         """

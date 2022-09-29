@@ -964,6 +964,50 @@ def test_unchecking_tag_in_checklist_removes_tag_from_paper_in_database(qtbot, d
             assert db_temp.paper_has_tag(paper.bibcode, tag) is True
 
 
+def test_checking_tag_in_checklist_adds_tag_to_interface(qtbot, db_temp):
+    # add some tags to this database
+    for tag in ["T1", "T2", "T3", "T4", "T5"]:
+        db_temp.add_new_tag(tag)
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    # get one of the papers, not sure which, then click on it
+    paper = widget.papersList.papers[0]
+    qtbot.mouseClick(paper, Qt.LeftButton)
+    # this will show the tags in the right panel. Click on a few
+    to_check = ["T1", "T3", "T4"]
+    for tag_item in widget.rightPanel.tags:
+        if tag_item.text() in to_check:
+            tag_item.setChecked(True)
+    # click the done editing button
+    qtbot.mouseClick(widget.rightPanel.doneEditingTagsButton, Qt.LeftButton)
+    # Then check that these tags are listen in the interface
+    assert widget.rightPanel.tagText.text() == "Tags: T1, T3, T4"
+
+
+def test_unchecking_tag_in_checklist_removes_tag_from_interface(qtbot, db_temp):
+    # add some tags to this database
+    for tag in ["T1", "T2", "T3", "T4", "T5"]:
+        db_temp.add_new_tag(tag)
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    # get one of the papers, not sure which, then click on it
+    paper = widget.papersList.papers[0]
+    # add all tags to this paper
+    for tag in db_temp.get_all_tags():
+        db_temp.tag_paper(paper.bibcode, tag)
+    # click on the paper to show it in the right panel
+    qtbot.mouseClick(paper, Qt.LeftButton)
+    # click on the tags we want to remove
+    to_uncheck = ["T1", "T3", "T4"]
+    for tag_item in widget.rightPanel.tags:
+        if tag_item.text() in to_uncheck:
+            tag_item.setChecked(False)
+    # click the done editing button
+    qtbot.mouseClick(widget.rightPanel.doneEditingTagsButton, Qt.LeftButton)
+    # Then check that these tags are not listed in the interface
+    assert widget.rightPanel.tagText.text() == "Tags: T2, T5"
+
+
 def test_all_papers_start_not_hidden(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
