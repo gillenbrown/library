@@ -318,8 +318,11 @@ class RightPanel(QWidget):
         self.abstractText = QLabel("")
         self.copyBibtexButton = QPushButton("Copy Bibtex entry to clipboard")
         self.firstDeletePaperButton = QPushButton("Delete this paper")
-        self.secondDeletePaperButton = QPushButton("Are you sure?")
+        self.secondDeletePaperButton = QPushButton("Confirm deletion of this paper")
         self.secondDeletePaperButton.setObjectName("secondDeletePaperButton")  # style
+        self.secondDeletePaperCancelButton = QPushButton(
+            "Oops, don't delete this paper"
+        )
         self.tagText = QLabel("")
         # set names for use with stylesheets
         self.titleText.setObjectName("right_panel_paper_title")
@@ -336,6 +339,7 @@ class RightPanel(QWidget):
         self.copyBibtexButton.clicked.connect(self.copyBibtex)
         self.firstDeletePaperButton.clicked.connect(self.revealSecondDeleteButton)
         self.secondDeletePaperButton.clicked.connect(self.deletePaper)
+        self.secondDeletePaperCancelButton.clicked.connect(self.resetDeleteButtons)
 
         # handle the initial state
         self.resetPaperDetails()
@@ -361,6 +365,7 @@ class RightPanel(QWidget):
         vBox.addLayout(self.vBoxTags)
         vBox.addWidget(self.firstDeletePaperButton)
         vBox.addWidget(self.secondDeletePaperButton)
+        vBox.addWidget(self.secondDeletePaperCancelButton)
 
         self.setLayout(vBox)
 
@@ -400,6 +405,7 @@ class RightPanel(QWidget):
         self.copyBibtexButton.hide()
         self.firstDeletePaperButton.hide()
         self.secondDeletePaperButton.hide()
+        self.secondDeletePaperCancelButton.hide()
 
     def setPaperDetails(self, bibcode):
         """
@@ -433,6 +439,7 @@ class RightPanel(QWidget):
         self.firstDeletePaperButton.show()
         # also hide the second button if it was shown
         self.secondDeletePaperButton.hide()
+        self.secondDeletePaperCancelButton.hide()
 
     def update_tag_text(self):
         """
@@ -504,6 +511,17 @@ class RightPanel(QWidget):
         """
         self.firstDeletePaperButton.hide()
         self.secondDeletePaperButton.show()
+        self.secondDeletePaperCancelButton.show()
+
+    def resetDeleteButtons(self):
+        """
+        Returns the delete buttons to their original state
+
+        :return:
+        """
+        self.firstDeletePaperButton.show()
+        self.secondDeletePaperButton.hide()
+        self.secondDeletePaperCancelButton.hide()
 
     def deletePaper(self):
         """

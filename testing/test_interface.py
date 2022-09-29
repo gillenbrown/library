@@ -1258,6 +1258,12 @@ def test_second_delete_paper_button_hidden_at_beginning(qtbot, db):
     assert widget.rightPanel.secondDeletePaperButton.isHidden() is True
 
 
+def test_second_delete_cancel_paper_button_hidden_at_beginning(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    assert widget.rightPanel.secondDeletePaperCancelButton.isHidden() is True
+
+
 def test_first_delete_paper_button_appears_when_paper_clicked(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
@@ -1272,12 +1278,29 @@ def test_second_delete_paper_button_does_not_appear_when_paper_clicked(qtbot, db
     assert widget.rightPanel.secondDeletePaperButton.isHidden() is True
 
 
+def test_second_delete_paper_cancel_button_does_not_appear_when_paper_clicked(
+    qtbot, db
+):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    assert widget.rightPanel.secondDeletePaperCancelButton.isHidden() is True
+
+
 def test_second_delete_paper_button_appears_when_first_clicked(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
     assert widget.rightPanel.secondDeletePaperButton.isHidden() is False
+
+
+def test_second_delete_paper_cancel_button_appears_when_first_clicked(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
+    assert widget.rightPanel.secondDeletePaperCancelButton.isHidden() is False
 
 
 def test_first_delete_paper_button_disappears_when_clicked(qtbot, db):
@@ -1306,6 +1329,15 @@ def test_second_delete_buttons_reset_when_on_new_paper(qtbot, db):
     assert widget.rightPanel.secondDeletePaperButton.isHidden() is True
 
 
+def test_second_delete_cancel_buttons_reset_when_on_new_paper(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
+    qtbot.mouseClick(widget.papersList.papers[1], Qt.LeftButton)
+    assert widget.rightPanel.secondDeletePaperCancelButton.isHidden() is True
+
+
 def test_second_delete_paper_button_deletes_paper_from_database_when_pressed(
     qtbot, db_temp
 ):
@@ -1332,6 +1364,47 @@ def test_second_delete_paper_button_deletes_paper_from_interface_when_pressed(
     # check that it's not in the center list anymore
     for paper in widget.papersList.papers:
         assert bibcode != paper.bibcode
+
+
+def test_second_delete_paper_cancel_button_does_not_delete_paper_from_database(
+    qtbot, db_temp
+):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    paper = widget.papersList.papers[0]
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.secondDeletePaperCancelButton, Qt.LeftButton)
+    # check that it's still in the database
+    assert db_temp.get_paper_attribute(paper.bibcode, "title") == paper.titleText.text()
+
+
+def test_second_delete_paper_cancel_button_does_not_delete_paper_from_interface(
+    qtbot, db_temp
+):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    bibcode = widget.papersList.papers[0].bibcode
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.secondDeletePaperCancelButton, Qt.LeftButton)
+    # check that it's still in the center list
+    found = False
+    for paper in widget.papersList.papers:
+        if bibcode == paper.bibcode:
+            found = True
+    assert found
+
+
+def test_second_delete_paper_cancel_button_resets_delete_buttons(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.secondDeletePaperCancelButton, Qt.LeftButton)
+    assert widget.rightPanel.firstDeletePaperButton.isHidden() is False
+    assert widget.rightPanel.secondDeletePaperButton.isHidden() is True
+    assert widget.rightPanel.secondDeletePaperCancelButton.isHidden() is True
 
 
 def test_right_panel_edit_tags_button_is_hidden_when_paper_is_deleted(qtbot, db_temp):
@@ -1384,6 +1457,17 @@ def test_right_panel_second_delete_button_is_hidden_when_paper_is_deleted(
     qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.secondDeletePaperButton, Qt.LeftButton)
     assert widget.rightPanel.secondDeletePaperButton.isHidden()
+
+
+def test_right_panel_second_delete_cancel_button_is_hidden_when_paper_is_deleted(
+    qtbot, db_temp
+):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.secondDeletePaperButton, Qt.LeftButton)
+    assert widget.rightPanel.secondDeletePaperCancelButton.isHidden()
 
 
 def test_right_panel_title_text_is_blank_when_paper_is_deleted(qtbot, db_temp):
