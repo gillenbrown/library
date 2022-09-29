@@ -232,3 +232,8 @@ def test_get_correct_page_nonnumeric_page():
 def test_get_correct_page_when_no_page():
     results = ads_call.get_info(u.grasha_thesis.bibcode)
     assert results["page"] == u.grasha_thesis.page
+
+
+def test_ensure_accents_on_letters():
+    results = ads_call.get_info(u.juan.bibcode)
+    assert results["authors"] == u.juan.authors

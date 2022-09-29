@@ -559,3 +559,8 @@ def test_papers_unread_when_added_capitalization(db_empty, tag):
     db_empty.add_new_tag(tag)
     db_empty.add_paper(u.mine.bibcode)
     assert db_empty.get_paper_tags(u.mine.bibcode) == [tag]
+
+
+def test_accents_kept_in_author_list(db_empty):
+    db_empty.add_paper(u.juan.url)
+    assert db_empty.get_paper_attribute(u.juan.bibcode, "authors") == u.juan.authors

@@ -415,6 +415,14 @@ def test_paper_initialization_has_correct_cite_string_in_the_text(qtbot, db):
     assert new_paper.citeText.text() == db.get_cite_string(u.mine.bibcode)
 
 
+def test_paper_initialization_has_accents_in_author_list(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    qtbot.addWidget(widget)
+    empty_db.add_paper(u.juan.bibcode)
+    new_paper = Paper(u.juan.bibcode, empty_db, widget.rightPanel, widget.papersList)
+    assert "á" in new_paper.citeText.text()
+
+
 def test_cannot_initialize_paper_thats_not_in_database(qtbot, empty_db):
     widget = MainWindow(empty_db)
     qtbot.addWidget(widget)

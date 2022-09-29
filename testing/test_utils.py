@@ -240,3 +240,9 @@ grasha_thesis = PaperDict(
     bibcode="2018PhDT........36G",
     page=-1,
 )
+
+juan = PaperDict(
+    url="https://ui.adsabs.harvard.edu/abs/2018ApJ...863...60R/abstract",
+    bibcode="2018ApJ...863...60R",
+    authors=["Remolina González, J. D.", "Sharon, K.", "Mahler, G."],
+)
