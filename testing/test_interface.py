@@ -844,6 +844,21 @@ def test_all_tags_in_database_are_in_the_tag_list_at_beginning(qtbot, db):
     assert sorted(tags_list) == sorted(db.get_all_tags())
 
 
+def test_read_and_unread_are_initialized_even_in_new_database(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    qtbot.addWidget(widget)
+    tags_list = [t.name for t in widget.tagsList.tags]
+    assert sorted(tags_list) == ["Read", "Unread"]
+
+
+def test_read_and_unread_arent_added_to_nonempty_databased(qtbot, db_temp_tags):
+    widget = MainWindow(db_temp_tags)
+    qtbot.addWidget(widget)
+    tags_list = [t.name for t in widget.tagsList.tags]
+    assert "Read" not in tags_list
+    assert "Unread" not in tags_list
+
+
 def test_tag_has_correct_name(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)

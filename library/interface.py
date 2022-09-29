@@ -675,6 +675,11 @@ class MainWindow(QMainWindow):
 
         self.db = db
 
+        # add read and unread tags if there is nothing in the database
+        if len(self.db.get_all_bibcodes()) == 0 and len(self.db.get_all_tags()) == 0:
+            db.add_new_tag("Read")
+            db.add_new_tag("Unread")
+
         # Start with the layout. Our main layout is three vertical components:
         # the first is the title, second is the search bar, where the user can paste
         # URLs to add to the database, and the third is the place where we show all
