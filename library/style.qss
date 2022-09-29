@@ -26,6 +26,8 @@ QPushButton:hover {
 /* make the add button even more obvious */
 QPushButton#add_button{
     border: 2px solid #777777;
+    padding-left: 1em;
+    padding-right: 1em;
 }
 QPushButton#add_button:hover {
     border: 2px solid black;
