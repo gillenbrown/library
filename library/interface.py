@@ -701,6 +701,7 @@ class MainWindow(QMainWindow):
         self.searchBar.setPlaceholderText("Enter your paper URL or ADS bibcode here")
         # We'll also have an add button
         self.addButton = QPushButton("Add")
+        self.addButton.setObjectName("add_button")
         # Define what to do when these things are activated. The user can either hit
         # enter or hit the add button
         self.searchBar.returnPressed.connect(self.addPaper)

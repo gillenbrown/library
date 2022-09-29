@@ -23,6 +23,14 @@ QPushButton:hover {
   border: 1px solid black;
 }
 
+/* make the add button even more obvious */
+QPushButton#add_button{
+    border: 2px solid #777777;
+}
+QPushButton#add_button:hover {
+    border: 2px solid black;
+}
+
 /* Make the title really big, and some other text larger too */
 QLabel#big_title {
     font-family: Lobster;
