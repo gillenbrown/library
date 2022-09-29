@@ -319,10 +319,11 @@ class RightPanel(QWidget):
         self.copyBibtexButton = QPushButton("Copy Bibtex entry to clipboard")
         self.firstDeletePaperButton = QPushButton("Delete this paper")
         self.secondDeletePaperButton = QPushButton("Confirm deletion of this paper")
-        self.secondDeletePaperButton.setObjectName("secondDeletePaperButton")  # style
+        self.secondDeletePaperButton.setProperty("delete_button", True)  # style
         self.secondDeletePaperCancelButton = QPushButton(
             "Oops, don't delete this paper"
         )
+        self.secondDeletePaperCancelButton.setProperty("delete_cancel_button", True)
         self.tagText = QLabel("")
         # set names for use with stylesheets
         self.titleText.setObjectName("right_panel_paper_title")
@@ -790,12 +791,12 @@ class MainWindow(QMainWindow):
 
         self.thirdDeleteTagButton = QPushButton("")
         self.thirdDeleteTagButton.clicked.connect(self.confirmTagDeletion)
-        self.thirdDeleteTagButton.setObjectName("thirdDeleteTagButton")  # for style
+        self.thirdDeleteTagButton.setProperty("delete_button", True)  # for style
         self.thirdDeleteTagButton.hide()
 
         self.thirdDeleteTagCancelButton = QPushButton("")
         self.thirdDeleteTagCancelButton.clicked.connect(self.cancelTagDeletion)
-        self.thirdDeleteTagCancelButton.setObjectName("thirdDeleteTagCancelButton")
+        self.thirdDeleteTagCancelButton.setProperty("delete_cancel_button", True)
         self.thirdDeleteTagCancelButton.hide()
 
         # Then set up the final tagsList object
@@ -932,7 +933,7 @@ class MainWindow(QMainWindow):
         )
         self.thirdDeleteTagCancelButton.show()
         self.thirdDeleteTagCancelButton.setText(
-            f'Click to cancel the deletion of tag "{tag_to_delete}"'
+            "Oops, don't delete tag " + f'"{tag_to_delete}"'
         )
 
     def confirmTagDeletion(self):

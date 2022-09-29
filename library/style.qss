@@ -109,14 +109,13 @@ LeftPanelTag[is_highlighted=false]{
 }
 
 /* Make some buttons that delete papers or tags red, to warn the user */
-QPushButton#secondDeletePaperButton{
+QPushButton[delete_button=true]{
     background-color: #FFCCCC;
 }
-
-QPushButton#thirdDeleteTagButton{
-    background-color: #FFCCCC;
+QPushButton[delete_button=true]:hover{
+    border: 3px dashed red;
 }
 
-QPushButton#thirdDeleteTagCancelButton{
-    background-color: #FFCCCC;
+QPushButton[delete_cancel_button=true]{
+    background-color: #F3FFF3;
 }

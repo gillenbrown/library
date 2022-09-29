@@ -1671,7 +1671,7 @@ def test_third_delete_tag_cancel_button_text_is_accurate(qtbot, db_temp_tags):
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
     assert (
         widget.thirdDeleteTagCancelButton.text()
-        == 'Click to cancel the deletion of tag "tag_1"'
+        == "Oops, don't delete tag " + '"tag_1"'
     )
 
 
