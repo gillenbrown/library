@@ -93,6 +93,18 @@ QLabel#center_panel_cite_string[is_highlighted=false]{
     background-color: #ECECEC;
 }
 
+/* Have some formatting when the user enters an invalid paper */
+QLabel#search_error_text{
+    color: #FF0000;
+}
+
+QLineEdit[error=true]{
+    background-color: #FFCCCC;
+    border-color: #FF0000;
+    border-radius: 0.5em;
+    padding-left: 0.5em;
+}
+
 /* Make the tags change color when selected */
 LeftPanelTag[is_highlighted=true]{
     padding-left: 1pt;

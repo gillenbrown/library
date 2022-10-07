@@ -729,6 +729,11 @@ class MainWindow(QMainWindow):
         hBoxSearchBar = QHBoxLayout()
         self.searchBar = QLineEdit()
         self.searchBar.setPlaceholderText("Enter your paper URL or ADS bibcode here")
+        self.searchBar.setProperty("error", False)
+        # and have some text if there's an error
+        self.searchBarErrorText = QLabel()
+        self.searchBarErrorText.setObjectName("search_error_text")
+        self.searchBarErrorText.hide()
         # We'll also have an add button
         self.addButton = QPushButton("Add")
         self.addButton.setObjectName("add_button")
@@ -736,6 +741,9 @@ class MainWindow(QMainWindow):
         # enter or hit the add button
         self.searchBar.returnPressed.connect(self.addPaper)
         self.addButton.clicked.connect(self.addPaper)
+        # also allow the reset after an error
+        self.searchBar.cursorPositionChanged.connect(self.resetSearchBarError)
+        self.searchBar.textChanged.connect(self.resetSearchBarError)
         # have both of these quantities have a fixed height. These values are chosen to
         # make it look nice. They aren't the same size since the bounding boxes aren't
         # quite the same relative to the shown borders for whatever reason
@@ -743,6 +751,7 @@ class MainWindow(QMainWindow):
         self.addButton.setFixedHeight(35)
         # Then add these to the layouts
         hBoxSearchBar.addWidget(self.searchBar)
+        hBoxSearchBar.addWidget(self.searchBarErrorText)
         hBoxSearchBar.addWidget(self.addButton)
         vBoxMain.addLayout(hBoxSearchBar)
 
@@ -860,7 +869,15 @@ class MainWindow(QMainWindow):
         try:  # see if the user put something good
             bibcode = self.db.add_paper(self.searchBar.text())
         except ValueError:  # will be raised if the value isn't recognized
-            return  # don't clear the text or add anything
+            # show the error message, and change formatting. Leave the text
+            self.searchBarErrorText.setText(
+                "This paper was not found in ADS. "
+                "If it was just added to the arXiv, "
+                "ADS may not have registered it."
+            )
+            self.searchBarErrorText.show()
+            qss_trigger(self.searchBar, "error", True)
+            return
         except PaperAlreadyInDatabaseError:
             # here we do clear the search bar, but do not add the paper
             self.searchBar.clear()
@@ -871,6 +888,15 @@ class MainWindow(QMainWindow):
         self.papersList.addPaper(bibcode)
         # clear the text so another paper can be added
         self.searchBar.clear()
+
+    def resetSearchBarError(self):
+        """
+        After an error, reset the search bar formatting to the original state
+
+        :return: None
+        """
+        qss_trigger(self.searchBar, "error", False)
+        self.searchBarErrorText.hide()
 
     def showAddTagBar(self):
         """

@@ -452,6 +452,16 @@ def test_adding_paper_adds_correct_paper_to_interface(qtbot, empty_db):
     assert widget.papersList.papers[0].bibcode == u.mine.bibcode
 
 
+def test_textedit_is_not_in_error_state_at_beginning(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    assert widget.searchBar.property("error") is False
+
+
+def test_textedit_error_message_hidden_at_beginning(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    assert widget.searchBarErrorText.isHidden() is True
+
+
 def test_adding_paper_clears_search_bar_if_successful(qtbot, empty_db):
     widget = MainWindow(empty_db)
     qtbot.addWidget(widget)
@@ -466,6 +476,68 @@ def test_adding_paper_does_not_clear_search_bar_if_not_successful(qtbot, empty_d
     qtbot.keyClicks(widget.searchBar, "nonsense")
     qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
     assert widget.searchBar.text() == "nonsense"
+
+
+def test_adding_bad_paper_shows_error_formatting_of_textedit(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    assert len(widget.papersList.papers) == 0
+    qtbot.addWidget(widget)
+    qtbot.keyClicks(widget.searchBar, "nonsense")
+    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    assert widget.searchBar.property("error") is True
+
+
+def test_adding_bad_paper_shows_error_text(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    assert len(widget.papersList.papers) == 0
+    qtbot.addWidget(widget)
+    qtbot.keyClicks(widget.searchBar, "nonsense")
+    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    assert widget.searchBarErrorText.isHidden() is False
+    assert (
+        widget.searchBarErrorText.text() == "This paper was not found in ADS. "
+        "If it was just added to the arXiv, ADS may not have registered it."
+    )
+
+
+def test_error_formatting_of_textedit_reset_after_any_clicking(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    assert len(widget.papersList.papers) == 0
+    qtbot.addWidget(widget)
+    qtbot.keyClicks(widget.searchBar, "nonsense")
+    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    widget.searchBar.setCursorPosition(0)
+    assert widget.searchBar.property("error") is False
+
+
+def test_error_message_of_textedit_reset_after_any_clicking(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    assert len(widget.papersList.papers) == 0
+    qtbot.addWidget(widget)
+    qtbot.keyClicks(widget.searchBar, "nonsense")
+    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    widget.searchBar.setCursorPosition(0)
+    assert widget.searchBarErrorText.isHidden() is True
+
+
+def test_error_formatting_of_textedit_reset_after_editing_text(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    assert len(widget.papersList.papers) == 0
+    qtbot.addWidget(widget)
+    qtbot.keyClicks(widget.searchBar, "nonsense")
+    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    qtbot.keyClicks(widget.searchBar, "nonsens")
+    assert widget.searchBar.property("error") is False
+
+
+def test_error_message_of_textedit_reset_after_editing_text(qtbot, empty_db):
+    widget = MainWindow(empty_db)
+    assert len(widget.papersList.papers) == 0
+    qtbot.addWidget(widget)
+    qtbot.keyClicks(widget.searchBar, "nonsense")
+    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    qtbot.keyClicks(widget.searchBar, "nonsens")
+    assert widget.searchBarErrorText.isHidden() is True
 
 
 def test_adding_paper_does_clear_search_bar_if_already_in_library(qtbot, db):
