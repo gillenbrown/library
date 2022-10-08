@@ -879,8 +879,10 @@ class MainWindow(QMainWindow):
             qss_trigger(self.searchBar, "error", True)
             return
         except PaperAlreadyInDatabaseError:
-            # here we do clear the search bar, but do not add the paper
-            self.searchBar.clear()
+            # show the error message, and change formatting. Leave the text in the bar
+            self.searchBarErrorText.setText("This paper is already in the library.")
+            self.searchBarErrorText.show()
+            qss_trigger(self.searchBar, "error", True)
             return
 
         # we only get here if the addition to the database worked. If so we add the

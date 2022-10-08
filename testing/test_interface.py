@@ -500,7 +500,9 @@ def test_adding_bad_paper_shows_error_text(qtbot, empty_db):
     )
 
 
-def test_error_formatting_of_textedit_reset_after_any_clicking(qtbot, empty_db):
+def test_bad_paper_error_formatting_of_textedit_reset_after_any_clicking(
+    qtbot, empty_db
+):
     widget = MainWindow(empty_db)
     assert len(widget.papersList.papers) == 0
     qtbot.addWidget(widget)
@@ -510,7 +512,7 @@ def test_error_formatting_of_textedit_reset_after_any_clicking(qtbot, empty_db):
     assert widget.searchBar.property("error") is False
 
 
-def test_error_message_of_textedit_reset_after_any_clicking(qtbot, empty_db):
+def test_bad_paper_error_message_of_textedit_reset_after_any_clicking(qtbot, empty_db):
     widget = MainWindow(empty_db)
     assert len(widget.papersList.papers) == 0
     qtbot.addWidget(widget)
@@ -520,7 +522,9 @@ def test_error_message_of_textedit_reset_after_any_clicking(qtbot, empty_db):
     assert widget.searchBarErrorText.isHidden() is True
 
 
-def test_error_formatting_of_textedit_reset_after_editing_text(qtbot, empty_db):
+def test_bad_paper_error_formatting_of_textedit_reset_after_editing_text(
+    qtbot, empty_db
+):
     widget = MainWindow(empty_db)
     assert len(widget.papersList.papers) == 0
     qtbot.addWidget(widget)
@@ -530,7 +534,7 @@ def test_error_formatting_of_textedit_reset_after_editing_text(qtbot, empty_db):
     assert widget.searchBar.property("error") is False
 
 
-def test_error_message_of_textedit_reset_after_editing_text(qtbot, empty_db):
+def test_bad_paper_error_message_of_textedit_reset_after_editing_text(qtbot, empty_db):
     widget = MainWindow(empty_db)
     assert len(widget.papersList.papers) == 0
     qtbot.addWidget(widget)
@@ -540,12 +544,65 @@ def test_error_message_of_textedit_reset_after_editing_text(qtbot, empty_db):
     assert widget.searchBarErrorText.isHidden() is True
 
 
-def test_adding_paper_does_clear_search_bar_if_already_in_library(qtbot, db):
+def test_adding_paper_does_not_clear_search_bar_if_already_in_library(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
     qtbot.keyClicks(widget.searchBar, u.mine.bibcode)
     qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
-    assert widget.searchBar.text() == ""
+    assert widget.searchBar.text() == u.mine.bibcode
+
+
+def test_adding_duplicate_paper_shows_error_formatting_of_textedit(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.keyClicks(widget.searchBar, u.mine.bibcode)
+    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    assert widget.searchBar.property("error") is True
+
+
+def test_adding_duplicate_paper_shows_error_text(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.keyClicks(widget.searchBar, u.mine.bibcode)
+    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    assert widget.searchBarErrorText.isHidden() is False
+    assert widget.searchBarErrorText.text() == "This paper is already in the library."
+
+
+def test_duplicate_error_formatting_of_textedit_reset_after_any_clicking(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.keyClicks(widget.searchBar, u.mine.bibcode)
+    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    widget.searchBar.setCursorPosition(0)
+    assert widget.searchBar.property("error") is False
+
+
+def test_duplicate_error_message_of_textedit_reset_after_any_clicking(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.keyClicks(widget.searchBar, u.mine.bibcode)
+    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    widget.searchBar.setCursorPosition(0)
+    assert widget.searchBarErrorText.isHidden() is True
+
+
+def test_duplicate_error_formatting_of_textedit_reset_after_editing_text(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.keyClicks(widget.searchBar, u.mine.bibcode)
+    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    qtbot.keyClicks(widget.searchBar, "s")
+    assert widget.searchBar.property("error") is False
+
+
+def test_duplicate_error_message_of_textedit_reset_after_editing_text(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.keyClicks(widget.searchBar, u.mine.bibcode)
+    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    qtbot.keyClicks(widget.searchBar, "s")
+    assert widget.searchBarErrorText.isHidden() is True
 
 
 def test_paper_cannot_be_added_twice(qtbot, empty_db):
