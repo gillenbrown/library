@@ -484,6 +484,11 @@ def test_textedit_error_message_hidden_at_beginning(qtbot, db_empty):
     assert widget.searchBarErrorText.isHidden() is True
 
 
+def test_add_paper_button_shown_at_beginning(qtbot, db_empty):
+    widget = MainWindow(db_empty)
+    assert widget.addButton.isHidden() is False
+
+
 def test_adding_paper_clears_search_bar_if_successful(qtbot, db_empty):
     widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
@@ -522,6 +527,15 @@ def test_adding_bad_paper_shows_error_text(qtbot, db_empty):
     )
 
 
+def test_adding_bad_paper_hides_add_button(qtbot, db_empty):
+    widget = MainWindow(db_empty)
+    assert len(widget.papersList.papers) == 0
+    qtbot.addWidget(widget)
+    qtbot.keyClicks(widget.searchBar, "nonsense")
+    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    assert widget.addButton.isHidden() is True
+
+
 def test_bad_paper_error_formatting_of_textedit_reset_after_any_clicking(
     qtbot, db_empty
 ):
@@ -544,6 +558,16 @@ def test_bad_paper_error_message_of_textedit_reset_after_any_clicking(qtbot, db_
     assert widget.searchBarErrorText.isHidden() is True
 
 
+def test_bad_paper_add_button_reshown_after_any_clicking(qtbot, db_empty):
+    widget = MainWindow(db_empty)
+    assert len(widget.papersList.papers) == 0
+    qtbot.addWidget(widget)
+    qtbot.keyClicks(widget.searchBar, "nonsense")
+    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    widget.searchBar.setCursorPosition(0)
+    assert widget.addButton.isHidden() is False
+
+
 def test_bad_paper_error_formatting_of_textedit_reset_after_editing_text(
     qtbot, db_empty
 ):
@@ -564,6 +588,16 @@ def test_bad_paper_error_message_of_textedit_reset_after_editing_text(qtbot, db_
     qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
     qtbot.keyClicks(widget.searchBar, "nonsens")
     assert widget.searchBarErrorText.isHidden() is True
+
+
+def test_bad_paper_add_button_reshown_after_editing_text(qtbot, db_empty):
+    widget = MainWindow(db_empty)
+    assert len(widget.papersList.papers) == 0
+    qtbot.addWidget(widget)
+    qtbot.keyClicks(widget.searchBar, "nonsense")
+    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    qtbot.keyClicks(widget.searchBar, "nonsens")
+    assert widget.addButton.isHidden() is False
 
 
 def test_adding_paper_does_not_clear_search_bar_if_already_in_library(qtbot, db):
@@ -591,6 +625,14 @@ def test_adding_duplicate_paper_shows_error_text(qtbot, db):
     assert widget.searchBarErrorText.text() == "This paper is already in the library."
 
 
+def test_adding_duplicate_paper_hides_add_button(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.keyClicks(widget.searchBar, u.mine.bibcode)
+    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    assert widget.addButton.isHidden() is True
+
+
 def test_duplicate_error_formatting_of_textedit_reset_after_any_clicking(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
@@ -609,6 +651,15 @@ def test_duplicate_error_message_of_textedit_reset_after_any_clicking(qtbot, db)
     assert widget.searchBarErrorText.isHidden() is True
 
 
+def test_duplicate_add_button_reshown_after_any_clicking(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.keyClicks(widget.searchBar, u.mine.bibcode)
+    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    widget.searchBar.setCursorPosition(0)
+    assert widget.addButton.isHidden() is False
+
+
 def test_duplicate_error_formatting_of_textedit_reset_after_editing_text(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
@@ -625,6 +676,15 @@ def test_duplicate_error_message_of_textedit_reset_after_editing_text(qtbot, db)
     qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
     qtbot.keyClicks(widget.searchBar, "s")
     assert widget.searchBarErrorText.isHidden() is True
+
+
+def test_duplicate_add_button_reshown_after_editing_text(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.keyClicks(widget.searchBar, u.mine.bibcode)
+    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    qtbot.keyClicks(widget.searchBar, "s")
+    assert widget.addButton.isHidden() is False
 
 
 def test_adding_paper_does_not_clear_search_bar_if_no_ads_key_set(
@@ -660,6 +720,14 @@ def test_adding_paper_no_ads_key_set_shows_error_text(qtbot, db_empty_change_ads
     )
 
 
+def test_adding_paper_no_ads_key_hides_add_button(qtbot, db_empty_change_ads_key):
+    widget = MainWindow(db_empty_change_ads_key)
+    qtbot.addWidget(widget)
+    qtbot.keyClicks(widget.searchBar, u.used_for_no_ads_key.url)
+    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    assert widget.addButton.isHidden() is True
+
+
 def test_no_ads_key_set_error_formatting_of_textedit_reset_after_any_clicking(
     qtbot, db_empty_change_ads_key
 ):
@@ -682,6 +750,17 @@ def test_no_ads_key_set_error_message_of_textedit_reset_after_any_clicking(
     assert widget.searchBarErrorText.isHidden() is True
 
 
+def test_no_ads_key_add_button_reshown_after_any_clicking(
+    qtbot, db_empty_change_ads_key
+):
+    widget = MainWindow(db_empty_change_ads_key)
+    qtbot.addWidget(widget)
+    qtbot.keyClicks(widget.searchBar, u.used_for_no_ads_key.url)
+    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    widget.searchBar.setCursorPosition(0)
+    assert widget.addButton.isHidden() is False
+
+
 def test_no_ads_key_set_error_formatting_of_textedit_reset_after_editing_text(
     qtbot, db_empty_change_ads_key
 ):
@@ -702,6 +781,17 @@ def test_no_ads_key_set_error_message_of_textedit_reset_after_editing_text(
     qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
     qtbot.keyClicks(widget.searchBar, "s")
     assert widget.searchBarErrorText.isHidden() is True
+
+
+def test_no_ads_key_add_button_reshown_after_editing_text(
+    qtbot, db_empty_change_ads_key
+):
+    widget = MainWindow(db_empty_change_ads_key)
+    qtbot.addWidget(widget)
+    qtbot.keyClicks(widget.searchBar, u.used_for_no_ads_key.url)
+    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    qtbot.keyClicks(widget.searchBar, "s")
+    assert widget.addButton.isHidden() is False
 
 
 def test_paper_cannot_be_added_twice(qtbot, db_empty):

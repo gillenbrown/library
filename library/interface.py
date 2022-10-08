@@ -903,6 +903,7 @@ class MainWindow(QMainWindow):
         """
         self.searchBarErrorText.setText(error_text)
         self.searchBarErrorText.show()
+        self.addButton.hide()
         qss_trigger(self.searchBar, "error", True)
 
     def resetSearchBarError(self):
@@ -913,6 +914,7 @@ class MainWindow(QMainWindow):
         """
         qss_trigger(self.searchBar, "error", False)
         self.searchBarErrorText.hide()
+        self.addButton.show()
 
     def showAddTagBar(self):
         """
