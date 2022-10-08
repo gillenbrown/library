@@ -318,6 +318,7 @@ class RightPanel(QWidget):
         self.citeText = QLabel("")
         self.abstractText = QLabel("")
         self.copyBibtexButton = QPushButton("Copy Bibtex entry to clipboard")
+        self.adsButton = QPushButton("Open this paper in ADS")
         self.firstDeletePaperButton = QPushButton("Delete this paper")
         self.secondDeletePaperButton = QPushButton("Confirm deletion of this paper")
         self.secondDeletePaperButton.setProperty("delete_button", True)  # style
@@ -339,6 +340,7 @@ class RightPanel(QWidget):
         self.editTagsButton.clicked.connect(self.enableTagEditing)
         self.doneEditingTagsButton.clicked.connect(self.doneTagEditing)
         self.copyBibtexButton.clicked.connect(self.copyBibtex)
+        self.adsButton.clicked.connect(self.openADS)
         self.firstDeletePaperButton.clicked.connect(self.revealSecondDeleteButton)
         self.secondDeletePaperButton.clicked.connect(self.deletePaper)
         self.secondDeletePaperCancelButton.clicked.connect(self.resetDeleteButtons)
@@ -361,6 +363,7 @@ class RightPanel(QWidget):
         vBox.addWidget(self.citeText)
         vBox.addWidget(self.abstractText)
         vBox.addWidget(self.copyBibtexButton)
+        vBox.addWidget(self.adsButton)
         vBox.addWidget(self.tagText)
         vBox.addWidget(self.editTagsButton)
         vBox.addWidget(self.doneEditingTagsButton)
@@ -405,6 +408,7 @@ class RightPanel(QWidget):
         self.editTagsButton.hide()
         self.doneEditingTagsButton.hide()
         self.copyBibtexButton.hide()
+        self.adsButton.hide()
         self.firstDeletePaperButton.hide()
         self.secondDeletePaperButton.hide()
         self.secondDeletePaperCancelButton.hide()
@@ -438,6 +442,7 @@ class RightPanel(QWidget):
         self.editTagsButton.show()
         self.doneEditingTagsButton.hide()
         self.copyBibtexButton.show()
+        self.adsButton.show()
         self.firstDeletePaperButton.show()
         # also hide the second button if it was shown
         self.secondDeletePaperButton.hide()
@@ -504,6 +509,16 @@ class RightPanel(QWidget):
         """
         this_bibtex = self.db.get_paper_attribute(self.bibcode, "bibtex")
         QGuiApplication.clipboard().setText(this_bibtex)
+
+    def openADS(self):
+        """
+        Open the ADS page for this paper in the user's browser
+
+        :return: None
+        """
+        QDesktopServices.openUrl(
+            f"https://ui.adsabs.harvard.edu/abs/{self.bibcode}/abstract"
+        )
 
     def revealSecondDeleteButton(self):
         """

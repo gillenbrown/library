@@ -1775,6 +1775,15 @@ def test_right_panel_copy_bibtex_button_is_hidden_when_paper_is_deleted(qtbot, d
     assert widget.rightPanel.copyBibtexButton.isHidden()
 
 
+def test_right_panel_open_ads_button_is_hidden_when_paper_is_deleted(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.secondDeletePaperButton, Qt.LeftButton)
+    assert widget.rightPanel.adsButton.isHidden()
+
+
 def test_right_panel_first_delete_button_is_hidden_when_paper_is_deleted(
     qtbot, db_temp
 ):
@@ -2249,3 +2258,35 @@ def test_adding_tags_doesnt_duplicate_tags_in_right_panel(qtbot, db_temp):
     # then look at the tags in the right panel
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     assert ["Test Tag", "Test Tag 2"] == [t.text() for t in widget.rightPanel.tags]
+
+
+def test_open_ads_button_hidden_at_beginning(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    assert widget.rightPanel.adsButton.isHidden() is True
+
+
+def test_open_ads_button_appears_when_paper_clicked(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    assert widget.rightPanel.adsButton.isHidden() is False
+
+
+def test_clicking_on_ads_button_opens_paper_in_browser(qtbot, db_empty, monkeypatch):
+    # Here we need to use monkeypatch to simulate opening the URL
+    open_calls = []
+    monkeypatch.setattr(QDesktopServices, "openUrl", lambda x: open_calls.append(x))
+
+    widget = MainWindow(db_empty)
+    qtbot.addWidget(widget)
+    # add a paper to this empty database to make the paper object
+    add_my_paper(qtbot, widget)
+    # click on th epaper in the main panel, then click on the ADS button
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.adsButton, Qt.LeftButton)
+
+    # since this already has a URL it should be added
+    assert open_calls == [
+        f"https://ui.adsabs.harvard.edu/abs/2018ApJ...864...94B/abstract"
+    ]
