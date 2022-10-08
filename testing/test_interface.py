@@ -22,7 +22,7 @@ def add_my_paper(qtbot, widget):
     qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
 
 
-@pytest.fixture(name="empty_db")
+@pytest.fixture(name="db_empty")
 def temporary_database():
     """
     Fixture to get a database at a temporary path in the current directory. This will be
@@ -67,7 +67,8 @@ def temporary_database_with_papers_and_tags():
 @pytest.fixture(name="db")
 def testing_database():
     """
-    Fixture to get the testing database, which has some prefilled info
+    Fixture to get the testing database, which has some prefilled info. This avoids
+    lots of unnecessary ADS calls
     """
     return Database(Path(__file__).parent / "testing.db")
 
@@ -128,111 +129,111 @@ def test_fonts_are_actually_in_the_font_database_after_set_up_fonts(qtbot):
     assert QFontDatabase.hasFamily("Cabin")
 
 
-def test_window_initial_width(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_window_initial_width(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     assert widget.size().width() == 1000
 
 
-def test_window_initial_height(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_window_initial_height(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     assert widget.size().height() == 600
 
 
-def test_title_is_has_text_saying_library(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_title_is_has_text_saying_library(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     assert widget.title.text() == "Library"
 
 
-def test_title_is_centered(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_title_is_centered(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     assert widget.title.alignment() == Qt.AlignCenter
 
 
-def test_title_is_lobster_font(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_title_is_lobster_font(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     assert widget.title.font().family() == "Lobster"
 
 
-def test_title_is_correct_font_size(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_title_is_correct_font_size(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     assert widget.title.font().pointSize() == 40
 
 
-def test_title_has_correct_height_in_pixels(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_title_has_correct_height_in_pixels(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     assert widget.title.height() == 60
 
 
-def test_search_bar_has_placeholder_text(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_search_bar_has_placeholder_text(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     text = "Enter your paper URL or ADS bibcode here"
     assert widget.searchBar.placeholderText() == text
 
 
-def test_search_bar_has_correct_font_family(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_search_bar_has_correct_font_family(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     assert widget.searchBar.font().family() == "Cabin"
 
 
-def test_search_bar_has_correct_font_size(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_search_bar_has_correct_font_size(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     assert widget.searchBar.font().pointSize() == 14
 
 
-def test_add_button_has_correct_font_family(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_add_button_has_correct_font_family(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     assert widget.addButton.font().family() == "Cabin"
 
 
-def test_add_button_has_correct_font_size(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_add_button_has_correct_font_size(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     assert widget.addButton.font().pointSize() == 14
 
 
-def test_add_button_and_search_bar_have_almost_same_height(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_add_button_and_search_bar_have_almost_same_height(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     height_ratio = widget.addButton.height() / widget.searchBar.height()
     assert 0.8 < height_ratio < 1.3
 
 
-def test_add_button_and_search_bar_are_much_shorter_than_title(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_add_button_and_search_bar_are_much_shorter_than_title(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     assert widget.addButton.height() < 0.6 * widget.title.height()
     assert widget.searchBar.height() < 0.6 * widget.title.height()
 
 
-def test_can_add_paper_by_filling_bibcode_then_clicking_button(qtbot, empty_db):
-    assert len(empty_db.get_all_bibcodes()) == 0
-    widget = MainWindow(empty_db)
+def test_can_add_paper_by_filling_bibcode_then_clicking_button(qtbot, db_empty):
+    assert len(db_empty.get_all_bibcodes()) == 0
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     qtbot.keyClicks(widget.searchBar, u.mine.bibcode)
     qtbot.mouseClick(widget.addButton, Qt.LeftButton)
-    assert len(empty_db.get_all_bibcodes()) == 1
-    assert u.mine.bibcode in empty_db.get_all_bibcodes()
+    assert len(db_empty.get_all_bibcodes()) == 1
+    assert u.mine.bibcode in db_empty.get_all_bibcodes()
 
 
-def test_can_add_paper_by_filling_bibcode_then_pressing_enter(qtbot, empty_db):
-    assert len(empty_db.get_all_bibcodes()) == 0
-    widget = MainWindow(empty_db)
+def test_can_add_paper_by_filling_bibcode_then_pressing_enter(qtbot, db_empty):
+    assert len(db_empty.get_all_bibcodes()) == 0
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     qtbot.keyClicks(widget.searchBar, u.mine.bibcode)
     qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
-    assert len(empty_db.get_all_bibcodes()) == 1
-    assert u.mine.bibcode in empty_db.get_all_bibcodes()
+    assert len(db_empty.get_all_bibcodes()) == 1
+    assert u.mine.bibcode in db_empty.get_all_bibcodes()
 
 
 def test_can_exit_action_actually_exit_the_app(qtbot, db, monkeypatch):
@@ -415,19 +416,19 @@ def test_paper_initialization_has_correct_cite_string_in_the_text(qtbot, db):
     assert new_paper.citeText.text() == db.get_cite_string(u.mine.bibcode)
 
 
-def test_paper_initialization_has_accents_in_author_list(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_paper_initialization_has_accents_in_author_list(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
-    empty_db.add_paper(u.juan.bibcode)
-    new_paper = Paper(u.juan.bibcode, empty_db, widget.rightPanel, widget.papersList)
+    db_empty.add_paper(u.juan.bibcode)
+    new_paper = Paper(u.juan.bibcode, db_empty, widget.rightPanel, widget.papersList)
     assert "á" in new_paper.citeText.text()
 
 
-def test_cannot_initialize_paper_thats_not_in_database(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_cannot_initialize_paper_thats_not_in_database(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     with pytest.raises(AssertionError):
-        Paper(u.mine.bibcode, empty_db, widget.rightPanel, widget.papersList)
+        Paper(u.mine.bibcode, db_empty, widget.rightPanel, widget.papersList)
 
 
 def test_all_papers_in_database_are_in_the_paper_list_at_beginning(qtbot, db):
@@ -437,40 +438,40 @@ def test_all_papers_in_database_are_in_the_paper_list_at_beginning(qtbot, db):
     assert sorted(papers_list_bibcodes) == sorted(db.get_all_bibcodes())
 
 
-def test_adding_paper_adds_paper_to_interface(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_adding_paper_adds_paper_to_interface(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     assert len(widget.papersList.papers) == 0
     qtbot.addWidget(widget)
     add_my_paper(qtbot, widget)
     assert len(widget.papersList.papers) == 1
 
 
-def test_adding_paper_adds_correct_paper_to_interface(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_adding_paper_adds_correct_paper_to_interface(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     add_my_paper(qtbot, widget)
     assert widget.papersList.papers[0].bibcode == u.mine.bibcode
 
 
-def test_textedit_is_not_in_error_state_at_beginning(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_textedit_is_not_in_error_state_at_beginning(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     assert widget.searchBar.property("error") is False
 
 
-def test_textedit_error_message_hidden_at_beginning(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_textedit_error_message_hidden_at_beginning(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     assert widget.searchBarErrorText.isHidden() is True
 
 
-def test_adding_paper_clears_search_bar_if_successful(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_adding_paper_clears_search_bar_if_successful(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     add_my_paper(qtbot, widget)
     assert widget.searchBar.text() == ""
 
 
-def test_adding_paper_does_not_clear_search_bar_if_not_successful(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_adding_paper_does_not_clear_search_bar_if_not_successful(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     assert len(widget.papersList.papers) == 0
     qtbot.addWidget(widget)
     qtbot.keyClicks(widget.searchBar, "nonsense")
@@ -478,8 +479,8 @@ def test_adding_paper_does_not_clear_search_bar_if_not_successful(qtbot, empty_d
     assert widget.searchBar.text() == "nonsense"
 
 
-def test_adding_bad_paper_shows_error_formatting_of_textedit(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_adding_bad_paper_shows_error_formatting_of_textedit(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     assert len(widget.papersList.papers) == 0
     qtbot.addWidget(widget)
     qtbot.keyClicks(widget.searchBar, "nonsense")
@@ -487,8 +488,8 @@ def test_adding_bad_paper_shows_error_formatting_of_textedit(qtbot, empty_db):
     assert widget.searchBar.property("error") is True
 
 
-def test_adding_bad_paper_shows_error_text(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_adding_bad_paper_shows_error_text(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     assert len(widget.papersList.papers) == 0
     qtbot.addWidget(widget)
     qtbot.keyClicks(widget.searchBar, "nonsense")
@@ -501,9 +502,9 @@ def test_adding_bad_paper_shows_error_text(qtbot, empty_db):
 
 
 def test_bad_paper_error_formatting_of_textedit_reset_after_any_clicking(
-    qtbot, empty_db
+    qtbot, db_empty
 ):
-    widget = MainWindow(empty_db)
+    widget = MainWindow(db_empty)
     assert len(widget.papersList.papers) == 0
     qtbot.addWidget(widget)
     qtbot.keyClicks(widget.searchBar, "nonsense")
@@ -512,8 +513,8 @@ def test_bad_paper_error_formatting_of_textedit_reset_after_any_clicking(
     assert widget.searchBar.property("error") is False
 
 
-def test_bad_paper_error_message_of_textedit_reset_after_any_clicking(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_bad_paper_error_message_of_textedit_reset_after_any_clicking(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     assert len(widget.papersList.papers) == 0
     qtbot.addWidget(widget)
     qtbot.keyClicks(widget.searchBar, "nonsense")
@@ -523,9 +524,9 @@ def test_bad_paper_error_message_of_textedit_reset_after_any_clicking(qtbot, emp
 
 
 def test_bad_paper_error_formatting_of_textedit_reset_after_editing_text(
-    qtbot, empty_db
+    qtbot, db_empty
 ):
-    widget = MainWindow(empty_db)
+    widget = MainWindow(db_empty)
     assert len(widget.papersList.papers) == 0
     qtbot.addWidget(widget)
     qtbot.keyClicks(widget.searchBar, "nonsense")
@@ -534,8 +535,8 @@ def test_bad_paper_error_formatting_of_textedit_reset_after_editing_text(
     assert widget.searchBar.property("error") is False
 
 
-def test_bad_paper_error_message_of_textedit_reset_after_editing_text(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_bad_paper_error_message_of_textedit_reset_after_editing_text(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     assert len(widget.papersList.papers) == 0
     qtbot.addWidget(widget)
     qtbot.keyClicks(widget.searchBar, "nonsense")
@@ -605,8 +606,8 @@ def test_duplicate_error_message_of_textedit_reset_after_editing_text(qtbot, db)
     assert widget.searchBarErrorText.isHidden() is True
 
 
-def test_paper_cannot_be_added_twice(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_paper_cannot_be_added_twice(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     assert len(widget.papersList.papers) == 0
     qtbot.addWidget(widget)
     add_my_paper(qtbot, widget)
@@ -741,7 +742,7 @@ def test_paper_texts_are_unhighlighted_when_others_clicked(qtbot, db):
 
 
 def test_double_clicking_on_paper_without_local_file_asks_user(
-    qtbot, empty_db, monkeypatch
+    qtbot, db_empty, monkeypatch
 ):
     # Here we need to use monkeypatch to simulate user input
     test_loc = "/Users/gillenb/test.pdf"
@@ -752,16 +753,16 @@ def test_double_clicking_on_paper_without_local_file_asks_user(
 
     monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
 
-    widget = MainWindow(empty_db)
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     # add a paper to this empty database to make the paper object
     add_my_paper(qtbot, widget)
     qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
-    assert empty_db.get_paper_attribute(u.mine.bibcode, "local_file") == test_loc
+    assert db_empty.get_paper_attribute(u.mine.bibcode, "local_file") == test_loc
 
 
 def test_double_clicking_on_paper_without_local_file_but_not_choosing_doesnt_add_it(
-    qtbot, empty_db, monkeypatch
+    qtbot, db_empty, monkeypatch
 ):
     # Here we need to use monkeypatch to simulate user input
     # create a mock function to get the file. It needs to have the filter kwarg, since
@@ -771,34 +772,34 @@ def test_double_clicking_on_paper_without_local_file_but_not_choosing_doesnt_add
 
     monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
 
-    widget = MainWindow(empty_db)
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     # add a paper to this empty database to make the paper object
     add_my_paper(qtbot, widget)
     qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
-    assert empty_db.get_paper_attribute(u.mine.bibcode, "local_file") == None
+    assert db_empty.get_paper_attribute(u.mine.bibcode, "local_file") == None
 
 
 def test_double_clicking_on_paper_with_local_file_opens_it(
-    qtbot, empty_db, monkeypatch
+    qtbot, db_empty, monkeypatch
 ):
     # Here we need to use monkeypatch to simulate opening the file
     test_loc = "/Users/gillenb/test.pdf"
     open_calls = []
     monkeypatch.setattr(QDesktopServices, "openUrl", lambda x: open_calls.append(x))
 
-    widget = MainWindow(empty_db)
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     # add a paper to this empty database to make the paper object
     add_my_paper(qtbot, widget)
-    empty_db.set_paper_attribute(u.mine.bibcode, "local_file", test_loc)
+    db_empty.set_paper_attribute(u.mine.bibcode, "local_file", test_loc)
     qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
     # since this already has a URL it should be added
     assert open_calls == [f"file:{test_loc}"]
 
 
 def test_double_clicking_on_paper_without_local_file_selects_and_opens_it(
-    qtbot, empty_db, monkeypatch
+    qtbot, db_empty, monkeypatch
 ):
     # Here we need to use monkeypatch to simulate user input and open files
     test_loc = "/Users/gillenb/test.pdf"
@@ -811,7 +812,7 @@ def test_double_clicking_on_paper_without_local_file_selects_and_opens_it(
     open_calls = []
     monkeypatch.setattr(QDesktopServices, "openUrl", lambda x: open_calls.append(x))
 
-    widget = MainWindow(empty_db)
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     # add a paper to this empty database to make the paper object
     add_my_paper(qtbot, widget)  # do not add file location
@@ -820,7 +821,7 @@ def test_double_clicking_on_paper_without_local_file_selects_and_opens_it(
 
 
 def test_dclicking_on_paper_without_local_file_but_not_choosing_doesnt_add_or_open_it(
-    qtbot, empty_db, monkeypatch
+    qtbot, db_empty, monkeypatch
 ):
     # Here we need to use monkeypatch to simulate user input and open files
     # create a mock function to get the file. It needs to have the filter kwarg, since
@@ -832,7 +833,7 @@ def test_dclicking_on_paper_without_local_file_but_not_choosing_doesnt_add_or_op
     open_calls = []
     monkeypatch.setattr(QDesktopServices, "openUrl", lambda x: open_calls.append(x))
 
-    widget = MainWindow(empty_db)
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     # add a paper to this empty database to make the paper object
     add_my_paper(qtbot, widget)  # do not add file location
@@ -847,60 +848,60 @@ def test_get_tags_from_paper_object_is_correct(qtbot, db):
     assert paper.getTags() == db.get_paper_tags(paper.bibcode)
 
 
-def test_add_tag_button_is_shown_at_beginning(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_add_tag_button_is_shown_at_beginning(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     assert widget.tagsList.addTagButton.isHidden() is False
 
 
-def test_add_tag_text_button_has_correct_font_size(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_add_tag_text_button_has_correct_font_size(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     assert widget.tagsList.addTagButton.font().pointSize() == 14
 
 
-def test_add_tag_text_button_has_correct_font_family(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_add_tag_text_button_has_correct_font_family(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     assert widget.tagsList.addTagButton.font().family() == "Cabin"
 
 
-def test_add_tag_text_bar_is_hidden_at_beginning(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_add_tag_text_bar_is_hidden_at_beginning(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     assert widget.tagsList.addTagBar.isHidden() is True
 
 
-def test_clicking_add_tag_button_hides_button(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_clicking_add_tag_button_hides_button(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     assert widget.tagsList.addTagButton.isHidden() is True
 
 
-def test_clicking_add_tag_button_shows_text_entry(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_clicking_add_tag_button_shows_text_entry(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     assert widget.tagsList.addTagBar.isHidden() is False
 
 
-def test_add_tag_text_bar_has_correct_font_size(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_add_tag_text_bar_has_correct_font_size(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     assert widget.tagsList.addTagBar.font().pointSize() == 14
 
 
-def test_add_tag_text_bar_has_correct_font_family(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_add_tag_text_bar_has_correct_font_family(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     assert widget.tagsList.addTagBar.font().family() == "Cabin"
 
 
-def test_add_tag_text_bar_has_correct_placeholder_text(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_add_tag_text_bar_has_correct_placeholder_text(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     text = "Tag name"
@@ -973,8 +974,8 @@ def test_all_tags_in_database_are_in_the_tag_list_at_beginning(qtbot, db):
     assert sorted(tags_list) == sorted(db.get_all_tags())
 
 
-def test_read_and_unread_are_initialized_even_in_new_database(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_read_and_unread_are_initialized_even_in_new_database(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     tags_list = [t.name for t in widget.tagsList.tags]
     assert sorted(tags_list) == ["Read", "Unread"]
@@ -1226,14 +1227,14 @@ def test_show_all_button_fontsize(qtbot, db):
     assert widget.tagsList.showAllButton.font().pointSize() == 14
 
 
-def test_show_all_button_has_correct_font_family(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_show_all_button_has_correct_font_family(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     assert widget.tagsList.showAllButton.font().family() == "Cabin"
 
 
-def test_show_all_button_has_correct_text(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_show_all_button_has_correct_text(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     assert widget.tagsList.showAllButton.text() == "All Papers"
 
@@ -1644,14 +1645,14 @@ def test_first_delete_tag_button_shown_at_beginning(qtbot, db_temp_tags):
     assert widget.firstDeleteTagButton.isHidden() is False
 
 
-def test_first_delete_tag_button_has_correct_font_size(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_first_delete_tag_button_has_correct_font_size(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     assert widget.firstDeleteTagButton.font().pointSize() == 14
 
 
-def test_first_delete_tag_button_has_correct_font_family(qtbot, empty_db):
-    widget = MainWindow(empty_db)
+def test_first_delete_tag_button_has_correct_font_family(qtbot, db_empty):
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     assert widget.firstDeleteTagButton.font().family() == "Cabin"
 
