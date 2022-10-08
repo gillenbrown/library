@@ -870,30 +870,21 @@ class MainWindow(QMainWindow):
         try:  # see if the user put something good
             bibcode = self.db.add_paper(self.searchBar.text())
         except ValueError:  # will be raised if the value isn't recognized
-            # show the error message, and change formatting. Leave the text
-            self.searchBarErrorText.setText(
+            self.formatSearchBarError(
                 "This paper was not found in ADS. "
                 "If it was just added to the arXiv, "
                 "ADS may not have registered it."
             )
-            self.searchBarErrorText.show()
-            qss_trigger(self.searchBar, "error", True)
             return
         except PaperAlreadyInDatabaseError:
-            # show the error message, and change formatting. Leave the text in the bar
-            self.searchBarErrorText.setText("This paper is already in the library.")
-            self.searchBarErrorText.show()
-            qss_trigger(self.searchBar, "error", True)
+            self.formatSearchBarError("This paper is already in the library.")
             return
         except ads.exceptions.APIResponseError:
             # ADS key not set
-            # show the error message, and change formatting. Leave the text in the bar
-            self.searchBarErrorText.setText(
+            self.formatSearchBarError(
                 "You don't have an ADS key set. "
                 "See this repository readme for more, then restart this application."
             )
-            self.searchBarErrorText.show()
-            qss_trigger(self.searchBar, "error", True)
             return
 
         # we only get here if the addition to the database worked. If so we add the
@@ -901,6 +892,18 @@ class MainWindow(QMainWindow):
         self.papersList.addPaper(bibcode)
         # clear the text so another paper can be added
         self.searchBar.clear()
+
+    def formatSearchBarError(self, error_text):
+        """
+        When an error with the ADS library happens, change the formatting.
+
+        :param error_text: The text to display in the error message.
+        :type error_text: str
+        :return: None
+        """
+        self.searchBarErrorText.setText(error_text)
+        self.searchBarErrorText.show()
+        qss_trigger(self.searchBar, "error", True)
 
     def resetSearchBarError(self):
         """
