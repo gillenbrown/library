@@ -746,10 +746,10 @@ class MainWindow(QMainWindow):
         self.searchBar.cursorPositionChanged.connect(self.resetSearchBarError)
         self.searchBar.textChanged.connect(self.resetSearchBarError)
         # have both of these quantities have a fixed height. These values are chosen to
-        # make it look nice. They aren't the same size since the bounding boxes aren't
-        # quite the same relative to the shown borders for whatever reason
+        # make it look nice.
         self.searchBar.setFixedHeight(30)
-        self.addButton.setFixedHeight(35)
+        self.searchBarErrorText.setFixedHeight(30)
+        self.addButton.setFixedHeight(30)
         # Then add these to the layouts
         hBoxSearchBar.addWidget(self.searchBar)
         hBoxSearchBar.addWidget(self.searchBarErrorText)

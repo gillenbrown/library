@@ -536,6 +536,26 @@ def test_adding_bad_paper_hides_add_button(qtbot, db_empty):
     assert widget.addButton.isHidden() is True
 
 
+def test_search_bar_and_error_text_have_almost_same_height(qtbot, db_empty):
+    widget = MainWindow(db_empty)
+    qtbot.addWidget(widget)
+    # add a bad paper, which is when this situation arises
+    qtbot.keyClicks(widget.searchBar, "nonsense")
+    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    height_ratio = widget.searchBarErrorText.height() / widget.searchBar.height()
+    assert 0.8 < height_ratio < 1.3
+
+
+def test_search_bar_and_error_text_are_much_shorter_than_title(qtbot, db_empty):
+    widget = MainWindow(db_empty)
+    qtbot.addWidget(widget)
+    # add a bad paper, which is when this situation arises
+    qtbot.keyClicks(widget.searchBar, "nonsense")
+    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    assert widget.searchBar.height() < 0.6 * widget.title.height()
+    assert widget.searchBarErrorText.height() < 0.6 * widget.title.height()
+
+
 def test_bad_paper_error_formatting_of_textedit_reset_after_any_clicking(
     qtbot, db_empty
 ):
