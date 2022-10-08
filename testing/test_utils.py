@@ -246,3 +246,9 @@ juan = PaperDict(
     bibcode="2018ApJ...863...60R",
     authors=["Remolina González, J. D.", "Sharon, K.", "Mahler, G."],
 )
+
+used_for_no_ads_key = PaperDict(
+    # I need one paper that isn't used anywhere else in the tests other than when I'm
+    # testing for a bad ADS key, so that my ADS wrapper doesn't store it in the cache
+    url="https://ui.adsabs.harvard.edu/abs/2021AJ....161...40G/abstract"
+)

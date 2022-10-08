@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import ads.exceptions
 from PySide6.QtCore import Qt, QEvent
 from PySide6.QtGui import (
     QKeySequence,
@@ -881,6 +882,16 @@ class MainWindow(QMainWindow):
         except PaperAlreadyInDatabaseError:
             # show the error message, and change formatting. Leave the text in the bar
             self.searchBarErrorText.setText("This paper is already in the library.")
+            self.searchBarErrorText.show()
+            qss_trigger(self.searchBar, "error", True)
+            return
+        except ads.exceptions.APIResponseError:
+            # ADS key not set
+            # show the error message, and change formatting. Leave the text in the bar
+            self.searchBarErrorText.setText(
+                "You don't have an ADS key set. "
+                "See this repository readme for more, then restart this application."
+            )
             self.searchBarErrorText.show()
             qss_trigger(self.searchBar, "error", True)
             return

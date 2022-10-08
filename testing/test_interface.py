@@ -3,6 +3,7 @@ test_interface.py
 
 Perform tests on the GUI using pytest-qt
 """
+import os
 from pathlib import Path
 import random
 
@@ -62,6 +63,26 @@ def temporary_database_with_papers_and_tags():
     db.add_new_tag("tag_2")
     yield db
     file_path.unlink()  # removes this file
+
+
+@pytest.fixture(name="db_empty_change_ads_key")
+def temporary_database_with_changed_ads_key():
+    """
+    Fixture to get a database at a temporary path in the current directory. This will be
+    removed once the test is done. It also changes the ADS key to something bad, then
+    resets it at the end of the test
+    """
+    # set the key to something bad
+    original_key = os.environ["ADS_DEV_KEY"]
+    os.environ["ADS_DEV_KEY"] = "junk"
+
+    file_path = Path(f"{random.randint(0, 1000000000)}.db")
+    db = Database(file_path)
+    yield db
+    file_path.unlink()  # removes this file
+
+    # reset the key
+    os.environ["ADS_DEV_KEY"] = original_key
 
 
 @pytest.fixture(name="db")
@@ -601,6 +622,83 @@ def test_duplicate_error_message_of_textedit_reset_after_editing_text(qtbot, db)
     widget = MainWindow(db)
     qtbot.addWidget(widget)
     qtbot.keyClicks(widget.searchBar, u.mine.bibcode)
+    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    qtbot.keyClicks(widget.searchBar, "s")
+    assert widget.searchBarErrorText.isHidden() is True
+
+
+def test_adding_paper_does_not_clear_search_bar_if_no_ads_key_set(
+    qtbot, db_empty_change_ads_key
+):
+    widget = MainWindow(db_empty_change_ads_key)
+    qtbot.addWidget(widget)
+    # need to use a paper that's not already stored in my ADS cache
+    qtbot.keyClicks(widget.searchBar, u.used_for_no_ads_key.url)
+    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    assert widget.searchBar.text() == u.used_for_no_ads_key.url
+
+
+def test_adding_paper_no_ads_key_set_shows_error_formatting_of_textedit(
+    qtbot, db_empty_change_ads_key
+):
+    widget = MainWindow(db_empty_change_ads_key)
+    qtbot.addWidget(widget)
+    qtbot.keyClicks(widget.searchBar, u.used_for_no_ads_key.url)
+    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    assert widget.searchBar.property("error") is True
+
+
+def test_adding_paper_no_ads_key_set_shows_error_text(qtbot, db_empty_change_ads_key):
+    widget = MainWindow(db_empty_change_ads_key)
+    qtbot.addWidget(widget)
+    qtbot.keyClicks(widget.searchBar, u.used_for_no_ads_key.url)
+    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    assert widget.searchBarErrorText.isHidden() is False
+    assert (
+        widget.searchBarErrorText.text() == "You don't have an ADS key set. "
+        "See this repository readme for more, then restart this application."
+    )
+
+
+def test_no_ads_key_set_error_formatting_of_textedit_reset_after_any_clicking(
+    qtbot, db_empty_change_ads_key
+):
+    widget = MainWindow(db_empty_change_ads_key)
+    qtbot.addWidget(widget)
+    qtbot.keyClicks(widget.searchBar, u.used_for_no_ads_key.url)
+    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    widget.searchBar.setCursorPosition(0)
+    assert widget.searchBar.property("error") is False
+
+
+def test_no_ads_key_set_error_message_of_textedit_reset_after_any_clicking(
+    qtbot, db_empty_change_ads_key
+):
+    widget = MainWindow(db_empty_change_ads_key)
+    qtbot.addWidget(widget)
+    qtbot.keyClicks(widget.searchBar, u.used_for_no_ads_key.url)
+    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    widget.searchBar.setCursorPosition(0)
+    assert widget.searchBarErrorText.isHidden() is True
+
+
+def test_no_ads_key_set_error_formatting_of_textedit_reset_after_editing_text(
+    qtbot, db_empty_change_ads_key
+):
+    widget = MainWindow(db_empty_change_ads_key)
+    qtbot.addWidget(widget)
+    qtbot.keyClicks(widget.searchBar, u.used_for_no_ads_key.url)
+    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    qtbot.keyClicks(widget.searchBar, "s")
+    assert widget.searchBar.property("error") is False
+
+
+def test_no_ads_key_set_error_message_of_textedit_reset_after_editing_text(
+    qtbot, db_empty_change_ads_key
+):
+    widget = MainWindow(db_empty_change_ads_key)
+    qtbot.addWidget(widget)
+    qtbot.keyClicks(widget.searchBar, u.used_for_no_ads_key.url)
     qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
     qtbot.keyClicks(widget.searchBar, "s")
     assert widget.searchBarErrorText.isHidden() is True
