@@ -3,6 +3,8 @@ name: Coverage
 # action, since I have a matrix there to run on linux, Mac, and various python versions.
 # I only need to check coverage once. Most of this duplicates test.yaml 
 on: [push]
+branches:
+  - main
 jobs:
   coverage:
     # I would like to use ubuntu-latest, but it uses 20.04, which has an older
