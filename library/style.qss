@@ -131,3 +131,14 @@ QPushButton[delete_button=true]:hover{
 QPushButton[delete_cancel_button=true]{
     background-color: #F3FFF3;
 }
+
+/* Adjust the sizing of the tag checkbox holder, so that it doesn't take up space */
+/* when hidden */
+TagCheckBox{
+    padding-top: 0;
+    padding-bottom: 0;
+    border-top: 0;
+    border-bottom: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+}
