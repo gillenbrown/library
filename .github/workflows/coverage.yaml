@@ -2,6 +2,7 @@ name: Coverage
 # Runs tests, then does coverage checks. I don't do coverage checks in the main testing
 # action, since I have a matrix there to run on linux, Mac, and various python versions.
 # I only need to check coverage once. Most of this duplicates test.yaml 
+on: ["push"]
 jobs:
   coverage:
     # I would like to use ubuntu-latest, but it uses 20.04, which has an older
