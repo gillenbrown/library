@@ -1372,7 +1372,6 @@ def test_show_all_tags_button_starts_highlighted(qtbot, db_temp_tags):
     qtbot.addWidget(widget)
     assert widget.tagsList.showAllButton.property("is_highlighted") is True
     assert widget.tagsList.showAllButton.label.property("is_highlighted") is True
-    assert widget.tagsList.showAllButton.exportButton.property("is_highlighted") is True
 
 
 def test_all_tags_start_unhighlighted(qtbot, db_temp_tags):
@@ -1382,7 +1381,6 @@ def test_all_tags_start_unhighlighted(qtbot, db_temp_tags):
     for tag in widget.tagsList.tags:
         assert tag.property("is_highlighted") is False
         assert tag.label.property("is_highlighted") is False
-        assert tag.exportButton.property("is_highlighted") is False
 
 
 def test_clicking_on_tag_in_left_panel_highlights_tag_text(qtbot, db_temp_tags):
@@ -1393,7 +1391,6 @@ def test_clicking_on_tag_in_left_panel_highlights_tag_text(qtbot, db_temp_tags):
     qtbot.mouseClick(tag, Qt.LeftButton)
     assert tag.property("is_highlighted") is True
     assert tag.label.property("is_highlighted") is True
-    assert tag.exportButton.property("is_highlighted") is True
 
 
 def test_clicking_on_show_all_in_left_panel_highlights_tag_text(qtbot, db_temp_tags):
@@ -1402,7 +1399,6 @@ def test_clicking_on_show_all_in_left_panel_highlights_tag_text(qtbot, db_temp_t
     qtbot.mouseClick(widget.tagsList.showAllButton, Qt.LeftButton)
     assert widget.tagsList.showAllButton.property("is_highlighted") is True
     assert widget.tagsList.showAllButton.label.property("is_highlighted") is True
-    assert widget.tagsList.showAllButton.exportButton.property("is_highlighted") is True
 
 
 def test_clicking_on_tag_in_left_panel_unlights_others(qtbot, db_temp_tags):
@@ -1415,11 +1411,9 @@ def test_clicking_on_tag_in_left_panel_unlights_others(qtbot, db_temp_tags):
             if tag.label.text() == tag_comp.label.text():
                 assert tag_comp.property("is_highlighted") is True
                 assert tag_comp.label.property("is_highlighted") is True
-                assert tag_comp.exportButton.property("is_highlighted") is True
             else:
                 assert tag_comp.property("is_highlighted") is False
                 assert tag_comp.label.property("is_highlighted") is False
-                assert tag_comp.exportButton.property("is_highlighted") is False
 
 
 def test_clicking_on_show_all_in_left_panel_unlights_others(qtbot, db_temp_tags):
@@ -1429,7 +1423,6 @@ def test_clicking_on_show_all_in_left_panel_unlights_others(qtbot, db_temp_tags)
     for tag in widget.tagsList.tags:
         assert tag.property("is_highlighted") is False
         assert tag.label.property("is_highlighted") is False
-        assert tag.exportButton.property("is_highlighted") is False
 
 
 def test_newly_added_tag_is_unhighlighted(qtbot, db_temp_tags):
@@ -1442,7 +1435,6 @@ def test_newly_added_tag_is_unhighlighted(qtbot, db_temp_tags):
         if tag.label.text() == "newly added tag":
             assert tag.property("is_highlighted") is False
             assert tag.label.property("is_highlighted") is False
-            assert tag.exportButton.property("is_highlighted") is False
 
 
 def test_show_all_button_fontsize(qtbot, db):
@@ -2318,6 +2310,69 @@ def test_tag_export_button_has_correct_text(qtbot, db_temp_tags):
     widget = MainWindow(db_temp_tags)
     qtbot.addWidget(widget)
     assert widget.tagsList.tags[0].exportButton.text() == "Export"
+
+
+def test_show_all_tags_button_starts_with_export_button(qtbot, db_temp_tags):
+    widget = MainWindow(db_temp_tags)
+    qtbot.addWidget(widget)
+    assert widget.tagsList.showAllButton.exportButton.isHidden() is False
+
+
+def test_all_tags_start_with_export_hidden(qtbot, db_temp_tags):
+    widget = MainWindow(db_temp_tags)
+    qtbot.addWidget(widget)
+    # get a tag from the left panel to click on
+    for tag in widget.tagsList.tags:
+        assert tag.exportButton.isHidden() is True
+
+
+def test_clicking_on_tag_in_left_panel_shows_export_button(qtbot, db_temp_tags):
+    widget = MainWindow(db_temp_tags)
+    qtbot.addWidget(widget)
+    # get a tag from the left panel to click on
+    tag = widget.tagsList.tags[0]
+    qtbot.mouseClick(tag, Qt.LeftButton)
+    assert tag.exportButton.isHidden() is False
+
+
+def test_clicking_on_show_all_in_left_panel_shows_export_button(qtbot, db_temp_tags):
+    widget = MainWindow(db_temp_tags)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.tagsList.tags[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.tagsList.showAllButton, Qt.LeftButton)
+    assert widget.tagsList.showAllButton.exportButton.isHidden() is False
+
+
+def test_clicking_on_tag_in_left_panel_removes_export_button(qtbot, db_temp_tags):
+    widget = MainWindow(db_temp_tags)
+    qtbot.addWidget(widget)
+    # Click on one tag, then another
+    for tag in widget.tagsList.tags:
+        qtbot.mouseClick(tag, Qt.LeftButton)
+        for tag_comp in widget.tagsList.tags:
+            if tag.label.text() == tag_comp.label.text():
+                assert tag_comp.exportButton.isHidden() is False
+            else:
+                assert tag_comp.exportButton.isHidden() is True
+
+
+def test_clicking_on_show_all_in_left_panel_removes_other_exports(qtbot, db_temp_tags):
+    widget = MainWindow(db_temp_tags)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.tagsList.showAllButton, Qt.LeftButton)
+    for tag in widget.tagsList.tags:
+        assert tag.exportButton.isHidden() is True
+
+
+def test_newly_added_tag_has_hidden_export(qtbot, db_temp_tags):
+    widget = MainWindow(db_temp_tags)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.tagsList.addTagBar, "newly added tag")
+    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    for tag in widget.tagsList.tags:
+        if tag.label.text() == "newly added tag":
+            assert tag.exportButton.isHidden() is True
 
 
 def test_clicking_export_all_exports_all(qtbot, db, monkeypatch):

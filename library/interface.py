@@ -118,7 +118,7 @@ class LeftPanelTag(QWidget):
         """
         qss_trigger(self, "is_highlighted", True)
         qss_trigger(self.label, "is_highlighted", True)
-        qss_trigger(self.exportButton, "is_highlighted", True)
+        self.exportButton.show()
 
     def unhighlight(self):
         """
@@ -128,7 +128,7 @@ class LeftPanelTag(QWidget):
         """
         qss_trigger(self, "is_highlighted", False)
         qss_trigger(self.label, "is_highlighted", False)
-        qss_trigger(self.exportButton, "is_highlighted", False)
+        self.exportButton.hide()
 
     def export(self):
         """
