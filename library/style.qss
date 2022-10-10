@@ -106,14 +106,14 @@ QLineEdit[error=true]{
 }
 
 /* Make the tags change color when selected */
-LeftPanelTag[is_highlighted=true]{
+QLabel[is_tag=true][is_highlighted=true]{
     padding-left: 1pt;
     border-left: 3px solid black;
     background-color: #F7F7F7;
     font-weight: bold;
 }
 
-LeftPanelTag[is_highlighted=false]{
+QLabel[is_tag=true][is_highlighted=false]{
     padding-left: 1pt;
     border-left: 3px solid #ECECEC;
     background-color: #ECECEC;

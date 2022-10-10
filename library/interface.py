@@ -69,6 +69,7 @@ class LeftPanelTag(QWidget):
         QWidget.__init__(self)
         # this contains two parts: a tag name, then a button to export
         self.label = QLabel(tagName)
+        self.label.setProperty("is_tag", True)
         self.exportButton = QPushButton("Export")
         self.exportButton.clicked.connect(self.export)
         # add these to a layout
@@ -110,7 +111,7 @@ class LeftPanelTag(QWidget):
 
         :return: None
         """
-        qss_trigger(self, "is_highlighted", True)
+        qss_trigger(self.label, "is_highlighted", True)
 
     def unhighlight(self):
         """
@@ -118,7 +119,7 @@ class LeftPanelTag(QWidget):
 
         :return: None
         """
-        qss_trigger(self, "is_highlighted", False)
+        qss_trigger(self.label, "is_highlighted", False)
 
     def export(self):
         """
