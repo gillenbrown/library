@@ -47,7 +47,7 @@ def qss_trigger(object, property, value):
     object.style().polish(object)
 
 
-class LeftPanelTag(QLabel):
+class LeftPanelTag(QWidget):
     """
     Class holding a tag that goes in the left panel
     """
@@ -66,7 +66,18 @@ class LeftPanelTag(QLabel):
         :param tagsList: The parent list of tags.
         :type tagsList: TagsListScrollArea
         """
-        QLabel.__init__(self, tagName)
+        QWidget.__init__(self)
+        # this contains two parts: a tag name, then a button to export
+        self.label = QLabel(tagName)
+        self.exportButton = QPushButton("Export")
+        self.exportButton.clicked.connect(self.export)
+        # add these to a layout
+        hBox = QHBoxLayout()
+        hBox.addWidget(self.label)
+        hBox.addWidget(self.exportButton)
+        self.setLayout(hBox)
+
+        # also store some other info
         self.name = tagName
         self.papersList = papersList
         self.tagsList = tagsList
@@ -108,6 +119,33 @@ class LeftPanelTag(QLabel):
         :return: None
         """
         qss_trigger(self, "is_highlighted", False)
+
+    def export(self):
+        """
+        Export the papers with this tag to a bibtex file.
+
+        The user will be prompted to pick the file, then we'll write the bibtex file
+        here.
+
+        :return: None
+        """
+        # the file dialog returns a two item tuple, where the first item is the
+        # file name and the second is the filter. This is true whether the user
+        # selects something or not. Contrary to the documentation, if the user
+        # hits cancel it returns a two item tuple with two empty strings!
+        local_file = QFileDialog.getSaveFileName(
+            caption="Select where to save this file", dir=str(Path.home())
+        )[0]
+        # if the user did not select anything, return.
+        if local_file == "":
+            return
+        # otherwise, do the export. We do need to parse the tags a bit
+        if self.name == "All Papers":
+            label = "all"
+        else:
+            label = self.name
+
+        self.papersList.db.export(label, Path(local_file))
 
 
 class LeftPanelTagShowAll(LeftPanelTag):
@@ -1010,7 +1048,7 @@ class MainWindow(QMainWindow):
         self.db.delete_tag(tag_to_delete)
         # find the tag to remove it from the interface
         for tag in self.tagsList.tags:
-            if tag.text() == tag_to_delete:
+            if tag.label.text() == tag_to_delete:
                 tag.hide()  # just to be safe
                 self.tagsList.tags.remove(tag)
                 del tag

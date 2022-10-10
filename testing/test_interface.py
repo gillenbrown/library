@@ -1202,7 +1202,7 @@ def test_tag_has_correct_name(qtbot, db):
     qtbot.addWidget(widget)
     # get one of the tags, not sure which
     tag = widget.tagsList.tags[0]
-    assert tag.text() == tag.name
+    assert tag.label.text() == tag.name
 
 
 def test_tag_has_correct_font_family(qtbot, db):
@@ -1361,7 +1361,7 @@ def test_clicking_on_tag_in_left_panel_hides_papers(qtbot, db):
     qtbot.mouseClick(left_tag, Qt.LeftButton)
     # then check the tags that are in shown papers
     for paper in widget.papersList.papers:
-        if left_tag.text() in db.get_paper_tags(paper.bibcode):
+        if left_tag.label.text() in db.get_paper_tags(paper.bibcode):
             assert paper.isHidden() is False
         else:
             assert paper.isHidden() is True
@@ -1404,7 +1404,7 @@ def test_clicking_on_tag_in_left_panel_unlights_others(qtbot, db_temp_tags):
     for tag in widget.tagsList.tags:
         qtbot.mouseClick(tag, Qt.LeftButton)
         for tag_comp in widget.tagsList.tags:
-            if tag.text() == tag_comp.text():
+            if tag.label.text() == tag_comp.label.text():
                 assert tag_comp.property("is_highlighted") is True
             else:
                 assert tag_comp.property("is_highlighted") is False
@@ -1425,7 +1425,7 @@ def test_newly_added_tag_is_unhighlighted(qtbot, db_temp_tags):
     qtbot.keyClicks(widget.tagsList.addTagBar, "newly added tag")
     qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
     for tag in widget.tagsList.tags:
-        if tag.text() == "newly added tag":
+        if tag.label.text() == "newly added tag":
             assert tag.property("is_highlighted") is False
 
 
@@ -1444,7 +1444,7 @@ def test_show_all_button_has_correct_font_family(qtbot, db_empty):
 def test_show_all_button_has_correct_text(qtbot, db_empty):
     widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
-    assert widget.tagsList.showAllButton.text() == "All Papers"
+    assert widget.tagsList.showAllButton.label.text() == "All Papers"
 
 
 def test_clicking_on_show_all_button_shows_all_papers(qtbot, db):
@@ -2290,3 +2290,102 @@ def test_clicking_on_ads_button_opens_paper_in_browser(qtbot, db_empty, monkeypa
     assert open_calls == [
         f"https://ui.adsabs.harvard.edu/abs/2018ApJ...864...94B/abstract"
     ]
+
+
+def test_show_all_export_button_has_correct_text(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    assert widget.tagsList.showAllButton.exportButton.text() == "Export"
+
+
+def test_tag_export_button_has_correct_text(qtbot, db_temp_tags):
+    widget = MainWindow(db_temp_tags)
+    qtbot.addWidget(widget)
+    assert widget.tagsList.tags[0].exportButton.text() == "Export"
+
+
+def test_clicking_export_all_exports_all(qtbot, db, monkeypatch):
+    # Here we need to use monkeypatch to simulate user input
+    test_loc = Path(__file__).parent / "test.txt"
+
+    # create a mock function to get the file. It needs to have a couple of kwargs,
+    # since those are used in the actual call. The filter is actually returned
+    def mock_get_file(filter="", caption="", dir=""):
+        return test_loc, "dummy filter"
+
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", mock_get_file)
+
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    # click on the export all button
+    qtbot.mouseClick(widget.tagsList.showAllButton.exportButton, Qt.LeftButton)
+    # then open the file and compare it
+    with open(test_loc, "r") as out_file:
+        file_contents = out_file.read()
+    # remove the file now before the test, so it always gets deleted
+    test_loc.unlink()
+    # then compare the contents to what we expect
+    expected_file_contents = u.tremonti.bibtex + "\n" + u.mine.bibtex + "\n"
+    assert file_contents == expected_file_contents
+
+
+def test_exporting_a_single_tag(qtbot, db_empty, monkeypatch):
+    # first, get the database into a format we like. I duplicate this from the db tests
+    papers_to_add = [u.bbfh, u.tremonti, u.mine, u.forbes]
+    for paper in papers_to_add:
+        db_empty.add_paper(paper.bibcode)
+    # then tag a few of them
+    db_empty.add_new_tag("test_tag")
+    tagged_papers = papers_to_add[::2]
+    for paper in tagged_papers:
+        db_empty.tag_paper(paper.bibcode, "test_tag")
+
+    # Here we need to use monkeypatch to simulate user input
+    test_loc = Path(__file__).parent / "test.txt"
+
+    # create a mock function to get the file. It needs to have a couple of kwargs,
+    # since those are used in the actual call. The filter is actually returned
+    def mock_get_file(filter="", caption="", dir=""):
+        return test_loc, "dummy filter"
+
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", mock_get_file)
+
+    widget = MainWindow(db_empty)
+    qtbot.addWidget(widget)
+    # find the tag to click on, then click it's export button
+    for tag in widget.tagsList.tags:
+        if tag.name == "test_tag":
+            break
+
+    qtbot.mouseClick(tag.exportButton, Qt.LeftButton)
+    # then open the file and compare it
+    with open(test_loc, "r") as out_file:
+        file_contents = out_file.read()
+    # remove the file now before the test, so it always gets deleted
+    test_loc.unlink()
+    # then compare the contents to what we expect
+    expected_file_contents = "\n".join([p.bibtex for p in tagged_papers]) + "\n"
+    assert file_contents == expected_file_contents
+
+
+def test_no_export_happens_if_user_cancels(qtbot, db, monkeypatch):
+    # create a mock function to get the file. It needs to have a couple of kwargs,
+    # since those are used in the actual call. The filter is actually returned. Since
+    # we're simulating no user interaction, return the emtpy string
+    def mock_get_file(filter="", caption="", dir=""):
+        return "", ""
+
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", mock_get_file)
+
+    # Also set up a monkeypatch for the export, so that we can see if anything
+    # happened
+    export_calls = []
+    monkeypatch.setattr(db, "export", lambda x, y: export_calls.append(1))
+
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    # find the tag to click on, then click it's export button
+    qtbot.mouseClick(widget.tagsList.showAllButton.exportButton, Qt.LeftButton)
+    # then see if anything has happened. I did test my test by using an actual file for
+    # the file dialog monkeypatch, and did get 1 export_call
+    assert len(export_calls) == 0
