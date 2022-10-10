@@ -106,18 +106,35 @@ QLineEdit[error=true]{
 }
 
 /* Make the tags change color when selected */
-QLabel[is_tag=true][is_highlighted=true]{
+LeftPanelTag[is_highlighted=true]{
     padding-left: 1pt;
     border-left: 3px solid black;
+    background-color: #F7F7F7;
+}
+LeftPanelTag[is_highlighted=false]{
+    padding-left: 1pt;
+    border-left: 3px solid #ECECEC;
+    background-color: #ECECEC;
+}
+
+QLabel[is_tag=true][is_highlighted=true]{
     background-color: #F7F7F7;
     font-weight: bold;
 }
 
 QLabel[is_tag=true][is_highlighted=false]{
-    padding-left: 1pt;
-    border-left: 3px solid #ECECEC;
     background-color: #ECECEC;
     font-weight: normal;
+}
+
+/* Adjust the buttons in the left panel, since their spacing needs to be different */
+/* from the tags in that panel */
+QPushButton[is_left_panel_item=true]{
+    margin-bottom: 0.5em;
+}
+
+QLineEdit[is_left_panel_item=true]{
+    margin-bottom: 0.5em;
 }
 
 /* Make some buttons that delete papers or tags red, to warn the user */

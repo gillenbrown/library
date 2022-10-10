@@ -72,17 +72,22 @@ class LeftPanelTag(QWidget):
         self.label.setProperty("is_tag", True)
         self.exportButton = QPushButton("Export")
         self.exportButton.clicked.connect(self.export)
+        self.exportButton.setProperty("export_button", True)
         # add these to a layout
         hBox = QHBoxLayout()
         hBox.addWidget(self.label)
         hBox.addWidget(self.exportButton)
+        hBox.setContentsMargins(5, 5, 5, 5)
         self.setLayout(hBox)
 
         # also store some other info
         self.name = tagName
         self.papersList = papersList
         self.tagsList = tagsList
-        # this starts unhighlighted
+        # make sure the tag is unhighlighted. This first thing ensures that changes
+        # are actually shown in the interface. Not sure why this is not automatically
+        # set
+        self.setAttribute(Qt.WA_StyledBackground, True)
         self.unhighlight()
 
     def mousePressEvent(self, _):
@@ -111,7 +116,9 @@ class LeftPanelTag(QWidget):
 
         :return: None
         """
+        qss_trigger(self, "is_highlighted", True)
         qss_trigger(self.label, "is_highlighted", True)
+        qss_trigger(self.exportButton, "is_highlighted", True)
 
     def unhighlight(self):
         """
@@ -119,7 +126,9 @@ class LeftPanelTag(QWidget):
 
         :return: None
         """
+        qss_trigger(self, "is_highlighted", False)
         qss_trigger(self.label, "is_highlighted", False)
+        qss_trigger(self.exportButton, "is_highlighted", False)
 
     def export(self):
         """
@@ -722,6 +731,17 @@ class TagsListScrollArea(ScrollArea):
         self.addWidget(thirdDeleteTagButton)
         self.addWidget(thirdDeleteTagCancelButton)
         self.addWidget(self.showAllButton)
+
+        # adjust the spacing between elements (i.e. tags). To compensate, increase the
+        # margins around the buttons at the top, so they're not right on top of each
+        # other. I do this with QSS
+        self.layout.setSpacing(0)
+        self.addTagButton.setProperty("is_left_panel_item", True)
+        self.addTagBar.setProperty("is_left_panel_item", True)
+        firstDeleteTagButton.setProperty("is_left_panel_item", True)
+        secondDeleteTagEntry.setProperty("is_left_panel_item", True)
+        thirdDeleteTagButton.setProperty("is_left_panel_item", True)
+        thirdDeleteTagCancelButton.setProperty("is_left_panel_item", True)
 
     def addTag(self, tag):
         """
