@@ -564,3 +564,60 @@ def test_papers_unread_when_added_capitalization(db_empty, tag):
 def test_accents_kept_in_author_list(db_empty):
     db_empty.add_paper(u.juan.url)
     assert db_empty.get_paper_attribute(u.juan.bibcode, "authors") == u.juan.authors
+
+
+def test_export_all_papers(db):
+    out_file_loc = Path(__file__).parent / "test.txt"
+    db.export("all", out_file_loc)
+    # read the file
+    with open(out_file_loc, "r") as out_file:
+        file_contents = out_file.read()
+    # remove the file now before the test, so it always gets deleted
+    out_file_loc.unlink()
+    # then compare the contents to what we expect. The bibtex file should be in
+    # order of date.
+    expected_file_contents = u.tremonti.bibtex + "\n" + u.mine.bibtex + "\n"
+    assert expected_file_contents == file_contents
+
+
+def test_export_one_tag(db_empty):
+    # the order of the bibtex fils should be in order of date, so we need to make
+    # our list of papers in that order (since we'll use it to compare)
+    papers_to_add = [u.bbfh, u.tremonti, u.mine, u.forbes]
+    for paper in papers_to_add:
+        db_empty.add_paper(paper.bibcode)
+    # then tag a few of them
+    db_empty.add_new_tag("test_tag")
+    tagged_papers = papers_to_add[::2]
+    for paper in tagged_papers:
+        db_empty.tag_paper(paper.bibcode, "test_tag")
+    # then export
+    out_file_loc = Path(__file__).parent / "test.txt"
+    db_empty.export("test_tag", out_file_loc)
+    # read the file
+    with open(out_file_loc, "r") as out_file:
+        file_contents = out_file.read()
+    # remove the file now before the test, so it always gets deleted
+    out_file_loc.unlink()
+    # then compare the contents to what we expect
+    expected_file_contents = "\n".join([p.bibtex for p in tagged_papers]) + "\n"
+    assert expected_file_contents == file_contents
+
+
+def test_export_tag_with_no_papers(db):
+    # add tag, but add no papers before exporting
+    db.add_new_tag("empty")
+    out_file_loc = Path(__file__).parent / "test.txt"
+    db.export("empty", out_file_loc)
+    # read the file
+    with open(out_file_loc, "r") as out_file:
+        file_contents = out_file.read()
+    # remove the file now before the test, so it always gets deleted
+    out_file_loc.unlink()
+    # then compare the contents to what we expect
+    assert file_contents == ""
+
+
+def test_export_tag_does_not_exist_raises_error(db):
+    with pytest.raises(ValueError):
+        db.export("lklkjlkj", "test.txt")

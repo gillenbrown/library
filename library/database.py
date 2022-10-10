@@ -463,3 +463,25 @@ class Database(object):
         # create the SQL code with question marks as the placeholder
         sql = f"DELETE FROM papers WHERE bibcode = ?"
         self._execute(sql, (bibcode,))
+
+    def export(self, tag_name, file_name):
+        """
+        Export the bibtex entries for all papers or all papers with a given tag.
+
+        :param tag_name: The subset of papers to be written. Either pass "all" to write
+                         all papers of the name of a tag to write only those papers.
+        :type tag_name: str
+        :param file_name: The location to write the output file. If this file already
+                          exists, it will be overwritten
+        :type file_name: pathlib.Path
+        :return: None
+        """
+        # check that the tag exists
+        if tag_name not in self.get_all_tags() + ["all"]:
+            raise ValueError("This tag does not exist")
+        # otherwise, write to the file
+        with open(file_name, "w") as out_file:
+            for bibcode in self.get_all_bibcodes():
+                if tag_name == "all" or self.paper_has_tag(bibcode, tag_name):
+                    out_file.write(self.get_paper_attribute(bibcode, "bibtex"))
+                    out_file.write("\n")
