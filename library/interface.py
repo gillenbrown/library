@@ -259,7 +259,8 @@ class Paper(QWidget):
 
         elif event.type() is QEvent.Type.MouseButtonDblClick:
             local_file = self.db.get_paper_attribute(self.bibcode, "local_file")
-            if local_file is None:
+            # if there is no file, or the file does not exist, ask the user
+            if local_file is None or not Path(local_file).is_file():
                 # if there is not a paper, we need to add it
                 # the file dialog returns a two item tuple, where the first item is the
                 # file name and the second is the filter. This is true whether the user

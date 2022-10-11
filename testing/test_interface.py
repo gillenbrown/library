@@ -952,8 +952,9 @@ def test_paper_texts_are_unhighlighted_when_others_clicked(qtbot, db):
 def test_double_clicking_on_paper_without_local_file_asks_user(
     qtbot, db_empty, monkeypatch
 ):
-    # Here we need to use monkeypatch to simulate user input
-    test_loc = "/Users/gillenb/test.pdf"
+    # Here we need to use monkeypatch to simulate user input. Use a file that actually
+    # exists
+    test_loc = __file__
     # create a mock function to get the file. It needs to have the filter kwarg, since
     # that is used in the actual call
     def mock_get_file(filter=""):
@@ -991,8 +992,9 @@ def test_double_clicking_on_paper_without_local_file_but_not_choosing_doesnt_add
 def test_double_clicking_on_paper_with_local_file_opens_it(
     qtbot, db_empty, monkeypatch
 ):
-    # Here we need to use monkeypatch to simulate opening the file
-    test_loc = "/Users/gillenb/test.pdf"
+    # Here we need to use monkeypatch to simulate opening the file. We do have to use
+    # a real file so that we don't ask again
+    test_loc = __file__
     open_calls = []
     monkeypatch.setattr(QDesktopServices, "openUrl", lambda x: open_calls.append(x))
 
@@ -1009,8 +1011,9 @@ def test_double_clicking_on_paper_with_local_file_opens_it(
 def test_double_clicking_on_paper_without_local_file_selects_and_opens_it(
     qtbot, db_empty, monkeypatch
 ):
-    # Here we need to use monkeypatch to simulate user input and open files
-    test_loc = "/Users/gillenb/test.pdf"
+    # Here we need to use monkeypatch to simulate user input and open files. Pick a
+    # real file
+    test_loc = __file__
     # create a mock function to get the file. It needs to have the filter kwarg, since
     # that is used in the actual call
     def mock_get_file(filter=""):
@@ -1047,6 +1050,34 @@ def test_dclicking_on_paper_without_local_file_but_not_choosing_doesnt_add_or_op
     add_my_paper(qtbot, widget)  # do not add file location
     qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
     assert open_calls == []
+
+
+def test_dclicking_on_paper_with_nonexistent_file_asks_user(
+    qtbot, db_empty, monkeypatch
+):
+    # first, add a file to the database, then set the file to something nonsense. We'll
+    # then try to open it, and check that the interface asks the user.
+    db_empty.add_paper(u.mine.bibcode)
+    db_empty.set_paper_attribute(u.mine.bibcode, "local_file", "lskdlskdflskj")
+
+    # Here we need to use monkeypatch to simulate user input and open files
+    # create a mock function to get the file. It needs to have the filter kwarg, since
+    # that is used in the actual call. We have to use a file that actually exists, so
+    # we'll use this file.
+    def mock_get_file(filter=""):
+        return (__file__, "")
+
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
+    # when we try to open files, just list the ones we tried to open
+    open_calls = []
+    monkeypatch.setattr(QDesktopServices, "openUrl", lambda x: open_calls.append(x))
+
+    widget = MainWindow(db_empty)
+    qtbot.addWidget(widget)
+    # add a paper to this empty database to make the paper object
+    qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
+    # check that we asked the user, and that it has the correct paper
+    assert open_calls == [f"file:{__file__}"]
 
 
 def test_get_tags_from_paper_object_is_correct(qtbot, db):
