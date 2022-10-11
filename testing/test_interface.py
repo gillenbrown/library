@@ -957,7 +957,7 @@ def test_double_clicking_on_paper_without_local_file_asks_user(
     test_loc = __file__
     # create a mock function to get the file. It needs to have the filter kwarg, since
     # that is used in the actual call
-    def mock_get_file(filter=""):
+    def mock_get_file(filter="", dir=""):
         return test_loc, "dummy filter"
 
     monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
@@ -976,7 +976,7 @@ def test_double_clicking_on_paper_without_local_file_but_not_choosing_doesnt_add
     # Here we need to use monkeypatch to simulate user input
     # create a mock function to get the file. It needs to have the filter kwarg, since
     # that is used in the actual call
-    def mock_get_file(filter=""):
+    def mock_get_file(filter="", dir=""):
         return ("", "")
 
     monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
@@ -1016,7 +1016,7 @@ def test_double_clicking_on_paper_without_local_file_selects_and_opens_it(
     test_loc = __file__
     # create a mock function to get the file. It needs to have the filter kwarg, since
     # that is used in the actual call
-    def mock_get_file(filter=""):
+    def mock_get_file(filter="", dir=""):
         return test_loc, "dummy filter"
 
     monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
@@ -1037,7 +1037,7 @@ def test_dclicking_on_paper_without_local_file_but_not_choosing_doesnt_add_or_op
     # Here we need to use monkeypatch to simulate user input and open files
     # create a mock function to get the file. It needs to have the filter kwarg, since
     # that is used in the actual call
-    def mock_get_file(filter=""):
+    def mock_get_file(filter="", dir=""):
         return ("", "")
 
     monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
@@ -1064,7 +1064,7 @@ def test_dclicking_on_paper_with_nonexistent_file_asks_user(
     # create a mock function to get the file. It needs to have the filter kwarg, since
     # that is used in the actual call. We have to use a file that actually exists, so
     # we'll use this file.
-    def mock_get_file(filter=""):
+    def mock_get_file(filter="", dir=""):
         return (__file__, "")
 
     monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)

@@ -266,7 +266,10 @@ class Paper(QWidget):
                 # file name and the second is the filter. This is true whether the user
                 # selects something or not. Contrary to the documentation, if the user
                 # hits cancel it returns a two item tuple with two empty strings!
-                local_file = QFileDialog.getOpenFileName(filter="PDF(*.pdf)")[0]
+                local_file = QFileDialog.getOpenFileName(
+                    filter="PDF(*.pdf)",
+                    dir=str(Path.home()),
+                )[0]
                 # If the user doesn't select anything this returns the empty string.
                 # Otherwise this returns a two item tuple, where the first item is the
                 # absolute path to the file they picked
