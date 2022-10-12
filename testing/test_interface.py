@@ -2669,3 +2669,28 @@ def test_user_notes_are_appropriately_shown_once_paper_deleted(qtbot, db_notes):
     assert widget.rightPanel.userNotesTextEditButton.isHidden() is True
     assert widget.rightPanel.userNotesTextEditField.isHidden() is True
     assert widget.rightPanel.userNotesTextEditFinishedButton.isHidden() is True
+
+
+def test_spacers_are_hidden_at_initialization(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    for spacer in widget.rightPanel.spacers:
+        assert spacer.isHidden() is True
+
+
+def test_spacers_are_shown_when_paper_clicked(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    for spacer in widget.rightPanel.spacers:
+        assert spacer.isHidden() is False
+
+
+def test_spacers_are_hidden_once_paper_deleted(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.secondDeletePaperButton, Qt.LeftButton)
+    for spacer in widget.rightPanel.spacers:
+        assert spacer.isHidden() is True

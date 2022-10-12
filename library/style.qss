@@ -159,3 +159,8 @@ TagCheckBox{
     margin-top: 0;
     margin-bottom: 0;
 }
+
+/* Format the spacers */
+HorizontalLine{
+    color: #BBBBBB;
+}

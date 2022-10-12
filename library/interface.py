@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (
     QLayout,
     QFileDialog,
     QCheckBox,
+    QFrame,
 )
 
 from library.database import PaperAlreadyInDatabaseError
@@ -343,6 +344,12 @@ class TagCheckBox(QCheckBox):
         self.rightPanel.changeTags(self.text(), self.isChecked())
 
 
+class HorizontalLine(QFrame):
+    def __init__(self):
+        super(HorizontalLine, self).__init__()
+        self.setFrameShape(QFrame.HLine)
+
+
 class RightPanel(QWidget):
     """
     The right panel area for the main window, holding paper info for a single paper
@@ -403,6 +410,9 @@ class RightPanel(QWidget):
         self.userNotesTextEditButton.clicked.connect(self.editUserNotes)
         self.userNotesTextEditFinishedButton.clicked.connect(self.doneEditingUserNotes)
 
+        # have some horizontal lines to visually distinguish sections
+        self.spacers = [HorizontalLine() for _ in range(3)]
+
         # handle the initial state
         self.resetPaperDetails()
 
@@ -421,14 +431,17 @@ class RightPanel(QWidget):
         vBox.addWidget(self.titleText)
         vBox.addWidget(self.citeText)
         vBox.addWidget(self.abstractText)
+        vBox.addWidget(self.spacers[0])
         vBox.addWidget(self.tagText)
         vBox.addWidget(self.editTagsButton)
         vBox.addWidget(self.doneEditingTagsButton)
         vBox.addLayout(self.vBoxTags)
+        vBox.addWidget(self.spacers[1])
         vBox.addWidget(self.userNotesText)
         vBox.addWidget(self.userNotesTextEditField)
         vBox.addWidget(self.userNotesTextEditButton)
         vBox.addWidget(self.userNotesTextEditFinishedButton)
+        vBox.addWidget(self.spacers[2])
         vBox.addWidget(self.copyBibtexButton)
         vBox.addWidget(self.adsButton)
         vBox.addWidget(self.firstDeletePaperButton)
@@ -479,6 +492,8 @@ class RightPanel(QWidget):
         self.firstDeletePaperButton.hide()
         self.secondDeletePaperButton.hide()
         self.secondDeletePaperCancelButton.hide()
+        for spacer in self.spacers:
+            spacer.hide()
 
     def setPaperDetails(self, bibcode):
         """
@@ -521,6 +536,9 @@ class RightPanel(QWidget):
         # show the user notes
         self.userNotesText.show()
         self.userNotesTextEditButton.show()
+        # and spacers
+        for spacer in self.spacers:
+            spacer.show()
 
     def update_tag_text(self):
         """
