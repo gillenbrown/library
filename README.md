@@ -5,9 +5,11 @@
 
 
 # library
-An attempt to implement a citation manager (in the style of ADS Libraries or Mendeney) designed for astronomy.
+An attempt to implement a citation manager (in the style of ADS Libraries or Mendeley) designed for astronomy.
 
 # Installation
+
+Before doing anything, please know that this application is a work in progress. If you find a bug or have a feature you'd like to be added, please email me! I'll be more than happy to work with you to fix any issues you're having. 
 
 To start, you'll need an ADS key to be able for the application to connect with ADS. Follow the steps to generate a new key [here.](https://github.com/adsabs/adsabs-dev-api#access) Once you get that API key, save it as an environment variable named `ADS_DEV_KEY`. 
 
