@@ -529,7 +529,10 @@ class RightPanel(QWidget):
         :return: None
         """
         tags_list = self.db.get_paper_tags(self.bibcode)
-        self.tagText.setText(f"Tags: {', '.join(tags_list)}")
+        if len(tags_list) > 0:
+            self.tagText.setText(f"Tags: {', '.join(tags_list)}")
+        else:
+            self.tagText.setText(f"Tags: None")
 
     def enableTagEditing(self):
         """

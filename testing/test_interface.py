@@ -901,6 +901,13 @@ def test_clicking_on_paper_puts_tags_in_right_panel(qtbot, db_temp):
     assert widget.rightPanel.tagText.text() == "Tags: T1, T3, T5"
 
 
+def test_clicking_on_paper_with_no_tags_puts_default_in_right_panel(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    assert widget.rightPanel.tagText.text() == "Tags: None"
+
+
 def test_clicking_on_paper_highlights_it_in_center_panel(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
@@ -1356,6 +1363,8 @@ def test_checking_tag_in_checklist_adds_tag_to_interface(qtbot, db_temp):
     # get one of the papers, not sure which, then click on it
     paper = widget.papersList.papers[0]
     qtbot.mouseClick(paper, Qt.LeftButton)
+    # first double check that no tags are selected (is already be tested for elsewhere)
+    assert widget.rightPanel.tagText.text() == "Tags: None"
     # this will show the tags in the right panel. Click on a few
     to_check = ["T1", "T3", "T4"]
     for tag_item in widget.rightPanel.tags:
