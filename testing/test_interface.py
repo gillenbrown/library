@@ -85,6 +85,20 @@ def temporary_database_with_changed_ads_key():
     os.environ["ADS_DEV_KEY"] = original_key
 
 
+@pytest.fixture(name="db_notes")
+def temporary_database_with_papers_and_notes():
+    """
+    Fixture to get a database at a temporary path in the current directory. This will be
+    removed once the test is done
+    """
+    file_path = Path(f"{random.randint(0, 1000000000)}.db")
+    db = Database(file_path)
+    db.add_paper(u.mine.bibcode)
+    db.set_paper_attribute(u.mine.bibcode, "user_notes", "abc123")
+    yield db
+    file_path.unlink()  # removes this file
+
+
 @pytest.fixture(name="db")
 def testing_database():
     """
@@ -2491,3 +2505,158 @@ def test_no_export_happens_if_user_cancels(qtbot, db, monkeypatch):
     # then see if anything has happened. I did test my test by using an actual file for
     # the file dialog monkeypatch, and did get 1 export_call
     assert len(export_calls) == 0
+
+
+def test_user_notes_fields_are_not_shown_on_initialization(qtbot, db_notes):
+    widget = MainWindow(db_notes)
+    qtbot.addWidget(widget)
+    assert widget.rightPanel.userNotesText.isHidden() is True
+    assert widget.rightPanel.userNotesTextEditButton.isHidden() is True
+    assert widget.rightPanel.userNotesTextEditField.isHidden() is True
+    assert widget.rightPanel.userNotesTextEditFinishedButton.isHidden() is True
+
+
+def test_user_notes_are_appropriately_shown_once_paper_clicked(qtbot, db_notes):
+    widget = MainWindow(db_notes)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    assert widget.rightPanel.userNotesText.isHidden() is False
+    assert widget.rightPanel.userNotesTextEditButton.isHidden() is False
+    assert widget.rightPanel.userNotesTextEditField.isHidden() is True
+    assert widget.rightPanel.userNotesTextEditFinishedButton.isHidden() is True
+
+
+def test_user_notes_has_correct_text(qtbot, db_notes):
+    widget = MainWindow(db_notes)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    assert widget.rightPanel.userNotesText.text() == "abc123"
+
+
+def test_user_notes_has_correct_text_if_originally_blank(qtbot, db_empty):
+    db_empty.add_paper(u.mine.bibcode)
+    widget = MainWindow(db_empty)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    assert widget.rightPanel.userNotesText.text() == "No notes yet"
+
+
+def test_user_notes_has_word_wrap_on(qtbot, db_notes):
+    widget = MainWindow(db_notes)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    assert widget.rightPanel.userNotesText.wordWrap()
+
+
+def test_edit_user_notes_button_has_correct_text(qtbot, db_notes):
+    widget = MainWindow(db_notes)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    assert widget.rightPanel.userNotesTextEditButton.text() == "Edit Notes"
+
+
+def test_user_notes_finished_editing_button_has_correct_text(qtbot, db_notes):
+    widget = MainWindow(db_notes)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    assert (
+        widget.rightPanel.userNotesTextEditFinishedButton.text() == "Done Editing Notes"
+    )
+
+
+def test_notes_static_text_disappears_when_edit_button_clicked(qtbot, db_notes):
+    widget = MainWindow(db_notes)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.userNotesTextEditButton, Qt.LeftButton)
+    assert widget.rightPanel.userNotesText.isHidden() is True
+
+
+def test_notes_edit_button_disappears_when_edit_button_clicked(qtbot, db_notes):
+    widget = MainWindow(db_notes)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.userNotesTextEditButton, Qt.LeftButton)
+    assert widget.rightPanel.userNotesTextEditButton.isHidden() is True
+
+
+def test_notes_finished_edit_button_appears_when_edit_button_clicked(qtbot, db_notes):
+    widget = MainWindow(db_notes)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.userNotesTextEditButton, Qt.LeftButton)
+    assert widget.rightPanel.userNotesTextEditFinishedButton.isHidden() is False
+
+
+def test_notes_edit_field_has_original_text(qtbot, db_notes):
+    widget = MainWindow(db_notes)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.userNotesTextEditButton, Qt.LeftButton)
+    assert widget.rightPanel.userNotesTextEditField.toPlainText() == "abc123"
+
+
+def test_notes_edit_field_changes_database_when_finished(qtbot, db_notes):
+    widget = MainWindow(db_notes)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.userNotesTextEditButton, Qt.LeftButton)
+    # simulate the user deleting the current into, then adding their own
+    widget.rightPanel.userNotesTextEditField.clear()
+    qtbot.keyClicks(widget.rightPanel.userNotesTextEditField, "987XYZ")
+    qtbot.mouseClick(widget.rightPanel.userNotesTextEditFinishedButton, Qt.LeftButton)
+    assert db_notes.get_paper_attribute(u.mine.bibcode, "user_notes") == "987XYZ"
+
+
+def test_notes_edit_field_changes_shown_text(qtbot, db_notes):
+    widget = MainWindow(db_notes)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.userNotesTextEditButton, Qt.LeftButton)
+    # simulate the user deleting the current into, then adding their own
+    widget.rightPanel.userNotesTextEditField.clear()
+    qtbot.keyClicks(widget.rightPanel.userNotesTextEditField, "987XYZ")
+    qtbot.mouseClick(widget.rightPanel.userNotesTextEditFinishedButton, Qt.LeftButton)
+    assert widget.rightPanel.userNotesText.text() == "987XYZ"
+
+
+def test_notes_edit_finished_button_disappears_when_clicked(qtbot, db_notes):
+    widget = MainWindow(db_notes)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.userNotesTextEditButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.rightPanel.userNotesTextEditField, "987XYZ")
+    qtbot.mouseClick(widget.rightPanel.userNotesTextEditFinishedButton, Qt.LeftButton)
+    assert widget.rightPanel.userNotesTextEditFinishedButton.isHidden() is True
+
+
+def test_notes_edit_field_disappears_when_editing_done(qtbot, db_notes):
+    widget = MainWindow(db_notes)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.userNotesTextEditButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.rightPanel.userNotesTextEditField, "987XYZ")
+    qtbot.mouseClick(widget.rightPanel.userNotesTextEditFinishedButton, Qt.LeftButton)
+    assert widget.rightPanel.userNotesTextEditField.isHidden() is True
+
+
+def test_notes_edit_button_reappears_when_editing_done(qtbot, db_notes):
+    widget = MainWindow(db_notes)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.userNotesTextEditButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.rightPanel.userNotesTextEditField, "987XYZ")
+    qtbot.mouseClick(widget.rightPanel.userNotesTextEditFinishedButton, Qt.LeftButton)
+    assert widget.rightPanel.userNotesTextEditButton.isHidden() is False
+
+
+def test_user_notes_are_appropriately_shown_once_paper_deleted(qtbot, db_notes):
+    widget = MainWindow(db_notes)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.secondDeletePaperButton, Qt.LeftButton)
+    assert widget.rightPanel.userNotesText.isHidden() is True
+    assert widget.rightPanel.userNotesTextEditButton.isHidden() is True
+    assert widget.rightPanel.userNotesTextEditField.isHidden() is True
+    assert widget.rightPanel.userNotesTextEditFinishedButton.isHidden() is True

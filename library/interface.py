@@ -5,7 +5,6 @@ from PySide6.QtCore import Qt, QEvent
 from PySide6.QtGui import (
     QKeySequence,
     QFontDatabase,
-    QFont,
     QDesktopServices,
     QGuiApplication,
     QAction,
@@ -20,6 +19,7 @@ from PySide6.QtWidgets import (
     QScrollArea,
     QSplitter,
     QLineEdit,
+    QTextEdit,
     QPushButton,
     QLayout,
     QFileDialog,
@@ -379,6 +379,10 @@ class RightPanel(QWidget):
         )
         self.secondDeletePaperCancelButton.setProperty("delete_cancel_button", True)
         self.tagText = QLabel("")
+        self.userNotesText = QLabel("")
+        self.userNotesTextEditButton = QPushButton("Edit Notes")
+        self.userNotesTextEditField = QTextEdit()
+        self.userNotesTextEditFinishedButton = QPushButton("Done Editing Notes")
         # set names for use with stylesheets
         self.titleText.setObjectName("right_panel_paper_title")
         self.citeText.setObjectName("right_panel_cite_text")
@@ -396,6 +400,8 @@ class RightPanel(QWidget):
         self.firstDeletePaperButton.clicked.connect(self.revealSecondDeleteButton)
         self.secondDeletePaperButton.clicked.connect(self.deletePaper)
         self.secondDeletePaperCancelButton.clicked.connect(self.resetDeleteButtons)
+        self.userNotesTextEditButton.clicked.connect(self.editUserNotes)
+        self.userNotesTextEditFinishedButton.clicked.connect(self.doneEditingUserNotes)
 
         # handle the initial state
         self.resetPaperDetails()
@@ -409,6 +415,7 @@ class RightPanel(QWidget):
         self.citeText.setWordWrap(True)
         self.abstractText.setWordWrap(True)
         self.tagText.setWordWrap(True)
+        self.userNotesText.setWordWrap(True)
 
         # add these to the layout
         vBox.addWidget(self.titleText)
@@ -418,6 +425,10 @@ class RightPanel(QWidget):
         vBox.addWidget(self.editTagsButton)
         vBox.addWidget(self.doneEditingTagsButton)
         vBox.addLayout(self.vBoxTags)
+        vBox.addWidget(self.userNotesText)
+        vBox.addWidget(self.userNotesTextEditField)
+        vBox.addWidget(self.userNotesTextEditButton)
+        vBox.addWidget(self.userNotesTextEditFinishedButton)
         vBox.addWidget(self.copyBibtexButton)
         vBox.addWidget(self.adsButton)
         vBox.addWidget(self.firstDeletePaperButton)
@@ -459,6 +470,10 @@ class RightPanel(QWidget):
         # all of the buttons
         self.editTagsButton.hide()
         self.doneEditingTagsButton.hide()
+        self.userNotesText.hide()
+        self.userNotesTextEditButton.hide()
+        self.userNotesTextEditFinishedButton.hide()
+        self.userNotesTextEditField.hide()
         self.copyBibtexButton.hide()
         self.adsButton.hide()
         self.firstDeletePaperButton.hide()
@@ -479,6 +494,10 @@ class RightPanel(QWidget):
         self.citeText.setText(self.db.get_cite_string(self.bibcode))
         self.abstractText.setText(self.db.get_paper_attribute(self.bibcode, "abstract"))
         self.update_tag_text()
+        notes_text = self.db.get_paper_attribute(self.bibcode, "user_notes")
+        if notes_text is None or len(notes_text.strip()) == 0:
+            notes_text = "No notes yet"
+        self.userNotesText.setText(notes_text)
 
         # Go through and set the checkboxes to match the tags the paper has
         self.populate_tags()
@@ -499,6 +518,9 @@ class RightPanel(QWidget):
         # also hide the second button if it was shown
         self.secondDeletePaperButton.hide()
         self.secondDeletePaperCancelButton.hide()
+        # show the user notes
+        self.userNotesText.show()
+        self.userNotesTextEditButton.show()
 
     def update_tag_text(self):
         """
@@ -601,6 +623,38 @@ class RightPanel(QWidget):
         self.db.delete_paper(self.bibcode)
         self.resetPaperDetails()  # clean up right panel
         self.papersList.deletePaper(self.bibcode)  # remove this frm the center panel
+
+    def editUserNotes(self):
+        """
+        Allow the user to edit their notes, by showing the text edit field
+
+        :return: None
+        """
+        # set the text in the edit field to be the current user notes
+        self.userNotesTextEditField.setText(self.userNotesText.text())
+        # then show the appropriate buttons
+        self.userNotesTextEditButton.hide()
+        self.userNotesText.hide()
+        self.userNotesTextEditField.show()
+        self.userNotesTextEditFinishedButton.show()
+
+    def doneEditingUserNotes(self):
+        """
+        The user is done editing text, so save their notes and reset the buttons
+
+        :return: None
+        """
+        # save this info in the database
+        text = self.userNotesTextEditField.toPlainText()
+        self.db.set_paper_attribute(self.bibcode, "user_notes", text)
+        # and put this text into the static text field
+        self.userNotesText.setText(text)
+
+        # reset buttons
+        self.userNotesTextEditButton.show()
+        self.userNotesText.show()
+        self.userNotesTextEditField.hide()
+        self.userNotesTextEditFinishedButton.hide()
 
 
 class ScrollArea(QScrollArea):
