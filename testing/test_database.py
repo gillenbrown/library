@@ -490,6 +490,12 @@ def test_cannot_add_duplicate_tag_to_database(db):
         db.add_new_tag("test")
 
 
+def test_cannot_add_duplicate_tag_capitalization_to_database(db):
+    db.add_new_tag("test")
+    with pytest.raises(ValueError):
+        db.add_new_tag("TEST")
+
+
 def test_get_all_tags_is_sorted(db):
     new_tags = ["test1", "test3", "Test with Space", "tag_tag_tag_tag"]
     for t in new_tags:

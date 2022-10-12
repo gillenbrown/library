@@ -1227,6 +1227,18 @@ def test_tag_name_entry_is_not_cleared_after_duplicate_tag_attempt(qtbot, db_tem
     assert widget.tagsList.addTagBar.text() == "Test Tag"
 
 
+def test_tag_name_entry_is_not_cleared_after_duplicate_cap_tag_attempt(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
+    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    # this has been tested to work and now be clear, so try it again
+    qtbot.keyClicks(widget.tagsList.addTagBar, "test tag")
+    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    assert widget.tagsList.addTagBar.text() == "test tag"
+
+
 def test_all_tags_in_database_are_in_the_tag_list_at_beginning(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
