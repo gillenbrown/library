@@ -43,7 +43,7 @@ class Database(object):
         "arxiv_id",
     ]
     # some columns won't be set when the paper is added, will be left NULL
-    colnames_data = colnames_set_on_paper_add + ["local_file"]
+    colnames_data = colnames_set_on_paper_add + ["local_file", "user_notes"]
 
     def __init__(self, db_file):
         """
@@ -68,7 +68,8 @@ class Database(object):
             "abstract text,"
             "bibtex text,"
             "arxiv_id text,"
-            "local_file text"
+            "local_file text,"
+            "user_notes text"
             ")"
         )
 

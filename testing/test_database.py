@@ -621,3 +621,15 @@ def test_export_tag_with_no_papers(db):
 def test_export_tag_does_not_exist_raises_error(db):
     with pytest.raises(ValueError):
         db.export("lklkjlkj", "test.txt")
+
+
+def test_user_notes_empty_at_start(db_empty):
+    db_empty.add_paper(u.mine.bibcode)
+    assert db_empty.get_paper_attribute(u.mine.bibcode, "user_notes") is None
+
+
+def test_user_notes_can_be_saved(db_empty):
+    db_empty.add_paper(u.mine.bibcode)
+    test_text = "testing testing testing"
+    db_empty.set_paper_attribute(u.mine.bibcode, "user_notes", test_text)
+    assert db_empty.get_paper_attribute(u.mine.bibcode, "user_notes") == test_text
