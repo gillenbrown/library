@@ -2605,6 +2605,15 @@ def test_notes_edit_field_has_original_text(qtbot, db_notes):
     assert widget.rightPanel.userNotesTextEditField.toPlainText() == "abc123"
 
 
+def test_notes_edit_field_is_blank_if_there_are_no_notes(qtbot, db_empty):
+    db_empty.add_paper(u.mine.bibcode)
+    widget = MainWindow(db_empty)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.userNotesTextEditButton, Qt.LeftButton)
+    assert widget.rightPanel.userNotesTextEditField.toPlainText() == ""
+
+
 def test_notes_edit_field_changes_database_when_finished(qtbot, db_notes):
     widget = MainWindow(db_notes)
     qtbot.addWidget(widget)
@@ -2627,6 +2636,17 @@ def test_notes_edit_field_changes_shown_text(qtbot, db_notes):
     qtbot.keyClicks(widget.rightPanel.userNotesTextEditField, "987XYZ")
     qtbot.mouseClick(widget.rightPanel.userNotesTextEditFinishedButton, Qt.LeftButton)
     assert widget.rightPanel.userNotesText.text() == "987XYZ"
+
+
+def test_notes_user_enters_blank_doesnt_print_blank(qtbot, db_notes):
+    widget = MainWindow(db_notes)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.userNotesTextEditButton, Qt.LeftButton)
+    # simulate the user deleting the current into, then adding their own
+    widget.rightPanel.userNotesTextEditField.clear()
+    qtbot.mouseClick(widget.rightPanel.userNotesTextEditFinishedButton, Qt.LeftButton)
+    assert widget.rightPanel.userNotesText.text() == "No notes yet"
 
 
 def test_notes_edit_finished_button_disappears_when_clicked(qtbot, db_notes):

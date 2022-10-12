@@ -509,10 +509,7 @@ class RightPanel(QWidget):
         self.citeText.setText(self.db.get_cite_string(self.bibcode))
         self.abstractText.setText(self.db.get_paper_attribute(self.bibcode, "abstract"))
         self.update_tag_text()
-        notes_text = self.db.get_paper_attribute(self.bibcode, "user_notes")
-        if notes_text is None or len(notes_text.strip()) == 0:
-            notes_text = "No notes yet"
-        self.userNotesText.setText(notes_text)
+        self.updateNotesText()
 
         # Go through and set the checkboxes to match the tags the paper has
         self.populate_tags()
@@ -645,14 +642,29 @@ class RightPanel(QWidget):
         self.resetPaperDetails()  # clean up right panel
         self.papersList.deletePaper(self.bibcode)  # remove this frm the center panel
 
+    def updateNotesText(self):
+        """
+        Set the appropriate text for the user notes. Use default value if empty.
+
+        :return: None
+        """
+        notes_text = self.db.get_paper_attribute(self.bibcode, "user_notes")
+        if notes_text is None or len(notes_text.strip()) == 0:
+            notes_text = "No notes yet"
+        self.userNotesText.setText(notes_text)
+
     def editUserNotes(self):
         """
         Allow the user to edit their notes, by showing the text edit field
 
         :return: None
         """
-        # set the text in the edit field to be the current user notes
-        self.userNotesTextEditField.setText(self.userNotesText.text())
+        # set the text in the edit field to be the current user notes. Don't just copy
+        # the text from the widget, since that may say "no notes yet" and I don't want
+        # that to be in this text box
+        self.userNotesTextEditField.setText(
+            self.db.get_paper_attribute(self.bibcode, "user_notes")
+        )
         # then show the appropriate buttons
         self.userNotesTextEditButton.hide()
         self.userNotesText.hide()
@@ -669,7 +681,7 @@ class RightPanel(QWidget):
         text = self.userNotesTextEditField.toPlainText()
         self.db.set_paper_attribute(self.bibcode, "user_notes", text)
         # and put this text into the static text field
-        self.userNotesText.setText(text)
+        self.updateNotesText()
 
         # reset buttons
         self.userNotesTextEditButton.show()
