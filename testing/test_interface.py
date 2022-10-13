@@ -2726,3 +2726,105 @@ def test_spacers_are_hidden_once_paper_deleted(qtbot, db_temp):
     qtbot.mouseClick(widget.rightPanel.secondDeletePaperButton, Qt.LeftButton)
     for spacer in widget.rightPanel.spacers:
         assert spacer.isHidden() is True
+
+
+def test_left_panel_tags_are_sorted_alphabetically(qtbot, db_empty):
+    # add tags to database before we initialize interface
+    # add tags
+    tags = ["abc", "zyx", "Aye", "Test", "ZAA"]
+    for t in tags:
+        db_empty.add_new_tag(t)
+
+    widget = MainWindow(db_empty)
+    qtbot.addWidget(widget)
+    tag_names = [tag.name for tag in widget.tagsList.tags]
+    assert tag_names == sorted(tags, key=lambda t: t.lower())
+
+
+def test_left_panel_tags_are_sorted_alphabetically_after_adding(qtbot, db_empty):
+    widget = MainWindow(db_empty)
+    qtbot.addWidget(widget)
+    # add tags
+    tags = ["abc", "zyx", "Aye", "Test", "ZAA"]
+    for tag in tags:
+        qtbot.keyClicks(widget.tagsList.addTagBar, tag)
+        qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    tag_names = [tag.name for tag in widget.tagsList.tags]
+    # in comparison, include read and unread, since those were included on widet
+    # initialization too
+    assert tag_names == sorted(tags + ["Read", "Unread"], key=lambda w: w.lower())
+
+
+def test_paper_tag_list_is_sorted_alphabetically_not_case_sensitive(qtbot, db_empty):
+    # set up tags to check
+    tags = ["abc", "zyx", "Aye", "Test", "ZAA"]
+    db_empty.add_paper(u.mine.bibcode)
+    for t in tags:
+        db_empty.add_new_tag(t)
+        db_empty.tag_paper(u.mine.bibcode, t)
+
+    widget = MainWindow(db_empty)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    expected = "Tags: " + ", ".join(sorted(tags, key=lambda x: x.lower()))
+    assert widget.rightPanel.tagText.text() == expected
+
+
+def test_paper_tag_list_is_sorted_properly_after_modifying_tags(qtbot, db_empty):
+    # set up tags to check
+    tags = ["abc", "zyx", "Aye", "Test", "ZAA"]
+    db_empty.add_paper(u.mine.bibcode)
+    for t in tags:
+        db_empty.add_new_tag(t)
+    for t in tags[:3]:
+        db_empty.tag_paper(u.mine.bibcode, t)
+
+    widget = MainWindow(db_empty)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    # then add the final tag in the list
+    to_add = tags[-1]
+    qtbot.mouseClick(widget.rightPanel.editTagsButton, Qt.LeftButton)
+    for tag_item in widget.rightPanel.tags:
+        if tag_item.text() == to_add:
+            tag_item.setChecked(True)
+    qtbot.mouseClick(widget.rightPanel.doneEditingTagsButton, Qt.LeftButton)
+
+    expected_tags = tags[:3] + [tags[-1]]
+    expected = "Tags: " + ", ".join(sorted(expected_tags, key=lambda x: x.lower()))
+    assert widget.rightPanel.tagText.text() == expected
+
+
+def test_tag_checkboxes_are_sorted_alphabetically_not_case_sensitive(qtbot, db_temp):
+    # set up tags to check
+    tags = ["abc", "zyx", "Aye", "Test", "ZAA"]
+    for t in tags:
+        db_temp.add_new_tag(t)
+
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.editTagsButton, Qt.LeftButton)
+    tags = [tag.text() for tag in widget.rightPanel.tags]
+    assert tags == sorted(tags, key=lambda x: x.lower())
+
+
+def test_tag_checkboxes_are_sorted_properly_after_adding_new_tag(qtbot, db_temp):
+    # set up tags to check
+    tags = ["abc", "zyx", "Test", "ZAA"]
+    for t in tags:
+        db_temp.add_new_tag(t)
+
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    # click to show the checkboxes
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.editTagsButton, Qt.LeftButton)
+    # then add one in the left panel
+    qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.tagsList.addTagBar, "Aye")
+    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    # then ensure this new checkbox was added appropriately
+    tags = [tag.text() for tag in widget.rightPanel.tags]
+    assert "Aye" in tags
+    assert tags == sorted(tags, key=lambda x: x.lower())

@@ -496,11 +496,11 @@ def test_cannot_add_duplicate_tag_capitalization_to_database(db):
         db.add_new_tag("TEST")
 
 
-def test_get_all_tags_is_sorted(db):
-    new_tags = ["test1", "test3", "Test with Space", "tag_tag_tag_tag"]
+def test_get_all_tags_is_sorted_ignoring_case(db):
+    new_tags = ["ABC", "aaa", "zaa", "ZBB"]
     for t in new_tags:
         db.add_new_tag(t)
-    assert db.get_all_tags() == sorted(new_tags)
+    assert db.get_all_tags() == sorted(new_tags, key=lambda x: x.lower())
 
 
 def test_get_all_tags_on_a_paper_is_correct(db):
@@ -511,6 +511,18 @@ def test_get_all_tags_on_a_paper_is_correct(db):
     db.tag_paper(u.mine.bibcode, "3")
     db.tag_paper(u.mine.bibcode, "B")
     assert db.get_paper_tags(u.mine.bibcode) == ["1", "3", "B"]
+
+
+def test_get_all_tags_on_a_paper_is_sorted_ignoring_case(db):
+    tags = ["abc", "ABZ", "zyx", "ZAA"]
+    for t in tags:
+        db.add_new_tag(t)
+    # add extra not used by paper
+    db.add_new_tag("slkdjlskdj")
+
+    for t in tags:
+        db.tag_paper(u.mine.bibcode, t)
+    assert db.get_paper_tags(u.mine.bibcode) == sorted(tags, key=lambda x: x.lower())
 
 
 def test_delete_paper_removes_one(db):

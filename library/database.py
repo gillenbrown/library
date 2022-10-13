@@ -436,22 +436,26 @@ class Database(object):
 
     def get_all_tags(self):
         """
-        Get the names of all tags in the database.
+        Get the names of all tags in the database. This is sorted, ignoring case
 
         :return: List of tags that are stored in the database
         :rtype: list
         """
-        return [self._undo_internal_tag_name(t) for t in self._get_all_tags_internal()]
+        return sorted(
+            [self._undo_internal_tag_name(t) for t in self._get_all_tags_internal()],
+            key=lambda t: t.lower(),
+        )
 
     def get_paper_tags(self, bibcode):
         """
-        Get all the tags applied to a given paper
+        Get all the tags applied to a given paper. This is sorted, ignoring case
 
         :param bibcode: Bibcode of the paper to get the tags of
         :type bibcode: str
         :return: List of tags that this paper has
         :rtype: list
         """
+        # We don't need to sort, since get_all_tags() is already sorted.
         return [t for t in self.get_all_tags() if self.paper_has_tag(bibcode, t)]
 
     def delete_paper(self, bibcode):

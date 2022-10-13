@@ -413,13 +413,13 @@ class RightPanel(QWidget):
         # have some horizontal lines to visually distinguish sections
         self.spacers = [HorizontalLine() for _ in range(3)]
 
-        # handle the initial state
-        self.resetPaperDetails()
-
         # the Tags List has a bit of setup
         self.tags = []  # store the tags that are in there
         self.vBoxTags = QVBoxLayout()
         self.populate_tags()
+
+        # handle the initial state
+        self.resetPaperDetails()
 
         self.titleText.setWordWrap(True)
         self.citeText.setWordWrap(True)
@@ -452,7 +452,10 @@ class RightPanel(QWidget):
 
     def populate_tags(self):
         """
-        Reset the list of tags shown in the right panel, to account for any new ones
+        Reset the list of tags shown in the right panel, to account for any new ones.
+
+        This checks checkboxes based on the paper currently shown, and hides or shows
+        the checkboxes appropriately
 
         :return: None
         """
@@ -466,8 +469,18 @@ class RightPanel(QWidget):
             this_tag_checkbox = TagCheckBox(t, self)
             self.tags.append(this_tag_checkbox)
             self.vBoxTags.addWidget(this_tag_checkbox)
-            # hide all tags at the beginning
-            this_tag_checkbox.hide()
+            # see whether we can check this box
+            if self.bibcode != "":
+                if t in self.db.get_paper_tags(self.bibcode):
+                    this_tag_checkbox.setChecked(True)
+                else:
+                    this_tag_checkbox.setChecked(False)
+
+            # see whether to hide or show the tags
+            if self.doneEditingTagsButton.isHidden():
+                this_tag_checkbox.hide()
+            else:
+                this_tag_checkbox.show()
 
     def resetPaperDetails(self):
         """
@@ -483,6 +496,7 @@ class RightPanel(QWidget):
         # all of the buttons
         self.editTagsButton.hide()
         self.doneEditingTagsButton.hide()
+        self.populate_tags()  # this handles hiding the checkboxes
         self.userNotesText.hide()
         self.userNotesTextEditButton.hide()
         self.userNotesTextEditFinishedButton.hide()
@@ -511,15 +525,6 @@ class RightPanel(QWidget):
         self.update_tag_text()
         self.updateNotesText()
 
-        # Go through and set the checkboxes to match the tags the paper has
-        self.populate_tags()
-        for tag in self.tags:
-            tag.hide()
-            if tag.text() in self.db.get_paper_tags(self.bibcode):
-                tag.setChecked(True)
-            else:
-                tag.setChecked(False)
-
         # then make the edit tags and copy Bibtex buttons appear, since they will be
         # hidden at the start
         self.editTagsButton.show()
@@ -536,6 +541,11 @@ class RightPanel(QWidget):
         # and spacers
         for spacer in self.spacers:
             spacer.show()
+
+        # Go through and set the checkboxes to match the tags the paper has. This
+        # needs to be done after hiding everything so we can detect whether or not
+        # to show the checkboxes
+        self.populate_tags()
 
     def update_tag_text(self):
         """
@@ -834,7 +844,7 @@ class TagsListScrollArea(ScrollArea):
         thirdDeleteTagButton.setProperty("is_left_panel_item", True)
         thirdDeleteTagCancelButton.setProperty("is_left_panel_item", True)
 
-    def addTag(self, tag):
+    def addTag(self, new_tag):
         """
         Add a tag to the tags scroll area.
 
@@ -845,10 +855,21 @@ class TagsListScrollArea(ScrollArea):
         :return: None
         """
         # check if this tag is already in the list. This should never happen
-        assert tag.name not in [t.name for t in self.tags]
+        assert new_tag.name not in [t.name for t in self.tags]
 
-        self.tags.append(tag)
-        self.addWidget(tag)  # calls the ScrollArea addWidget
+        # We then need to add it to the layout. We want the tags to be sorted. So what
+        # we do is remove all tags from the layout, figure out the sort order, then add
+        # everything back
+        for tag in self.tags:
+            self.layout.removeWidget(tag)
+        # then add the new tag to this list. (we don't do this first because we don't
+        # need to remove it
+        self.tags.append(new_tag)
+        # sort the tags by their name (not case sensitive)
+        self.tags = sorted(self.tags, key=lambda tag: tag.name.lower())
+        # then add them to the layout in this order
+        for tag in self.tags:
+            self.layout.addWidget(tag)
 
 
 class MainWindow(QMainWindow):
@@ -1104,6 +1125,8 @@ class MainWindow(QMainWindow):
             tagName = self.addTagBar.text()
             self.db.add_new_tag(tagName)
             self.tagsList.addTag(LeftPanelTag(tagName, self.papersList, self.tagsList))
+            # add this checkbox to the right panel
+            self.rightPanel.populate_tags()
         except ValueError:  # this tag is already in the database
             return
 
