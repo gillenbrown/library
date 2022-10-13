@@ -496,6 +496,11 @@ def test_cannot_add_duplicate_tag_capitalization_to_database(db):
         db.add_new_tag("TEST")
 
 
+def test_cannot_add_empty_tag_to_database(db):
+    with pytest.raises(ValueError):
+        db.add_new_tag("   ")
+
+
 def test_get_all_tags_is_sorted_ignoring_case(db):
     new_tags = ["ABC", "aaa", "zaa", "ZBB"]
     for t in new_tags:

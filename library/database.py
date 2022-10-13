@@ -351,6 +351,9 @@ class Database(object):
         :type tag_name: str
         :return: None
         """
+        # check that the tag is not just whitespace
+        if tag_name.strip() == "":
+            raise ValueError("Tag cannot be empty")
         # convert the tag name
         internal_tag = self._to_internal_tag_name(tag_name)
         try:
