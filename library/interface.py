@@ -1110,6 +1110,7 @@ class MainWindow(QMainWindow):
         """
         self.addTagButton.hide()
         self.addTagBar.show()
+        self.addTagBar.setFocus()
 
     def addTag(self):
         """
@@ -1144,6 +1145,7 @@ class MainWindow(QMainWindow):
         """
         self.firstDeleteTagButton.hide()
         self.secondDeleteTagEntry.show()
+        self.secondDeleteTagEntry.setFocus()
 
     def revealThirdTagDeleteButtons(self):
         """

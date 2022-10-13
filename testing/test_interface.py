@@ -11,7 +11,7 @@ import pytest
 import pytestqt
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFontDatabase, QDesktopServices, QGuiApplication
-from PySide6.QtWidgets import QApplication, QFileDialog
+from PySide6.QtWidgets import QApplication, QFileDialog, QLineEdit
 
 from library.interface import MainWindow, get_fonts, set_up_fonts, Paper, LeftPanelTag
 from library.database import Database
@@ -1146,6 +1146,21 @@ def test_clicking_add_tag_button_shows_text_entry(qtbot, db_empty):
     assert widget.tagsList.addTagBar.isHidden() is False
 
 
+def test_clicking_add_tag_button_puts_focus_on_text_entry(qtbot, db_empty, monkeypatch):
+    # I tried to test this directly, but was having trouble getting the tests to work
+    # properly. Specifically, widget.hasFocus() was not working propertly in tests for
+    # whatever reasonSo instead, I'll monkeypatch the setFocus method. I have tested
+    # that this works in the actual interface
+    setFocus_calls = []
+    monkeypatch.setattr(QLineEdit, "setFocus", lambda x: setFocus_calls.append(True))
+
+    widget = MainWindow(db_empty)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
+    # assert widget.tagsList.addTagBar.hasFocus() is True  # would be the best test
+    assert setFocus_calls == [True]
+
+
 def test_add_tag_text_bar_has_correct_font_size(qtbot, db_empty):
     widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
@@ -1965,6 +1980,23 @@ def test_clicking_first_tag_delete_button_shows_second_entry(qtbot, db_temp_tags
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     assert widget.secondDeleteTagEntry.isHidden() is False
+
+
+def test_clicking_first_tag_delete_button_puts_focus_on_entry(
+    qtbot, db_temp_tags, monkeypatch
+):
+    # I tried to test this directly, but was having trouble getting the tests to work
+    # properly. Specifically, widget.hasFocus() was not working propertly in tests for
+    # whatever reasonSo instead, I'll monkeypatch the setFocus method. I have tested
+    # that this works in the actual interface
+    setFocus_calls = []
+    monkeypatch.setattr(QLineEdit, "setFocus", lambda x: setFocus_calls.append(True))
+
+    widget = MainWindow(db_temp_tags)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
+    # assert widget.secondDeleteTagEntry.hasFocus() is True  # would be the best test
+    assert setFocus_calls == [True]
 
 
 def test_clicking_first_tag_delete_button_hides_first_button(qtbot, db_temp_tags):
