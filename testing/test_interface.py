@@ -2828,3 +2828,25 @@ def test_tag_checkboxes_are_sorted_properly_after_adding_new_tag(qtbot, db_temp)
     tags = [tag.text() for tag in widget.rightPanel.tags]
     assert "Aye" in tags
     assert tags == sorted(tags, key=lambda x: x.lower())
+
+
+def test_tag_checkboxes_are_sorted_properly_after_deleting_tag(qtbot, db_temp):
+    # set up tags to check
+    tags = ["abc", "zyx", "Test", "ZAA"]
+    for t in tags:
+        db_temp.add_new_tag(t)
+
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    # click to show the checkboxes
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.editTagsButton, Qt.LeftButton)
+    # then delete a tag from the left panel
+    qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.secondDeleteTagEntry, "Test")
+    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    qtbot.mouseClick(widget.thirdDeleteTagButton, Qt.LeftButton)
+    # then ensure this new checkbox was removed appropriately
+    tags = [tag.text() for tag in widget.rightPanel.tags]
+    assert "Test" not in tags
+    assert tags == sorted(tags, key=lambda x: x.lower())

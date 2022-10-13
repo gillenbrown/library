@@ -1189,6 +1189,8 @@ class MainWindow(QMainWindow):
                 del tag
         # then reset the boxes
         self.cancelTagDeletion()
+        # and reset the checkboxes in the rightPanel
+        self.rightPanel.populate_tags()
 
     def cancelTagDeletion(self):
         """
