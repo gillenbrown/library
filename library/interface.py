@@ -872,6 +872,55 @@ class TagsListScrollArea(ScrollArea):
             self.layout.addWidget(tag)
 
 
+class TagEntryDeletionTextEdit(QLineEdit):
+    """
+    Just like a textEdit, but they can call a function (which should exit) with escape
+    or backspace when all text is empty
+    """
+
+    def __init__(self, exitFunc, enterFunc):
+        """
+        Initialize the TextEdit.
+
+        :param exitFunc: The function to be called if the user either hits escape or
+                         hits backspace when the text is empty.
+        :type exitFunc: function
+        :param enterFunc: The function to be called if the user hits enter
+        :type enterFunc: function
+        """
+        super().__init__()
+        self.exitFunc = exitFunc
+        self.enterFunc = enterFunc
+
+    def keyPressEvent(self, keyPressEvent):
+        """
+        Either add normal text or exit under certain conditions.
+
+        Any escape keypress exits, or a backspace when the text is empty
+
+        :param keyPressEvent: The key press event
+        :type keyPressEvent: ySide6.QtGui.QKeyEvent
+        :return: None
+        """
+        # We overwrite the Enter, Escape, and Backspace keys, but let everything
+        # else be handled normally
+        if keyPressEvent.key() == Qt.Key_Enter or keyPressEvent.key() == Qt.Key_Return:
+            # call the function specified
+            self.enterFunc()
+        elif keyPressEvent.key() == Qt.Key_Escape:
+            # exit emmediately
+            self.exitFunc()
+        elif keyPressEvent.key() == Qt.Key_Backspace:
+            # if there is text still there, just do a normal backspace. If there's
+            # nothing there, exit.
+            if self.text() != "":
+                super().keyPressEvent(keyPressEvent)
+            else:
+                self.exitFunc()
+        else:  # all other chanracters are handled normally
+            super().keyPressEvent(keyPressEvent)
+
+
 class MainWindow(QMainWindow):
     """
     Main window object holding everything needed in the interface.
@@ -966,9 +1015,8 @@ class MainWindow(QMainWindow):
         # center panel since the tags need to access the paper list
         self.addTagButton = QPushButton("Add a tag")
         self.addTagButton.clicked.connect(self.showAddTagBar)
-        self.addTagBar = QLineEdit()
+        self.addTagBar = TagEntryDeletionTextEdit(self.resetAddTag, self.addTag)
         self.addTagBar.setPlaceholderText("Tag name")
-        self.addTagBar.returnPressed.connect(self.addTag)
         self.addTagBar.hide()
 
         # Then set up the buttons to remove tags. We'll have four buttons. The first
@@ -977,12 +1025,10 @@ class MainWindow(QMainWindow):
         # a confirm and cancel button
         self.firstDeleteTagButton = QPushButton("Delete a tag")
         self.firstDeleteTagButton.clicked.connect(self.revealSecondTagDeleteEntry)
-
-        self.secondDeleteTagEntry = QLineEdit()
-        self.secondDeleteTagEntry.setPlaceholderText("Tag to delete")
-        self.secondDeleteTagEntry.returnPressed.connect(
-            self.revealThirdTagDeleteButtons
+        self.secondDeleteTagEntry = TagEntryDeletionTextEdit(
+            self.cancelTagDeletion, self.revealThirdTagDeleteButtons
         )
+        self.secondDeleteTagEntry.setPlaceholderText("Tag to delete")
         self.secondDeleteTagEntry.hide()
 
         self.thirdDeleteTagButton = QPushButton("")
@@ -1112,6 +1158,18 @@ class MainWindow(QMainWindow):
         self.addTagBar.show()
         self.addTagBar.setFocus()
 
+    def resetAddTag(self):
+        """
+        Reset the add tag buttons to be the original state.
+
+        This can either happen after successfull entry or cancellation
+
+        :return: None
+        """
+        self.addTagBar.clear()
+        self.addTagBar.hide()
+        self.addTagButton.show()
+
     def addTag(self):
         """
         Adds a tag to the database, taking the name from the text box.
@@ -1133,9 +1191,7 @@ class MainWindow(QMainWindow):
 
         # if we got here we had no error, so it was successfully added and we should
         # clear the text box and reset the buttons
-        self.addTagBar.clear()
-        self.addTagBar.hide()
-        self.addTagButton.show()
+        self.resetAddTag()
 
     def revealSecondTagDeleteEntry(self):
         """

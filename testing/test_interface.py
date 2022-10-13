@@ -1254,6 +1254,42 @@ def test_tag_name_entry_is_not_cleared_after_duplicate_cap_tag_attempt(qtbot, db
     assert widget.tagsList.addTagBar.text() == "test tag"
 
 
+def test_add_tag_entry_can_exit_with_escape_press_at_any_time(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.tagsList.addTagBar, "sdfsdf")
+    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Escape)
+    assert widget.tagsList.addTagBar.isHidden() is True
+    assert widget.tagsList.addTagButton.isHidden() is False
+
+
+def test_add_tag_entry_can_exit_with_escape_press_at_any_time_clears_text(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.tagsList.addTagBar, "sdfsdf")
+    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Escape)
+    assert widget.tagsList.addTagBar.text() == ""
+
+
+def test_add_tag_entry_can_exit_with_backspace_when_empty(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.tagsList.addTagBar, "abc")
+    # back out those three letters
+    for _ in range(3):
+        qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Backspace)
+    # entry should still be visible
+    assert widget.tagsList.addTagBar.isHidden() is False
+    assert widget.tagsList.addTagButton.isHidden() is True
+    # with one more backspace, we exit
+    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Backspace)
+    assert widget.tagsList.addTagBar.isHidden() is True
+    assert widget.tagsList.addTagButton.isHidden() is False
+
+
 def test_all_tags_in_database_are_in_the_tag_list_at_beginning(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
@@ -2067,6 +2103,42 @@ def test_third_delete_tag_cancel_button_appears_when_first_entry_done(
     qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
     assert widget.thirdDeleteTagCancelButton.isHidden() is False
+
+
+def test_delete_tag_entry_can_exit_with_escape_press_at_any_time(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.secondDeleteTagEntry, "sdfsdf")
+    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Escape)
+    assert widget.secondDeleteTagEntry.isHidden() is True
+    assert widget.firstDeleteTagButton.isHidden() is False
+
+
+def test_delete_tag_entry_can_exit_with_escape_press_at_any_time_clears_text(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.secondDeleteTagEntry, "sdfsdf")
+    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Escape)
+    assert widget.secondDeleteTagEntry.text() == ""
+
+
+def test_delete_tag_entry_can_exit_with_backspace_when_empty(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.secondDeleteTagEntry, "abc")
+    # back out those three letters
+    for _ in range(3):
+        qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Backspace)
+    # entry should still be visible
+    assert widget.secondDeleteTagEntry.isHidden() is False
+    assert widget.firstDeleteTagButton.isHidden() is True
+    # with one more backspace, we exit
+    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Backspace)
+    assert widget.secondDeleteTagEntry.isHidden() is True
+    assert widget.firstDeleteTagButton.isHidden() is False
 
 
 def test_third_delete_tag_button_has_correct_font_size(qtbot, db_temp_tags):
