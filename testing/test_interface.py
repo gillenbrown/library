@@ -6,6 +6,7 @@ Perform tests on the GUI using pytest-qt
 import os
 from pathlib import Path
 import random
+import shutil
 
 import pytest
 import pytestqt
@@ -95,6 +96,23 @@ def temporary_database_with_papers_and_notes():
     db = Database(file_path)
     db.add_paper(u.mine.bibcode)
     db.set_paper_attribute(u.mine.bibcode, "user_notes", "abc123")
+    yield db
+    file_path.unlink()  # removes this file
+
+
+@pytest.fixture(name="db_update")
+def temporary_db_with_old_arxiv_paper():
+    """
+    Fixture to get a database I've prefilled with one paper with arXiv only details.
+    This paper has since been published in a journal, so this is designed to check
+    whether the database can update papers to include this information.
+
+    Note that this provides a temporary database that's a copy of the original, since
+    I don't want that one to be modified
+    """
+    file_path = Path(f"{random.randint(0, 1000000000)}.db")
+    shutil.copy2("testing_update.db", file_path)
+    db = Database(file_path)
     yield db
     file_path.unlink()  # removes this file
 
@@ -2963,3 +2981,11 @@ def test_tag_checkboxes_are_sorted_properly_after_deleting_tag(qtbot, db_temp):
     tags = [tag.text() for tag in widget.rightPanel.tags]
     assert "Test" not in tags
     assert tags == sorted(tags, key=lambda x: x.lower())
+
+
+def test_db_update_reflected_in_interface(qtbot, db_update):
+    widget = MainWindow(db_update)
+    qtbot.addWidget(widget)
+    cite_strings = [paper.citeText.text() for paper in widget.papersList.papers]
+    assert "Brown, Gnedin, Li, 2018, ApJ, 864, 94" in cite_strings
+    assert "Brown, Gnedin, Li, 2022, arXiv:1804.09819" not in cite_strings
