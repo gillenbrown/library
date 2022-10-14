@@ -11,9 +11,9 @@ An attempt to implement a citation manager (in the style of ADS Libraries or Men
 
 Before doing anything, please know that this application is a work in progress. If you find a bug or have a feature you'd like to be added, please email me! I'll be more than happy to work with you to fix any issues you're having. 
 
-To start, you'll need an ADS key to be able for the application to connect with ADS. Follow the steps to generate a new key [here.](https://github.com/adsabs/adsabs-dev-api#access) Once you get that API key, save it as an environment variable named `ADS_DEV_KEY`. 
+To start, you'll need an ADS key to be able for the application to connect with ADS. Follow the steps to generate a new key [here](https://github.com/adsabs/adsabs-dev-api#access) (just steps 1 and 2, don't worry about the `curl` command). Once you get that API key, save it as an environment variable named `ADS_DEV_KEY`. 
 
-Then you can install the Pyton application. I haven't yet made a simple executable, so for now you'll need to clone the repository and install it with pip. This will install all the dependencies too. This requires Python 3.
+Then you can install the Pyton application. You'll need to be using Python 3. I haven't yet made a simple executable, so for now you'll need to clone the repository and install it with pip. This will install all the dependencies too.
 
 ```
 git clone https://github.com/gillenbrown/library.git
@@ -25,7 +25,7 @@ python -m pytest
 ```
 When the tests run, the interface may appear a few times, but that is temporary and part of the tests. The tests should all pass, but if they don't, reach out and I'll help you figure out what's going wrong. 
 
-# Running the Application
+# Launching the Application
 
 To run the application, simply run the `run.py` script: 
 ```
