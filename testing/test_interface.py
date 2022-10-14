@@ -921,10 +921,6 @@ def test_clicking_on_paper_puts_tags_in_right_panel(qtbot, db_no_tags):
 
 
 def test_clicking_on_paper_with_no_tags_puts_default_in_right_panel(qtbot, db_no_tags):
-    # remove tags from all papers
-    for bibcode in db_no_tags.get_all_bibcodes():
-        for tag in db_no_tags.get_paper_tags(bibcode):
-            db_no_tags.untag_paper(bibcode, tag)
     widget = MainWindow(db_no_tags)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
