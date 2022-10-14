@@ -1,5 +1,8 @@
 import random
 from pathlib import Path
+import shutil
+import sqlite3
+import contextlib
 
 import pytest
 
@@ -42,6 +45,23 @@ def temporary_db_two_papers():
     db = Database(file_path)
     db.add_paper(u.mine.bibcode)
     db.add_paper(u.tremonti.bibcode)
+    yield db
+    file_path.unlink()  # removes this file
+
+
+@pytest.fixture(name="db_update")
+def temporary_db_with_old_arxiv_paper():
+    """
+    Fixture to get a database I've prefilled with one paper with arXiv only details.
+    This paper has since been published in a journal, so this is designed to check
+    whether the database can update papers to include this information.
+
+    Note that this provides a temporary database that's a copy of the original, since
+    I don't want that one to be modified
+    """
+    file_path = Path(f"{random.randint(0, 1000000000)}.db")
+    shutil.copy2("testing_update.db", file_path)
+    db = Database(file_path)
     yield db
     file_path.unlink()  # removes this file
 
@@ -656,3 +676,105 @@ def test_user_notes_can_be_saved(db_empty):
     test_text = "testing testing testing"
     db_empty.set_paper_attribute(u.mine.bibcode, "user_notes", test_text)
     assert db_empty.get_paper_attribute(u.mine.bibcode, "user_notes") == test_text
+
+
+# Test the updating of the database to get journal information for arXiv papers.
+# Note that this updating is done on initialization, so we don't need to do anything
+# to check that the update was done. The initial contents of the database will be
+# wiped. Also note that in several of the later checks, I use the new bibcode rather
+# than the old to access attributes, so that checks that it was updated too.
+# Some more information on the database used here: I manually changed it to have the
+# bibcode corresponding to the arXiv submission, then mangled all the other paper data.
+# All of it should be replaced by the update system. I did enter some notes and a local
+# file, so those should be kept by the system, along with the tags.
+# first validate the testing database -- it should look strange
+def test_validate_test_update_db():
+    # I don't want to use the database code, since it automatically updates. So instead
+    # to validate I copy some of the reading code from the database object and hack
+    # it into here. It's ugly, but I like the interface to the database automatically
+    # updating, so to test the un-updated version I need to do this.
+    def sql(sql, parameters=()):
+        with contextlib.closing(sqlite3.connect("testing_update.db")) as conn:
+            # using this factory makes the returned quantities easier to use
+            conn.row_factory = sqlite3.Row
+            with conn:  # auto commits changes to the database
+                with contextlib.closing(conn.cursor()) as cursor:
+                    cursor.execute(sql, parameters)
+                    return cursor.fetchall()
+
+    old_bibcode = "2018arXiv180409819B"
+    new_bibcodes = [p["bibcode"] for p in sql("SELECT bibcode FROM papers")]
+    assert new_bibcodes == [
+        u.tremonti.bibcode,
+        old_bibcode,
+        u.forbes.bibcode,
+    ]
+    title = sql("SELECT title FROM papers WHERE bibcode=?", (old_bibcode,))[0]["title"]
+    assert title == "NSCs Rule!"
+
+
+def test_update_system_can_update_bibcode(db_update):
+    assert db_update.get_all_bibcodes() == [
+        u.tremonti.bibcode,
+        u.mine.bibcode,
+        u.forbes.bibcode,
+    ]
+
+
+def test_update_system_can_update_title(db_update):
+    assert db_update.get_paper_attribute(u.mine.bibcode, "title") == u.mine.title
+
+
+def test_update_system_can_update_authors(db_update):
+    assert db_update.get_paper_attribute(u.mine.bibcode, "authors") == u.mine.authors
+
+
+def test_update_system_can_update_abstract(db_update):
+    assert db_update.get_paper_attribute(u.mine.bibcode, "abstract") == u.mine.abstract
+
+
+def test_update_system_can_update_pubdate(db_update):
+    assert db_update.get_paper_attribute(u.mine.bibcode, "pubdate") == u.mine.pubdate
+
+
+def test_update_system_gets_new_journal(db_update):
+    assert db_update.get_paper_attribute(u.mine.bibcode, "journal") == u.mine.journal
+
+
+def test_update_system_gets_new_volume(db_update):
+    assert db_update.get_paper_attribute(u.mine.bibcode, "volume") == u.mine.volume
+
+
+def test_update_system_gets_new_page(db_update):
+    assert db_update.get_paper_attribute(u.mine.bibcode, "page") == u.mine.page
+
+
+def test_update_system_does_not_change_arxiv_id(db_update):
+    assert db_update.get_paper_attribute(u.mine.bibcode, "arxiv_id") == u.mine.arxiv_id
+
+
+def test_update_system_gets_new_bibtex(db_update):
+    assert db_update.get_paper_attribute(u.mine.bibcode, "bibtex") == u.mine.bibtex
+
+
+def test_update_system_does_not_change_local_file(db_update):
+    assert (
+        db_update.get_paper_attribute(u.mine.bibcode, "local_file")
+        == "/Users/gillenbrown/code/library/testing/test.pdf"
+    )
+
+
+def test_update_system_does_not_change_tags(db_update):
+    assert db_update.get_paper_tags(u.mine.bibcode) == ["test", "Unread"]
+
+
+def test_update_system_does_not_change_notes(db_update):
+    notes = db_update.get_paper_attribute(u.mine.bibcode, "user_notes")
+    assert notes == "Test notes are here!"
+
+
+def test_update_system_does_not_update_published_papers(db_update, monkeypatch):
+    assert (
+        db_update.get_paper_attribute(u.tremonti.bibcode, "bibtex") == u.tremonti.bibtex
+    )
+    assert db_update.get_paper_attribute(u.forbes.bibcode, "bibtex") == u.forbes.bibtex

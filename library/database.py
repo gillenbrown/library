@@ -73,6 +73,11 @@ class Database(object):
             ")"
         )
 
+        # then update all papers, as necessary
+        for bibcode in self.get_all_bibcodes():
+            if self.get_paper_attribute(bibcode, "journal") == "arXiv e-prints":
+                self.update_paper(bibcode)
+
     def _execute(self, sql, parameters=()):
         """
         Execute a given command to the database.
@@ -471,6 +476,39 @@ class Database(object):
         # create the SQL code with question marks as the placeholder
         sql = f"DELETE FROM papers WHERE bibcode = ?"
         self._execute(sql, (bibcode,))
+
+    def update_paper(self, old_bibcode):
+        """
+        Re-ask ADS for the paper details, then update the database if necessary.
+
+        This is useful for papers that are on the arXiv but unpublished. Once ADS gets
+        their paper details, they will be added to the database.
+
+        :param old_bibcode: the bibcode of the paper to update.
+        :type old_bibcode: str
+        :return: None
+        """
+        # need to get the new bibcode. This is actually non-trivial. The best thing to
+        # do is to pass the arXiv ID, which can then be sent to ADS
+        new_bibcode = ads_call.get_bibcode(
+            self.get_paper_attribute(old_bibcode, "arxiv_id")
+        )
+        if old_bibcode == new_bibcode:
+            # no update found, we can exit
+            return
+
+        # the easiest thing is to actually delete the original paper, then add a new
+        # one with the new bibcode, keeping the data that's user-generated
+        self.add_paper(new_bibcode)
+        for field in ["user_notes", "local_file"]:
+            old_attribute = self.get_paper_attribute(old_bibcode, field)
+            self.set_paper_attribute(new_bibcode, field, old_attribute)
+        # also transfer the tags
+        for tag in self.get_paper_tags(old_bibcode):
+            self.tag_paper(new_bibcode, tag)
+
+        # then delete the paper
+        self.delete_paper(old_bibcode)
 
     def export(self, tag_name, file_name):
         """
