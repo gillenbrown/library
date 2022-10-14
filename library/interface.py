@@ -648,9 +648,9 @@ class RightPanel(QWidget):
 
         :return: None, but the paper is deleted and text reset
         """
-        self.db.delete_paper(self.bibcode)
         self.resetPaperDetails()  # clean up right panel
         self.papersList.deletePaper(self.bibcode)  # remove this frm the center panel
+        self.db.delete_paper(self.bibcode)
 
     def updateNotesText(self):
         """

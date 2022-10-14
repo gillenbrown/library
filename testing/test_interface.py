@@ -44,14 +44,16 @@ def temporary_database_with_papers():
     """
     file_path = Path(f"{random.randint(0, 1000000000)}.db")
     db = Database(file_path)
+    db.add_new_tag("Read")
+    db.add_new_tag("Unread")
     db.add_paper(u.mine.bibcode)
     db.add_paper(u.tremonti.bibcode)
     yield db
     file_path.unlink()  # removes this file
 
 
-@pytest.fixture(name="db_temp_tags")
-def temporary_database_with_papers_and_tags():
+@pytest.fixture(name="db_no_tags")
+def temporary_database_with_papers_no_tags():
     """
     Fixture to get a database at a temporary path in the current directory. This will be
     removed once the test is done
@@ -60,8 +62,6 @@ def temporary_database_with_papers_and_tags():
     db = Database(file_path)
     db.add_paper(u.mine.bibcode)
     db.add_paper(u.tremonti.bibcode)
-    db.add_new_tag("tag_1")
-    db.add_new_tag("tag_2")
     yield db
     file_path.unlink()  # removes this file
 
@@ -94,6 +94,7 @@ def temporary_database_with_papers_and_notes():
     """
     file_path = Path(f"{random.randint(0, 1000000000)}.db")
     db = Database(file_path)
+    db.add_new_tag("Read")
     db.add_paper(u.mine.bibcode)
     db.set_paper_attribute(u.mine.bibcode, "user_notes", "abc123")
     yield db
@@ -899,8 +900,8 @@ def test_clicking_on_paper_puts_abstract_in_right_panel(qtbot, db):
     ]
 
 
-def test_clicking_on_paper_puts_tags_in_right_panel(qtbot, db_temp):
-    widget = MainWindow(db_temp)
+def test_clicking_on_paper_puts_tags_in_right_panel(qtbot, db_no_tags):
+    widget = MainWindow(db_no_tags)
     qtbot.addWidget(widget)
     # Add some tags to the database - this is tested below
     for tag in ["T1", "T2", "T3", "T4", "T5"]:
@@ -911,16 +912,20 @@ def test_clicking_on_paper_puts_tags_in_right_panel(qtbot, db_temp):
     paper = widget.papersList.papers[0]
     # add one of the tags to this paper - this is done through the database, not the
     # actual adding tags functionality - that will be tested below
-    db_temp.tag_paper(paper.bibcode, "T1")
-    db_temp.tag_paper(paper.bibcode, "T3")
-    db_temp.tag_paper(paper.bibcode, "T5")
+    db_no_tags.tag_paper(paper.bibcode, "T1")
+    db_no_tags.tag_paper(paper.bibcode, "T3")
+    db_no_tags.tag_paper(paper.bibcode, "T5")
     # then click on the paper
     qtbot.mouseClick(paper, Qt.LeftButton)
     assert widget.rightPanel.tagText.text() == "Tags: T1, T3, T5"
 
 
-def test_clicking_on_paper_with_no_tags_puts_default_in_right_panel(qtbot, db_temp):
-    widget = MainWindow(db_temp)
+def test_clicking_on_paper_with_no_tags_puts_default_in_right_panel(qtbot, db_no_tags):
+    # remove tags from all papers
+    for bibcode in db_no_tags.get_all_bibcodes():
+        for tag in db_no_tags.get_paper_tags(bibcode):
+            db_no_tags.untag_paper(bibcode, tag)
+    widget = MainWindow(db_no_tags)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     assert widget.rightPanel.tagText.text() == "Tags: None"
@@ -1331,8 +1336,10 @@ def test_read_and_unread_are_initialized_even_in_new_database(qtbot, db_empty):
     assert sorted(tags_list) == ["Read", "Unread"]
 
 
-def test_read_and_unread_arent_added_to_nonempty_databased(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_read_and_unread_arent_added_to_nonempty_database(qtbot, db_no_tags):
+    db_no_tags.add_new_tag("lskdjlkj")
+    db_no_tags.add_new_tag("ghjghjg")
+    widget = MainWindow(db_no_tags)
     qtbot.addWidget(widget)
     tags_list = [t.name for t in widget.tagsList.tags]
     assert "Read" not in tags_list
@@ -1396,11 +1403,11 @@ def test_right_panel_tags_checked_match_paper_that_is_selected(qtbot, db):
             assert not tag.isChecked()
 
 
-def test_checking_tag_in_checklist_adds_tag_to_paper_in_database(qtbot, db_temp):
+def test_checking_tag_in_checklist_adds_tag_to_paper_in_database(qtbot, db_no_tags):
     # add some tags to this database
     for tag in ["T1", "T2", "T3", "T4", "T5"]:
-        db_temp.add_new_tag(tag)
-    widget = MainWindow(db_temp)
+        db_no_tags.add_new_tag(tag)
+    widget = MainWindow(db_no_tags)
     qtbot.addWidget(widget)
     # get one of the papers, not sure which, then click on it
     paper = widget.papersList.papers[0]
@@ -1411,24 +1418,26 @@ def test_checking_tag_in_checklist_adds_tag_to_paper_in_database(qtbot, db_temp)
         if tag_item.text() in to_check:
             tag_item.setChecked(True)
     # Then check that these tags are listen in the database
-    for tag in db_temp.get_all_tags():
+    for tag in db_no_tags.get_all_tags():
         if tag in to_check:
-            assert db_temp.paper_has_tag(paper.bibcode, tag) is True
+            assert db_no_tags.paper_has_tag(paper.bibcode, tag) is True
         else:
-            assert db_temp.paper_has_tag(paper.bibcode, tag) is False
+            assert db_no_tags.paper_has_tag(paper.bibcode, tag) is False
 
 
-def test_unchecking_tag_in_checklist_removes_tag_from_paper_in_database(qtbot, db_temp):
+def test_unchecking_tag_in_checklist_removes_tag_from_paper_in_database(
+    qtbot, db_no_tags
+):
     # add some tags to this database
     for tag in ["T1", "T2", "T3", "T4", "T5"]:
-        db_temp.add_new_tag(tag)
-    widget = MainWindow(db_temp)
+        db_no_tags.add_new_tag(tag)
+    widget = MainWindow(db_no_tags)
     qtbot.addWidget(widget)
     # get one of the papers, not sure which, then click on it
     paper = widget.papersList.papers[0]
     # add all tags to this paper
-    for tag in db_temp.get_all_tags():
-        db_temp.tag_paper(paper.bibcode, tag)
+    for tag in db_no_tags.get_all_tags():
+        db_no_tags.tag_paper(paper.bibcode, tag)
     # click on the paper to show it in the right panel
     qtbot.mouseClick(paper, Qt.LeftButton)
     # click on the tags we want to remove
@@ -1437,18 +1446,18 @@ def test_unchecking_tag_in_checklist_removes_tag_from_paper_in_database(qtbot, d
         if tag_item.text() in to_uncheck:
             tag_item.setChecked(False)
     # Then check that these tags are listen in the database
-    for tag in db_temp.get_all_tags():
+    for tag in db_no_tags.get_all_tags():
         if tag in to_uncheck:
-            assert db_temp.paper_has_tag(paper.bibcode, tag) is False
+            assert db_no_tags.paper_has_tag(paper.bibcode, tag) is False
         else:
-            assert db_temp.paper_has_tag(paper.bibcode, tag) is True
+            assert db_no_tags.paper_has_tag(paper.bibcode, tag) is True
 
 
-def test_checking_tag_in_checklist_adds_tag_to_interface(qtbot, db_temp):
+def test_checking_tag_in_checklist_adds_tag_to_interface(qtbot, db_no_tags):
     # add some tags to this database
     for tag in ["T1", "T2", "T3", "T4", "T5"]:
-        db_temp.add_new_tag(tag)
-    widget = MainWindow(db_temp)
+        db_no_tags.add_new_tag(tag)
+    widget = MainWindow(db_no_tags)
     qtbot.addWidget(widget)
     # get one of the papers, not sure which, then click on it
     paper = widget.papersList.papers[0]
@@ -1466,17 +1475,17 @@ def test_checking_tag_in_checklist_adds_tag_to_interface(qtbot, db_temp):
     assert widget.rightPanel.tagText.text() == "Tags: T1, T3, T4"
 
 
-def test_unchecking_tag_in_checklist_removes_tag_from_interface(qtbot, db_temp):
+def test_unchecking_tag_in_checklist_removes_tag_from_interface(qtbot, db_no_tags):
     # add some tags to this database
     for tag in ["T1", "T2", "T3", "T4", "T5"]:
-        db_temp.add_new_tag(tag)
-    widget = MainWindow(db_temp)
+        db_no_tags.add_new_tag(tag)
+    widget = MainWindow(db_no_tags)
     qtbot.addWidget(widget)
     # get one of the papers, not sure which, then click on it
     paper = widget.papersList.papers[0]
     # add all tags to this paper
-    for tag in db_temp.get_all_tags():
-        db_temp.tag_paper(paper.bibcode, tag)
+    for tag in db_no_tags.get_all_tags():
+        db_no_tags.tag_paper(paper.bibcode, tag)
     # click on the paper to show it in the right panel
     qtbot.mouseClick(paper, Qt.LeftButton)
     # click on the tags we want to remove
@@ -1511,15 +1520,15 @@ def test_clicking_on_tag_in_left_panel_hides_papers(qtbot, db):
             assert paper.isHidden() is True
 
 
-def test_show_all_tags_button_starts_highlighted(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_show_all_tags_button_starts_highlighted(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     assert widget.tagsList.showAllButton.property("is_highlighted") is True
     assert widget.tagsList.showAllButton.label.property("is_highlighted") is True
 
 
-def test_all_tags_start_unhighlighted(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_all_tags_start_unhighlighted(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     # get a tag from the left panel to click on
     for tag in widget.tagsList.tags:
@@ -1527,8 +1536,8 @@ def test_all_tags_start_unhighlighted(qtbot, db_temp_tags):
         assert tag.label.property("is_highlighted") is False
 
 
-def test_clicking_on_tag_in_left_panel_highlights_tag_text(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_clicking_on_tag_in_left_panel_highlights_tag_text(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     # get a tag from the left panel to click on
     tag = widget.tagsList.tags[0]
@@ -1537,16 +1546,16 @@ def test_clicking_on_tag_in_left_panel_highlights_tag_text(qtbot, db_temp_tags):
     assert tag.label.property("is_highlighted") is True
 
 
-def test_clicking_on_show_all_in_left_panel_highlights_tag_text(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_clicking_on_show_all_in_left_panel_highlights_tag_text(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.tagsList.showAllButton, Qt.LeftButton)
     assert widget.tagsList.showAllButton.property("is_highlighted") is True
     assert widget.tagsList.showAllButton.label.property("is_highlighted") is True
 
 
-def test_clicking_on_tag_in_left_panel_unlights_others(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_clicking_on_tag_in_left_panel_unlights_others(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     # Click on one tag, then another
     for tag in widget.tagsList.tags:
@@ -1560,8 +1569,8 @@ def test_clicking_on_tag_in_left_panel_unlights_others(qtbot, db_temp_tags):
                 assert tag_comp.label.property("is_highlighted") is False
 
 
-def test_clicking_on_show_all_in_left_panel_unlights_others(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_clicking_on_show_all_in_left_panel_unlights_others(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.tagsList.showAllButton, Qt.LeftButton)
     for tag in widget.tagsList.tags:
@@ -1569,8 +1578,8 @@ def test_clicking_on_show_all_in_left_panel_unlights_others(qtbot, db_temp_tags)
         assert tag.label.property("is_highlighted") is False
 
 
-def test_newly_added_tag_is_unhighlighted(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_newly_added_tag_is_unhighlighted(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.tagsList.addTagBar, "newly added tag")
@@ -1911,7 +1920,6 @@ def test_right_panel_done_editing_tags_button_is_hidden_when_paper_is_deleted(
 ):
     widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
-    bibcode = widget.papersList.papers[0].bibcode
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.secondDeletePaperButton, Qt.LeftButton)
@@ -2008,8 +2016,8 @@ def test_right_panel_abstract_text_is_default_when_paper_is_deleted(qtbot, db_te
     )
 
 
-def test_first_delete_tag_button_shown_at_beginning(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_first_delete_tag_button_shown_at_beginning(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     assert widget.firstDeleteTagButton.isHidden() is False
 
@@ -2026,27 +2034,27 @@ def test_first_delete_tag_button_has_correct_font_family(qtbot, db_empty):
     assert widget.firstDeleteTagButton.font().family() == "Cabin"
 
 
-def test_first_delete_tag_button_has_correct_text(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_first_delete_tag_button_has_correct_text(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     assert widget.firstDeleteTagButton.text() == "Delete a tag"
 
 
-def test_second_delete_tag_entry_hidden_at_beginning(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_second_delete_tag_entry_hidden_at_beginning(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     assert widget.secondDeleteTagEntry.isHidden() is True
 
 
-def test_clicking_first_tag_delete_button_shows_second_entry(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_clicking_first_tag_delete_button_shows_second_entry(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     assert widget.secondDeleteTagEntry.isHidden() is False
 
 
 def test_clicking_first_tag_delete_button_puts_focus_on_entry(
-    qtbot, db_temp_tags, monkeypatch
+    qtbot, db_temp, monkeypatch
 ):
     # I tried to test this directly, but was having trouble getting the tests to work
     # properly. Specifically, widget.hasFocus() was not working propertly in tests for
@@ -2055,56 +2063,56 @@ def test_clicking_first_tag_delete_button_puts_focus_on_entry(
     setFocus_calls = []
     monkeypatch.setattr(QLineEdit, "setFocus", lambda x: setFocus_calls.append(True))
 
-    widget = MainWindow(db_temp_tags)
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     # assert widget.secondDeleteTagEntry.hasFocus() is True  # would be the best test
     assert setFocus_calls == [True]
 
 
-def test_clicking_first_tag_delete_button_hides_first_button(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_clicking_first_tag_delete_button_hides_first_button(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     assert widget.firstDeleteTagButton.isHidden() is True
 
 
-def test_second_delete_tag_button_has_correct_font_size(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_second_delete_tag_button_has_correct_font_size(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     assert widget.secondDeleteTagEntry.font().pointSize() == 14
 
 
-def test_second_delete_tag_button_has_correct_font_family(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_second_delete_tag_button_has_correct_font_family(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     assert widget.secondDeleteTagEntry.font().family() == "Cabin"
 
 
-def test_second_delete_tag_entry_has_placeholder_text(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_second_delete_tag_entry_has_placeholder_text(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     text = "Tag to delete"
     assert widget.secondDeleteTagEntry.placeholderText() == text
 
 
-def test_third_delete_tag_entry_hidden_at_beginning(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_third_delete_tag_entry_hidden_at_beginning(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     assert widget.thirdDeleteTagButton.isHidden() is True
 
 
-def test_third_cancel_tag_entry_hidden_at_beginning(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_third_cancel_tag_entry_hidden_at_beginning(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     assert widget.thirdDeleteTagCancelButton.isHidden() is True
 
 
-def test_second_delete_tag_entry_is_hidden_when_entry_done(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_second_delete_tag_entry_is_hidden_when_entry_done(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
@@ -2112,22 +2120,20 @@ def test_second_delete_tag_entry_is_hidden_when_entry_done(qtbot, db_temp_tags):
     assert widget.secondDeleteTagEntry.isHidden() is True
 
 
-def test_third_delete_tag_button_appears_when_first_entry_done(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_third_delete_tag_button_appears_when_first_entry_done(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
+    qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
     assert widget.thirdDeleteTagButton.isHidden() is False
 
 
-def test_third_delete_tag_cancel_button_appears_when_first_entry_done(
-    qtbot, db_temp_tags
-):
-    widget = MainWindow(db_temp_tags)
+def test_third_delete_tag_cancel_button_appears_when_first_entry_done(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
+    qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
     assert widget.thirdDeleteTagCancelButton.isHidden() is False
 
@@ -2168,138 +2174,135 @@ def test_delete_tag_entry_can_exit_with_backspace_when_empty(qtbot, db):
     assert widget.firstDeleteTagButton.isHidden() is False
 
 
-def test_third_delete_tag_button_has_correct_font_size(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_third_delete_tag_button_has_correct_font_size(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
+    qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
     assert widget.thirdDeleteTagButton.font().pointSize() == 14
 
 
-def test_third_delete_tag_button_has_correct_font_family(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_third_delete_tag_button_has_correct_font_family(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
+    qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
     assert widget.thirdDeleteTagButton.font().family() == "Cabin"
 
 
-def test_third_delete_tag_cancel_button_has_correct_font_size(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_third_delete_tag_cancel_button_has_correct_font_size(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
+    qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
     assert widget.thirdDeleteTagCancelButton.font().pointSize() == 14
 
 
-def test_third_delete_tag_cancel_button_has_correct_font_family(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_third_delete_tag_cancel_button_has_correct_font_family(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
+    qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
     assert widget.thirdDeleteTagCancelButton.font().family() == "Cabin"
 
 
-def test_third_delete_tag_button_text_is_accurate(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_third_delete_tag_button_text_is_accurate(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
+    qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
     assert (
-        widget.thirdDeleteTagButton.text() == 'Click to confirm deletion of tag "tag_1"'
+        widget.thirdDeleteTagButton.text() == 'Click to confirm deletion of tag "Read"'
     )
 
 
-def test_third_delete_tag_cancel_button_text_is_accurate(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_third_delete_tag_cancel_button_text_is_accurate(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
+    qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
     assert (
-        widget.thirdDeleteTagCancelButton.text()
-        == "Oops, don't delete tag " + '"tag_1"'
+        widget.thirdDeleteTagCancelButton.text() == "Oops, don't delete tag " + '"Read"'
     )
 
 
-def test_third_delete_tag_button_deletes_tag_from_db_when_pressed(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_third_delete_tag_button_deletes_tag_from_db_when_pressed(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
-    original_tags = db_temp_tags.get_all_tags()
+    original_tags = db_temp.get_all_tags()
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
+    qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
     qtbot.mouseClick(widget.thirdDeleteTagButton, Qt.LeftButton)
     # check that it's not in the database anymore
-    new_tags = db_temp_tags.get_all_tags()
-    assert "tag_1" not in new_tags
+    new_tags = db_temp.get_all_tags()
+    assert "Read" not in new_tags
     assert len(new_tags) == len(original_tags) - 1
 
 
-def test_third_delete_tag_button_deletes_tag_from_list_when_pressed(
-    qtbot, db_temp_tags
-):
-    widget = MainWindow(db_temp_tags)
+def test_third_delete_tag_button_deletes_tag_from_list_when_pressed(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     # first get the original number of tags
     num_original_tags = len([t.name for t in widget.tagsList.tags])
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
+    qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
     qtbot.mouseClick(widget.thirdDeleteTagButton, Qt.LeftButton)
     # Then see what tags are in the list now
     new_tags = [t.name for t in widget.tagsList.tags]
     assert len(new_tags) == num_original_tags - 1
-    assert not "tag_1" in new_tags
+    assert not "Read" in new_tags
 
 
-def test_first_delete_tag_button_comes_back_once_tag_deleted(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_first_delete_tag_button_comes_back_once_tag_deleted(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
+    qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
     qtbot.mouseClick(widget.thirdDeleteTagButton, Qt.LeftButton)
     assert widget.firstDeleteTagButton.isHidden() is False
 
 
-def test_second_delete_tag_entry_hidden_once_tag_deleted(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_second_delete_tag_entry_hidden_once_tag_deleted(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
+    qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
     qtbot.mouseClick(widget.thirdDeleteTagButton, Qt.LeftButton)
     assert widget.secondDeleteTagEntry.isHidden() is True
 
 
-def test_third_delete_tag_button_hides_once_tag_deleted(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_third_delete_tag_button_hides_once_tag_deleted(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
+    qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
     qtbot.mouseClick(widget.thirdDeleteTagButton, Qt.LeftButton)
     assert widget.thirdDeleteTagButton.isHidden() is True
 
 
-def test_third_delete_tag_cancel_button_hides_once_tag_deleted(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_third_delete_tag_cancel_button_hides_once_tag_deleted(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
+    qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
     qtbot.mouseClick(widget.thirdDeleteTagButton, Qt.LeftButton)
     assert widget.thirdDeleteTagCancelButton.isHidden() is True
 
 
-def test_first_delete_tag_button_comes_back_once_cancelled(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_first_delete_tag_button_comes_back_once_cancelled(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
@@ -2308,8 +2311,8 @@ def test_first_delete_tag_button_comes_back_once_cancelled(qtbot, db_temp_tags):
     assert widget.firstDeleteTagButton.isHidden() is False
 
 
-def test_second_delete_tag_entry_hidden_once_cancelled(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_second_delete_tag_entry_hidden_once_cancelled(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
@@ -2318,8 +2321,8 @@ def test_second_delete_tag_entry_hidden_once_cancelled(qtbot, db_temp_tags):
     assert widget.secondDeleteTagEntry.isHidden() is True
 
 
-def test_third_delete_tag_button_hides_once_cancelled(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_third_delete_tag_button_hides_once_cancelled(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
@@ -2328,8 +2331,8 @@ def test_third_delete_tag_button_hides_once_cancelled(qtbot, db_temp_tags):
     assert widget.thirdDeleteTagButton.isHidden() is True
 
 
-def test_third_delete_tag_cancel_button_hides_once_cancelled(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_third_delete_tag_cancel_button_hides_once_cancelled(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
@@ -2338,22 +2341,22 @@ def test_third_delete_tag_cancel_button_hides_once_cancelled(qtbot, db_temp_tags
     assert widget.thirdDeleteTagCancelButton.isHidden() is True
 
 
-def test_cancel_tag_delete_doesnt_delete_any_tags_db(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_cancel_tag_delete_doesnt_delete_any_tags_db(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     # first get the original tags
-    original_tags = db_temp_tags.get_all_tags()
+    original_tags = db_temp.get_all_tags()
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
     qtbot.mouseClick(widget.thirdDeleteTagCancelButton, Qt.LeftButton)
-    new_tags = db_temp_tags.get_all_tags()
+    new_tags = db_temp.get_all_tags()
     assert len(original_tags) == len(new_tags)
     assert original_tags == new_tags
 
 
-def test_cancel_tag_delete_doesnt_delete_any_tags_interface(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_cancel_tag_delete_doesnt_delete_any_tags_interface(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     # first get the original tags
     original_tags = [t.name for t in widget.tagsList.tags]
@@ -2366,8 +2369,8 @@ def test_cancel_tag_delete_doesnt_delete_any_tags_interface(qtbot, db_temp_tags)
     assert original_tags == new_tags
 
 
-def test_invalid_tag_delete_entry_hides_entry(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_invalid_tag_delete_entry_hides_entry(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "sdfsdfadbsdf")
@@ -2375,8 +2378,8 @@ def test_invalid_tag_delete_entry_hides_entry(qtbot, db_temp_tags):
     assert widget.secondDeleteTagEntry.isHidden() is True
 
 
-def test_invalid_tag_delete_entry_shows_first_button(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_invalid_tag_delete_entry_shows_first_button(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "sdfsdfadbsdf")
@@ -2384,8 +2387,8 @@ def test_invalid_tag_delete_entry_shows_first_button(qtbot, db_temp_tags):
     assert widget.firstDeleteTagButton.isHidden() is False
 
 
-def test_invalid_tag_delete_entry_resets_entry(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_invalid_tag_delete_entry_resets_entry(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "sdfsdfadbsdf")
@@ -2393,8 +2396,8 @@ def test_invalid_tag_delete_entry_resets_entry(qtbot, db_temp_tags):
     assert widget.secondDeleteTagEntry.text() == ""
 
 
-def test_invalid_tag_delete_entry_keeps_third_hidden(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_invalid_tag_delete_entry_keeps_third_hidden(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "sdfsdfadbsdf")
@@ -2402,8 +2405,8 @@ def test_invalid_tag_delete_entry_keeps_third_hidden(qtbot, db_temp_tags):
     assert widget.thirdDeleteTagButton.isHidden() is True
 
 
-def test_invalid_tag_delete_entry_keeps_third_cancel_hidden(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_invalid_tag_delete_entry_keeps_third_cancel_hidden(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "sdfsdfadbsdf")
@@ -2411,8 +2414,8 @@ def test_invalid_tag_delete_entry_keeps_third_cancel_hidden(qtbot, db_temp_tags)
     assert widget.thirdDeleteTagCancelButton.isHidden() is True
 
 
-def test_tag_checkboxes_are_hidden_when_paper_clicked(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_tag_checkboxes_are_hidden_when_paper_clicked(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     # click on a paper, then click the edit tags button
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
@@ -2424,8 +2427,8 @@ def test_tag_checkboxes_are_hidden_when_paper_clicked(qtbot, db_temp_tags):
         assert t.isHidden()
 
 
-def test_done_editing_button_is_hidden_when_paper_clicked(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_done_editing_button_is_hidden_when_paper_clicked(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     # click on a paper, then click the edit tags button
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
@@ -2447,8 +2450,9 @@ def test_newly_added_tags_appear_in_right_panel(qtbot, db_temp):
     assert "Test Tag" in [t.text() for t in widget.rightPanel.tags]
 
 
-def test_adding_tags_doesnt_duplicate_tags_in_right_panel(qtbot, db_temp):
-    widget = MainWindow(db_temp)
+def test_adding_tags_doesnt_duplicate_tags_in_right_panel(qtbot, db_empty):
+    db_empty.add_paper(u.mine.bibcode)
+    widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     # first add a tag
     qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
@@ -2503,28 +2507,28 @@ def test_show_all_export_button_has_correct_text(qtbot, db):
     assert widget.tagsList.showAllButton.exportButton.text() == "Export"
 
 
-def test_tag_export_button_has_correct_text(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_tag_export_button_has_correct_text(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     assert widget.tagsList.tags[0].exportButton.text() == "Export"
 
 
-def test_show_all_tags_button_starts_with_export_button(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_show_all_tags_button_starts_with_export_button(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     assert widget.tagsList.showAllButton.exportButton.isHidden() is False
 
 
-def test_all_tags_start_with_export_hidden(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_all_tags_start_with_export_hidden(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     # get a tag from the left panel to click on
     for tag in widget.tagsList.tags:
         assert tag.exportButton.isHidden() is True
 
 
-def test_clicking_on_tag_in_left_panel_shows_export_button(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_clicking_on_tag_in_left_panel_shows_export_button(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     # get a tag from the left panel to click on
     tag = widget.tagsList.tags[0]
@@ -2532,16 +2536,16 @@ def test_clicking_on_tag_in_left_panel_shows_export_button(qtbot, db_temp_tags):
     assert tag.exportButton.isHidden() is False
 
 
-def test_clicking_on_show_all_in_left_panel_shows_export_button(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_clicking_on_show_all_in_left_panel_shows_export_button(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.tagsList.tags[0], Qt.LeftButton)
     qtbot.mouseClick(widget.tagsList.showAllButton, Qt.LeftButton)
     assert widget.tagsList.showAllButton.exportButton.isHidden() is False
 
 
-def test_clicking_on_tag_in_left_panel_removes_export_button(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_clicking_on_tag_in_left_panel_removes_export_button(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     # Click on one tag, then another
     for tag in widget.tagsList.tags:
@@ -2553,16 +2557,16 @@ def test_clicking_on_tag_in_left_panel_removes_export_button(qtbot, db_temp_tags
                 assert tag_comp.exportButton.isHidden() is True
 
 
-def test_clicking_on_show_all_in_left_panel_removes_other_exports(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_clicking_on_show_all_in_left_panel_removes_other_exports(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.tagsList.showAllButton, Qt.LeftButton)
     for tag in widget.tagsList.tags:
         assert tag.exportButton.isHidden() is True
 
 
-def test_newly_added_tag_has_hidden_export(qtbot, db_temp_tags):
-    widget = MainWindow(db_temp_tags)
+def test_newly_added_tag_has_hidden_export(qtbot, db_temp):
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.tagsList.addTagBar, "newly added tag")
