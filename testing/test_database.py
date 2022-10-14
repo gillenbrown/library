@@ -686,7 +686,9 @@ def test_user_notes_can_be_saved(db_empty):
 # Some more information on the database used here: I manually changed it to have the
 # bibcode corresponding to the arXiv submission, then mangled all the other paper data.
 # All of it should be replaced by the update system. I did enter some notes and a local
-# file, so those should be kept by the system, along with the tags.
+# file, so those should be kept by the system, along with the tags. I also saved a real
+# entry from an arXiv paper before it was published, so I have a more realistic test
+# too.
 # first validate the testing database -- it should look strange
 def test_validate_test_update_db():
     # I don't want to use the database code, since it automatically updates. So instead
@@ -703,15 +705,22 @@ def test_validate_test_update_db():
                     cursor.execute(sql, parameters)
                     return cursor.fetchall()
 
-    old_bibcode = "2018arXiv180409819B"
+    old_bibcode_1, old_bibcode_2 = "2018arXiv180409819B", "2022arXiv220300559B"
     new_bibcodes = [p["bibcode"] for p in sql("SELECT bibcode FROM papers")]
     assert new_bibcodes == [
         u.tremonti.bibcode,
-        old_bibcode,
+        old_bibcode_1,
         u.forbes.bibcode,
+        old_bibcode_2,
     ]
-    title = sql("SELECT title FROM papers WHERE bibcode=?", (old_bibcode,))[0]["title"]
-    assert title == "NSCs Rule!"
+    t1 = sql("SELECT title FROM papers WHERE bibcode=?", (old_bibcode_1,))[0]["title"]
+    assert t1 == "NSCs Rule!"
+
+    t2 = sql("SELECT title FROM papers WHERE bibcode=?", (old_bibcode_2,))[0]["title"]
+    assert (
+        t2 == "Testing Feedback from Star Clusters in "
+        "Simulations of the Milky Way Formation"
+    )
 
 
 def test_update_system_can_update_bibcode(db_update):
@@ -719,43 +728,53 @@ def test_update_system_can_update_bibcode(db_update):
         u.tremonti.bibcode,
         u.mine.bibcode,
         u.forbes.bibcode,
+        u.mine_recent.bibcode,
     ]
 
 
 def test_update_system_can_update_title(db_update):
-    assert db_update.get_paper_attribute(u.mine.bibcode, "title") == u.mine.title
+    for p in [u.mine, u.mine_recent]:
+        assert db_update.get_paper_attribute(p.bibcode, "title") == p.title
 
 
 def test_update_system_can_update_authors(db_update):
-    assert db_update.get_paper_attribute(u.mine.bibcode, "authors") == u.mine.authors
+    for p in [u.mine, u.mine_recent]:
+        assert db_update.get_paper_attribute(p.bibcode, "authors") == p.authors
 
 
 def test_update_system_can_update_abstract(db_update):
-    assert db_update.get_paper_attribute(u.mine.bibcode, "abstract") == u.mine.abstract
+    for p in [u.mine, u.mine_recent]:
+        assert db_update.get_paper_attribute(p.bibcode, "abstract") == p.abstract
 
 
 def test_update_system_can_update_pubdate(db_update):
-    assert db_update.get_paper_attribute(u.mine.bibcode, "pubdate") == u.mine.pubdate
+    for p in [u.mine, u.mine_recent]:
+        assert db_update.get_paper_attribute(p.bibcode, "pubdate") == p.pubdate
 
 
 def test_update_system_gets_new_journal(db_update):
-    assert db_update.get_paper_attribute(u.mine.bibcode, "journal") == u.mine.journal
+    for p in [u.mine, u.mine_recent]:
+        assert db_update.get_paper_attribute(p.bibcode, "journal") == p.journal
 
 
 def test_update_system_gets_new_volume(db_update):
-    assert db_update.get_paper_attribute(u.mine.bibcode, "volume") == u.mine.volume
+    for p in [u.mine, u.mine_recent]:
+        assert db_update.get_paper_attribute(p.bibcode, "volume") == p.volume
 
 
 def test_update_system_gets_new_page(db_update):
-    assert db_update.get_paper_attribute(u.mine.bibcode, "page") == u.mine.page
+    for p in [u.mine, u.mine_recent]:
+        assert db_update.get_paper_attribute(p.bibcode, "page") == p.page
 
 
 def test_update_system_does_not_change_arxiv_id(db_update):
-    assert db_update.get_paper_attribute(u.mine.bibcode, "arxiv_id") == u.mine.arxiv_id
+    for p in [u.mine, u.mine_recent]:
+        assert db_update.get_paper_attribute(p.bibcode, "arxiv_id") == p.arxiv_id
 
 
 def test_update_system_gets_new_bibtex(db_update):
-    assert db_update.get_paper_attribute(u.mine.bibcode, "bibtex") == u.mine.bibtex
+    for p in [u.mine, u.mine_recent]:
+        assert db_update.get_paper_attribute(p.bibcode, "bibtex") == p.bibtex
 
 
 def test_update_system_does_not_change_local_file(db_update):
@@ -763,18 +782,23 @@ def test_update_system_does_not_change_local_file(db_update):
         db_update.get_paper_attribute(u.mine.bibcode, "local_file")
         == "/Users/gillenbrown/code/library/testing/test.pdf"
     )
+    assert db_update.get_paper_attribute(u.mine_recent.bibcode, "local_file") == None
 
 
 def test_update_system_does_not_change_tags(db_update):
     assert db_update.get_paper_tags(u.mine.bibcode) == ["test", "Unread"]
+    assert db_update.get_paper_tags(u.mine_recent.bibcode) == ["Unread"]
 
 
 def test_update_system_does_not_change_notes(db_update):
-    notes = db_update.get_paper_attribute(u.mine.bibcode, "user_notes")
-    assert notes == "Test notes are here!"
+    assert (
+        db_update.get_paper_attribute(u.mine.bibcode, "user_notes")
+        == "Test notes are here!"
+    )
+    assert db_update.get_paper_attribute(u.mine_recent.bibcode, "user_notes") == None
 
 
-def test_update_system_does_not_update_published_papers(db_update, monkeypatch):
+def test_update_system_does_not_update_published_papers(db_update):
     assert (
         db_update.get_paper_attribute(u.tremonti.bibcode, "bibtex") == u.tremonti.bibtex
     )

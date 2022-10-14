@@ -254,3 +254,60 @@ used_for_no_ads_key = PaperDict(
     # testing for a bad ADS key, so that my ADS wrapper doesn't store it in the cache
     url="https://ui.adsabs.harvard.edu/abs/2021AJ....161...40G/abstract"
 )
+
+# my most recent paper. Used for the updating test
+mine_recent = PaperDict(
+    bibcode="2022MNRAS.514..280B",
+    title=(
+        "Testing feedback from star clusters in simulations of the Milky Way formation"
+    ),
+    authors=["Brown, Gillen", "Gnedin, Oleg Y."],
+    pubdate="2022-07-00",
+    arxiv_id="2203.00559",
+    journal="Monthly Notices of the Royal Astronomical Society",
+    volume=514,
+    page=280,
+    abstract=(
+        "We present a suite of galaxy formation simulations that directly model star "
+        "cluster formation and disruption. Starting from a model previously developed "
+        "by our group, here we introduce several improvements to the prescriptions "
+        "for cluster formation and feedback, then test these updates using a large "
+        "suite of cosmological simulations of Milky Way mass galaxies. We perform a "
+        "differential analysis with the goal of understanding how each of the updates "
+        "affects star cluster populations. Two key parameters are the momentum boost "
+        "of supernova feedback f<SUB>boost</SUB> and star formation efficiency per "
+        "free-fall time ϵ<SUB>ff</SUB>. We find that f<SUB>boost</SUB> has a strong "
+        "influence on the galactic star formation rate, with higher values leading to "
+        "less star formation. The efficiency ϵ<SUB>ff</SUB> does not have a "
+        "significant impact on the global star formation rate, but dramatically "
+        "changes cluster properties, with increasing ϵ<SUB>ff</SUB> leading to a "
+        "higher maximum cluster mass, shorter age spread of stars within clusters, "
+        "and higher integrated star formation efficiencies. We also explore the "
+        "redshift evolution of the observable cluster mass function, finding that "
+        "most massive clusters have formed at high redshift z &gt; 4. Extrapolation "
+        "of cluster disruption to z = 0 produces good agreement with both the "
+        "Galactic globular cluster mass function and age-metallicity relation. Our "
+        "results emphasize the importance of using small-scale properties of galaxies "
+        "to calibrate subgrid models of star cluster formation and feedback."
+    ),
+    bibtex=(
+        "@ARTICLE{2022MNRAS.514..280B,\n"
+        "       author = {{Brown}, Gillen and {Gnedin}, Oleg Y.},\n"
+        '        title = "{Testing feedback from star clusters in simulations of the Milky Way formation}",\n'
+        "      journal = {\mnras},\n"
+        "     keywords = {methods: numerical, galaxies: evolution, galaxies: formation, galaxies: star clusters: general, galaxies: star formation, Astrophysics - Astrophysics of Galaxies},\n"
+        "         year = 2022,\n"
+        "        month = jul,\n"
+        "       volume = {514},\n"
+        "       number = {1},\n"
+        "        pages = {280-301},\n"
+        "          doi = {10.1093/mnras/stac1164},\n"
+        "archivePrefix = {arXiv},\n"
+        "       eprint = {2203.00559},\n"
+        " primaryClass = {astro-ph.GA},\n"
+        "       adsurl = {https://ui.adsabs.harvard.edu/abs/2022MNRAS.514..280B},\n"
+        "      adsnote = {Provided by the SAO/NASA Astrophysics Data System}\n"
+        "}\n"
+        "\n"
+    ),
+)

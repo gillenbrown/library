@@ -2989,3 +2989,5 @@ def test_db_update_reflected_in_interface(qtbot, db_update):
     cite_strings = [paper.citeText.text() for paper in widget.papersList.papers]
     assert "Brown, Gnedin, Li, 2018, ApJ, 864, 94" in cite_strings
     assert "Brown, Gnedin, Li, 2022, arXiv:1804.09819" not in cite_strings
+    assert "Brown, Gnedin, 2022, MNRAS, 514, 280" in cite_strings
+    assert "Brown, Gnedin, 2022, arXiv:2203.00559" not in cite_strings
