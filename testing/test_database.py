@@ -60,7 +60,7 @@ def temporary_db_with_old_arxiv_paper():
     I don't want that one to be modified
     """
     file_path = Path(f"{random.randint(0, 1000000000)}.db")
-    shutil.copy2("testing_update.db", file_path)
+    shutil.copy2(Path(__file__).parent / "testing_update.db", file_path)
     db = Database(file_path)
     yield db
     file_path.unlink()  # removes this file
@@ -694,7 +694,8 @@ def test_validate_test_update_db():
     # it into here. It's ugly, but I like the interface to the database automatically
     # updating, so to test the un-updated version I need to do this.
     def sql(sql, parameters=()):
-        with contextlib.closing(sqlite3.connect("testing_update.db")) as conn:
+        db_loc = Path(__file__).parent / "testing_update.db"
+        with contextlib.closing(sqlite3.connect(db_loc)) as conn:
             # using this factory makes the returned quantities easier to use
             conn.row_factory = sqlite3.Row
             with conn:  # auto commits changes to the database
