@@ -2991,3 +2991,29 @@ def test_db_update_reflected_in_interface(qtbot, db_update):
     assert "Brown, Gnedin, Li, 2022, arXiv:1804.09819" not in cite_strings
     assert "Brown, Gnedin, 2022, MNRAS, 514, 280" in cite_strings
     assert "Brown, Gnedin, 2022, arXiv:2203.00559" not in cite_strings
+
+
+def test_papers_are_in_sorted_order_to_begin(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    dates = [
+        db.get_paper_attribute(paper.bibcode, "pubdate")
+        for paper in widget.papersList.papers
+    ]
+
+    assert dates == sorted(dates)
+
+
+def test_papers_are_in_sorted_order_after_adding(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    # add two papers: one very old, one very recent
+    for bibcode in [u.mine_recent.bibcode, u.bbfh.bibcode]:
+        qtbot.keyClicks(widget.searchBar, bibcode)
+        qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    # then check sorting
+    dates = [
+        db_temp.get_paper_attribute(paper.bibcode, "pubdate")
+        for paper in widget.papersList.papers
+    ]
+    assert dates == sorted(dates)

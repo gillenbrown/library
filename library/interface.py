@@ -778,6 +778,7 @@ class PapersListScrollArea(ScrollArea):
         paper = Paper(bibcode, self.db, self.rightPanel, self)
         self.papers.append(paper)
         self.addWidget(paper)  # calls the ScrollArea addWidget
+        self.sortPapers()
 
     def deletePaper(self, bibcode):
         """
@@ -791,6 +792,24 @@ class PapersListScrollArea(ScrollArea):
                 paper.hide()  # just to be safe
                 self.papers.remove(paper)
                 del paper
+
+    def sortPapers(self):
+        """
+        Rearrange the papers to be in sorted order by publication date
+
+        :return: None
+        """
+
+        # To do this, we'll remove all the papers from the layout, sort them, then
+        # add them back
+        for paper in self.papers:
+            self.layout.removeWidget(paper)
+        # sort by publication date
+        self.papers = sorted(
+            self.papers, key=lambda p: self.db.get_paper_attribute(p.bibcode, "pubdate")
+        )
+        for paper in self.papers:
+            self.layout.addWidget(paper)
 
 
 class TagsListScrollArea(ScrollArea):
