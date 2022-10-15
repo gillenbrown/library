@@ -756,6 +756,7 @@ class PapersListScrollArea(ScrollArea):
         :type rightPanel: rightPanel
         """
         ScrollArea.__init__(self)
+        self.layout.setContentsMargins(0, 35, 0, 0)  # add space for top sortChooser
         self.papers = []
 
         self.rightPanel = rightPanel
@@ -767,7 +768,9 @@ class PapersListScrollArea(ScrollArea):
         self.sortChooser.addItems(["Sort by Date", "Sort by First Author"])
         self.sortChooser.setFixedWidth(200)
         self.sortChooser.currentTextChanged.connect(self.changeSort)
-        self.addWidget(self.sortChooser)
+        # Don't add the sortChooser to the layout. Instead, just set it as a child of
+        # the papersList. That will allow it to float on top
+        self.sortChooser.setParent(self)
 
         # initially sort by date
         self.changeSort()
@@ -1060,7 +1063,8 @@ class MainWindow(QMainWindow):
 
         # The central panel is the list of papers. This has to be set up after the
         # right panel because the paper objects need it, and before the left panel
-        # because the tags need this panel
+        # because the tags need this panel. In the big picture, we have a main
+        # wrapper so that we can keep the sort button at the top
         self.papersList = PapersListScrollArea(db, self.rightPanel)
         for b in self.db.get_all_bibcodes():
             self.papersList.addPaper(b)
