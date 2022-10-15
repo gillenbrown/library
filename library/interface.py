@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (
     QFileDialog,
     QCheckBox,
     QFrame,
+    QComboBox,
 )
 
 from library.database import PaperAlreadyInDatabaseError
@@ -761,6 +762,16 @@ class PapersListScrollArea(ScrollArea):
         self.db = db
         rightPanel.papersList = self
 
+        self.sortChooser = QComboBox()
+        # set the options. By putting date first it's the default
+        self.sortChooser.addItems(["Sort by Date", "Sort by First Author"])
+        self.sortChooser.setFixedWidth(200)
+        self.sortChooser.currentTextChanged.connect(self.changeSort)
+        self.addWidget(self.sortChooser)
+
+        # initially sort by date
+        self.changeSort()
+
     def addPaper(self, bibcode):
         """
         Add a paper to the papers scroll area.
@@ -805,11 +816,36 @@ class PapersListScrollArea(ScrollArea):
         for paper in self.papers:
             self.layout.removeWidget(paper)
         # sort by publication date
-        self.papers = sorted(
-            self.papers, key=lambda p: self.db.get_paper_attribute(p.bibcode, "pubdate")
-        )
+        self.papers = sorted(self.papers, key=self.sortKey)
         for paper in self.papers:
             self.layout.addWidget(paper)
+
+    def changeSort(self):
+        """
+        Change the sorting method used for the list of papers
+
+        :return: None
+        """
+        text = self.sortChooser.currentText()
+        if text == "Sort by Date":
+            # Here we just sort by publication date
+            self.sortKey = lambda p: self.db.get_paper_attribute(p.bibcode, "pubdate")
+        elif text == "Sort by First Author":
+            # Here we have to do something a bit more complex. We sort by the author's
+            # last name first, then by their first name (to try to distinguish between
+            # authors with the same last name. Then within each author, we sort by the
+            # year. To accomplish this, we return a three item tuple, as Python sorts
+            # by comparing the first item of the tuple, then the second, etc.
+            def author_sort(p):
+                first_author = self.db.get_paper_attribute(p.bibcode, "authors")[0]
+
+                last_name = first_author.split(",")[0]
+                rest_of_name = ",".join(first_author.split(",")[1:]).strip()
+                year = self.db.get_paper_attribute(p.bibcode, "pubdate")
+                return last_name, rest_of_name, year
+
+            self.sortKey = author_sort
+        self.sortPapers()
 
 
 class TagsListScrollArea(ScrollArea):

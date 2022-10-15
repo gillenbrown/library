@@ -3017,3 +3017,77 @@ def test_papers_are_in_sorted_order_after_adding(qtbot, db_temp):
         for paper in widget.papersList.papers
     ]
     assert dates == sorted(dates)
+
+
+def test_paper_sort_is_initially_by_date(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    bibcodes = [paper.bibcode for paper in widget.papersList.papers]
+    assert bibcodes == [u.tremonti.bibcode, u.mine.bibcode]
+
+
+def test_paper_sort_dropdown_can_sort_by_author(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    # find the dropdown to sort by date
+    index = widget.papersList.sortChooser.findText("Sort by First Author")
+    widget.papersList.sortChooser.setCurrentIndex(index)
+    # then check the papers in the list
+    bibcodes = [paper.bibcode for paper in widget.papersList.papers]
+    assert bibcodes == [u.mine.bibcode, u.tremonti.bibcode]
+
+
+def test_paper_sort_dropdown_can_sort_by_author_same_last_name(qtbot, db_temp):
+    # add another paper by Warren Brown, should be sorted after me (Gillen Brown)
+    db_temp.add_paper("2015ApJ...804...49B")
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    # find the dropdown to sort by date
+    index = widget.papersList.sortChooser.findText("Sort by First Author")
+    widget.papersList.sortChooser.setCurrentIndex(index)
+    # then check the papers in the list
+    bibcodes = [paper.bibcode for paper in widget.papersList.papers]
+    assert bibcodes == [u.mine.bibcode, "2015ApJ...804...49B", u.tremonti.bibcode]
+
+
+def test_paper_sort_dropdown_can_sort_in_both_directions(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    # find the dropdown to sort by date
+    index = widget.papersList.sortChooser.findText("Sort by First Author")
+    widget.papersList.sortChooser.setCurrentIndex(index)
+    # then check the papers in the list
+    bibcodes = [paper.bibcode for paper in widget.papersList.papers]
+    assert bibcodes == [u.mine.bibcode, u.tremonti.bibcode]
+    # find the dropdown to sort by date
+    index = widget.papersList.sortChooser.findText("Sort by Date")
+    widget.papersList.sortChooser.setCurrentIndex(index)
+    # then check the papers in the list
+    bibcodes = [paper.bibcode for paper in widget.papersList.papers]
+    assert bibcodes == [u.tremonti.bibcode, u.mine.bibcode]
+
+
+def test_paper_sort_dropdown_can_sort_by_author_single_author(qtbot, db_empty):
+    bibcodes_to_add = [
+        u.mine.bibcode,
+        u.mine_recent.bibcode,
+        "2021MNRAS.508.5935B",
+        "2021NewA...8401501B",
+    ]
+    # put some papers by me in the database
+    for b in bibcodes_to_add:
+        db_empty.add_paper(b)
+    widget = MainWindow(db_empty)
+    qtbot.addWidget(widget)
+    # find the dropdown to sort by date
+    index = widget.papersList.sortChooser.findText("Sort by First Author")
+    widget.papersList.sortChooser.setCurrentIndex(index)
+    # # then check the papers in the list
+    bibcodes = [paper.bibcode for paper in widget.papersList.papers]
+    # since these are all one author, they should be in date order
+    assert bibcodes == [
+        u.mine.bibcode,
+        "2021NewA...8401501B",
+        "2021MNRAS.508.5935B",
+        u.mine_recent.bibcode,
+    ]
