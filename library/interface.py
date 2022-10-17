@@ -419,6 +419,7 @@ class RightPanel(QWidget):
         )
         self.editCiteKeyEntry.setPlaceholderText("e.g. yourname_etal_2022")
         self.editCiteKeyErrorText = QLabel("")
+        qss_trigger(self.editCiteKeyErrorText, "error_text", True)
         self.editCiteKeyButton.clicked.connect(self.revealCiteKeyEntry)
 
         # have some horizontal lines to visually distinguish sections
@@ -1094,7 +1095,7 @@ class MainWindow(QMainWindow):
         self.searchBar.setProperty("error", False)
         # and have some text if there's an error
         self.searchBarErrorText = QLabel()
-        self.searchBarErrorText.setObjectName("search_error_text")
+        qss_trigger(self.searchBarErrorText, "error_text", True)
         self.searchBarErrorText.hide()
         # We'll also have an add button
         self.addButton = QPushButton("Add")

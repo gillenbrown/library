@@ -94,7 +94,7 @@ QLabel#center_panel_cite_string[is_highlighted=false]{
 }
 
 /* Have some formatting when the user enters an invalid paper */
-QLabel#search_error_text{
+QLabel[error_text=true]{
     color: #FF0000;
 }
 
