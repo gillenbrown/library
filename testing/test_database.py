@@ -772,9 +772,24 @@ def test_update_system_does_not_change_arxiv_id(db_update):
         assert db_update.get_paper_attribute(p.bibcode, "arxiv_id") == p.arxiv_id
 
 
+def test_update_system_does_not_update_citation_keyword(db_update):
+    assert (
+        db_update.get_paper_attribute(u.mine.bibcode, "citation_keyword")
+        == "brown_etal_18"
+    )
+    assert (
+        db_update.get_paper_attribute(u.mine_recent.bibcode, "citation_keyword")
+        == "brown_gnedin_22"
+    )
+
+
 def test_update_system_gets_new_bibtex(db_update):
-    for p in [u.mine, u.mine_recent]:
-        assert db_update.get_paper_attribute(p.bibcode, "bibtex") == p.bibtex
+    for p, key in zip([u.mine, u.mine_recent], ["brown_etal_18", "brown_gnedin_22"]):
+        # for each of these, replace the first line with the assigned key
+        true_bibtex_lines = p.bibtex.split("\n")
+        true_bibtex_lines[0] = "@ARTICLE{" + f"{key},"
+        true_bibtex = "\n".join(true_bibtex_lines)
+        assert db_update.get_paper_attribute(p.bibcode, "bibtex") == true_bibtex
 
 
 def test_update_system_does_not_change_local_file(db_update):
@@ -803,3 +818,47 @@ def test_update_system_does_not_update_published_papers(db_update):
         db_update.get_paper_attribute(u.tremonti.bibcode, "bibtex") == u.tremonti.bibtex
     )
     assert db_update.get_paper_attribute(u.forbes.bibcode, "bibtex") == u.forbes.bibtex
+
+
+def test_default_citation_keyword_is_bibcode(db):
+    assert db.get_paper_attribute(u.mine.bibcode, "citation_keyword") == u.mine.bibcode
+
+
+def test_can_change_citation_keyword(db):
+    db.set_paper_attribute(u.mine.bibcode, "citation_keyword", "brown_etal_18")
+    assert db.get_paper_attribute(u.mine.bibcode, "citation_keyword") == "brown_etal_18"
+
+
+def test_duplicate_citation_keywords_not_allowed(db):
+    db.set_paper_attribute(u.mine.bibcode, "citation_keyword", "brown_etal_18")
+    with pytest.raises(ValueError):
+        db.set_paper_attribute(u.tremonti.bibcode, "citation_keyword", "brown_etal_18")
+
+
+def test_bibtex_export_reflects_citation_keywords(db):
+    db.set_paper_attribute(u.mine.bibcode, "citation_keyword", "brown_etal_18")
+    test_bibtex = db.get_paper_attribute(u.mine.bibcode, "bibtex")
+    # to see if mine works, manually replace the first line
+    true_bibtex_lines = u.mine.bibtex.split("\n")
+    true_bibtex_lines[0] = "@ARTICLE{brown_etal_18,"
+    true_bibtex = "\n".join(true_bibtex_lines)
+    assert test_bibtex == true_bibtex
+
+
+def test_bibtex_export_reflects_citation_keywords_for_book(db):
+    db.add_paper(u.mvdbw_book.bibcode)
+    db.set_paper_attribute(u.mvdbw_book.bibcode, "citation_keyword", "mo_book")
+    test_bibtex = db.get_paper_attribute(u.mvdbw_book.bibcode, "bibtex")
+    true_bibtex = (
+        "@BOOK{mo_book,\n"
+        "       author = {{Mo}, Houjun and {van den Bosch}, "
+        "Frank C. and {White}, Simon},\n"
+        '        title = "{Galaxy Formation and Evolution}",\n'
+        "         year = 2010,\n"
+        "       adsurl = {https://ui.adsabs.harvard.edu/abs/2010gfe..book.....M},\n"
+        "      adsnote = {Provided by the SAO/NASA Astrophysics Data System}\n"
+        "}\n"
+        "\n"
+        ""
+    )
+    assert true_bibtex == test_bibtex

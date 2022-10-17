@@ -41,6 +41,7 @@ class Database(object):
         "abstract",
         "bibtex",
         "arxiv_id",
+        "citation_keyword",  # the thing within the \cite{} command in LaTeX
     ]
     # some columns won't be set when the paper is added, will be left NULL
     colnames_data = colnames_set_on_paper_add + ["local_file", "user_notes"]
@@ -69,7 +70,8 @@ class Database(object):
             "bibtex text,"
             "arxiv_id text,"
             "local_file text,"
-            "user_notes text"
+            "user_notes text,"
+            "citation_keyword text UNIQUE"
             ")"
         )
 
@@ -151,6 +153,7 @@ class Database(object):
                 paper_data["abstract"],
                 paper_data["bibtex"],
                 paper_data["arxiv_id"],
+                bibcode,  # citation keyword
             )
             # then run this SQL
             self._execute(sql, parameters)
@@ -205,6 +208,17 @@ class Database(object):
                 return int(r_value)
             except ValueError:  # strings cannot be converted
                 return r_value
+        # user the user's citaiton key when exporting the bibtex entry
+        # we store it as the raw bibtex, then replace the value when processing
+        elif attribute == "bibtex":
+            # here we just need to replace the key at the beginning
+            new_key = self.get_paper_attribute(bibcode, "citation_keyword")
+            bibtex_rows = r_value.split("\n")
+            # find the open brace that starts to specify the key
+            brace_idx = bibtex_rows[0].find("{")
+            bibtex_rows[0] = bibtex_rows[0][: brace_idx + 1] + new_key + ","
+            return "\n".join(bibtex_rows)
+
         else:  # no modification needed
             return r_value
 
@@ -240,6 +254,11 @@ class Database(object):
             self._execute(sql, (new_value, bibcode))
         except sqlite3.InterfaceError:  # this is what's raised with bad data types
             raise ValueError(f"Bad datatype for attribute {attribute}: {new_value}")
+        except sqlite3.IntegrityError:  # this is raised for nonunique citation keywords
+            assert attribute == "citation_keyword"
+            raise ValueError(
+                f"{attribute} needs to be unique. " f"{new_value} is already used. "
+            )
 
     def num_papers(self):
         """
@@ -500,7 +519,7 @@ class Database(object):
         # the easiest thing is to actually delete the original paper, then add a new
         # one with the new bibcode, keeping the data that's user-generated
         self.add_paper(new_bibcode)
-        for field in ["user_notes", "local_file"]:
+        for field in ["user_notes", "local_file", "citation_keyword"]:
             old_attribute = self.get_paper_attribute(old_bibcode, field)
             self.set_paper_attribute(new_bibcode, field, old_attribute)
         # also transfer the tags

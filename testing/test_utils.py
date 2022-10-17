@@ -293,9 +293,12 @@ mine_recent = PaperDict(
     bibtex=(
         "@ARTICLE{2022MNRAS.514..280B,\n"
         "       author = {{Brown}, Gillen and {Gnedin}, Oleg Y.},\n"
-        '        title = "{Testing feedback from star clusters in simulations of the Milky Way formation}",\n'
+        '        title = "{Testing feedback from star clusters in simulations of the '
+        'Milky Way formation}",\n'
         "      journal = {\mnras},\n"
-        "     keywords = {methods: numerical, galaxies: evolution, galaxies: formation, galaxies: star clusters: general, galaxies: star formation, Astrophysics - Astrophysics of Galaxies},\n"
+        "     keywords = {methods: numerical, galaxies: evolution, galaxies: formation, "
+        "galaxies: star clusters: general, galaxies: star formation, Astrophysics - "
+        "Astrophysics of Galaxies},\n"
         "         year = 2022,\n"
         "        month = jul,\n"
         "       volume = {514},\n"
@@ -309,5 +312,20 @@ mine_recent = PaperDict(
         "      adsnote = {Provided by the SAO/NASA Astrophysics Data System}\n"
         "}\n"
         "\n"
+    ),
+)
+
+mvdbw_book = PaperDict(
+    bibcode="2010gfe..book.....M",
+    bibtex=(
+        "@BOOK{2010gfe..book.....M,\n"
+        "       author = {{Mo}, Houjun and {van den Bosch}, Frank C. and {White}, Simon},\n"
+        '        title = "{Galaxy Formation and Evolution}",\n'
+        "         year = 2010,\n"
+        "       adsurl = {https://ui.adsabs.harvard.edu/abs/2010gfe..book.....M},\n"
+        "      adsnote = {Provided by the SAO/NASA Astrophysics Data System}\n"
+        "}\n"
+        "\n"
+        ""
     ),
 )
