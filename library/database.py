@@ -521,17 +521,22 @@ class Database(object):
             return
 
         # the easiest thing is to actually delete the original paper, then add a new
-        # one with the new bibcode, keeping the data that's user-generated
+        # one with the new bibcode, keeping the data that's user-generated. Don't yet
+        # update the citation keyword, since that must be unique. We instead do that
+        # after deleting the paper, but have to get it first
         self.add_paper(new_bibcode)
-        for field in ["user_notes", "local_file", "citation_keyword"]:
+        for field in ["user_notes", "local_file"]:
             old_attribute = self.get_paper_attribute(old_bibcode, field)
             self.set_paper_attribute(new_bibcode, field, old_attribute)
+        old_citation_keyword = self.get_paper_attribute(old_bibcode, "citation_keyword")
         # also transfer the tags
         for tag in self.get_paper_tags(old_bibcode):
             self.tag_paper(new_bibcode, tag)
 
         # then delete the paper
         self.delete_paper(old_bibcode)
+        # and set the citation keyword
+        self.set_paper_attribute(new_bibcode, "citation_keyword", old_citation_keyword)
 
     def export(self, tag_name, file_name):
         """
