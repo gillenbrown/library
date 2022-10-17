@@ -831,7 +831,7 @@ def test_can_change_citation_keyword(db):
 
 def test_duplicate_citation_keywords_not_allowed(db):
     db.set_paper_attribute(u.mine.bibcode, "citation_keyword", "brown_etal_18")
-    with pytest.raises(ValueError):
+    with pytest.raises(RuntimeError):
         db.set_paper_attribute(u.tremonti.bibcode, "citation_keyword", "brown_etal_18")
 
 

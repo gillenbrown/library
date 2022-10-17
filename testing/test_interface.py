@@ -3091,3 +3091,367 @@ def test_paper_sort_dropdown_can_sort_by_author_single_author(qtbot, db_empty):
         "2021MNRAS.508.5935B",
         u.mine_recent.bibcode,
     ]
+
+
+def test_edit_citation_keyword_button_hidden_at_beginning(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    assert widget.rightPanel.editCiteKeyButton.isHidden() is True
+
+
+def test_citation_keyword_text_shown_at_beginning(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    assert widget.rightPanel.citeKeyText.isHidden() is True
+
+
+def test_edit_citation_keyword_edit_hidden_at_beginning(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    assert widget.rightPanel.editCiteKeyEntry.isHidden() is True
+
+
+def test_edit_citation_keyword_edit_error_text_hidden_at_beginning(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is True
+
+
+def test_edit_citation_keyword_button_shown_when_paper_clicked(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    assert widget.rightPanel.editCiteKeyButton.isHidden() is False
+
+
+def test_edit_citation_keyword_button_text_is_correct(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    assert widget.rightPanel.editCiteKeyButton.text() == "Edit Citation Keyword"
+
+
+def test_citation_keyword_text_shown_when_paper_clicked(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    assert widget.rightPanel.citeKeyText.isHidden() is False
+
+
+def test_citation_keyword_text_is_correct(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    paper = widget.papersList.papers[0]
+    qtbot.mouseClick(paper, Qt.LeftButton)
+    true_cite_key = db.get_paper_attribute(paper.bibcode, "citation_keyword")
+    assert widget.rightPanel.citeKeyText.text() == f"Citation Keyword: {true_cite_key}"
+
+
+def test_edit_citation_keyword_edit_hidden_when_paper_clicked(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    assert widget.rightPanel.editCiteKeyEntry.isHidden() is True
+
+
+def test_edit_citation_keyword_edit_error_text_hidden_when_paper_clicked(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is True
+
+
+def test_edit_citation_keyword_button_hidden_when_clicked(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
+    assert widget.rightPanel.editCiteKeyButton.isHidden() is True
+
+
+def test_citation_keyword_text_not_hidden_when_button_clicked(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
+    assert widget.rightPanel.citeKeyText.isHidden() is False
+
+
+def test_citation_keyword_text_has_placeholder_text(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
+    correct_placeholder = "e.g. yourname_etal_2022"
+    assert widget.rightPanel.editCiteKeyEntry.placeholderText() == correct_placeholder
+
+
+def test_edit_citation_keyword_entry_shown_when_button_clicked(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
+    assert widget.rightPanel.editCiteKeyEntry.isHidden() is False
+
+
+def test_edit_citation_keyword_error_text_not_shown_when_button_clicked(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
+    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is True
+
+
+def test_edit_citation_keyword_good_entry_updates_database(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test_key")
+    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Return)
+    new_key = db_temp.get_paper_attribute(
+        widget.papersList.papers[0].bibcode, "citation_keyword"
+    )
+    assert new_key == "test_key"
+
+
+def test_edit_citation_keyword_good_entry_updates_shown_text(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test_key")
+    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Return)
+    assert widget.rightPanel.citeKeyText.text() == "Citation Keyword: test_key"
+
+
+def test_edit_citation_keyword_good_entry_resets_buttons(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test_key")
+    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Return)
+    assert widget.rightPanel.editCiteKeyButton.isHidden() is False
+    assert widget.rightPanel.editCiteKeyEntry.isHidden() is True
+    assert widget.rightPanel.citeKeyText.isHidden() is False
+    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is True
+
+
+def test_edit_citation_keyword_good_entry_clears_entry(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test_key")
+    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Return)
+    assert widget.rightPanel.editCiteKeyEntry.text() == ""
+
+
+def test_edit_citation_keyword_spaces_not_allowed(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test key")
+    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Return)
+    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is False
+    assert widget.rightPanel.editCiteKeyErrorText.text() == "Spaces not allowed"
+
+
+def test_edit_citation_keyword_duplicates_not_allowed(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test_key")
+    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Return)
+    qtbot.mouseClick(widget.papersList.papers[1], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test_key")
+    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Return)
+    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is False
+    assert (
+        widget.rightPanel.editCiteKeyErrorText.text()
+        == "Another paper already uses this"
+    )
+
+
+def test_edit_citation_keyword_spaces_doesnt_reset_buttons(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test key")
+    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Return)
+    assert widget.rightPanel.editCiteKeyButton.isHidden() is True
+    assert widget.rightPanel.editCiteKeyEntry.isHidden() is False
+    assert widget.rightPanel.citeKeyText.isHidden() is False
+    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is False
+
+
+def test_edit_citation_keyword_duplicates_doesnt_reset_buttons(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test_key")
+    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Return)
+    qtbot.mouseClick(widget.papersList.papers[1], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test_key")
+    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Return)
+    assert widget.rightPanel.editCiteKeyButton.isHidden() is True
+    assert widget.rightPanel.editCiteKeyEntry.isHidden() is False
+    assert widget.rightPanel.citeKeyText.isHidden() is False
+    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is False
+
+
+def test_edit_citation_keyword_spaces_doesnt_clear_text(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test key")
+    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Return)
+    assert widget.rightPanel.editCiteKeyEntry.text() == "test key"
+
+
+def test_edit_citation_keyword_duplicates_doesnt_clear_text(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test_key")
+    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Return)
+    qtbot.mouseClick(widget.papersList.papers[1], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test_key")
+    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Return)
+    assert widget.rightPanel.editCiteKeyEntry.text() == "test_key"
+
+
+def test_edit_citation_keyword_spaces_doesnt_update_database(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test key")
+    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Return)
+    bibcode = widget.papersList.papers[0].bibcode
+    assert db_temp.get_paper_attribute(bibcode, "citation_keyword") == bibcode
+
+
+def test_edit_citation_keyword_duplicates_doesnt_update_database(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test_key")
+    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Return)
+    qtbot.mouseClick(widget.papersList.papers[1], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test_key")
+    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Return)
+    bibcode_update = widget.papersList.papers[0].bibcode
+    assert db_temp.get_paper_attribute(bibcode_update, "citation_keyword") == "test_key"
+    bibcode_dup = widget.papersList.papers[1].bibcode
+    assert db_temp.get_paper_attribute(bibcode_dup, "citation_keyword") == bibcode_dup
+
+
+def test_edit_citation_keyword_buttons_hidden_when_paper_deleted(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.secondDeletePaperButton, Qt.LeftButton)
+    assert widget.rightPanel.editCiteKeyButton.isHidden() is True
+    assert widget.rightPanel.editCiteKeyEntry.isHidden() is True
+    assert widget.rightPanel.citeKeyText.isHidden() is True
+    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is True
+
+
+def test_edit_citation_keyword_entry_escape_exit_resets_buttons(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "abc")
+    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Escape)
+    assert widget.rightPanel.editCiteKeyButton.isHidden() is False
+    assert widget.rightPanel.editCiteKeyEntry.isHidden() is True
+    assert widget.rightPanel.citeKeyText.isHidden() is False
+    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is True
+
+
+def test_edit_citation_keyword_entry_backspace_exit_resets_buttons(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "abc")
+    # back out the text we entered
+    for _ in range(3):
+        qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Backspace)
+    # buttons should not be reset yet
+    assert widget.rightPanel.editCiteKeyButton.isHidden() is True
+    assert widget.rightPanel.editCiteKeyEntry.isHidden() is False
+    assert widget.rightPanel.citeKeyText.isHidden() is False
+    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is True
+    # buttons should reset after one more backspace
+    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Backspace)
+    assert widget.rightPanel.editCiteKeyButton.isHidden() is False
+    assert widget.rightPanel.editCiteKeyEntry.isHidden() is True
+    assert widget.rightPanel.citeKeyText.isHidden() is False
+    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is True
+
+
+def test_edit_citation_keyword_entry_escape_exit_clears_text(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "abc")
+    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Escape)
+    assert widget.rightPanel.editCiteKeyEntry.text() == ""
+
+
+def test_edit_citation_keywored_entry_backspace_exit_clears_text(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "abc")
+    # back out the text we entered
+    for _ in range(3):
+        qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Backspace)
+    # buttons should reset after one more backspace
+    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Backspace)
+
+    assert widget.rightPanel.editCiteKeyEntry.text() == ""
+
+
+def test_edit_citation_keywored_entry_escape_exit_doesnt_change_db(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "abc")
+    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Escape)
+    bibcode = widget.papersList.papers[0].bibcode
+    assert db_temp.get_paper_attribute(bibcode, "citation_keyword") == bibcode
+
+
+def test_edit_citation_keywored_entry_backspace_exit_doesnt_change_db(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "abc")
+    # back out the text we entered
+    for _ in range(3):
+        qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Backspace)
+    # buttons should reset after one more backspace
+    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Backspace)
+    bibcode = widget.papersList.papers[0].bibcode
+    assert db_temp.get_paper_attribute(bibcode, "citation_keyword") == bibcode

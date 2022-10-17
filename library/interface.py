@@ -411,8 +411,18 @@ class RightPanel(QWidget):
         self.userNotesTextEditButton.clicked.connect(self.editUserNotes)
         self.userNotesTextEditFinishedButton.clicked.connect(self.doneEditingUserNotes)
 
+        # have buttons to edit the citation keyword
+        self.citeKeyText = QLabel("")
+        self.editCiteKeyButton = QPushButton("Edit Citation Keyword")
+        self.editCiteKeyEntry = EasyExitLineEdit(
+            self.resetCiteTextButtons, self.changeCiteKey
+        )
+        self.editCiteKeyEntry.setPlaceholderText("e.g. yourname_etal_2022")
+        self.editCiteKeyErrorText = QLabel("")
+        self.editCiteKeyButton.clicked.connect(self.revealCiteKeyEntry)
+
         # have some horizontal lines to visually distinguish sections
-        self.spacers = [HorizontalLine() for _ in range(3)]
+        self.spacers = [HorizontalLine() for _ in range(4)]
 
         # the Tags List has a bit of setup
         self.tags = []  # store the tags that are in there
@@ -443,7 +453,12 @@ class RightPanel(QWidget):
         vBox.addWidget(self.doneEditingTagsButton)
         vBox.addLayout(self.vBoxTags)
         vBox.addWidget(self.spacers[2])
+        vBox.addWidget(self.citeKeyText)
+        vBox.addWidget(self.editCiteKeyButton)
+        vBox.addWidget(self.editCiteKeyErrorText)
+        vBox.addWidget(self.editCiteKeyEntry)
         vBox.addWidget(self.copyBibtexButton)
+        vBox.addWidget(self.spacers[3])
         vBox.addWidget(self.adsButton)
         vBox.addWidget(self.firstDeletePaperButton)
         vBox.addWidget(self.secondDeletePaperButton)
@@ -507,6 +522,10 @@ class RightPanel(QWidget):
         self.firstDeletePaperButton.hide()
         self.secondDeletePaperButton.hide()
         self.secondDeletePaperCancelButton.hide()
+        self.citeKeyText.hide()
+        self.editCiteKeyButton.hide()
+        self.editCiteKeyEntry.hide()
+        self.editCiteKeyErrorText.hide()
         for spacer in self.spacers:
             spacer.hide()
 
@@ -530,7 +549,6 @@ class RightPanel(QWidget):
         # hidden at the start
         self.editTagsButton.show()
         self.doneEditingTagsButton.hide()
-        self.copyBibtexButton.show()
         self.adsButton.show()
         self.firstDeletePaperButton.show()
         # also hide the second button if it was shown
@@ -539,6 +557,12 @@ class RightPanel(QWidget):
         # show the user notes
         self.userNotesText.show()
         self.userNotesTextEditButton.show()
+        # and the bibtex buttons
+        self.citeKeyText.show()
+        cite_key = self.db.get_paper_attribute(self.bibcode, "citation_keyword")
+        self.citeKeyText.setText(f"Citation Keyword: {cite_key}")
+        self.editCiteKeyButton.show()
+        self.copyBibtexButton.show()
         # and spacers
         for spacer in self.spacers:
             spacer.show()
@@ -699,6 +723,50 @@ class RightPanel(QWidget):
         self.userNotesText.show()
         self.userNotesTextEditField.hide()
         self.userNotesTextEditFinishedButton.hide()
+
+    def revealCiteKeyEntry(self):
+        """
+        Show the entry area to change the paper's citation keyword
+
+        :return: None
+        """
+        self.editCiteKeyButton.hide()
+        self.editCiteKeyEntry.show()
+
+    def resetCiteTextButtons(self):
+        """
+        Once the user is done editing the citation key, reset the buttons.
+
+        :return: None
+        """
+        self.editCiteKeyEntry.hide()
+        self.editCiteKeyEntry.setText("")
+        self.editCiteKeyButton.show()
+        self.editCiteKeyErrorText.hide()
+        self.citeKeyText.show()
+
+    def changeCiteKey(self):
+        """
+        Take the user's entry and update the citation keyword in the database
+
+        :return: None
+        """
+        user_entry = self.editCiteKeyEntry.text()
+        # try to add this, and then handle errors as needed
+        try:
+            self.db.set_paper_attribute(self.bibcode, "citation_keyword", user_entry)
+        except ValueError:  # space in keyword
+            self.editCiteKeyErrorText.setText("Spaces not allowed")
+            self.editCiteKeyErrorText.show()
+            return
+        except RuntimeError:  # duplicate
+            self.editCiteKeyErrorText.setText("Another paper already uses this")
+            self.editCiteKeyErrorText.show()
+            return
+
+        # if it worked, reset the buttons and the text
+        self.citeKeyText.setText(f"Citation Keyword: {user_entry}")
+        self.resetCiteTextButtons()
 
 
 class ScrollArea(QScrollArea):
@@ -930,7 +998,7 @@ class TagsListScrollArea(ScrollArea):
             self.layout.addWidget(tag)
 
 
-class TagEntryDeletionTextEdit(QLineEdit):
+class EasyExitLineEdit(QLineEdit):
     """
     Just like a textEdit, but they can call a function (which should exit) with escape
     or backspace when all text is empty
@@ -1074,7 +1142,7 @@ class MainWindow(QMainWindow):
         # center panel since the tags need to access the paper list
         self.addTagButton = QPushButton("Add a tag")
         self.addTagButton.clicked.connect(self.showAddTagBar)
-        self.addTagBar = TagEntryDeletionTextEdit(self.resetAddTag, self.addTag)
+        self.addTagBar = EasyExitLineEdit(self.resetAddTag, self.addTag)
         self.addTagBar.setPlaceholderText("Tag name")
         self.addTagBar.hide()
 
@@ -1084,7 +1152,7 @@ class MainWindow(QMainWindow):
         # a confirm and cancel button
         self.firstDeleteTagButton = QPushButton("Delete a tag")
         self.firstDeleteTagButton.clicked.connect(self.revealSecondTagDeleteEntry)
-        self.secondDeleteTagEntry = TagEntryDeletionTextEdit(
+        self.secondDeleteTagEntry = EasyExitLineEdit(
             self.cancelTagDeletion, self.revealThirdTagDeleteButtons
         )
         self.secondDeleteTagEntry.setPlaceholderText("Tag to delete")

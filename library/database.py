@@ -260,7 +260,7 @@ class Database(object):
             raise ValueError(f"Bad datatype for attribute {attribute}: {new_value}")
         except sqlite3.IntegrityError:  # this is raised for nonunique citation keywords
             assert attribute == "citation_keyword"
-            raise ValueError(
+            raise RuntimeError(
                 f"{attribute} needs to be unique. " f"{new_value} is already used. "
             )
 
