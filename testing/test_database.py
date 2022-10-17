@@ -835,6 +835,11 @@ def test_duplicate_citation_keywords_not_allowed(db):
         db.set_paper_attribute(u.tremonti.bibcode, "citation_keyword", "brown_etal_18")
 
 
+def test_spaces_not_allowed_in_citation_keywords(db):
+    with pytest.raises(ValueError):
+        db.set_paper_attribute(u.mine.bibcode, "citation_keyword", "brown etal 18")
+
+
 def test_bibtex_export_reflects_citation_keywords(db):
     db.set_paper_attribute(u.mine.bibcode, "citation_keyword", "brown_etal_18")
     test_bibtex = db.get_paper_attribute(u.mine.bibcode, "bibtex")

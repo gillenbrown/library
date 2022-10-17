@@ -248,6 +248,10 @@ class Database(object):
         # to put it back as a list.
         if attribute == "authors":
             new_value = self._author_sep.join(new_value)
+        # we have to validate that spaces aren't in any citation keywords
+        elif attribute == "citation_keyword":
+            if " " in new_value:
+                raise ValueError("Spaces not allowed in citation keywords.")
 
         sql = f"UPDATE papers SET {attribute} = ? WHERE bibcode = ?"
         try:
