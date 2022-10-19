@@ -262,17 +262,14 @@ class Paper(QWidget):
         self.highlight()
 
         if event.type() is QEvent.Type.MouseButtonDblClick:
+            self.rightPanel.validatePDFPath()
             local_file = self.db.get_paper_attribute(self.bibcode, "local_file")
-            # if there is no file, or the file does not exist, ask the user
-            if local_file is None or not Path(local_file).is_file():
+            # local_file will either be None or an existing file
+            # if there is no file, ask the user
+            if local_file is None:
                 self.rightPanel.userChooseLocalPDF()
-
-            # open the file. The user may decide to cancel the choosing, so we need
-            # to check the attribute again
-            # check again, as the user may decide to cancel the choosing
-            local_file = self.db.get_paper_attribute(self.bibcode, "local_file")
-            if local_file is not None:
-                self.rightPanel.openPDF()
+            # open the file. This function handles error checking
+            self.rightPanel.openPDF()
         # nothing should be done for other click types
 
     def getTags(self):
@@ -551,15 +548,7 @@ class RightPanel(QWidget):
 
         # then make all the buttons appear, since they will be hidden at the start
         self.pdfText.show()
-        local_file = self.db.get_paper_attribute(self.bibcode, "local_file")
-        if local_file is not None:
-            self.pdfText.setText(f"PDF Location: {local_file}")
-            self.pdfOpenButton.show()
-            self.pdfChooseLocalFileButton.hide()
-        else:
-            self.pdfText.setText("No PDF location set")
-            self.pdfOpenButton.hide()
-            self.pdfChooseLocalFileButton.show()
+        self.validatePDFPath()  # handles PDF buttons
         # tags
         self.editTagsButton.show()
         self.doneEditingTagsButton.hide()
@@ -782,6 +771,31 @@ class RightPanel(QWidget):
         self.citeKeyText.setText(f"Citation Keyword: {user_entry}")
         self.resetCiteTextButtons()
 
+    def validatePDFPath(self):
+        """
+        Checks that the current local_path to the PDF points to a real pdf
+
+        Allowed values are None and existing files. If it is a non-existent pdf, the
+        value will be replaced with None
+
+        :return: None
+        """
+        local_file = self.db.get_paper_attribute(self.bibcode, "local_file")
+        # if it does not exist, replace it
+        if local_file is not None and not Path(local_file).is_file():
+            self.db.set_paper_attribute(self.bibcode, "local_file", None)
+            local_file = None
+
+        # now we either have None or a valid file
+        if local_file is None:
+            self.pdfText.setText("No PDF location set")
+            self.pdfOpenButton.hide()
+            self.pdfChooseLocalFileButton.show()
+        else:  # valid file
+            self.pdfText.setText(f"PDF Location: {local_file}")
+            self.pdfOpenButton.show()
+            self.pdfChooseLocalFileButton.hide()
+
     def userChooseLocalPDF(self):
         """
         Prompt the user to choose a PDF for this file
@@ -802,11 +816,7 @@ class RightPanel(QWidget):
         # absolute path to the file they picked
         if local_file != "":
             self.db.set_paper_attribute(self.bibcode, "local_file", local_file)
-
-            # also update the buttons and text here in this right panel
-            self.pdfText.setText(f"PDF Location: {local_file}")
-            self.pdfChooseLocalFileButton.hide()
-            self.pdfOpenButton.show()
+            self.validatePDFPath()  # handles buttons and whatnot
 
     def openPDF(self):
         """
@@ -814,8 +824,12 @@ class RightPanel(QWidget):
 
         :return: None
         """
+        # first validate
+        self.validatePDFPath()
+        # if it's valid, open the file
         local_file = self.db.get_paper_attribute(self.bibcode, "local_file")
-        QDesktopServices.openUrl(f"file:{local_file}")
+        if local_file is not None:
+            QDesktopServices.openUrl(f"file:{local_file}")
 
 
 class ScrollArea(QScrollArea):
