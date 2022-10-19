@@ -995,6 +995,7 @@ def test_paper_pdf_buttons_are_hidden_at_start(qtbot, db):
     assert widget.rightPanel.pdfText.isHidden() is True
     assert widget.rightPanel.pdfOpenButton.isHidden() is True
     assert widget.rightPanel.pdfChooseLocalFileButton.isHidden() is True
+    assert widget.rightPanel.pdfDownloadButton.isHidden() is True
 
 
 def test_paper_pdf_buttons_show_when_paper_clicked_with_local_file(qtbot, db_empty):
@@ -1007,6 +1008,7 @@ def test_paper_pdf_buttons_show_when_paper_clicked_with_local_file(qtbot, db_emp
     assert widget.rightPanel.pdfText.isHidden() is False
     assert widget.rightPanel.pdfOpenButton.isHidden() is False
     assert widget.rightPanel.pdfChooseLocalFileButton.isHidden() is True
+    assert widget.rightPanel.pdfDownloadButton.isHidden() is True
 
 
 def test_paper_pdf_buttons_show_when_paper_clicked_without_local_file(qtbot, db_temp):
@@ -1017,6 +1019,7 @@ def test_paper_pdf_buttons_show_when_paper_clicked_without_local_file(qtbot, db_
     assert widget.rightPanel.pdfText.isHidden() is False
     assert widget.rightPanel.pdfOpenButton.isHidden() is True
     assert widget.rightPanel.pdfChooseLocalFileButton.isHidden() is False
+    assert widget.rightPanel.pdfDownloadButton.isHidden() is False
 
 
 def test_paper_pdf_buttons_show_when_paper_clicked_with_nonexistent_local_file(
@@ -1031,6 +1034,7 @@ def test_paper_pdf_buttons_show_when_paper_clicked_with_nonexistent_local_file(
     assert widget.rightPanel.pdfText.isHidden() is False
     assert widget.rightPanel.pdfOpenButton.isHidden() is True
     assert widget.rightPanel.pdfChooseLocalFileButton.isHidden() is False
+    assert widget.rightPanel.pdfDownloadButton.isHidden() is False
 
 
 def test_paper_pdf_buttons_update_database_if_file_doesnt_exist(qtbot, db_empty):
@@ -1047,10 +1051,8 @@ def test_paper_pdf_buttons_have_correct_text(qtbot, db_temp):
     widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     assert widget.rightPanel.pdfOpenButton.text() == "Open this paper's PDF"
-    assert (
-        widget.rightPanel.pdfChooseLocalFileButton.text()
-        == "Choose a local PDF for this paper"
-    )
+    assert widget.rightPanel.pdfChooseLocalFileButton.text() == "Choose a local PDF"
+    assert widget.rightPanel.pdfDownloadButton.text() == "Download the PDF"
 
 
 def test_paper_pdf_text_has_correct_text_with_local_file(qtbot, db_empty):
@@ -1229,6 +1231,7 @@ def test_paper_pdf_add_local_file_button_resets_buttons_if_successful(
     assert widget.rightPanel.pdfText.isHidden() is False
     assert widget.rightPanel.pdfOpenButton.isHidden() is False
     assert widget.rightPanel.pdfChooseLocalFileButton.isHidden() is True
+    assert widget.rightPanel.pdfDownloadButton.isHidden() is True
 
 
 def test_paper_pdf_add_local_file_button_doest_change_buttons_cancel(
@@ -1249,6 +1252,7 @@ def test_paper_pdf_add_local_file_button_doest_change_buttons_cancel(
     assert widget.rightPanel.pdfText.isHidden() is False
     assert widget.rightPanel.pdfOpenButton.isHidden() is True
     assert widget.rightPanel.pdfChooseLocalFileButton.isHidden() is False
+    assert widget.rightPanel.pdfDownloadButton.isHidden() is False
 
 
 def test_paper_pdf_add_local_file_button_doest_change_buttons_nonexistent(
@@ -1269,6 +1273,7 @@ def test_paper_pdf_add_local_file_button_doest_change_buttons_nonexistent(
     assert widget.rightPanel.pdfText.isHidden() is False
     assert widget.rightPanel.pdfOpenButton.isHidden() is True
     assert widget.rightPanel.pdfChooseLocalFileButton.isHidden() is False
+    assert widget.rightPanel.pdfDownloadButton.isHidden() is False
 
 
 def test_paper_pdf_open_pdf_button_opens_pdf(qtbot, db_empty, monkeypatch):
@@ -1284,7 +1289,7 @@ def test_paper_pdf_open_pdf_button_opens_pdf(qtbot, db_empty, monkeypatch):
     assert open_calls == [f"file:{__file__}"]
 
 
-def test_paper_pdf_open_bad_pdf_resets_buttons(qtbot, db_empty, monkeypatch):
+def test_paper_pdf_open_bad_pdf_doesnt_open(qtbot, db_empty, monkeypatch):
     open_calls = []
     monkeypatch.setattr(QDesktopServices, "openUrl", lambda x: open_calls.append(x))
     # fill a local file into the database
@@ -1298,6 +1303,25 @@ def test_paper_pdf_open_bad_pdf_resets_buttons(qtbot, db_empty, monkeypatch):
     Path("example.py").unlink()
     qtbot.mouseClick(widget.rightPanel.pdfOpenButton, Qt.LeftButton)
     assert open_calls == []
+
+
+def test_paper_pdf_open_bad_pdf_resets_buttons(qtbot, db_empty, monkeypatch):
+    open_calls = []
+    monkeypatch.setattr(QDesktopServices, "openUrl", lambda x: open_calls.append(x))
+    # fill a local file into the database
+    db_empty.add_paper(u.mine.bibcode)
+    shutil.copy2(__file__, "example.py")
+    db_empty.set_paper_attribute(u.mine.bibcode, "local_file", "example.py")
+
+    widget = MainWindow(db_empty)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    Path("example.py").unlink()
+    qtbot.mouseClick(widget.rightPanel.pdfOpenButton, Qt.LeftButton)
+    assert widget.rightPanel.pdfText.isHidden() is False
+    assert widget.rightPanel.pdfOpenButton.isHidden() is True
+    assert widget.rightPanel.pdfChooseLocalFileButton.isHidden() is False
+    assert widget.rightPanel.pdfDownloadButton.isHidden() is False
 
 
 def test_paper_pdf_open_bad_pdf_resets_database(qtbot, db_empty, monkeypatch):
@@ -1326,6 +1350,7 @@ def test_paper_pdf_buttons_hidden_when_paper_deleted(qtbot, db_temp):
     assert widget.rightPanel.pdfText.isHidden() is True
     assert widget.rightPanel.pdfOpenButton.isHidden() is True
     assert widget.rightPanel.pdfChooseLocalFileButton.isHidden() is True
+    assert widget.rightPanel.pdfDownloadButton.isHidden() is True
 
 
 def test_double_clicking_on_paper_without_local_file_asks_user(

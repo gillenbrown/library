@@ -412,8 +412,9 @@ class RightPanel(QWidget):
         self.pdfText = QLabel("")
         self.pdfOpenButton = QPushButton("Open this paper's PDF")
         self.pdfOpenButton.clicked.connect(self.openPDF)
-        self.pdfChooseLocalFileButton = QPushButton("Choose a local PDF for this paper")
+        self.pdfChooseLocalFileButton = QPushButton("Choose a local PDF")
         self.pdfChooseLocalFileButton.clicked.connect(self.userChooseLocalPDF)
+        self.pdfDownloadButton = QPushButton("Download the PDF")
 
         # have some horizontal lines to visually distinguish sections
         self.spacers = [HorizontalLine() for _ in range(5)]
@@ -445,6 +446,7 @@ class RightPanel(QWidget):
         vBox.addWidget(self.pdfText)
         vBox.addWidget(self.pdfOpenButton)
         vBox.addWidget(self.pdfChooseLocalFileButton)
+        vBox.addWidget(self.pdfDownloadButton)
         vBox.addWidget(self.spacers[2])
         vBox.addWidget(self.tagText)
         vBox.addWidget(self.editTagsButton)
@@ -511,6 +513,7 @@ class RightPanel(QWidget):
         self.pdfText.hide()
         self.pdfOpenButton.hide()
         self.pdfChooseLocalFileButton.hide()
+        self.pdfDownloadButton.hide()
         self.editTagsButton.hide()
         self.doneEditingTagsButton.hide()
         self.populate_tags()  # this handles hiding the checkboxes
@@ -791,10 +794,12 @@ class RightPanel(QWidget):
             self.pdfText.setText("No PDF location set")
             self.pdfOpenButton.hide()
             self.pdfChooseLocalFileButton.show()
+            self.pdfDownloadButton.show()
         else:  # valid file
             self.pdfText.setText(f"PDF Location: {local_file}")
             self.pdfOpenButton.show()
             self.pdfChooseLocalFileButton.hide()
+            self.pdfDownloadButton.hide()
 
     def userChooseLocalPDF(self):
         """
