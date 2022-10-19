@@ -265,27 +265,14 @@ class Paper(QWidget):
             local_file = self.db.get_paper_attribute(self.bibcode, "local_file")
             # if there is no file, or the file does not exist, ask the user
             if local_file is None or not Path(local_file).is_file():
-                # if there is not a paper, we need to add it
-                # the file dialog returns a two item tuple, where the first item is the
-                # file name and the second is the filter. This is true whether the user
-                # selects something or not. Contrary to the documentation, if the user
-                # hits cancel it returns a two item tuple with two empty strings!
-                local_file = QFileDialog.getOpenFileName(
-                    filter="PDF(*.pdf)",
-                    dir=str(Path.home()),
-                )[0]
-                # If the user doesn't select anything this returns the empty string.
-                # Otherwise this returns a two item tuple, where the first item is the
-                # absolute path to the file they picked
-                if local_file != "":
-                    self.db.set_paper_attribute(self.bibcode, "local_file", local_file)
-                    # we'll open this file in a minute
-                else:
-                    # the user didn't pick anything, so don't open anything
-                    return
-            # if we now have a path, open the file. We get here whether we had to ask
-            # the user or now
-            QDesktopServices.openUrl(f"file:{local_file}")
+                self.rightPanel.userChooseLocalPDF()
+
+            # open the file. The user may decide to cancel the choosing, so we need
+            # to check the attribute again
+            # check again, as the user may decide to cancel the choosing
+            local_file = self.db.get_paper_attribute(self.bibcode, "local_file")
+            if local_file is not None:
+                self.rightPanel.openPDF()
         # nothing should be done for other click types
 
     def getTags(self):
@@ -424,8 +411,15 @@ class RightPanel(QWidget):
         qss_trigger(self.editCiteKeyErrorText, "error_text", True)
         self.editCiteKeyButton.clicked.connect(self.revealCiteKeyEntry)
 
+        # have buttons for the local PDF file
+        self.pdfText = QLabel("")
+        self.pdfOpenButton = QPushButton("Open this paper's PDF")
+        self.pdfOpenButton.clicked.connect(self.openPDF)
+        self.pdfChooseLocalFileButton = QPushButton("Choose a local PDF for this paper")
+        self.pdfChooseLocalFileButton.clicked.connect(self.userChooseLocalPDF)
+
         # have some horizontal lines to visually distinguish sections
-        self.spacers = [HorizontalLine() for _ in range(4)]
+        self.spacers = [HorizontalLine() for _ in range(5)]
 
         # the Tags List has a bit of setup
         self.tags = []  # store the tags that are in there
@@ -451,17 +445,21 @@ class RightPanel(QWidget):
         vBox.addWidget(self.userNotesTextEditButton)
         vBox.addWidget(self.userNotesTextEditFinishedButton)
         vBox.addWidget(self.spacers[1])
+        vBox.addWidget(self.pdfText)
+        vBox.addWidget(self.pdfOpenButton)
+        vBox.addWidget(self.pdfChooseLocalFileButton)
+        vBox.addWidget(self.spacers[2])
         vBox.addWidget(self.tagText)
         vBox.addWidget(self.editTagsButton)
         vBox.addWidget(self.doneEditingTagsButton)
         vBox.addLayout(self.vBoxTags)
-        vBox.addWidget(self.spacers[2])
+        vBox.addWidget(self.spacers[3])
         vBox.addWidget(self.citeKeyText)
         vBox.addWidget(self.editCiteKeyButton)
         vBox.addWidget(self.editCiteKeyErrorText)
         vBox.addWidget(self.editCiteKeyEntry)
         vBox.addWidget(self.copyBibtexButton)
-        vBox.addWidget(self.spacers[3])
+        vBox.addWidget(self.spacers[4])
         vBox.addWidget(self.adsButton)
         vBox.addWidget(self.firstDeletePaperButton)
         vBox.addWidget(self.secondDeletePaperButton)
@@ -513,6 +511,9 @@ class RightPanel(QWidget):
         self.tagText.setText("")
 
         # all of the buttons
+        self.pdfText.hide()
+        self.pdfOpenButton.hide()
+        self.pdfChooseLocalFileButton.hide()
         self.editTagsButton.hide()
         self.doneEditingTagsButton.hide()
         self.populate_tags()  # this handles hiding the checkboxes
@@ -548,8 +549,18 @@ class RightPanel(QWidget):
         self.update_tag_text()
         self.updateNotesText()
 
-        # then make the edit tags and copy Bibtex buttons appear, since they will be
-        # hidden at the start
+        # then make all the buttons appear, since they will be hidden at the start
+        self.pdfText.show()
+        local_file = self.db.get_paper_attribute(self.bibcode, "local_file")
+        if local_file is not None:
+            self.pdfText.setText(f"PDF Location: {local_file}")
+            self.pdfOpenButton.show()
+            self.pdfChooseLocalFileButton.hide()
+        else:
+            self.pdfText.setText("No PDF location set")
+            self.pdfOpenButton.hide()
+            self.pdfChooseLocalFileButton.show()
+        # tags
         self.editTagsButton.show()
         self.doneEditingTagsButton.hide()
         self.adsButton.show()
@@ -770,6 +781,41 @@ class RightPanel(QWidget):
         # if it worked, reset the buttons and the text
         self.citeKeyText.setText(f"Citation Keyword: {user_entry}")
         self.resetCiteTextButtons()
+
+    def userChooseLocalPDF(self):
+        """
+        Prompt the user to choose a PDF for this file
+
+        :return: None
+        """
+        # if there is not a paper, we need to add it
+        # the file dialog returns a two item tuple, where the first item is the
+        # file name and the second is the filter. This is true whether the user
+        # selects something or not. Contrary to the documentation, if the user
+        # hits cancel it returns a two item tuple with two empty strings!
+        local_file = QFileDialog.getOpenFileName(
+            filter="PDF(*.pdf)",
+            dir=str(Path.home()),
+        )[0]
+        # If the user doesn't select anything this returns the empty string.
+        # Otherwise this returns a two item tuple, where the first item is the
+        # absolute path to the file they picked
+        if local_file != "":
+            self.db.set_paper_attribute(self.bibcode, "local_file", local_file)
+
+            # also update the buttons and text here in this right panel
+            self.pdfText.setText(f"PDF Location: {local_file}")
+            self.pdfChooseLocalFileButton.hide()
+            self.pdfOpenButton.show()
+
+    def openPDF(self):
+        """
+        Open the local PDF set for this paper
+
+        :return: None
+        """
+        local_file = self.db.get_paper_attribute(self.bibcode, "local_file")
+        QDesktopServices.openUrl(f"file:{local_file}")
 
 
 class ScrollArea(QScrollArea):
