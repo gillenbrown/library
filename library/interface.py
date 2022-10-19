@@ -250,16 +250,18 @@ class Paper(QWidget):
         :type event: PySide2.QtGui.QMouseEvent
         :return: None
         """
-        if event.type() is QEvent.Type.MouseButtonPress:
-            # Pass the bibcode on to the right panel
-            self.rightPanel.setPaperDetails(self.bibcode)
-            # unhighlight all papers
-            for paper in self.papersList.papers:
-                paper.unhighlight()
-            # then highlight this paper
-            self.highlight()
+        # No matter whether we have a single or double click, show the details in the
+        # right panel. If we have a double click, we'll open the paper pdf.
 
-        elif event.type() is QEvent.Type.MouseButtonDblClick:
+        # Pass the bibcode on to the right panel
+        self.rightPanel.setPaperDetails(self.bibcode)
+        # unhighlight all papers
+        for paper in self.papersList.papers:
+            paper.unhighlight()
+        # then highlight this paper
+        self.highlight()
+
+        if event.type() is QEvent.Type.MouseButtonDblClick:
             local_file = self.db.get_paper_attribute(self.bibcode, "local_file")
             # if there is no file, or the file does not exist, ask the user
             if local_file is None or not Path(local_file).is_file():

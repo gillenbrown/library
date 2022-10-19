@@ -1120,6 +1120,25 @@ def test_dclicking_on_paper_with_nonexistent_file_asks_user(
     assert open_calls == [f"file:{__file__}"]
 
 
+def test_dclicking_on_paper_shows_details_in_right_panel(qtbot, db_empty, monkeypatch):
+    # Here we need to use monkeypatch to simulate user input and open files
+    # create a mock function to get the file. It needs to have the filter kwarg, since
+    # that is used in the actual call
+    def mock_get_file(filter="", dir=""):
+        return ("", "")
+
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
+    open_calls = []
+    monkeypatch.setattr(QDesktopServices, "openUrl", lambda x: open_calls.append(x))
+
+    widget = MainWindow(db_empty)
+    qtbot.addWidget(widget)
+    # add a paper to this empty database to make the paper object
+    add_my_paper(qtbot, widget)  # do not add file location
+    qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
+    assert widget.rightPanel.titleText.text() == u.mine.title
+
+
 def test_get_tags_from_paper_object_is_correct(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
