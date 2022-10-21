@@ -1,4 +1,5 @@
 from pathlib import Path
+import requests
 
 import ads.exceptions
 from PySide6.QtCore import Qt, QEvent
@@ -415,6 +416,7 @@ class RightPanel(QWidget):
         self.pdfChooseLocalFileButton = QPushButton("Choose a local PDF")
         self.pdfChooseLocalFileButton.clicked.connect(self.userChooseLocalPDF)
         self.pdfDownloadButton = QPushButton("Download the PDF")
+        self.pdfDownloadButton.clicked.connect(self.downloadPDF)
 
         # have some horizontal lines to visually distinguish sections
         self.spacers = [HorizontalLine() for _ in range(5)]
@@ -551,6 +553,7 @@ class RightPanel(QWidget):
 
         # then make all the buttons appear, since they will be hidden at the start
         self.pdfText.show()
+        self.pdfDownloadButton.setText("Download the PDF")
         self.validatePDFPath()  # handles PDF buttons
         # tags
         self.editTagsButton.show()
@@ -835,6 +838,60 @@ class RightPanel(QWidget):
         local_file = self.db.get_paper_attribute(self.bibcode, "local_file")
         if local_file is not None:
             QDesktopServices.openUrl(f"file:{local_file}")
+
+    def downloadPDF(self):
+        """
+        Download a PDF for this paper and update the database appropriately
+
+        :return: None
+        """
+        # This is simple in principle. We'll check if we can access the publisher PDF.
+        # If so, download it. If not, try the arXiv PDF. The downside of this is that
+        # I found that the publishers have protections that identify this as a bot
+        # (which I suppose it is), and block access. So there's a possibility that I
+        # initially check a URL to see if there's a PDF there. It may be once, but the
+        # next request will be blocked. If that happens, I may need to redo this
+        # by just downloading the whole thing for each and see what kind of file it is.
+        base_url = "https://ui.adsabs.harvard.edu/link_gateway/"
+        for source in ["PUB_PDF", "EPRINT_PDF"]:
+            this_url = base_url + self.bibcode + "/" + source
+            r = requests.head(this_url, allow_redirects=True)
+            page_type = r.headers["content-type"]
+            if page_type.startswith("application/pdf"):
+                break
+        else:
+            # no PDF found
+            self.pdfDownloadButton.setText("Automatic Download Failed")
+            return
+
+        # we found the right URL, now ask the user where to download
+        local_file = QFileDialog.getSaveFileName(
+            caption="Select where to save this pdf", dir=str(Path.home())
+        )[0]
+
+        # the user may cancel
+        if local_file == "":
+            return
+
+        # then download
+        self._downloadURL(this_url, local_file)
+
+        # and set the database attribute and show buttons
+        self.db.set_paper_attribute(self.bibcode, "local_file", local_file)
+        self.validatePDFPath()
+
+    def _downloadURL(self, url, local_path):
+        """
+        Download a PDF from a URL to a given location
+
+        :param url: the URL from which to download the file
+        :type url: str
+        :param local_path: Path at which to save the file
+        :type local_path: str
+        :return: None
+        """
+        r = requests.get(url, allow_redirects=True)
+        Path(local_path).write_bytes(r.content)
 
 
 class ScrollArea(QScrollArea):
