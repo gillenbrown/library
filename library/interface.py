@@ -266,11 +266,12 @@ class Paper(QWidget):
             self.rightPanel.validatePDFPath()
             local_file = self.db.get_paper_attribute(self.bibcode, "local_file")
             # local_file will either be None or an existing file
-            # if there is no file, ask the user
+            # if there is no file, highlight for the user where they can add the file
             if local_file is None:
-                self.rightPanel.userChooseLocalPDF()
-            # open the file. This function handles error checking
-            self.rightPanel.openPDF()
+                self.rightPanel.highlightPDFButtons()
+            else:
+                # open the file. This function handles error checking
+                self.rightPanel.openPDF()
         # nothing should be done for other click types
 
     def getTags(self):
@@ -552,6 +553,7 @@ class RightPanel(QWidget):
         self.updateNotesText()
 
         # then make all the buttons appear, since they will be hidden at the start
+        self.unhighlightPDFButtons()
         self.pdfText.show()
         self.pdfDownloadButton.setText("Download the PDF")
         self.validatePDFPath()  # handles PDF buttons
@@ -810,6 +812,8 @@ class RightPanel(QWidget):
 
         :return: None
         """
+        # unhighlight the box
+        self.unhighlightPDFButtons()
         # if there is not a paper, we need to add it
         # the file dialog returns a two item tuple, where the first item is the
         # file name and the second is the filter. This is true whether the user
@@ -845,6 +849,8 @@ class RightPanel(QWidget):
 
         :return: None
         """
+        # unhighlight the box
+        self.unhighlightPDFButtons()
         # This is simple in principle. We'll check if we can access the publisher PDF.
         # If so, download it. If not, try the arXiv PDF. The downside of this is that
         # I found that the publishers have protections that identify this as a bot
@@ -892,6 +898,36 @@ class RightPanel(QWidget):
         """
         r = requests.get(url, allow_redirects=True)
         Path(local_path).write_bytes(r.content)
+
+    def highlightPDFButtons(self):
+        """
+        Visually highlight the area to specify the PDF, and scroll to the location
+
+        :return: None
+        """
+        qss_trigger(self.pdfText, "pdf_highlight", True)
+        qss_trigger(self.pdfChooseLocalFileButton, "pdf_highlight", True)
+        qss_trigger(self.pdfDownloadButton, "pdf_highlight", True)
+
+    def unhighlightPDFButtons(self):
+        """
+        Remove the visual highlighting from the area to specify the PDF
+
+        :return: None
+        """
+        qss_trigger(self.pdfText, "pdf_highlight", False)
+        qss_trigger(self.pdfChooseLocalFileButton, "pdf_highlight", False)
+        qss_trigger(self.pdfDownloadButton, "pdf_highlight", False)
+
+    def mousePressEvent(self, event):
+        """
+        When clicked, reset the pdf button highlighting
+
+        :param event: Mouse click event object
+        :type event: PySide2.QtGui.QMouseEvent
+        :return: None
+        """
+        self.unhighlightPDFButtons()
 
 
 class ScrollArea(QScrollArea):

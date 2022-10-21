@@ -1686,51 +1686,10 @@ def test_download_pdf_button_error_message_resets_on_new_paper_clicked(
     assert widget.rightPanel.pdfDownloadButton.text() == "Download the PDF"
 
 
-def test_double_clicking_on_paper_without_local_file_asks_user(
-    qtbot, db_empty, monkeypatch
-):
-    # Here we need to use monkeypatch to simulate user input. Use a file that actually
-    # exists
-    test_loc = __file__
-    # create a mock function to get the file. It needs to have the filter kwarg, since
-    # that is used in the actual call
-    def mock_get_file(filter="", dir=""):
-        return test_loc, "dummy filter"
-
-    monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
-
-    widget = MainWindow(db_empty)
-    qtbot.addWidget(widget)
-    # add a paper to this empty database to make the paper object
-    add_my_paper(qtbot, widget)
-    qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
-    assert db_empty.get_paper_attribute(u.mine.bibcode, "local_file") == test_loc
-
-
-def test_double_clicking_on_paper_without_local_file_but_not_choosing_doesnt_add_it(
-    qtbot, db_empty, monkeypatch
-):
-    # Here we need to use monkeypatch to simulate user input
-    # create a mock function to get the file. It needs to have the filter kwarg, since
-    # that is used in the actual call
-    def mock_get_file(filter="", dir=""):
-        return ("", "")
-
-    monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
-
-    widget = MainWindow(db_empty)
-    qtbot.addWidget(widget)
-    # add a paper to this empty database to make the paper object
-    add_my_paper(qtbot, widget)
-    qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
-    assert db_empty.get_paper_attribute(u.mine.bibcode, "local_file") == None
-
-
 def test_double_clicking_on_paper_with_local_file_opens_it(
     qtbot, db_empty, monkeypatch
 ):
-    # Here we need to use monkeypatch to simulate opening the file. We do have to use
-    # a real file so that we don't ask again
+    # Here we need to use monkeypatch to simulate opening the file
     test_loc = __file__
     open_calls = []
     monkeypatch.setattr(QDesktopServices, "openUrl", lambda x: open_calls.append(x))
@@ -1745,51 +1704,104 @@ def test_double_clicking_on_paper_with_local_file_opens_it(
     assert open_calls == [f"file:{test_loc}"]
 
 
-def test_double_clicking_on_paper_without_local_file_selects_and_opens_it(
-    qtbot, db_empty, monkeypatch
+def test_dclicking_on_paper_with_no_local_file_doesnt_ask_user(
+    qtbot, db_temp, monkeypatch
 ):
-    # Here we need to use monkeypatch to simulate user input and open files. Pick a
-    # real file
-    test_loc = __file__
-    # create a mock function to get the file. It needs to have the filter kwarg, since
-    # that is used in the actual call
-    def mock_get_file(filter="", dir=""):
-        return test_loc, "dummy filter"
-
-    monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
+    # Here we need to use monkeypatch to simulate opening the file and asking user
     open_calls = []
     monkeypatch.setattr(QDesktopServices, "openUrl", lambda x: open_calls.append(x))
+    user_asks = []
+    monkeypatch.setattr(
+        QFileDialog,
+        "getSaveFileName",
+        lambda filter, dir, caption: user_asks.append("save"),
+    )
+    monkeypatch.setattr(
+        QFileDialog,
+        "getOpenFileName",
+        lambda filter, dir: user_asks.append("open"),
+    )
 
-    widget = MainWindow(db_empty)
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
-    # add a paper to this empty database to make the paper object
-    add_my_paper(qtbot, widget)  # do not add file location
     qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
-    assert open_calls == [f"file:{test_loc}"]
+    assert user_asks == []
 
 
-def test_dclicking_on_paper_without_local_file_but_not_choosing_doesnt_add_or_open_it(
-    qtbot, db_empty, monkeypatch
-):
-    # Here we need to use monkeypatch to simulate user input and open files
-    # create a mock function to get the file. It needs to have the filter kwarg, since
-    # that is used in the actual call
-    def mock_get_file(filter="", dir=""):
-        return ("", "")
-
-    monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
+def test_dclicking_on_paper_with_no_local_file_doesnt_open(qtbot, db_temp, monkeypatch):
+    # Here we need to use monkeypatch to simulate opening the file
     open_calls = []
     monkeypatch.setattr(QDesktopServices, "openUrl", lambda x: open_calls.append(x))
 
-    widget = MainWindow(db_empty)
+    widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
-    # add a paper to this empty database to make the paper object
-    add_my_paper(qtbot, widget)  # do not add file location
     qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
     assert open_calls == []
 
 
-def test_dclicking_on_paper_with_nonexistent_file_asks_user(
+def test_dclicking_on_paper_with_no_local_file_highlights_right_panel(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
+    assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == True
+    assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == True
+
+
+def test_pdf_highlighting_goes_away_with_any_click(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
+    assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == True
+    assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == True
+    qtbot.mouseClick(widget.rightPanel, Qt.LeftButton)
+    assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == False
+    assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == False
+
+
+def test_pdf_highlighting_goes_away_with_choose_local_interaction(
+    qtbot, db_temp, monkeypatch
+):
+    # mock the selection interaction
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", lambda filter, dir: ("", ""))
+
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
+    assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == True
+    assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == True
+    qtbot.mouseClick(widget.rightPanel.pdfChooseLocalFileButton, Qt.LeftButton)
+    assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == False
+    assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == False
+
+
+def test_pdf_highlighting_goes_away_with_download_interaction(
+    qtbot, db_temp, monkeypatch
+):
+    # mock the selection interaction
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", lambda dir, caption: ("", ""))
+
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
+    assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == True
+    assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == True
+    qtbot.mouseClick(widget.rightPanel.pdfDownloadButton, Qt.LeftButton)
+    assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == False
+    assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == False
+
+
+def test_pdf_highlighting_goes_away_when_new_paper_clicked(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
+    assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == True
+    assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == True
+    qtbot.mouseClick(widget.papersList.papers[1], Qt.LeftButton)
+    assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == False
+    assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == False
+
+
+def test_dclicking_on_paper_with_nonexistent_file_redirects_to_right_panel(
     qtbot, db_empty, monkeypatch
 ):
     # first, add a file to the database, then set the file to something nonsense. We'll
@@ -1797,14 +1809,6 @@ def test_dclicking_on_paper_with_nonexistent_file_asks_user(
     db_empty.add_paper(u.mine.bibcode)
     db_empty.set_paper_attribute(u.mine.bibcode, "local_file", "lskdlskdflskj")
 
-    # Here we need to use monkeypatch to simulate user input and open files
-    # create a mock function to get the file. It needs to have the filter kwarg, since
-    # that is used in the actual call. We have to use a file that actually exists, so
-    # we'll use this file.
-    def mock_get_file(filter="", dir=""):
-        return (__file__, "")
-
-    monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
     # when we try to open files, just list the ones we tried to open
     open_calls = []
     monkeypatch.setattr(QDesktopServices, "openUrl", lambda x: open_calls.append(x))
@@ -1813,21 +1817,14 @@ def test_dclicking_on_paper_with_nonexistent_file_asks_user(
     qtbot.addWidget(widget)
     # add a paper to this empty database to make the paper object
     qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
-    # check that we asked the user, and that it has the correct paper
-    assert open_calls == [f"file:{__file__}"]
+    # check that we didn't open anything
+    assert open_calls == []
+    # check that the right panel is highlighted
+    assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == True
+    assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == True
 
 
 def test_dclicking_on_paper_shows_details_in_right_panel(qtbot, db_empty, monkeypatch):
-    # Here we need to use monkeypatch to simulate user input and open files
-    # create a mock function to get the file. It needs to have the filter kwarg, since
-    # that is used in the actual call
-    def mock_get_file(filter="", dir=""):
-        return ("", "")
-
-    monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
-    open_calls = []
-    monkeypatch.setattr(QDesktopServices, "openUrl", lambda x: open_calls.append(x))
-
     widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
     # add a paper to this empty database to make the paper object

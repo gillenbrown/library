@@ -203,3 +203,14 @@ QComboBox QAbstractItemView {  /* the popup */
     color: #555555;
     selection-color: black;
 }
+
+/* The PDF section highlighting */
+QLabel[pdf_highlight=true]{
+    color: darkred;
+}
+QPushButton[pdf_highlight=true]{
+    border: 2px solid darkred;
+}
+QPushButton[pdf_highlight=true]:hover {
+  border: 2px solid black;
+}
