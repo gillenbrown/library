@@ -212,5 +212,23 @@ QPushButton[pdf_highlight=true]{
     border: 2px solid darkred;
 }
 QPushButton[pdf_highlight=true]:hover {
-  border: 2px solid black;
+    border: 2px solid black;
+}
+
+/* Format scrollbar. This actually turned out to be tricky
+   What I wanted to do is just use the default scrollbars. To do this, you need to
+   not set any QSS at all (setting them to {} does not work). This would require
+   big changes to this QSS file, since at the top I have one selector that applies
+   to all widgets. I'd need to get rid of that and apply those rules to all the
+   individual widgets. That's a pain, so I'll not do it. Right now, this is pretty
+   close to the default MacOs behavior. The only substantive difference is that the
+   scrollbars don't disappear once scrolling is done. They're always there.
+*/
+QScrollBar:vertical {
+    width: 6px;
+}
+QScrollBar::handle:vertical {
+    background-color: #BBBBBB;
+    min-height: 20px;
+    border-radius: 3px;
 }
