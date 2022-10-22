@@ -40,7 +40,7 @@ QLabel#big_title {
 }
 
 QLabel#center_panel_paper_title{
-    font-size: 16pt;
+    font-size: 18pt;
 }
 
 QLabel#center_panel_cite_string{

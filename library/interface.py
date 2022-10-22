@@ -230,6 +230,9 @@ class Paper(QWidget):
         # name these for stylesheets
         self.titleText.setObjectName("center_panel_paper_title")
         self.citeText.setObjectName("center_panel_cite_string")
+        # and let the text wrap
+        self.titleText.setWordWrap(True)
+        self.citeText.setWordWrap(True)
 
         # make sure the paper is unhighlighted. This first thing ensures that changes
         # are actually shown in the interface. Not sure why this is not automatically

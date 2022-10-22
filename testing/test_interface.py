@@ -452,7 +452,7 @@ def test_paper_title_has_correct_font_size(qtbot, db):
     qtbot.addWidget(widget)
     # get one of the papers, not sure which
     paper = widget.papersList.papers[0]
-    assert paper.titleText.font().pointSize() == 16
+    assert paper.titleText.font().pointSize() == 18
 
 
 def test_paper_cite_string_has_correct_font_size(qtbot, db):
@@ -864,6 +864,20 @@ def test_duplicate_in_internal_paper_list_raises_error(qtbot, db):
     new_paper = Paper(u.mine.bibcode, db, widget.rightPanel, widget.papersList)
     with pytest.raises(AssertionError):
         widget.papersList.addPaper(new_paper)
+
+
+def test_paper_title_has_word_wrap_on(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    for paper in widget.papersList.papers:
+        assert paper.titleText.wordWrap()
+
+
+def test_paper_cite_string_has_word_wrap_on(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    for paper in widget.papersList.papers:
+        assert paper.citeText.wordWrap()
 
 
 def test_clicking_on_paper_puts_title_in_right_panel(qtbot, db):
