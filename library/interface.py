@@ -990,7 +990,9 @@ class PapersListScrollArea(ScrollArea):
         :type rightPanel: rightPanel
         """
         ScrollArea.__init__(self)
-        self.layout.setContentsMargins(0, 35, 0, 0)  # add space for top sortChooser
+        # add space for top sortChooser, then matching space at the bottom so the
+        # last paper doesn't get cut off.
+        self.layout.setContentsMargins(0, 35, 0, 35)
         self.papers = []
 
         self.rightPanel = rightPanel
