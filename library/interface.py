@@ -574,6 +574,9 @@ class RightPanel(ScrollArea):
         :type bibcode: str
         :return: None, but the text properties are set.
         """
+        # if the user is clicking on the same paper we're already displaying, just exit
+        if self.bibcode == bibcode:
+            return
         self.bibcode = bibcode
         self.titleText.setText(self.db.get_paper_attribute(self.bibcode, "title"))
         self.citeText.setText(self.db.get_cite_string(self.bibcode))
@@ -611,6 +614,10 @@ class RightPanel(ScrollArea):
         # needs to be done after hiding everything so we can detect whether or not
         # to show the checkboxes
         self.populate_tags()
+
+        # scroll to the top so the title is visible
+        self.verticalScrollBar().setValue(0)
+        self.horizontalScrollBar().setValue(0)
 
     def update_tag_text(self):
         """
@@ -937,6 +944,9 @@ class RightPanel(ScrollArea):
         qss_trigger(self.pdfText, "pdf_highlight", True)
         qss_trigger(self.pdfChooseLocalFileButton, "pdf_highlight", True)
         qss_trigger(self.pdfDownloadButton, "pdf_highlight", True)
+        # scroll down so the user can see the buttons
+        self.ensureWidgetVisible(self.pdfDownloadButton)
+        self.horizontalScrollBar().setValue(0)
 
     def unhighlightPDFButtons(self):
         """

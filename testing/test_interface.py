@@ -946,6 +946,34 @@ def test_clicking_on_paper_highlights_its_text_it_in_center_panel(qtbot, db):
     assert paper.citeText.property("is_highlighted") is True
 
 
+def test_clicking_on_paper_scroll_is_at_top(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    assert widget.rightPanel.verticalScrollBar().value() == 0
+    assert widget.rightPanel.horizontalScrollBar().value() == 0
+
+
+def test_clicking_on_paper_scroll_is_at_top_even_after_scrolling_down(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    widget.rightPanel.verticalScrollBar().setValue(100)
+    assert widget.rightPanel.verticalScrollBar().value() == 100
+    qtbot.mouseClick(widget.papersList.papers[1], Qt.LeftButton)
+    assert widget.rightPanel.verticalScrollBar().value() == 0
+
+
+def test_clicking_on_same_paper_doesnt_adjust_scroll_position(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    widget.rightPanel.verticalScrollBar().setValue(100)
+    assert widget.rightPanel.verticalScrollBar().value() == 100
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    assert widget.rightPanel.verticalScrollBar().value() == 100
+
+
 def test_all_papers_are_unhilighted_to_start(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
@@ -1745,6 +1773,19 @@ def test_dclicking_on_paper_with_no_local_file_highlights_right_panel(qtbot, db_
     qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
     assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == True
     assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == True
+
+
+def test_dclicking_on_paper_with_no_local_file_scrolls_to_show_buttons(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
+    # I don't know exactly where this should end up, but not at the top or bottom
+    assert (
+        0
+        < widget.rightPanel.verticalScrollBar().value()
+        < widget.rightPanel.verticalScrollBar().maximum()
+    )
+    assert widget.rightPanel.horizontalScrollBar().value() == 0
 
 
 def test_pdf_highlighting_goes_away_with_any_click(qtbot, db_temp):
