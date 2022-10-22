@@ -417,6 +417,18 @@ def test_right_panel_tag_text_has_word_wrap_on(qtbot, db):
     assert widget.rightPanel.tagText.wordWrap()
 
 
+def test_right_panel_pdf_text_has_word_wrap_on(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    assert widget.rightPanel.pdfText.wordWrap()
+
+
+def test_right_panel_cite_key_has_word_wrap_on(qtbot, db):
+    widget = MainWindow(db)
+    qtbot.addWidget(widget)
+    assert widget.rightPanel.citeKeyText.wordWrap()
+
+
 def test_paper_initialization_has_correct_bibcode(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)

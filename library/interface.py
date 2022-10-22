@@ -506,6 +506,8 @@ class RightPanel(ScrollArea):
         self.abstractText.setWordWrap(True)
         self.tagText.setWordWrap(True)
         self.userNotesText.setWordWrap(True)
+        self.pdfText.setWordWrap(True)
+        self.citeKeyText.setWordWrap(True)
 
         # add these to the layout
         self.addWidget(self.titleText)
