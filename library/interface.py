@@ -372,6 +372,43 @@ class ScrollArea(QScrollArea):
         # add the widget to the layout
         self.layout.addWidget(widget)
 
+    def resizeEvent(self, resize_event):
+        """
+        Handle the resizing of the splitter, adjusting all child widgets too
+
+        :param resize_event: the resizing event
+        :type: QResizeEvent
+        :return: None
+        """
+        # get the new size, and apply it to all widgets in the layout. Have some
+        # padding on either size to avoid horizontal scroll bars
+        self.resize_items_in_layout(self.layout, resize_event.size().width() - 25)
+
+        # Then do the normal resizing
+        super().resizeEvent(resize_event)
+
+    def resize_items_in_layout(self, layout, width):
+        """
+        Recursively resize all widgets within a layout
+
+        Any widgets in this layout will be adjusted, while any other layouts will
+        be sent to this function for them to be adjusted
+
+        :param layout: The layout to be adjusted to a given width
+        :type layout: QLayout
+        :param width: the width to make each widget, in pixels
+        :type width: int
+        :return: None
+        """
+        for w_idx in range(0, layout.count()):
+            item = layout.itemAt(w_idx)
+            # if it's a layout, just adjust the width
+            if item.widget() is not None:
+                # leave room on the right for the padding
+                item.widget().setFixedWidth(width)
+            else:  # is a layout
+                self.resize_items_in_layout(item.layout(), width)
+
 
 class RightPanel(ScrollArea):
     """
@@ -1288,7 +1325,7 @@ class MainWindow(QMainWindow):
         # Then we have the main body. This is a bit more complex. We'll start by just
         # initializing the layout for this, which is three panels laid horizonatlly.
         # This is the default splitter orientation
-        splitter = QSplitter()
+        self.splitter = QSplitter()
         # then make each of these things
 
         # The right panel is the details on a given paper. It holds the tags list,
@@ -1348,12 +1385,12 @@ class MainWindow(QMainWindow):
             self.tagsList.addTag(LeftPanelTag(t, self.papersList, self.tagsList))
 
         # then add each of these widgets to the central splitter
-        splitter.addWidget(self.tagsList)
-        splitter.addWidget(self.papersList)
-        splitter.addWidget(self.rightPanel)
+        self.splitter.addWidget(self.tagsList)
+        self.splitter.addWidget(self.papersList)
+        self.splitter.addWidget(self.rightPanel)
 
         # Add this to the main layout
-        vBoxMain.addWidget(splitter)
+        vBoxMain.addWidget(self.splitter)
 
         # We then have to have a dummy widget to act as the central widget. All that
         # is done here is setting the layout

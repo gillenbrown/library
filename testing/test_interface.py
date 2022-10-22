@@ -4209,3 +4209,32 @@ def test_edit_citation_keywored_entry_backspace_exit_doesnt_change_db(qtbot, db_
     qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Backspace)
     bibcode = widget.papersList.papers[0].bibcode
     assert db_temp.get_paper_attribute(bibcode, "citation_keyword") == bibcode
+
+
+def test_widgets_dont_go_outside_of_splitter(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    # get the original positions
+    o_sizes = widget.splitter.sizes()
+    # check examples in each panel
+    assert widget.tagsList.addTagBar.size().width() <= o_sizes[0]
+    assert widget.papersList.papers[0].size().width() <= o_sizes[1]
+    assert widget.rightPanel.titleText.size().width() <= o_sizes[2]
+
+
+def test_resizing_splitter_resizes_widgets(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    # get the original positions
+    o_sizes = widget.splitter.sizes()
+    assert sum(o_sizes) > 600
+    new_sizes = [100, 400, sum(o_sizes) - 500]
+    widget.splitter.setSizes(new_sizes)
+    # check examples in each panel. Not sure why the difference is 27 and not 25, but
+    # it may have to do with a 1 pixel pad on both sides I use somewhere. The 25 is
+    # the spacing I give to avoid horizontal scroll bars
+    assert widget.tagsList.addTagBar.size().width() == new_sizes[0] - 27
+    assert widget.papersList.papers[0].size().width() == new_sizes[1] - 27
+    assert widget.rightPanel.titleText.size().width() == new_sizes[2] - 27
