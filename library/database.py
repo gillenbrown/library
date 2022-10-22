@@ -77,7 +77,11 @@ class Database(object):
 
         # then update all papers, as necessary
         for bibcode in self.get_all_bibcodes():
-            if self.get_paper_attribute(bibcode, "journal") == "arXiv e-prints":
+            # don't simply check that the journal is set. Soemtimes there can be
+            # intermediate updates to a paper, where the journal can be set but not
+            # the full information. Once the page info is set, the paper will be
+            # fully updated
+            if self.get_paper_attribute(bibcode, "page") == -1:
                 self.update_paper(bibcode)
 
     def _execute(self, sql, parameters=()):
