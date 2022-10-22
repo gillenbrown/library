@@ -1753,7 +1753,7 @@ def test_pdf_highlighting_goes_away_with_any_click(qtbot, db_temp):
     qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
     assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == True
     assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == True
-    qtbot.mouseClick(widget.rightPanel, Qt.LeftButton)
+    qtbot.mouseClick(widget.rightPanel.titleText, Qt.LeftButton)
     assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == False
     assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == False
 

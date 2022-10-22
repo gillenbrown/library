@@ -339,7 +339,41 @@ class HorizontalLine(QFrame):
         self.setFrameShape(QFrame.HLine)
 
 
-class RightPanel(QWidget):
+class ScrollArea(QScrollArea):
+    """
+    A wrapper around QScrollArea with a vertical layout, appropriate for lists
+    """
+
+    def __init__(self):
+        """
+        Setup the scroll area, no parameters needed.
+        """
+        QScrollArea.__init__(self)
+
+        # Have a central widget with a vertical box layout
+        self.container = QWidget()
+        self.layout = QVBoxLayout()
+        # the widgets should have their fixed size, no modification. This is also
+        # needed to get them to show up, I believe to stop this from having zero size?
+        self.layout.setSizeConstraint(QLayout.SetFixedSize)
+
+        # Then add these layouts and widgets
+        self.container.setLayout(self.layout)
+        self.setWidget(self.container)
+
+    def addWidget(self, widget):
+        """
+        Add a widget to the list of vertical objects
+
+        :param widget: Widget to be added to the layout.
+        :type widget: QWidget
+        :return: None
+        """
+        # add the widget to the layout
+        self.layout.addWidget(widget)
+
+
+class RightPanel(ScrollArea):
     """
     The right panel area for the main window, holding paper info for a single paper
     """
@@ -351,15 +385,12 @@ class RightPanel(QWidget):
         :param db: Database object this interface is using
         :type db: library.database.Database
         """
-        QWidget.__init__(self)
+        super().__init__()
 
         self.db = db
         self.bibcode = ""  # will be set later
         self.papersList = None  # will be set by the papersList initializer, which
         # will have this passed in to it
-
-        # This widget will have several main areas, all laid out vertically
-        vBox = QVBoxLayout()
 
         # for clarity set text to empty, the default values will be set below
         self.titleText = QLabel("")
@@ -437,37 +468,35 @@ class RightPanel(QWidget):
         self.userNotesText.setWordWrap(True)
 
         # add these to the layout
-        vBox.addWidget(self.titleText)
-        vBox.addWidget(self.citeText)
-        vBox.addWidget(self.abstractText)
-        vBox.addWidget(self.spacers[0])
-        vBox.addWidget(self.userNotesText)
-        vBox.addWidget(self.userNotesTextEditField)
-        vBox.addWidget(self.userNotesTextEditButton)
-        vBox.addWidget(self.userNotesTextEditFinishedButton)
-        vBox.addWidget(self.spacers[1])
-        vBox.addWidget(self.pdfText)
-        vBox.addWidget(self.pdfOpenButton)
-        vBox.addWidget(self.pdfChooseLocalFileButton)
-        vBox.addWidget(self.pdfDownloadButton)
-        vBox.addWidget(self.spacers[2])
-        vBox.addWidget(self.tagText)
-        vBox.addWidget(self.editTagsButton)
-        vBox.addWidget(self.doneEditingTagsButton)
-        vBox.addLayout(self.vBoxTags)
-        vBox.addWidget(self.spacers[3])
-        vBox.addWidget(self.citeKeyText)
-        vBox.addWidget(self.editCiteKeyButton)
-        vBox.addWidget(self.editCiteKeyErrorText)
-        vBox.addWidget(self.editCiteKeyEntry)
-        vBox.addWidget(self.copyBibtexButton)
-        vBox.addWidget(self.spacers[4])
-        vBox.addWidget(self.adsButton)
-        vBox.addWidget(self.firstDeletePaperButton)
-        vBox.addWidget(self.secondDeletePaperButton)
-        vBox.addWidget(self.secondDeletePaperCancelButton)
-
-        self.setLayout(vBox)
+        self.addWidget(self.titleText)
+        self.addWidget(self.citeText)
+        self.addWidget(self.abstractText)
+        self.addWidget(self.spacers[0])
+        self.addWidget(self.userNotesText)
+        self.addWidget(self.userNotesTextEditField)
+        self.addWidget(self.userNotesTextEditButton)
+        self.addWidget(self.userNotesTextEditFinishedButton)
+        self.addWidget(self.spacers[1])
+        self.addWidget(self.pdfText)
+        self.addWidget(self.pdfOpenButton)
+        self.addWidget(self.pdfChooseLocalFileButton)
+        self.addWidget(self.pdfDownloadButton)
+        self.addWidget(self.spacers[2])
+        self.addWidget(self.tagText)
+        self.addWidget(self.editTagsButton)
+        self.addWidget(self.doneEditingTagsButton)
+        self.layout.addLayout(self.vBoxTags)
+        self.addWidget(self.spacers[3])
+        self.addWidget(self.citeKeyText)
+        self.addWidget(self.editCiteKeyButton)
+        self.addWidget(self.editCiteKeyErrorText)
+        self.addWidget(self.editCiteKeyEntry)
+        self.addWidget(self.copyBibtexButton)
+        self.addWidget(self.spacers[4])
+        self.addWidget(self.adsButton)
+        self.addWidget(self.firstDeletePaperButton)
+        self.addWidget(self.secondDeletePaperButton)
+        self.addWidget(self.secondDeletePaperCancelButton)
 
     def populate_tags(self):
         """
@@ -930,40 +959,6 @@ class RightPanel(QWidget):
         self.unhighlightPDFButtons()
 
 
-class ScrollArea(QScrollArea):
-    """
-    A wrapper around QScrollArea with a vertical layout, appropriate for lists
-    """
-
-    def __init__(self):
-        """
-        Setup the scroll area, no parameters needed.
-        """
-        QScrollArea.__init__(self)
-
-        # Have a central widget with a vertical box layout
-        self.container = QWidget()
-        self.layout = QVBoxLayout()
-        # the widgets should have their fixed size, no modification. This is also
-        # needed to get them to show up, I believe to stop this from having zero size?
-        self.layout.setSizeConstraint(QLayout.SetFixedSize)
-
-        # Then add these layouts and widgets
-        self.container.setLayout(self.layout)
-        self.setWidget(self.container)
-
-    def addWidget(self, widget):
-        """
-        Add a widget to the list of vertical objects
-
-        :param widget: Widget to be added to the layout.
-        :type widget: QWidget
-        :return: None
-        """
-        # add the widget to the layout
-        self.layout.addWidget(widget)
-
-
 class PapersListScrollArea(ScrollArea):
     """
     The class to be used for the central list of papers.
@@ -1287,8 +1282,6 @@ class MainWindow(QMainWindow):
         # The right panel is the details on a given paper. It holds the tags list,
         # which we need to initialize first
         self.rightPanel = RightPanel(self.db)
-        rightScroll = ScrollArea()
-        rightScroll.addWidget(self.rightPanel)
 
         # The central panel is the list of papers. This has to be set up after the
         # right panel because the paper objects need it, and before the left panel
@@ -1345,7 +1338,7 @@ class MainWindow(QMainWindow):
         # then add each of these widgets to the central splitter
         splitter.addWidget(self.tagsList)
         splitter.addWidget(self.papersList)
-        splitter.addWidget(rightScroll)
+        splitter.addWidget(self.rightPanel)
 
         # Add this to the main layout
         vBoxMain.addWidget(splitter)
