@@ -539,8 +539,14 @@ class Database(object):
 
         # then delete the paper
         self.delete_paper(old_bibcode)
-        # and set the citation keyword
-        self.set_paper_attribute(new_bibcode, "citation_keyword", old_citation_keyword)
+        # and set the citation keyword. If it's just the default bibcode, I'll update
+        # to the new bibcode. If the user had set a custom keyword, keep that.
+        if old_citation_keyword == old_bibcode:
+            self.set_paper_attribute(new_bibcode, "citation_keyword", new_bibcode)
+        else:
+            self.set_paper_attribute(
+                new_bibcode, "citation_keyword", old_citation_keyword
+            )
 
     def export(self, tag_name, file_name):
         """
