@@ -4232,9 +4232,13 @@ def test_resizing_splitter_resizes_widgets(qtbot, db_temp):
     assert sum(o_sizes) > 600
     new_sizes = [100, 400, sum(o_sizes) - 500]
     widget.splitter.setSizes(new_sizes)
-    # check examples in each panel. Not sure why the difference is 27 and not 25, but
-    # it may have to do with a 1 pixel pad on both sides I use somewhere. The 25 is
-    # the spacing I give to avoid horizontal scroll bars
-    assert widget.tagsList.addTagBar.size().width() == new_sizes[0] - 27
-    assert widget.papersList.papers[0].size().width() == new_sizes[1] - 27
-    assert widget.rightPanel.titleText.size().width() == new_sizes[2] - 27
+    # check examples in each panel. They won't be exact, but should be close
+    assert (
+        new_sizes[0] * 0.7 <= widget.tagsList.addTagBar.size().width() <= new_sizes[0]
+    )
+    assert (
+        new_sizes[1] * 0.7 <= widget.papersList.papers[0].size().width() <= new_sizes[1]
+    )
+    assert (
+        new_sizes[2] * 0.7 <= widget.rightPanel.titleText.size().width() <= new_sizes[2]
+    )
