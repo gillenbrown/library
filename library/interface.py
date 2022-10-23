@@ -245,6 +245,7 @@ class Paper(QWidget):
         vBox.addWidget(self.citeText)
         self.setLayout(vBox)
         self.layout().setSpacing(2)
+        self.layout().setContentsMargins(10, 10, 0, 10)
 
     def mousePressEvent(self, event):
         """
@@ -347,9 +348,15 @@ class ScrollArea(QScrollArea):
     A wrapper around QScrollArea with a vertical layout, appropriate for lists
     """
 
-    def __init__(self, min_width):
+    def __init__(self, min_width, offset):
         """
-        Setup the scroll area, no parameters needed.
+        Setup the scroll area
+
+        :param min_width: the minimum width for this widget, in pixels:
+        :type min_width: int
+        :param offset: the difference between the splitter size and the size of the
+                       child widgets
+        :type offset: int
         """
         QScrollArea.__init__(self)
 
@@ -367,6 +374,9 @@ class ScrollArea(QScrollArea):
         # have a minimum allowed width. This makes the splitter know to not decrease
         # below this size
         self.setMinimumWidth(min_width)
+        # store the difference between the splitter size and what we want to set the
+        # widget widths 10
+        self.offset = offset
 
     def addWidget(self, widget):
         """
@@ -389,7 +399,8 @@ class ScrollArea(QScrollArea):
         """
         # get the new size, and apply it to all widgets in the layout. Have some
         # padding on either size to avoid horizontal scroll bars
-        self.resize_items_in_layout(self.layout, resize_event.size().width() - 25)
+        new_width = resize_event.size().width() - self.offset
+        self.resize_items_in_layout(self.layout, new_width)
 
         # Then do the normal resizing
         super().resizeEvent(resize_event)
@@ -429,7 +440,7 @@ class RightPanel(ScrollArea):
         :param db: Database object this interface is using
         :type db: library.database.Database
         """
-        super().__init__(min_width=250)
+        super().__init__(min_width=250, offset=25)
 
         self.db = db
         self.bibcode = ""  # will be set later
@@ -1035,7 +1046,7 @@ class PapersListScrollArea(ScrollArea):
                            we can call the update feature when this is clicked on
         :type rightPanel: rightPanel
         """
-        super().__init__(min_width=300)
+        super().__init__(min_width=300, offset=6)  # match offset to scrollbar width
         # add space for top sortChooser, then matching space at the bottom so the
         # last paper doesn't get cut off.
         self.layout.setContentsMargins(0, 35, 0, 35)
@@ -1155,7 +1166,7 @@ class TagsListScrollArea(ScrollArea):
         """
         Set up the papers list, no parameters needed
         """
-        super().__init__(min_width=200)
+        super().__init__(min_width=200, offset=25)
         self.tags = []
         self.addTagButton = addTagButton
         self.addTagBar = addTagBar
