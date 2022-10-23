@@ -93,6 +93,9 @@ class LeftPanelTag(QWidget):
         self.setAttribute(Qt.WA_StyledBackground, True)
         self.unhighlight()
 
+        # set the height to be a fixed value, so it doesn't change when highlighted
+        self.setFixedHeight(self.sizeHint().height() + 2)
+
     def mousePressEvent(self, _):
         """
         When the tag is clicked on, show the papers with that tag in the central panel
