@@ -4278,3 +4278,27 @@ def test_resizing_splitter_resizes_widgets(qtbot, db_temp):
     assert (
         new_sizes[2] * 0.7 <= widget.rightPanel.titleText.size().width() <= new_sizes[2]
     )
+
+
+def test_sortchooser_starts_at_top_right(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    position = widget.papersList.sortChooser.pos()
+    expected_x = widget.papersList.width() - widget.papersList.sortChooser.width()
+    assert position.x() == expected_x
+    assert position.y() == 0
+
+
+def test_resizing_splitter_keeps_sortchooser_at_top_right(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    position = widget.papersList.sortChooser.pos()
+    new_sizes = [250, 350, sum(widget.splitter.sizes()) - 500]
+    widget.splitter.setSizes(new_sizes)
+    new_position = widget.papersList.sortChooser.pos()
+    assert new_position.x() != position.x()
+    expected_x = widget.papersList.width() - widget.papersList.sortChooser.width()
+    assert new_position.x() == expected_x
+    assert new_position.y() == 0

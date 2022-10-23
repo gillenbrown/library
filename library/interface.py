@@ -394,7 +394,7 @@ class ScrollArea(QScrollArea):
         Handle the resizing of the splitter, adjusting all child widgets too
 
         :param resize_event: the resizing event
-        :type: QResizeEvent
+        :type resize_event: QResizeEvent
         :return: None
         """
         # get the new size, and apply it to all widgets in the layout. Have some
@@ -1142,6 +1142,26 @@ class PapersListScrollArea(ScrollArea):
 
             self.sortKey = author_sort
         self.sortPapers()
+
+    def resizeEvent(self, resize_event):
+        """
+        Resize the window and move the sortChooser
+
+        This will be called whenever the splitter is moved. Since we have the
+        sortChooser at the top right, we need to keep it positioned in that spot as
+        the window changes size
+
+        :param resize_event: The event
+        :type resize_event: QResizeEvent
+        :return:
+        """
+        # first call the parent resize to adjust the window location
+        super().resizeEvent(resize_event)
+        # then move the sortChooser to be in the top right of the newly adjusted
+        # window. We needed to adjust it first so we know its new size. We do have some
+        # qss set to give there some margin around the sortChooser.
+        # setting y=0 is defined to e at the top.
+        self.sortChooser.move(self.size().width() - self.sortChooser.width(), 0)
 
 
 class TagsListScrollArea(ScrollArea):

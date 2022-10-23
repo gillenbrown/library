@@ -168,8 +168,8 @@ HorizontalLine{
 /* Style the ComboBox used to choose the sort order */
 QComboBox{
     border: 1px solid #BBBBBB;
-    border-radius: 0.5em;
-    margin-left: 1.2em;
+    border-radius: 10px;
+    margin-right: 16px;
     margin-top: 0.5em;
     padding-left: 0.5em;
     background-color: #F7F7F7;
