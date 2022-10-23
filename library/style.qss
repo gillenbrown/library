@@ -232,3 +232,13 @@ QScrollBar::handle:vertical {
     min-height: 20px;
     border-radius: 3px;
 }
+/* I shouldn't ever show horizontal scrollbars, but format them nicely if
+   they do show up */
+QScrollBar:horizontal {
+    height: 6px;
+}
+QScrollBar::handle:horizontal {
+    background-color: #BBBBBB;
+    min-width: 20px;
+    border-radius: 3px;
+}
