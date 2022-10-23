@@ -11,7 +11,12 @@ QLineEdit{
     border-radius: 0.5em;
     padding-left: 0.5em;
 }
-
+QTextEdit{
+    background-color: #F7F7F7;
+    border-radius: 0.5em;
+    padding-left: 0.5em;
+    border: 1px solid #BBBBBB;
+}
 QPushButton{
     background-color: #F7F7F7;
     padding-left: 0.5em;
