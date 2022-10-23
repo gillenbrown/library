@@ -347,7 +347,7 @@ class ScrollArea(QScrollArea):
     A wrapper around QScrollArea with a vertical layout, appropriate for lists
     """
 
-    def __init__(self):
+    def __init__(self, min_width):
         """
         Setup the scroll area, no parameters needed.
         """
@@ -363,6 +363,10 @@ class ScrollArea(QScrollArea):
         # Then add these layouts and widgets
         self.container.setLayout(self.layout)
         self.setWidget(self.container)
+
+        # have a minimum allowed width. This makes the splitter know to not decrease
+        # below this size
+        self.setMinimumWidth(min_width)
 
     def addWidget(self, widget):
         """
@@ -425,7 +429,7 @@ class RightPanel(ScrollArea):
         :param db: Database object this interface is using
         :type db: library.database.Database
         """
-        super().__init__()
+        super().__init__(min_width=250)
 
         self.db = db
         self.bibcode = ""  # will be set later
@@ -1031,7 +1035,7 @@ class PapersListScrollArea(ScrollArea):
                            we can call the update feature when this is clicked on
         :type rightPanel: rightPanel
         """
-        ScrollArea.__init__(self)
+        super().__init__(min_width=300)
         # add space for top sortChooser, then matching space at the bottom so the
         # last paper doesn't get cut off.
         self.layout.setContentsMargins(0, 35, 0, 35)
@@ -1151,7 +1155,7 @@ class TagsListScrollArea(ScrollArea):
         """
         Set up the papers list, no parameters needed
         """
-        ScrollArea.__init__(self)
+        super().__init__(min_width=200)
         self.tags = []
         self.addTagButton = addTagButton
         self.addTagBar = addTagBar

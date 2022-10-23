@@ -4256,7 +4256,7 @@ def test_resizing_splitter_resizes_widgets(qtbot, db_temp):
     # get the original positions
     o_sizes = widget.splitter.sizes()
     assert sum(o_sizes) > 600
-    new_sizes = [100, 400, sum(o_sizes) - 500]
+    new_sizes = [250, 350, sum(o_sizes) - 500]
     widget.splitter.setSizes(new_sizes)
     # check examples in each panel. They won't be exact, but should be close
     assert (
