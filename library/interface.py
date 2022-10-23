@@ -1590,9 +1590,7 @@ class MainWindow(QMainWindow):
         # if it is valid, show the next button and put the appropriate text on them
         self.secondDeleteTagEntry.hide()
         self.thirdDeleteTagButton.show()
-        self.thirdDeleteTagButton.setText(
-            f'Click to confirm deletion of tag "{tag_to_delete}"'
-        )
+        self.thirdDeleteTagButton.setText(f'Confirm deletion of tag "{tag_to_delete}"')
         self.thirdDeleteTagCancelButton.show()
         self.thirdDeleteTagCancelButton.setText(
             "Oops, don't delete tag " + f'"{tag_to_delete}"'

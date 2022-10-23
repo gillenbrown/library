@@ -2992,9 +2992,7 @@ def test_third_delete_tag_button_text_is_accurate(qtbot, db_temp):
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
-    assert (
-        widget.thirdDeleteTagButton.text() == 'Click to confirm deletion of tag "Read"'
-    )
+    assert widget.thirdDeleteTagButton.text() == 'Confirm deletion of tag "Read"'
 
 
 def test_third_delete_tag_cancel_button_text_is_accurate(qtbot, db_temp):
