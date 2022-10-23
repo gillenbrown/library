@@ -1436,7 +1436,9 @@ class MainWindow(QMainWindow):
         self.file_menu.addAction(self.exitAction)
 
         # and the initial window size
-        self.resize(1000, 600)
+        self.resize(1100, 600)
+        # set the splitter
+        self.splitter.setSizes([200, 550, 350])
         self.show()
 
     def addPaper(self):

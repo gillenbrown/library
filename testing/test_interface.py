@@ -186,7 +186,7 @@ def test_fonts_are_actually_in_the_font_database_after_set_up_fonts(qtbot):
 def test_window_initial_width(qtbot, db_empty):
     widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
-    assert widget.size().width() == 1000
+    assert widget.size().width() == 1100
 
 
 def test_window_initial_height(qtbot, db_empty):
@@ -4235,6 +4235,16 @@ def test_edit_citation_keywored_entry_backspace_exit_doesnt_change_db(qtbot, db_
     qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Backspace)
     bibcode = widget.papersList.papers[0].bibcode
     assert db_temp.get_paper_attribute(bibcode, "citation_keyword") == bibcode
+
+
+def test_widgets_are_sized_appropriately_at_beginning(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
+    # get the original positions
+    o_sizes = widget.splitter.sizes()
+    # check examples in each panel
+    assert o_sizes[0] < o_sizes[2] < o_sizes[1]
 
 
 def test_widgets_dont_go_outside_of_splitter(qtbot, db_temp):
