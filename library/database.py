@@ -191,7 +191,7 @@ class Database(object):
 
         # get the rows from the table where the bibtex matches.
         rows = self._execute(
-            f"SELECT {attribute} FROM papers WHERE bibcode=?", (bibcode,)
+            f"SELECT `{attribute}` FROM papers WHERE bibcode=?", (bibcode,)
         )
         # if we didn't find anything, tell the user
         if len(rows) == 0:
@@ -257,7 +257,7 @@ class Database(object):
             if " " in new_value:
                 raise ValueError("Spaces not allowed in citation keywords.")
 
-        sql = f"UPDATE papers SET {attribute} = ? WHERE bibcode = ?"
+        sql = f"UPDATE papers SET `{attribute}` = ? WHERE bibcode = ?"
         try:
             self._execute(sql, (new_value, bibcode))
         except sqlite3.InterfaceError:  # this is what's raised with bad data types
@@ -386,12 +386,19 @@ class Database(object):
         # check that the tag is not just whitespace
         if tag_name.strip() == "":
             raise ValueError("Tag cannot be empty")
+        # I use backticks to enclose the tag name in the SQL query (to allow other
+        # punctuation to be included), so they cannot be part of the tag name. My other
+        # options were single quotes, double quotes, or square brackets, but I figured
+        # backticks were less likely to be included than those other choices
+        # See this for more: https://www.sqlite.org/lang_keywords.html
+        elif "`" in tag_name:
+            raise ValueError("Tag cannot include backticks")
         # convert the tag name
         internal_tag = self._to_internal_tag_name(tag_name)
         try:
             self._execute(
                 f"ALTER TABLE papers "
-                f"ADD COLUMN {internal_tag} INTEGER NOT NULL "
+                f"ADD COLUMN `{internal_tag}` INTEGER NOT NULL "
                 f"DEFAULT 0;"
             )
         except sqlite3.OperationalError:  # will happen if the tag is already in there
@@ -408,7 +415,7 @@ class Database(object):
         internal_tag = self._to_internal_tag_name(tag_name)
         try:
             # This syntax requires sqlite3>=3.35.0. I checked this at the top
-            self._execute(f"ALTER TABLE papers DROP COLUMN {internal_tag}")
+            self._execute(f"ALTER TABLE papers DROP COLUMN `{internal_tag}`")
         except sqlite3.OperationalError:  # will happen if this tag does not exist
             raise ValueError("Tag does not exist!")
 

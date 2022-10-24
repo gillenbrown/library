@@ -9,6 +9,25 @@ import pytest
 from library.database import Database, PaperAlreadyInDatabaseError
 import test_utils as u
 
+# define some tags that include punctuation, which can mess up SQL. I'll use these
+# later
+punctuation_tags = [
+    '"',
+    "'",
+    """ this is "single ' and double " quotes" """,
+    """ this has everything: ['"'"] """,
+    ";",
+    ".",
+    ",",
+    "(",
+    ")",
+    "[",
+    "]",
+    "!",
+    "-",
+    ":",
+]
+
 
 @pytest.fixture(name="db_empty")
 def temporary_db():
@@ -464,6 +483,23 @@ def test_cite_string_no_page_no_arxiv(db):
     assert db.get_cite_string(u.grasha_thesis.bibcode) == true_cite_string
 
 
+def test_can_add_long_tag_to_database(db):
+    new_tag = "a b c d e f g h i j k l m n o p q r s t u v w x y z"
+    db.add_new_tag(new_tag)
+    assert new_tag in db.get_all_tags()
+
+
+def test_cannot_use_backticks_in_tag_name(db):
+    with pytest.raises(ValueError):
+        db.add_new_tag("`")
+
+
+def test_can_add_tag_with_punctuation(db):
+    for t in punctuation_tags:
+        db.add_new_tag(t)
+        assert t in db.get_all_tags()
+
+
 def test_can_add_new_tag_column_and_it_is_false_for_all_papers(db):
     db.add_new_tag("test_tag")
     for bibcode in db.get_all_bibcodes():
@@ -481,6 +517,13 @@ def test_can_add_tag_to_a_paper(db):
     assert db.paper_has_tag(u.mine.bibcode, "test_tag") is False
     db.tag_paper(u.mine.bibcode, "test_tag")
     assert db.paper_has_tag(u.mine.bibcode, "test_tag") is True
+
+
+def test_can_add_tag_with_punctuation_to_a_paper(db):
+    for tag in punctuation_tags:
+        db.add_new_tag(tag)
+        db.tag_paper(u.mine.bibcode, tag)
+        assert db.paper_has_tag(u.mine.bibcode, tag) is True
 
 
 def test_can_add_tag_to_a_paper_and_only_that_paper_tagged(db):
@@ -502,6 +545,15 @@ def test_can_remove_tag_from_a_paper(db):
     assert db.paper_has_tag(u.mine.bibcode, "test") is True
     db.untag_paper(u.mine.bibcode, "test")
     assert db.paper_has_tag(u.mine.bibcode, "test") is False
+
+
+def test_can_remove_tag_with_punctuation_to_a_paper(db):
+    for tag in punctuation_tags:
+        db.add_new_tag(tag)
+        db.tag_paper(u.mine.bibcode, tag)
+        assert db.paper_has_tag(u.mine.bibcode, tag) is True
+        db.untag_paper(u.mine.bibcode, tag)
+        assert db.paper_has_tag(u.mine.bibcode, tag) is False
 
 
 def test_cannot_add_duplicate_tag_to_database(db):
@@ -589,6 +641,13 @@ def test_delete_tag_removes_it_from_papers(db):
     db.tag_paper(u.mine.bibcode, "test_tag")
     db.delete_tag("test_tag")
     assert db.get_paper_tags(u.mine.bibcode) == []
+
+
+def test_can_delete_tag_with_punctuation(db):
+    for t in punctuation_tags:
+        db.add_new_tag(t)
+        db.delete_tag(t)
+    assert db.get_all_tags() == []
 
 
 def test_papers_unread_when_added(db_empty):
