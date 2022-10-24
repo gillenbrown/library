@@ -124,12 +124,10 @@ LeftPanelTag[is_highlighted=false]{
 
 QLabel[is_tag=true][is_highlighted=true]{
     background-color: #F7F7F7;
-    font-weight: bold;
 }
 
 QLabel[is_tag=true][is_highlighted=false]{
     background-color: #ECECEC;
-    font-weight: normal;
 }
 
 /* Adjust the buttons in the left panel, since their spacing needs to be different */
