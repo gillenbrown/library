@@ -2875,6 +2875,12 @@ def test_second_delete_tag_entry_hidden_at_beginning(qtbot, db_temp):
     assert widget.secondDeleteTagEntry.isHidden() is True
 
 
+def test_second_delete_tag_error_text_hidden_at_beginning(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    assert widget.secondDeleteTagErrorText.isHidden() is True
+
+
 def test_clicking_first_tag_delete_button_shows_second_entry(qtbot, db_temp):
     widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
@@ -2944,7 +2950,7 @@ def test_second_delete_tag_entry_is_hidden_when_entry_done(qtbot, db_temp):
     widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
+    qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")  # tag must exist
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
     assert widget.secondDeleteTagEntry.isHidden() is True
 
@@ -2965,6 +2971,15 @@ def test_third_delete_tag_cancel_button_appears_when_first_entry_done(qtbot, db_
     qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
     assert widget.thirdDeleteTagCancelButton.isHidden() is False
+
+
+def test_second_tag_delete_error_text_hidden_when_first_entry_done(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
+    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    assert widget.secondDeleteTagErrorText.isHidden() is True
 
 
 def test_delete_tag_entry_can_exit_with_escape_press_at_any_time(qtbot, db):
@@ -3196,31 +3211,24 @@ def test_cancel_tag_delete_doesnt_delete_any_tags_interface(qtbot, db_temp):
     assert original_tags == new_tags
 
 
-def test_invalid_tag_delete_entry_hides_entry(qtbot, db_temp):
+def test_invalid_tag_delete_entry_keeps_entry(qtbot, db_temp):
     widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "sdfsdfadbsdf")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
-    assert widget.secondDeleteTagEntry.isHidden() is True
+    assert widget.secondDeleteTagEntry.isHidden() is False
+    assert widget.secondDeleteTagEntry.text() == "sdfsdfadbsdf"
 
 
-def test_invalid_tag_delete_entry_shows_first_button(qtbot, db_temp):
+def test_invalid_tag_delete_entry_shows_error_text(qtbot, db_temp):
     widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "sdfsdfadbsdf")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
-    assert widget.firstDeleteTagButton.isHidden() is False
-
-
-def test_invalid_tag_delete_entry_resets_entry(qtbot, db_temp):
-    widget = MainWindow(db_temp)
-    qtbot.addWidget(widget)
-    qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "sdfsdfadbsdf")
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
-    assert widget.secondDeleteTagEntry.text() == ""
+    assert widget.secondDeleteTagErrorText.isHidden() is False
+    assert widget.secondDeleteTagErrorText.text() == "This tag does not exist"
 
 
 def test_invalid_tag_delete_entry_keeps_third_hidden(qtbot, db_temp):
@@ -3239,6 +3247,28 @@ def test_invalid_tag_delete_entry_keeps_third_cancel_hidden(qtbot, db_temp):
     qtbot.keyClicks(widget.secondDeleteTagEntry, "sdfsdfadbsdf")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
     assert widget.thirdDeleteTagCancelButton.isHidden() is True
+
+
+def test_invalid_tag_delete_error_text_hidden_when_clicked(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.secondDeleteTagEntry, "sdfsdfadbsdf")
+    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    assert widget.secondDeleteTagErrorText.isHidden() is False
+    widget.secondDeleteTagEntry.setCursorPosition(0)
+    assert widget.secondDeleteTagErrorText.isHidden() is True
+
+
+def test_invalid_tag_delete_error_text_hidden_when_text_modified(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.secondDeleteTagEntry, "sdfsdfadbsdf")
+    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    assert widget.secondDeleteTagErrorText.isHidden() is False
+    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Backspace)
+    assert widget.secondDeleteTagErrorText.isHidden() is True
 
 
 def test_tag_checkboxes_are_hidden_when_paper_clicked(qtbot, db_temp):

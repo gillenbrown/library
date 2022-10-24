@@ -1190,6 +1190,7 @@ class TagsListScrollArea(ScrollArea):
         splitter,
         firstDeleteTagButton,
         secondDeleteTagEntry,
+        secondDeleteTagErrorText,
         thirdDeleteTagButton,
         thirdDeleteTagCancelButton,
     ):
@@ -1208,6 +1209,8 @@ class TagsListScrollArea(ScrollArea):
         :type firstDeleteTagButton: QPushButton
         :param secondDeleteTagEntry: The entry where tags to delete are entered
         :type secondDeleteTagEntry: QLineEdit
+        :param secondDeleteTagErrorText: the label showing if there's an error
+        :type secondDeleteTagErrorText: QLabel
         :param thirdDeleteTagButton: The button to confirm deletion of a tag
         :type thirdDeleteTagButton: QPushButton
         :param thirdDeleteTagCancelButton: The button to cancel deletion of a tag
@@ -1224,6 +1227,7 @@ class TagsListScrollArea(ScrollArea):
         self.splitter = splitter
         self.firstDeleteTagButton = firstDeleteTagButton
         self.secondDeleteTagEntry = secondDeleteTagEntry
+        self.secondDeleteErrorText = secondDeleteTagErrorText
         self.thirdDeleteTagButton = thirdDeleteTagButton
         self.thirdDeleteTagCancelButton = thirdDeleteTagCancelButton
 
@@ -1236,6 +1240,7 @@ class TagsListScrollArea(ScrollArea):
         self.addWidget(self.addTagErrorText)
         self.addWidget(self.firstDeleteTagButton)
         self.addWidget(self.secondDeleteTagEntry)
+        self.addWidget(self.secondDeleteErrorText)
         self.addWidget(self.thirdDeleteTagButton)
         self.addWidget(self.thirdDeleteTagCancelButton)
         self.addWidget(self.showAllButton)
@@ -1247,10 +1252,11 @@ class TagsListScrollArea(ScrollArea):
         self.addTagErrorText.setProperty("is_left_panel_item", True)
         self.addTagButton.setProperty("is_left_panel_item", True)
         self.addTagBar.setProperty("is_left_panel_item", True)
-        firstDeleteTagButton.setProperty("is_left_panel_item", True)
-        secondDeleteTagEntry.setProperty("is_left_panel_item", True)
-        thirdDeleteTagButton.setProperty("is_left_panel_item", True)
-        thirdDeleteTagCancelButton.setProperty("is_left_panel_item", True)
+        self.firstDeleteTagButton.setProperty("is_left_panel_item", True)
+        self.secondDeleteTagEntry.setProperty("is_left_panel_item", True)
+        self.secondDeleteErrorText.setProperty("is_left_panel_item", True)
+        self.thirdDeleteTagButton.setProperty("is_left_panel_item", True)
+        self.thirdDeleteTagCancelButton.setProperty("is_left_panel_item", True)
 
     def addTag(self, new_tag):
         """
@@ -1479,6 +1485,16 @@ class MainWindow(QMainWindow):
         )
         self.secondDeleteTagEntry.setPlaceholderText("Tag to delete")
         self.secondDeleteTagEntry.hide()
+        self.secondDeleteTagErrorText = QLabel("This tag does not exist")
+        self.secondDeleteTagErrorText.hide()
+        self.secondDeleteTagErrorText.setProperty("error_text", True)
+        # also allow the reset after an error
+        self.secondDeleteTagEntry.cursorPositionChanged.connect(
+            self.secondDeleteTagErrorText.hide
+        )
+        self.secondDeleteTagEntry.textChanged.connect(
+            self.secondDeleteTagErrorText.hide
+        )
 
         self.thirdDeleteTagButton = QPushButton("")
         self.thirdDeleteTagButton.clicked.connect(self.confirmTagDeletion)
@@ -1499,6 +1515,7 @@ class MainWindow(QMainWindow):
             self.splitter,
             self.firstDeleteTagButton,
             self.secondDeleteTagEntry,
+            self.secondDeleteTagErrorText,
             self.thirdDeleteTagButton,
             self.thirdDeleteTagCancelButton,
         )
@@ -1671,10 +1688,10 @@ class MainWindow(QMainWindow):
         If the entry is a valid tag, show the next two buttons. Otherwise reset it.
         :return: None
         """
-        # check that the entered text is valid. If not, reset
+        # check that the entered text is valid. If not, show error message
         tag_to_delete = self.secondDeleteTagEntry.text()
         if tag_to_delete not in self.db.get_all_tags():
-            self.cancelTagDeletion()
+            self.secondDeleteTagErrorText.show()
             return
         # if it is valid, show the next button and put the appropriate text on them
         self.secondDeleteTagEntry.hide()
