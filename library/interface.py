@@ -94,7 +94,12 @@ class LeftPanelTag(QWidget):
         self.unhighlight()
 
         # set the height to be a fixed value, so it doesn't change when highlighted
-        self.setFixedHeight(self.sizeHint().height() + 2)
+        self.setFixedHeight(self.sizeHint().height())
+        # set some details about the widths to be used when resizing
+        self.exportButton.setFixedWidth(self.exportButton.sizeHint().width())
+        self.neededWidth = (
+            self.exportButton.width() + self.label.sizeHint().width() + 25
+        )
 
     def mousePressEvent(self, _):
         """
@@ -1181,19 +1186,42 @@ class TagsListScrollArea(ScrollArea):
         addTagButton,
         addTagBar,
         papersList,
+        splitter,
         firstDeleteTagButton,
         secondDeleteTagEntry,
         thirdDeleteTagButton,
         thirdDeleteTagCancelButton,
     ):
         """
-        Set up the papers list, no parameters needed
+        :param addTagButton: The button to press to add a tag
+        :type addTagButton: QPushButton
+        :param addTagBar: The entry where new tag names are added
+        :type addTagBar: QLineEdit
+        :param papersList: The object holding the central papers list
+        :type papersList: PapersListScrollArea
+        :param splitter: The splitter object in the main panel
+        :type splitter: QSplitter
+        :param firstDeleteTagButton: The button to delete a tag
+        :type firstDeleteTagButton: QPushButton
+        :param secondDeleteTagEntry: The entry where tags to delete are entered
+        :type secondDeleteTagEntry: QLineEdit
+        :param thirdDeleteTagButton: The button to confirm deletion of a tag
+        :type thirdDeleteTagButton: QPushButton
+        :param thirdDeleteTagCancelButton: The button to cancel deletion of a tag
+        :type thirdDeleteTagCancelButton: QPushButton
         """
-        super().__init__(min_width=200, offset=25)
+        self.default_min_width = 200
+        self.offset = 25
+        super().__init__(min_width=self.default_min_width, offset=self.offset)
         self.tags = []
         self.addTagButton = addTagButton
         self.addTagBar = addTagBar
         self.papersList = papersList
+        self.splitter = splitter
+        self.firstDeleteTagButton = firstDeleteTagButton
+        self.secondDeleteTagEntry = secondDeleteTagEntry
+        self.thirdDeleteTagButton = thirdDeleteTagButton
+        self.thirdDeleteTagCancelButton = thirdDeleteTagCancelButton
 
         # Make the button to show all the papers in the list
         self.showAllButton = LeftPanelTagShowAll(papersList, self)
@@ -1201,10 +1229,10 @@ class TagsListScrollArea(ScrollArea):
         # put the tag bar at the top of the list
         self.addWidget(self.addTagButton)  # calls ScrollArea addWidget
         self.addWidget(self.addTagBar)
-        self.addWidget(firstDeleteTagButton)
-        self.addWidget(secondDeleteTagEntry)
-        self.addWidget(thirdDeleteTagButton)
-        self.addWidget(thirdDeleteTagCancelButton)
+        self.addWidget(self.firstDeleteTagButton)
+        self.addWidget(self.secondDeleteTagEntry)
+        self.addWidget(self.thirdDeleteTagButton)
+        self.addWidget(self.thirdDeleteTagCancelButton)
         self.addWidget(self.showAllButton)
 
         # adjust the spacing between elements (i.e. tags). To compensate, increase the
@@ -1244,6 +1272,42 @@ class TagsListScrollArea(ScrollArea):
         # then add them to the layout in this order
         for tag in self.tags:
             self.layout.addWidget(tag)
+
+        # resize
+        self.triggerResize()
+
+    def triggerResize(self):
+        """
+        When the panel changes state, make sure it's wide enough to host everything
+
+        This is when tags are added, deleted, or the delete buttons are shown
+
+        :return: None ``
+        """
+        # make a list of the desired sizes of everything in this panel, then pick
+        # the biggest. Include the default minimum size to give a nice default size
+        sizeHints = [self.default_min_width]
+        for tag in self.tags:
+            sizeHints.append(tag.neededWidth + self.offset)
+        if not self.thirdDeleteTagButton.isHidden():
+            sizeHints.append(
+                self.thirdDeleteTagButton.sizeHint().width() + self.offset + 5
+            )
+            sizeHints.append(
+                self.thirdDeleteTagCancelButton.sizeHint().width() + self.offset + 5
+            )
+        needed_size = max(sizeHints)
+        self.setMinimumWidth(needed_size)
+        # then change the splitter sizes. Adjust the left panel to be the needed size,
+        # adjusting the center panel to make room as needed
+        original_sizes = self.splitter.sizes()
+        # If the splitter hasn't been initialized, don't adjust it
+        if len(original_sizes) == 0:
+            return
+        # otherwise do the adjustment
+        diff = needed_size - original_sizes[0]
+        new_sizes = [needed_size, original_sizes[1] - diff, original_sizes[2]]
+        self.splitter.setSizes(new_sizes)
 
 
 class EasyExitLineEdit(QLineEdit):
@@ -1419,6 +1483,7 @@ class MainWindow(QMainWindow):
             self.addTagButton,
             self.addTagBar,
             self.papersList,
+            self.splitter,
             self.firstDeleteTagButton,
             self.secondDeleteTagEntry,
             self.thirdDeleteTagButton,
@@ -1544,6 +1609,7 @@ class MainWindow(QMainWindow):
         self.addTagBar.clear()
         self.addTagBar.hide()
         self.addTagButton.show()
+        self.tagsList.triggerResize()
 
     def addTag(self):
         """
@@ -1598,6 +1664,7 @@ class MainWindow(QMainWindow):
         self.thirdDeleteTagCancelButton.setText(
             "Oops, don't delete tag " + f'"{tag_to_delete}"'
         )
+        self.tagsList.triggerResize()
 
     def confirmTagDeletion(self):
         """
@@ -1618,7 +1685,7 @@ class MainWindow(QMainWindow):
                 tag.hide()  # just to be safe
                 self.tagsList.tags.remove(tag)
                 del tag
-        # then reset the boxes
+        # then reset the boxes, plus resize
         self.cancelTagDeletion()
         # and reset the checkboxes in the rightPanel
         self.rightPanel.populate_tags()
@@ -1637,6 +1704,7 @@ class MainWindow(QMainWindow):
         self.secondDeleteTagEntry.setText("")
         self.thirdDeleteTagButton.hide()
         self.thirdDeleteTagCancelButton.hide()
+        self.tagsList.triggerResize()
 
 
 def get_fonts(directory, current_list):

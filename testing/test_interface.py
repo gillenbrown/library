@@ -4300,3 +4300,76 @@ def test_resizing_splitter_keeps_sortchooser_at_top_right(qtbot, db_temp):
     expected_x = widget.papersList.width() - widget.papersList.sortChooser.width()
     assert new_position.x() == expected_x
     assert new_position.y() == 0
+
+
+def test_adding_long_tag_resizes_splitter(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    original_sizes = widget.splitter.sizes()
+    qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
+    qtbot.keyClicks(
+        widget.tagsList.addTagBar,
+        "this is a very long tag, too long to realistically use",
+    )
+    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    new_sizes = widget.splitter.sizes()
+    assert new_sizes[0] > original_sizes[0]
+
+
+def test_db_with_long_tag_has_wide_tag_bar_at_beginning(qtbot, db_temp):
+    db_temp.add_new_tag("this is a very long tag, too long to realistically use")
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    original_sizes = widget.splitter.sizes()
+    assert original_sizes[0] > 200
+    for tag in widget.tagsList.tags:
+        assert tag.width() >= tag.sizeHint().width()
+
+
+def test_deleting_long_tag_resizes_splitter(qtbot, db_temp):
+    tag_name = "this is a very long tag, too long to realistically use"
+    db_temp.add_new_tag(tag_name)
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    original_sizes = widget.splitter.sizes()
+    qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.secondDeleteTagEntry, tag_name)
+    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    qtbot.mouseClick(widget.thirdDeleteTagButton, Qt.LeftButton)
+    new_sizes = widget.splitter.sizes()
+    assert new_sizes[0] < original_sizes[0]
+    assert new_sizes[0] == max(
+        widget.tagsList.default_min_width,
+        max([tag.sizeHint().width() for tag in widget.tagsList.tags]),
+    )
+
+
+def test_showing_delete_tag_confirm_resizes_splitter(qtbot, db_temp):
+    tag_name = "this is a very long tag, too long to realistically use"
+    db_temp.add_new_tag(tag_name)
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    original_sizes = widget.splitter.sizes()
+    qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.secondDeleteTagEntry, tag_name)
+    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    new_sizes = widget.splitter.sizes()
+    assert new_sizes[0] > original_sizes[0]
+
+
+def test_confirming_tag_delete_resizes_splitter(qtbot, db_temp):
+    tag_name = "this is a very long tag, too long to realistically use"
+    db_temp.add_new_tag(tag_name)
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.secondDeleteTagEntry, tag_name)
+    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    original_sizes = widget.splitter.sizes()
+    qtbot.mouseClick(widget.thirdDeleteTagButton, Qt.LeftButton)
+    new_sizes = widget.splitter.sizes()
+    assert new_sizes[0] < original_sizes[0]
+    assert new_sizes[0] == max(
+        widget.tagsList.default_min_width,
+        max([tag.sizeHint().width() for tag in widget.tagsList.tags]),
+    )
