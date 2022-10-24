@@ -132,11 +132,7 @@ QLabel[is_tag=true][is_highlighted=false]{
 
 /* Adjust the buttons in the left panel, since their spacing needs to be different */
 /* from the tags in that panel */
-QPushButton[is_left_panel_item=true]{
-    margin-bottom: 0.5em;
-}
-
-QLineEdit[is_left_panel_item=true]{
+QWidget[is_left_panel_item=true]{
     margin-bottom: 0.5em;
 }
 

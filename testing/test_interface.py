@@ -1931,6 +1931,12 @@ def test_add_tag_text_bar_is_hidden_at_beginning(qtbot, db_empty):
     assert widget.tagsList.addTagBar.isHidden() is True
 
 
+def test_add_tag_error_text_is_hidden_at_beginning(qtbot, db_empty):
+    widget = MainWindow(db_empty)
+    qtbot.addWidget(widget)
+    assert widget.tagsList.addTagErrorText.isHidden() is True
+
+
 def test_clicking_add_tag_button_hides_button(qtbot, db_empty):
     widget = MainWindow(db_empty)
     qtbot.addWidget(widget)
@@ -2041,6 +2047,19 @@ def test_tag_name_entry_is_not_cleared_after_duplicate_tag_attempt(qtbot, db_tem
     assert widget.tagsList.addTagBar.text() == "Test Tag"
 
 
+def test_add_tag_error_message_shown_after_duplicate_tag_attempt(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
+    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    # this has been tested to work and now be clear, so try it again
+    qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
+    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    assert widget.tagsList.addTagErrorText.isHidden() is False
+    assert widget.tagsList.addTagErrorText.text() == "This tag already exists"
+
+
 def test_tag_name_entry_is_not_cleared_after_duplicate_cap_tag_attempt(qtbot, db_temp):
     widget = MainWindow(db_temp)
     qtbot.addWidget(widget)
@@ -2062,6 +2081,38 @@ def test_tag_name_entry_is_not_cleared_after_whitespace_tag_attempt(qtbot, db_te
     assert widget.tagsList.addTagBar.text() == "   "
 
 
+def test_add_tag_error_message_shown_after_whitesapce_tag_attempt(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.tagsList.addTagBar, "   ")
+    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    assert widget.tagsList.addTagErrorText.isHidden() is False
+    assert widget.tagsList.addTagErrorText.text() == "Pure whitespace isn't valid"
+
+
+def test_add_tag_error_message_hidden_after_text_changed(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.tagsList.addTagBar, "   ")
+    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    assert widget.tagsList.addTagErrorText.isHidden() is False
+    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Backspace)
+    assert widget.tagsList.addTagErrorText.isHidden() is True
+
+
+def test_add_tag_error_message_hidden_after_cursor_moved(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.tagsList.addTagBar, "   ")
+    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    assert widget.tagsList.addTagErrorText.isHidden() is False
+    widget.tagsList.addTagBar.setCursorPosition(0)
+    assert widget.tagsList.addTagErrorText.isHidden() is True
+
+
 def test_add_tag_entry_can_exit_with_escape_press_at_any_time(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
@@ -2070,6 +2121,7 @@ def test_add_tag_entry_can_exit_with_escape_press_at_any_time(qtbot, db):
     qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Escape)
     assert widget.tagsList.addTagBar.isHidden() is True
     assert widget.tagsList.addTagButton.isHidden() is False
+    assert widget.tagsList.addTagErrorText.isHidden() is True
 
 
 def test_add_tag_entry_can_exit_with_escape_press_at_any_time_clears_text(qtbot, db):
@@ -2096,6 +2148,7 @@ def test_add_tag_entry_can_exit_with_backspace_when_empty(qtbot, db):
     qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Backspace)
     assert widget.tagsList.addTagBar.isHidden() is True
     assert widget.tagsList.addTagButton.isHidden() is False
+    assert widget.tagsList.addTagErrorText.isHidden() is True
 
 
 def test_all_tags_in_database_are_in_the_tag_list_at_beginning(qtbot, db):

@@ -1185,6 +1185,7 @@ class TagsListScrollArea(ScrollArea):
         self,
         addTagButton,
         addTagBar,
+        addTagErrorText,
         papersList,
         splitter,
         firstDeleteTagButton,
@@ -1197,6 +1198,8 @@ class TagsListScrollArea(ScrollArea):
         :type addTagButton: QPushButton
         :param addTagBar: The entry where new tag names are added
         :type addTagBar: QLineEdit
+        :param addTagErrorText: the label showing if there's an error
+        :type addTagErrorText: QLabel
         :param papersList: The object holding the central papers list
         :type papersList: PapersListScrollArea
         :param splitter: The splitter object in the main panel
@@ -1216,6 +1219,7 @@ class TagsListScrollArea(ScrollArea):
         self.tags = []
         self.addTagButton = addTagButton
         self.addTagBar = addTagBar
+        self.addTagErrorText = addTagErrorText
         self.papersList = papersList
         self.splitter = splitter
         self.firstDeleteTagButton = firstDeleteTagButton
@@ -1229,6 +1233,7 @@ class TagsListScrollArea(ScrollArea):
         # put the tag bar at the top of the list
         self.addWidget(self.addTagButton)  # calls ScrollArea addWidget
         self.addWidget(self.addTagBar)
+        self.addWidget(self.addTagErrorText)
         self.addWidget(self.firstDeleteTagButton)
         self.addWidget(self.secondDeleteTagEntry)
         self.addWidget(self.thirdDeleteTagButton)
@@ -1239,6 +1244,7 @@ class TagsListScrollArea(ScrollArea):
         # margins around the buttons at the top, so they're not right on top of each
         # other. I do this with QSS
         self.layout.setSpacing(0)
+        self.addTagErrorText.setProperty("is_left_panel_item", True)
         self.addTagButton.setProperty("is_left_panel_item", True)
         self.addTagBar.setProperty("is_left_panel_item", True)
         firstDeleteTagButton.setProperty("is_left_panel_item", True)
@@ -1455,6 +1461,12 @@ class MainWindow(QMainWindow):
         self.addTagBar = EasyExitLineEdit(self.resetAddTag, self.addTag)
         self.addTagBar.setPlaceholderText("Tag name")
         self.addTagBar.hide()
+        self.addTagErrorText = QLabel("")
+        self.addTagErrorText.setProperty("error_text", True)
+        self.addTagErrorText.hide()
+        # also allow the reset after an error
+        self.addTagBar.cursorPositionChanged.connect(self.addTagErrorText.hide)
+        self.addTagBar.textChanged.connect(self.addTagErrorText.hide)
 
         # Then set up the buttons to remove tags. We'll have four buttons. The first
         # will be a button to click to start the process of deleting a tag. Next
@@ -1482,6 +1494,7 @@ class MainWindow(QMainWindow):
         self.tagsList = TagsListScrollArea(
             self.addTagButton,
             self.addTagBar,
+            self.addTagErrorText,
             self.papersList,
             self.splitter,
             self.firstDeleteTagButton,
@@ -1620,14 +1633,21 @@ class MainWindow(QMainWindow):
 
         :return: None
         """
-        #
+        # check for pure whitespace
+        tagName = self.addTagBar.text()
+        if tagName.strip() == "":
+            self.tagsList.addTagErrorText.setText("Pure whitespace isn't valid")
+            self.tagsList.addTagErrorText.show()
+            return
+        # otherwise, try to add it to the database
         try:
-            tagName = self.addTagBar.text()
             self.db.add_new_tag(tagName)
             self.tagsList.addTag(LeftPanelTag(tagName, self.papersList, self.tagsList))
             # add this checkbox to the right panel
             self.rightPanel.populate_tags()
         except ValueError:  # this tag is already in the database
+            self.tagsList.addTagErrorText.setText("This tag already exists")
+            self.tagsList.addTagErrorText.show()
             return
 
         # if we got here we had no error, so it was successfully added and we should
