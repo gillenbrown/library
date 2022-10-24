@@ -2091,6 +2091,25 @@ def test_add_tag_error_message_shown_after_whitesapce_tag_attempt(qtbot, db_temp
     assert widget.tagsList.addTagErrorText.text() == "Pure whitespace isn't valid"
 
 
+def test_tag_name_entry_is_not_cleared_after_backtick_tag_attempt(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.tagsList.addTagBar, "`")
+    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    assert widget.tagsList.addTagBar.text() == "`"
+
+
+def test_add_tag_error_message_shown_after_backtick_tag_attempt(qtbot, db_temp):
+    widget = MainWindow(db_temp)
+    qtbot.addWidget(widget)
+    qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
+    qtbot.keyClicks(widget.tagsList.addTagBar, "`")
+    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    assert widget.tagsList.addTagErrorText.isHidden() is False
+    assert widget.tagsList.addTagErrorText.text() == "Backticks aren't allowed"
+
+
 def test_add_tag_error_message_hidden_after_text_changed(qtbot, db_temp):
     widget = MainWindow(db_temp)
     qtbot.addWidget(widget)

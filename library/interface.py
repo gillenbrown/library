@@ -1652,8 +1652,11 @@ class MainWindow(QMainWindow):
         """
         # check for pure whitespace
         tagName = self.addTagBar.text()
-        if tagName.strip() == "":
-            self.tagsList.addTagErrorText.setText("Pure whitespace isn't valid")
+        if tagName.strip() == "" or "`" in tagName:
+            if "`" in tagName:
+                self.tagsList.addTagErrorText.setText("Backticks aren't allowed")
+            else:
+                self.tagsList.addTagErrorText.setText("Pure whitespace isn't valid")
             self.tagsList.addTagErrorText.show()
             return
         # otherwise, try to add it to the database
