@@ -139,17 +139,33 @@ def CInitialize(qtbot, db):
     return widget
 
 
-def CClick(widget_to_click, qtbot):
-    qtbot.mouseClick(widget_to_click, Qt.LeftButton)
+def CClick(widget, qtbot):
+    qtbot.mouseClick(widget, Qt.LeftButton)
 
 
-def CDoubleClick(widget_to_click, qtbot):
-    qtbot.mouseDClick(widget_to_click, Qt.LeftButton)
+def CDoubleClick(widget, qtbot):
+    qtbot.mouseDClick(widget, Qt.LeftButton)
+
+
+def CEnterText(widget, text, qtbot):
+    qtbot.keyClicks(widget, text)
+
+
+def CPressEnter(widget, qtbot):
+    qtbot.keyPress(widget, Qt.Key_Enter)
+
+
+def CPressEscape(widget, qtbot):
+    qtbot.keyPress(widget, Qt.Key_Escape)
+
+
+def CPressBackspace(widget, qtbot):
+    qtbot.keyPress(widget, Qt.Key_Backspace)
 
 
 def CAddPaper(qtbot, widget, bibcode):
-    qtbot.keyClicks(widget.searchBar, bibcode)
-    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    CEnterText(widget.searchBar, bibcode, qtbot)
+    CPressEnter(widget.searchBar, qtbot)
 
 
 ########################################################################################
@@ -289,7 +305,7 @@ def test_add_button_and_search_bar_are_much_shorter_than_title(qtbot, db_empty):
 def test_can_add_paper_by_filling_bibcode_then_clicking_button(qtbot, db_empty):
     assert len(db_empty.get_all_bibcodes()) == 0
     widget = CInitialize(qtbot, db_empty)
-    qtbot.keyClicks(widget.searchBar, u.mine.bibcode)
+    CEnterText(widget.searchBar, u.mine.bibcode, qtbot)
     CClick(widget.addButton, qtbot)
     assert len(db_empty.get_all_bibcodes()) == 1
     assert u.mine.bibcode in db_empty.get_all_bibcodes()
@@ -298,8 +314,8 @@ def test_can_add_paper_by_filling_bibcode_then_clicking_button(qtbot, db_empty):
 def test_can_add_paper_by_filling_bibcode_then_pressing_enter(qtbot, db_empty):
     assert len(db_empty.get_all_bibcodes()) == 0
     widget = CInitialize(qtbot, db_empty)
-    qtbot.keyClicks(widget.searchBar, u.mine.bibcode)
-    qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
+    CEnterText(widget.searchBar, u.mine.bibcode, qtbot)
+    CPressEnter(widget.searchBar, qtbot)
     assert len(db_empty.get_all_bibcodes()) == 1
     assert u.mine.bibcode in db_empty.get_all_bibcodes()
 
@@ -594,21 +610,21 @@ def test_bad_paper_error_formatting_of_textedit_reset_after_editing_text(
 ):
     widget = CInitialize(qtbot, db_empty)
     CAddPaper(qtbot, widget, "nonsense")
-    qtbot.keyClicks(widget.searchBar, "nonsens")
+    CEnterText(widget.searchBar, "nonsens", qtbot)
     assert widget.searchBar.property("error") is False
 
 
 def test_bad_paper_error_message_of_textedit_reset_after_editing_text(qtbot, db_empty):
     widget = CInitialize(qtbot, db_empty)
     CAddPaper(qtbot, widget, "nonsense")
-    qtbot.keyClicks(widget.searchBar, "nonsens")
+    CEnterText(widget.searchBar, "nonsens", qtbot)
     assert widget.searchBarErrorText.isHidden() is True
 
 
 def test_bad_paper_add_button_reshown_after_editing_text(qtbot, db_empty):
     widget = CInitialize(qtbot, db_empty)
     CAddPaper(qtbot, widget, "nonsense")
-    qtbot.keyClicks(widget.searchBar, "nonsens")
+    CEnterText(widget.searchBar, "nonsens", qtbot)
     assert widget.addButton.isHidden() is False
 
 
@@ -661,21 +677,21 @@ def test_duplicate_add_button_reshown_after_any_clicking(qtbot, db):
 def test_duplicate_error_formatting_of_textedit_reset_after_editing_text(qtbot, db):
     widget = CInitialize(qtbot, db)
     CAddPaper(qtbot, widget, u.mine.bibcode)
-    qtbot.keyClicks(widget.searchBar, "s")
+    CEnterText(widget.searchBar, "s", qtbot)
     assert widget.searchBar.property("error") is False
 
 
 def test_duplicate_error_message_of_textedit_reset_after_editing_text(qtbot, db):
     widget = CInitialize(qtbot, db)
     CAddPaper(qtbot, widget, u.mine.bibcode)
-    qtbot.keyClicks(widget.searchBar, "s")
+    CEnterText(widget.searchBar, "s", qtbot)
     assert widget.searchBarErrorText.isHidden() is True
 
 
 def test_duplicate_add_button_reshown_after_editing_text(qtbot, db):
     widget = CInitialize(qtbot, db)
     CAddPaper(qtbot, widget, u.mine.bibcode)
-    qtbot.keyClicks(widget.searchBar, "s")
+    CEnterText(widget.searchBar, "s", qtbot)
     assert widget.addButton.isHidden() is False
 
 
@@ -744,7 +760,7 @@ def test_no_ads_key_set_error_formatting_of_textedit_reset_after_editing_text(
 ):
     widget = CInitialize(qtbot, db_empty_change_ads_key)
     CAddPaper(qtbot, widget, u.used_for_no_ads_key.url)
-    qtbot.keyClicks(widget.searchBar, "s")
+    CEnterText(widget.searchBar, "s", qtbot)
     assert widget.searchBar.property("error") is False
 
 
@@ -753,7 +769,7 @@ def test_no_ads_key_set_error_message_of_textedit_reset_after_editing_text(
 ):
     widget = CInitialize(qtbot, db_empty_change_ads_key)
     CAddPaper(qtbot, widget, u.used_for_no_ads_key.url)
-    qtbot.keyClicks(widget.searchBar, "s")
+    CEnterText(widget.searchBar, "s", qtbot)
     assert widget.searchBarErrorText.isHidden() is True
 
 
@@ -762,7 +778,7 @@ def test_no_ads_key_add_button_reshown_after_editing_text(
 ):
     widget = CInitialize(qtbot, db_empty_change_ads_key)
     CAddPaper(qtbot, widget, u.used_for_no_ads_key.url)
-    qtbot.keyClicks(widget.searchBar, "s")
+    CEnterText(widget.searchBar, "s", qtbot)
     assert widget.addButton.isHidden() is False
 
 
@@ -830,8 +846,8 @@ def test_clicking_on_paper_puts_tags_in_right_panel(qtbot, db_no_tags):
     widget = CInitialize(qtbot, db_no_tags)
     # Add some tags to the database - this is tested below
     for tag in ["T1", "T2", "T3", "T4", "T5"]:
-        qtbot.keyClicks(widget.tagsList.addTagBar, tag)
-        qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+        CEnterText(widget.tagsList.addTagBar, tag, qtbot)
+        CPressEnter(widget.tagsList.addTagBar, qtbot)
 
     # get one of the papers, not sure which
     paper = widget.papersList.papers[0]
@@ -1820,16 +1836,16 @@ def test_add_tag_text_bar_has_correct_placeholder_text(qtbot, db_empty):
 def test_can_add_tag_by_filling_tag_name_then_pressing_enter(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.tagsList.addTagButton, qtbot)
-    qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
-    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    CEnterText(widget.tagsList.addTagBar, "Test Tag", qtbot)
+    CPressEnter(widget.tagsList.addTagBar, qtbot)
     assert db_temp.paper_has_tag(u.mine.bibcode, "Test Tag") is False
 
 
 def test_can_add_tag_to_list_by_filling_tag_name_then_pressing_enter(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.tagsList.addTagButton, qtbot)
-    qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
-    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    CEnterText(widget.tagsList.addTagBar, "Test Tag", qtbot)
+    CPressEnter(widget.tagsList.addTagBar, qtbot)
     tag_names = [t.name for t in widget.tagsList.tags]
     assert "Test Tag" in tag_names
 
@@ -1837,8 +1853,8 @@ def test_can_add_tag_to_list_by_filling_tag_name_then_pressing_enter(qtbot, db_t
 def test_tag_name_entry_is_cleared_after_successful_entry(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.tagsList.addTagButton, qtbot)
-    qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
-    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    CEnterText(widget.tagsList.addTagBar, "Test Tag", qtbot)
+    CPressEnter(widget.tagsList.addTagBar, qtbot)
     # this has been tested to work
     assert widget.tagsList.addTagBar.text() == ""
 
@@ -1846,38 +1862,38 @@ def test_tag_name_entry_is_cleared_after_successful_entry(qtbot, db_temp):
 def test_tag_name_entry_is_hidden_after_successful_entry(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.tagsList.addTagButton, qtbot)
-    qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
-    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    CEnterText(widget.tagsList.addTagBar, "Test Tag", qtbot)
+    CPressEnter(widget.tagsList.addTagBar, qtbot)
     assert widget.tagsList.addTagBar.isHidden() is True
 
 
 def test_tag_name_button_is_shown_after_successful_entry(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.tagsList.addTagButton, qtbot)
-    qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
-    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    CEnterText(widget.tagsList.addTagBar, "Test Tag", qtbot)
+    CPressEnter(widget.tagsList.addTagBar, qtbot)
     assert widget.tagsList.addTagButton.isHidden() is False
 
 
 def test_tag_name_entry_is_not_cleared_after_duplicate_tag_attempt(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.tagsList.addTagButton, qtbot)
-    qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
-    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    CEnterText(widget.tagsList.addTagBar, "Test Tag", qtbot)
+    CPressEnter(widget.tagsList.addTagBar, qtbot)
     # this has been tested to work and now be clear, so try it again
-    qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
-    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    CEnterText(widget.tagsList.addTagBar, "Test Tag", qtbot)
+    CPressEnter(widget.tagsList.addTagBar, qtbot)
     assert widget.tagsList.addTagBar.text() == "Test Tag"
 
 
 def test_add_tag_error_message_shown_after_duplicate_tag_attempt(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.tagsList.addTagButton, qtbot)
-    qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
-    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    CEnterText(widget.tagsList.addTagBar, "Test Tag", qtbot)
+    CPressEnter(widget.tagsList.addTagBar, qtbot)
     # this has been tested to work and now be clear, so try it again
-    qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
-    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    CEnterText(widget.tagsList.addTagBar, "Test Tag", qtbot)
+    CPressEnter(widget.tagsList.addTagBar, qtbot)
     assert widget.tagsList.addTagErrorText.isHidden() is False
     assert widget.tagsList.addTagErrorText.text() == "This tag already exists"
 
@@ -1885,27 +1901,27 @@ def test_add_tag_error_message_shown_after_duplicate_tag_attempt(qtbot, db_temp)
 def test_tag_name_entry_is_not_cleared_after_duplicate_cap_tag_attempt(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.tagsList.addTagButton, qtbot)
-    qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
-    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    CEnterText(widget.tagsList.addTagBar, "Test Tag", qtbot)
+    CPressEnter(widget.tagsList.addTagBar, qtbot)
     # this has been tested to work and now be clear, so try it again
-    qtbot.keyClicks(widget.tagsList.addTagBar, "test tag")
-    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    CEnterText(widget.tagsList.addTagBar, "test tag", qtbot)
+    CPressEnter(widget.tagsList.addTagBar, qtbot)
     assert widget.tagsList.addTagBar.text() == "test tag"
 
 
 def test_tag_name_entry_is_not_cleared_after_whitespace_tag_attempt(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.tagsList.addTagButton, qtbot)
-    qtbot.keyClicks(widget.tagsList.addTagBar, "   ")
-    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    CEnterText(widget.tagsList.addTagBar, "   ", qtbot)
+    CPressEnter(widget.tagsList.addTagBar, qtbot)
     assert widget.tagsList.addTagBar.text() == "   "
 
 
 def test_add_tag_error_message_shown_after_whitesapce_tag_attempt(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.tagsList.addTagButton, qtbot)
-    qtbot.keyClicks(widget.tagsList.addTagBar, "   ")
-    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    CEnterText(widget.tagsList.addTagBar, "   ", qtbot)
+    CPressEnter(widget.tagsList.addTagBar, qtbot)
     assert widget.tagsList.addTagErrorText.isHidden() is False
     assert widget.tagsList.addTagErrorText.text() == "Pure whitespace isn't valid"
 
@@ -1913,16 +1929,16 @@ def test_add_tag_error_message_shown_after_whitesapce_tag_attempt(qtbot, db_temp
 def test_tag_name_entry_is_not_cleared_after_backtick_tag_attempt(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.tagsList.addTagButton, qtbot)
-    qtbot.keyClicks(widget.tagsList.addTagBar, "`")
-    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    CEnterText(widget.tagsList.addTagBar, "`", qtbot)
+    CPressEnter(widget.tagsList.addTagBar, qtbot)
     assert widget.tagsList.addTagBar.text() == "`"
 
 
 def test_add_tag_error_message_shown_after_backtick_tag_attempt(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.tagsList.addTagButton, qtbot)
-    qtbot.keyClicks(widget.tagsList.addTagBar, "`")
-    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    CEnterText(widget.tagsList.addTagBar, "`", qtbot)
+    CPressEnter(widget.tagsList.addTagBar, qtbot)
     assert widget.tagsList.addTagErrorText.isHidden() is False
     assert widget.tagsList.addTagErrorText.text() == "Backticks aren't allowed"
 
@@ -1930,18 +1946,18 @@ def test_add_tag_error_message_shown_after_backtick_tag_attempt(qtbot, db_temp):
 def test_add_tag_error_message_hidden_after_text_changed(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.tagsList.addTagButton, qtbot)
-    qtbot.keyClicks(widget.tagsList.addTagBar, "   ")
-    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    CEnterText(widget.tagsList.addTagBar, "   ", qtbot)
+    CPressEnter(widget.tagsList.addTagBar, qtbot)
     assert widget.tagsList.addTagErrorText.isHidden() is False
-    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Backspace)
+    CPressBackspace(widget.tagsList.addTagBar, qtbot)
     assert widget.tagsList.addTagErrorText.isHidden() is True
 
 
 def test_add_tag_error_message_hidden_after_cursor_moved(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.tagsList.addTagButton, qtbot)
-    qtbot.keyClicks(widget.tagsList.addTagBar, "   ")
-    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    CEnterText(widget.tagsList.addTagBar, "   ", qtbot)
+    CPressEnter(widget.tagsList.addTagBar, qtbot)
     assert widget.tagsList.addTagErrorText.isHidden() is False
     widget.tagsList.addTagBar.setCursorPosition(0)
     assert widget.tagsList.addTagErrorText.isHidden() is True
@@ -1950,8 +1966,8 @@ def test_add_tag_error_message_hidden_after_cursor_moved(qtbot, db_temp):
 def test_add_tag_entry_can_exit_with_escape_press_at_any_time(qtbot, db):
     widget = CInitialize(qtbot, db)
     CClick(widget.tagsList.addTagButton, qtbot)
-    qtbot.keyClicks(widget.tagsList.addTagBar, "sdfsdf")
-    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Escape)
+    CEnterText(widget.tagsList.addTagBar, "sdfsdf", qtbot)
+    CPressEscape(widget.tagsList.addTagBar, qtbot)
     assert widget.tagsList.addTagBar.isHidden() is True
     assert widget.tagsList.addTagButton.isHidden() is False
     assert widget.tagsList.addTagErrorText.isHidden() is True
@@ -1960,23 +1976,23 @@ def test_add_tag_entry_can_exit_with_escape_press_at_any_time(qtbot, db):
 def test_add_tag_entry_can_exit_with_escape_press_at_any_time_clears_text(qtbot, db):
     widget = CInitialize(qtbot, db)
     CClick(widget.tagsList.addTagButton, qtbot)
-    qtbot.keyClicks(widget.tagsList.addTagBar, "sdfsdf")
-    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Escape)
+    CEnterText(widget.tagsList.addTagBar, "sdfsdf", qtbot)
+    CPressEscape(widget.tagsList.addTagBar, qtbot)
     assert widget.tagsList.addTagBar.text() == ""
 
 
 def test_add_tag_entry_can_exit_with_backspace_when_empty(qtbot, db):
     widget = CInitialize(qtbot, db)
     CClick(widget.tagsList.addTagButton, qtbot)
-    qtbot.keyClicks(widget.tagsList.addTagBar, "abc")
+    CEnterText(widget.tagsList.addTagBar, "abc", qtbot)
     # back out those three letters
     for _ in range(3):
-        qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Backspace)
+        CPressBackspace(widget.tagsList.addTagBar, qtbot)
     # entry should still be visible
     assert widget.tagsList.addTagBar.isHidden() is False
     assert widget.tagsList.addTagButton.isHidden() is True
     # with one more backspace, we exit
-    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Backspace)
+    CPressBackspace(widget.tagsList.addTagBar, qtbot)
     assert widget.tagsList.addTagBar.isHidden() is True
     assert widget.tagsList.addTagButton.isHidden() is False
     assert widget.tagsList.addTagErrorText.isHidden() is True
@@ -2026,8 +2042,8 @@ def test_tag_has_correct_font_size(qtbot, db):
 
 def test_duplicate_in_internal_tags_list_raises_error(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
-    qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
-    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    CEnterText(widget.tagsList.addTagBar, "Test Tag", qtbot)
+    CPressEnter(widget.tagsList.addTagBar, qtbot)
     new_tag = LeftPanelTag("Test Tag", widget.papersList, widget.tagsList)
     with pytest.raises(AssertionError):
         widget.tagsList.addTag(new_tag)
@@ -2220,8 +2236,8 @@ def test_clicking_on_show_all_in_left_panel_unlights_others(qtbot, db_temp):
 def test_newly_added_tag_is_unhighlighted(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.tagsList.addTagButton, qtbot)
-    qtbot.keyClicks(widget.tagsList.addTagBar, "newly added tag")
-    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    CEnterText(widget.tagsList.addTagBar, "newly added tag", qtbot)
+    CPressEnter(widget.tagsList.addTagBar, qtbot)
     for tag in widget.tagsList.tags:
         if tag.label.text() == "newly added tag":
             assert tag.property("is_highlighted") is False
@@ -2697,40 +2713,40 @@ def test_third_cancel_tag_entry_hidden_at_beginning(qtbot, db_temp):
 def test_second_delete_tag_entry_is_hidden_when_entry_done(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.firstDeleteTagButton, qtbot)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")  # tag must exist
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    CEnterText(widget.secondDeleteTagEntry, "Read", qtbot)  # tag must exist
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
     assert widget.secondDeleteTagEntry.isHidden() is True
 
 
 def test_third_delete_tag_button_appears_when_first_entry_done(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.firstDeleteTagButton, qtbot)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    CEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
     assert widget.thirdDeleteTagButton.isHidden() is False
 
 
 def test_third_delete_tag_cancel_button_appears_when_first_entry_done(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.firstDeleteTagButton, qtbot)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    CEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
     assert widget.thirdDeleteTagCancelButton.isHidden() is False
 
 
 def test_second_tag_delete_error_text_hidden_when_first_entry_done(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.firstDeleteTagButton, qtbot)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    CEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
     assert widget.secondDeleteTagErrorText.isHidden() is True
 
 
 def test_delete_tag_entry_can_exit_with_escape_press_at_any_time(qtbot, db):
     widget = CInitialize(qtbot, db)
     CClick(widget.firstDeleteTagButton, qtbot)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "sdfsdf")
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Escape)
+    CEnterText(widget.secondDeleteTagEntry, "sdfsdf", qtbot)
+    CPressEscape(widget.secondDeleteTagEntry, qtbot)
     assert widget.secondDeleteTagEntry.isHidden() is True
     assert widget.firstDeleteTagButton.isHidden() is False
 
@@ -2738,23 +2754,23 @@ def test_delete_tag_entry_can_exit_with_escape_press_at_any_time(qtbot, db):
 def test_delete_tag_entry_can_exit_with_escape_press_at_any_time_clears_text(qtbot, db):
     widget = CInitialize(qtbot, db)
     CClick(widget.firstDeleteTagButton, qtbot)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "sdfsdf")
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Escape)
+    CEnterText(widget.secondDeleteTagEntry, "sdfsdf", qtbot)
+    CPressEscape(widget.secondDeleteTagEntry, qtbot)
     assert widget.secondDeleteTagEntry.text() == ""
 
 
 def test_delete_tag_entry_can_exit_with_backspace_when_empty(qtbot, db):
     widget = CInitialize(qtbot, db)
     CClick(widget.firstDeleteTagButton, qtbot)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "abc")
+    CEnterText(widget.secondDeleteTagEntry, "abc", qtbot)
     # back out those three letters
     for _ in range(3):
-        qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Backspace)
+        CPressBackspace(widget.secondDeleteTagEntry, qtbot)
     # entry should still be visible
     assert widget.secondDeleteTagEntry.isHidden() is False
     assert widget.firstDeleteTagButton.isHidden() is True
     # with one more backspace, we exit
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Backspace)
+    CPressBackspace(widget.secondDeleteTagEntry, qtbot)
     assert widget.secondDeleteTagEntry.isHidden() is True
     assert widget.firstDeleteTagButton.isHidden() is False
 
@@ -2762,48 +2778,48 @@ def test_delete_tag_entry_can_exit_with_backspace_when_empty(qtbot, db):
 def test_third_delete_tag_button_has_correct_font_size(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.firstDeleteTagButton, qtbot)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    CEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
     assert widget.thirdDeleteTagButton.font().pointSize() == 14
 
 
 def test_third_delete_tag_button_has_correct_font_family(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.firstDeleteTagButton, qtbot)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    CEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
     assert widget.thirdDeleteTagButton.font().family() == "Cabin"
 
 
 def test_third_delete_tag_cancel_button_has_correct_font_size(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.firstDeleteTagButton, qtbot)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    CEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
     assert widget.thirdDeleteTagCancelButton.font().pointSize() == 14
 
 
 def test_third_delete_tag_cancel_button_has_correct_font_family(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.firstDeleteTagButton, qtbot)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    CEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
     assert widget.thirdDeleteTagCancelButton.font().family() == "Cabin"
 
 
 def test_third_delete_tag_button_text_is_accurate(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.firstDeleteTagButton, qtbot)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    CEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
     assert widget.thirdDeleteTagButton.text() == 'Confirm deletion of tag "Read"'
 
 
 def test_third_delete_tag_cancel_button_text_is_accurate(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.firstDeleteTagButton, qtbot)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    CEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
     assert (
         widget.thirdDeleteTagCancelButton.text() == "Oops, don't delete tag " + '"Read"'
     )
@@ -2813,8 +2829,8 @@ def test_third_delete_tag_button_deletes_tag_from_db_when_pressed(qtbot, db_temp
     widget = CInitialize(qtbot, db_temp)
     original_tags = db_temp.get_all_tags()
     CClick(widget.firstDeleteTagButton, qtbot)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    CEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
     CClick(widget.thirdDeleteTagButton, qtbot)
     # check that it's not in the database anymore
     new_tags = db_temp.get_all_tags()
@@ -2827,8 +2843,8 @@ def test_third_delete_tag_button_deletes_tag_from_list_when_pressed(qtbot, db_te
     # first get the original number of tags
     num_original_tags = len([t.name for t in widget.tagsList.tags])
     CClick(widget.firstDeleteTagButton, qtbot)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    CEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
     CClick(widget.thirdDeleteTagButton, qtbot)
     # Then see what tags are in the list now
     new_tags = [t.name for t in widget.tagsList.tags]
@@ -2839,8 +2855,8 @@ def test_third_delete_tag_button_deletes_tag_from_list_when_pressed(qtbot, db_te
 def test_first_delete_tag_button_comes_back_once_tag_deleted(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.firstDeleteTagButton, qtbot)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    CEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
     CClick(widget.thirdDeleteTagButton, qtbot)
     assert widget.firstDeleteTagButton.isHidden() is False
 
@@ -2848,8 +2864,8 @@ def test_first_delete_tag_button_comes_back_once_tag_deleted(qtbot, db_temp):
 def test_second_delete_tag_entry_hidden_once_tag_deleted(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.firstDeleteTagButton, qtbot)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    CEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
     CClick(widget.thirdDeleteTagButton, qtbot)
     assert widget.secondDeleteTagEntry.isHidden() is True
 
@@ -2857,8 +2873,8 @@ def test_second_delete_tag_entry_hidden_once_tag_deleted(qtbot, db_temp):
 def test_third_delete_tag_button_hides_once_tag_deleted(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.firstDeleteTagButton, qtbot)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    CEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
     CClick(widget.thirdDeleteTagButton, qtbot)
     assert widget.thirdDeleteTagButton.isHidden() is True
 
@@ -2866,8 +2882,8 @@ def test_third_delete_tag_button_hides_once_tag_deleted(qtbot, db_temp):
 def test_third_delete_tag_cancel_button_hides_once_tag_deleted(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.firstDeleteTagButton, qtbot)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    CEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
     CClick(widget.thirdDeleteTagButton, qtbot)
     assert widget.thirdDeleteTagCancelButton.isHidden() is True
 
@@ -2875,8 +2891,8 @@ def test_third_delete_tag_cancel_button_hides_once_tag_deleted(qtbot, db_temp):
 def test_first_delete_tag_button_comes_back_once_cancelled(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.firstDeleteTagButton, qtbot)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    CEnterText(widget.secondDeleteTagEntry, "tag_1", qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
     CClick(widget.thirdDeleteTagCancelButton, qtbot)
     assert widget.firstDeleteTagButton.isHidden() is False
 
@@ -2884,8 +2900,8 @@ def test_first_delete_tag_button_comes_back_once_cancelled(qtbot, db_temp):
 def test_second_delete_tag_entry_hidden_once_cancelled(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.firstDeleteTagButton, qtbot)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    CEnterText(widget.secondDeleteTagEntry, "tag_1", qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
     CClick(widget.thirdDeleteTagCancelButton, qtbot)
     assert widget.secondDeleteTagEntry.isHidden() is True
 
@@ -2893,8 +2909,8 @@ def test_second_delete_tag_entry_hidden_once_cancelled(qtbot, db_temp):
 def test_third_delete_tag_button_hides_once_cancelled(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.firstDeleteTagButton, qtbot)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    CEnterText(widget.secondDeleteTagEntry, "tag_1", qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
     CClick(widget.thirdDeleteTagCancelButton, qtbot)
     assert widget.thirdDeleteTagButton.isHidden() is True
 
@@ -2902,8 +2918,8 @@ def test_third_delete_tag_button_hides_once_cancelled(qtbot, db_temp):
 def test_third_delete_tag_cancel_button_hides_once_cancelled(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.firstDeleteTagButton, qtbot)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    CEnterText(widget.secondDeleteTagEntry, "tag_1", qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
     CClick(widget.thirdDeleteTagCancelButton, qtbot)
     assert widget.thirdDeleteTagCancelButton.isHidden() is True
 
@@ -2913,8 +2929,8 @@ def test_cancel_tag_delete_doesnt_delete_any_tags_db(qtbot, db_temp):
     # first get the original tags
     original_tags = db_temp.get_all_tags()
     CClick(widget.firstDeleteTagButton, qtbot)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    CEnterText(widget.secondDeleteTagEntry, "tag_1", qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
     CClick(widget.thirdDeleteTagCancelButton, qtbot)
     new_tags = db_temp.get_all_tags()
     assert len(original_tags) == len(new_tags)
@@ -2926,8 +2942,8 @@ def test_cancel_tag_delete_doesnt_delete_any_tags_interface(qtbot, db_temp):
     # first get the original tags
     original_tags = [t.name for t in widget.tagsList.tags]
     CClick(widget.firstDeleteTagButton, qtbot)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    CEnterText(widget.secondDeleteTagEntry, "tag_1", qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
     CClick(widget.thirdDeleteTagCancelButton, qtbot)
     new_tags = [t.name for t in widget.tagsList.tags]
     assert len(original_tags) == len(new_tags)
@@ -2937,8 +2953,8 @@ def test_cancel_tag_delete_doesnt_delete_any_tags_interface(qtbot, db_temp):
 def test_invalid_tag_delete_entry_keeps_entry(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.firstDeleteTagButton, qtbot)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "sdfsdfadbsdf")
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    CEnterText(widget.secondDeleteTagEntry, "sdfsdfadbsdf", qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
     assert widget.secondDeleteTagEntry.isHidden() is False
     assert widget.secondDeleteTagEntry.text() == "sdfsdfadbsdf"
 
@@ -2946,8 +2962,8 @@ def test_invalid_tag_delete_entry_keeps_entry(qtbot, db_temp):
 def test_invalid_tag_delete_entry_shows_error_text(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.firstDeleteTagButton, qtbot)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "sdfsdfadbsdf")
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    CEnterText(widget.secondDeleteTagEntry, "sdfsdfadbsdf", qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
     assert widget.secondDeleteTagErrorText.isHidden() is False
     assert widget.secondDeleteTagErrorText.text() == "This tag does not exist"
 
@@ -2955,24 +2971,24 @@ def test_invalid_tag_delete_entry_shows_error_text(qtbot, db_temp):
 def test_invalid_tag_delete_entry_keeps_third_hidden(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.firstDeleteTagButton, qtbot)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "sdfsdfadbsdf")
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    CEnterText(widget.secondDeleteTagEntry, "sdfsdfadbsdf", qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
     assert widget.thirdDeleteTagButton.isHidden() is True
 
 
 def test_invalid_tag_delete_entry_keeps_third_cancel_hidden(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.firstDeleteTagButton, qtbot)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "sdfsdfadbsdf")
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    CEnterText(widget.secondDeleteTagEntry, "sdfsdfadbsdf", qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
     assert widget.thirdDeleteTagCancelButton.isHidden() is True
 
 
 def test_invalid_tag_delete_error_text_hidden_when_clicked(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.firstDeleteTagButton, qtbot)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "sdfsdfadbsdf")
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    CEnterText(widget.secondDeleteTagEntry, "sdfsdfadbsdf", qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
     assert widget.secondDeleteTagErrorText.isHidden() is False
     widget.secondDeleteTagEntry.setCursorPosition(0)
     assert widget.secondDeleteTagErrorText.isHidden() is True
@@ -2981,10 +2997,10 @@ def test_invalid_tag_delete_error_text_hidden_when_clicked(qtbot, db_temp):
 def test_invalid_tag_delete_error_text_hidden_when_text_modified(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.firstDeleteTagButton, qtbot)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "sdfsdfadbsdf")
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    CEnterText(widget.secondDeleteTagEntry, "sdfsdfadbsdf", qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
     assert widget.secondDeleteTagErrorText.isHidden() is False
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Backspace)
+    CPressBackspace(widget.secondDeleteTagEntry, qtbot)
     assert widget.secondDeleteTagErrorText.isHidden() is True
 
 
@@ -3014,8 +3030,8 @@ def test_done_editing_button_is_hidden_when_paper_clicked(qtbot, db_temp):
 def test_newly_added_tags_appear_in_right_panel(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     # first add a tag
-    qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
-    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    CEnterText(widget.tagsList.addTagBar, "Test Tag", qtbot)
+    CPressEnter(widget.tagsList.addTagBar, qtbot)
     # then look at the tags in the right panel
     CClick(widget.papersList.papers[0], qtbot)
     assert "Test Tag" in [t.text() for t in widget.rightPanel.tags]
@@ -3025,15 +3041,15 @@ def test_adding_tags_doesnt_duplicate_tags_in_right_panel(qtbot, db_empty):
     db_empty.add_paper(u.mine.bibcode)
     widget = CInitialize(qtbot, db_empty)
     # first add a tag
-    qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
-    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    CEnterText(widget.tagsList.addTagBar, "Test Tag", qtbot)
+    CPressEnter(widget.tagsList.addTagBar, qtbot)
     # then look at the tags in the right panel
     CClick(widget.papersList.papers[0], qtbot)
     assert ["Test Tag"] == [t.text() for t in widget.rightPanel.tags]
 
     # add another tag, then check again
-    qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag 2")
-    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    CEnterText(widget.tagsList.addTagBar, "Test Tag 2", qtbot)
+    CPressEnter(widget.tagsList.addTagBar, qtbot)
     # then look at the tags in the right panel
     CClick(widget.papersList.papers[0], qtbot)
     assert ["Test Tag", "Test Tag 2"] == [t.text() for t in widget.rightPanel.tags]
@@ -3127,8 +3143,8 @@ def test_clicking_on_show_all_in_left_panel_removes_other_exports(qtbot, db_temp
 def test_newly_added_tag_has_hidden_export(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.tagsList.addTagButton, qtbot)
-    qtbot.keyClicks(widget.tagsList.addTagBar, "newly added tag")
-    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    CEnterText(widget.tagsList.addTagBar, "newly added tag", qtbot)
+    CPressEnter(widget.tagsList.addTagBar, qtbot)
     for tag in widget.tagsList.tags:
         if tag.label.text() == "newly added tag":
             assert tag.exportButton.isHidden() is True
@@ -3310,7 +3326,7 @@ def test_notes_edit_field_changes_database_when_finished(qtbot, db_notes):
     CClick(widget.rightPanel.userNotesTextEditButton, qtbot)
     # simulate the user deleting the current into, then adding their own
     widget.rightPanel.userNotesTextEditField.clear()
-    qtbot.keyClicks(widget.rightPanel.userNotesTextEditField, "987XYZ")
+    CEnterText(widget.rightPanel.userNotesTextEditField, "987XYZ", qtbot)
     CClick(widget.rightPanel.userNotesTextEditFinishedButton, qtbot)
     assert db_notes.get_paper_attribute(u.mine.bibcode, "user_notes") == "987XYZ"
 
@@ -3321,7 +3337,7 @@ def test_notes_edit_field_changes_shown_text(qtbot, db_notes):
     CClick(widget.rightPanel.userNotesTextEditButton, qtbot)
     # simulate the user deleting the current into, then adding their own
     widget.rightPanel.userNotesTextEditField.clear()
-    qtbot.keyClicks(widget.rightPanel.userNotesTextEditField, "987XYZ")
+    CEnterText(widget.rightPanel.userNotesTextEditField, "987XYZ", qtbot)
     CClick(widget.rightPanel.userNotesTextEditFinishedButton, qtbot)
     assert widget.rightPanel.userNotesText.text() == "987XYZ"
 
@@ -3340,7 +3356,7 @@ def test_notes_edit_finished_button_disappears_when_clicked(qtbot, db_notes):
     widget = CInitialize(qtbot, db_notes)
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.userNotesTextEditButton, qtbot)
-    qtbot.keyClicks(widget.rightPanel.userNotesTextEditField, "987XYZ")
+    CEnterText(widget.rightPanel.userNotesTextEditField, "987XYZ", qtbot)
     CClick(widget.rightPanel.userNotesTextEditFinishedButton, qtbot)
     assert widget.rightPanel.userNotesTextEditFinishedButton.isHidden() is True
 
@@ -3349,7 +3365,7 @@ def test_notes_edit_field_disappears_when_editing_done(qtbot, db_notes):
     widget = CInitialize(qtbot, db_notes)
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.userNotesTextEditButton, qtbot)
-    qtbot.keyClicks(widget.rightPanel.userNotesTextEditField, "987XYZ")
+    CEnterText(widget.rightPanel.userNotesTextEditField, "987XYZ", qtbot)
     CClick(widget.rightPanel.userNotesTextEditFinishedButton, qtbot)
     assert widget.rightPanel.userNotesTextEditField.isHidden() is True
 
@@ -3358,7 +3374,7 @@ def test_notes_edit_button_reappears_when_editing_done(qtbot, db_notes):
     widget = CInitialize(qtbot, db_notes)
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.userNotesTextEditButton, qtbot)
-    qtbot.keyClicks(widget.rightPanel.userNotesTextEditField, "987XYZ")
+    CEnterText(widget.rightPanel.userNotesTextEditField, "987XYZ", qtbot)
     CClick(widget.rightPanel.userNotesTextEditFinishedButton, qtbot)
     assert widget.rightPanel.userNotesTextEditButton.isHidden() is False
 
@@ -3413,8 +3429,8 @@ def test_left_panel_tags_are_sorted_alphabetically_after_adding(qtbot, db_empty)
     # add tags
     tags = ["abc", "zyx", "Aye", "Test", "ZAA"]
     for tag in tags:
-        qtbot.keyClicks(widget.tagsList.addTagBar, tag)
-        qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+        CEnterText(widget.tagsList.addTagBar, tag, qtbot)
+        CPressEnter(widget.tagsList.addTagBar, qtbot)
     tag_names = [tag.name for tag in widget.tagsList.tags]
     # in comparison, include read and unread, since those were included on widet
     # initialization too
@@ -3484,8 +3500,8 @@ def test_tag_checkboxes_are_sorted_properly_after_adding_new_tag(qtbot, db_temp)
     CClick(widget.rightPanel.editTagsButton, qtbot)
     # then add one in the left panel
     CClick(widget.tagsList.addTagButton, qtbot)
-    qtbot.keyClicks(widget.tagsList.addTagBar, "Aye")
-    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    CEnterText(widget.tagsList.addTagBar, "Aye", qtbot)
+    CPressEnter(widget.tagsList.addTagBar, qtbot)
     # then ensure this new checkbox was added appropriately
     tags = [tag.text() for tag in widget.rightPanel.tags]
     assert "Aye" in tags
@@ -3504,8 +3520,8 @@ def test_tag_checkboxes_are_sorted_properly_after_deleting_tag(qtbot, db_temp):
     CClick(widget.rightPanel.editTagsButton, qtbot)
     # then delete a tag from the left panel
     CClick(widget.firstDeleteTagButton, qtbot)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, "Test")
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    CEnterText(widget.secondDeleteTagEntry, "Test", qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
     CClick(widget.thirdDeleteTagButton, qtbot)
     # then ensure this new checkbox was removed appropriately
     tags = [tag.text() for tag in widget.rightPanel.tags]
@@ -3712,8 +3728,8 @@ def test_edit_citation_keyword_good_entry_updates_database(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test_key")
-    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Return)
+    CEnterText(widget.rightPanel.editCiteKeyEntry, "test_key", qtbot)
+    CPressEnter(widget.rightPanel.editCiteKeyEntry, qtbot)
     new_key = db_temp.get_paper_attribute(
         widget.papersList.papers[0].bibcode, "citation_keyword"
     )
@@ -3724,8 +3740,8 @@ def test_edit_citation_keyword_good_entry_updates_shown_text(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test_key")
-    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Return)
+    CEnterText(widget.rightPanel.editCiteKeyEntry, "test_key", qtbot)
+    CPressEnter(widget.rightPanel.editCiteKeyEntry, qtbot)
     assert widget.rightPanel.citeKeyText.text() == "Citation Keyword: test_key"
 
 
@@ -3733,8 +3749,8 @@ def test_edit_citation_keyword_good_entry_resets_buttons(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test_key")
-    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Return)
+    CEnterText(widget.rightPanel.editCiteKeyEntry, "test_key", qtbot)
+    CPressEnter(widget.rightPanel.editCiteKeyEntry, qtbot)
     assert widget.rightPanel.editCiteKeyButton.isHidden() is False
     assert widget.rightPanel.editCiteKeyEntry.isHidden() is True
     assert widget.rightPanel.citeKeyText.isHidden() is False
@@ -3745,8 +3761,8 @@ def test_edit_citation_keyword_good_entry_clears_entry(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test_key")
-    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Return)
+    CEnterText(widget.rightPanel.editCiteKeyEntry, "test_key", qtbot)
+    CPressEnter(widget.rightPanel.editCiteKeyEntry, qtbot)
     assert widget.rightPanel.editCiteKeyEntry.text() == ""
 
 
@@ -3754,8 +3770,8 @@ def test_edit_citation_keyword_spaces_not_allowed(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test key")
-    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Return)
+    CEnterText(widget.rightPanel.editCiteKeyEntry, "test key", qtbot)
+    CPressEnter(widget.rightPanel.editCiteKeyEntry, qtbot)
     assert widget.rightPanel.editCiteKeyErrorText.isHidden() is False
     assert widget.rightPanel.editCiteKeyErrorText.text() == "Spaces not allowed"
 
@@ -3764,12 +3780,12 @@ def test_edit_citation_keyword_duplicates_not_allowed(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test_key")
-    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Return)
+    CEnterText(widget.rightPanel.editCiteKeyEntry, "test_key", qtbot)
+    CPressEnter(widget.rightPanel.editCiteKeyEntry, qtbot)
     CClick(widget.papersList.papers[1], qtbot)
     CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test_key")
-    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Return)
+    CEnterText(widget.rightPanel.editCiteKeyEntry, "test_key", qtbot)
+    CPressEnter(widget.rightPanel.editCiteKeyEntry, qtbot)
     assert widget.rightPanel.editCiteKeyErrorText.isHidden() is False
     assert (
         widget.rightPanel.editCiteKeyErrorText.text()
@@ -3781,8 +3797,8 @@ def test_edit_citation_keyword_spaces_doesnt_reset_buttons(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test key")
-    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Return)
+    CEnterText(widget.rightPanel.editCiteKeyEntry, "test key", qtbot)
+    CPressEnter(widget.rightPanel.editCiteKeyEntry, qtbot)
     assert widget.rightPanel.editCiteKeyButton.isHidden() is True
     assert widget.rightPanel.editCiteKeyEntry.isHidden() is False
     assert widget.rightPanel.citeKeyText.isHidden() is False
@@ -3793,12 +3809,12 @@ def test_edit_citation_keyword_duplicates_doesnt_reset_buttons(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test_key")
-    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Return)
+    CEnterText(widget.rightPanel.editCiteKeyEntry, "test_key", qtbot)
+    CPressEnter(widget.rightPanel.editCiteKeyEntry, qtbot)
     CClick(widget.papersList.papers[1], qtbot)
     CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test_key")
-    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Return)
+    CEnterText(widget.rightPanel.editCiteKeyEntry, "test_key", qtbot)
+    CPressEnter(widget.rightPanel.editCiteKeyEntry, qtbot)
     assert widget.rightPanel.editCiteKeyButton.isHidden() is True
     assert widget.rightPanel.editCiteKeyEntry.isHidden() is False
     assert widget.rightPanel.citeKeyText.isHidden() is False
@@ -3809,8 +3825,8 @@ def test_edit_citation_keyword_spaces_doesnt_clear_text(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test key")
-    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Return)
+    CEnterText(widget.rightPanel.editCiteKeyEntry, "test key", qtbot)
+    CPressEnter(widget.rightPanel.editCiteKeyEntry, qtbot)
     assert widget.rightPanel.editCiteKeyEntry.text() == "test key"
 
 
@@ -3818,12 +3834,12 @@ def test_edit_citation_keyword_duplicates_doesnt_clear_text(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test_key")
-    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Return)
+    CEnterText(widget.rightPanel.editCiteKeyEntry, "test_key", qtbot)
+    CPressEnter(widget.rightPanel.editCiteKeyEntry, qtbot)
     CClick(widget.papersList.papers[1], qtbot)
     CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test_key")
-    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Return)
+    CEnterText(widget.rightPanel.editCiteKeyEntry, "test_key", qtbot)
+    CPressEnter(widget.rightPanel.editCiteKeyEntry, qtbot)
     assert widget.rightPanel.editCiteKeyEntry.text() == "test_key"
 
 
@@ -3831,8 +3847,8 @@ def test_edit_citation_keyword_spaces_doesnt_update_database(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test key")
-    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Return)
+    CEnterText(widget.rightPanel.editCiteKeyEntry, "test key", qtbot)
+    CPressEnter(widget.rightPanel.editCiteKeyEntry, qtbot)
     bibcode = widget.papersList.papers[0].bibcode
     assert db_temp.get_paper_attribute(bibcode, "citation_keyword") == bibcode
 
@@ -3841,12 +3857,12 @@ def test_edit_citation_keyword_duplicates_doesnt_update_database(qtbot, db_temp)
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test_key")
-    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Return)
+    CEnterText(widget.rightPanel.editCiteKeyEntry, "test_key", qtbot)
+    CPressEnter(widget.rightPanel.editCiteKeyEntry, qtbot)
     CClick(widget.papersList.papers[1], qtbot)
     CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test_key")
-    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Return)
+    CEnterText(widget.rightPanel.editCiteKeyEntry, "test_key", qtbot)
+    CPressEnter(widget.rightPanel.editCiteKeyEntry, qtbot)
     bibcode_update = widget.papersList.papers[0].bibcode
     assert db_temp.get_paper_attribute(bibcode_update, "citation_keyword") == "test_key"
     bibcode_dup = widget.papersList.papers[1].bibcode
@@ -3868,8 +3884,8 @@ def test_edit_citation_keyword_entry_escape_exit_resets_buttons(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "abc")
-    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Escape)
+    CEnterText(widget.rightPanel.editCiteKeyEntry, "abc", qtbot)
+    CPressEscape(widget.rightPanel.editCiteKeyEntry, qtbot)
     assert widget.rightPanel.editCiteKeyButton.isHidden() is False
     assert widget.rightPanel.editCiteKeyEntry.isHidden() is True
     assert widget.rightPanel.citeKeyText.isHidden() is False
@@ -3880,17 +3896,17 @@ def test_edit_citation_keyword_entry_backspace_exit_resets_buttons(qtbot, db_tem
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "abc")
+    CEnterText(widget.rightPanel.editCiteKeyEntry, "abc", qtbot)
     # back out the text we entered
     for _ in range(3):
-        qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Backspace)
+        CPressBackspace(widget.rightPanel.editCiteKeyEntry, qtbot)
     # buttons should not be reset yet
     assert widget.rightPanel.editCiteKeyButton.isHidden() is True
     assert widget.rightPanel.editCiteKeyEntry.isHidden() is False
     assert widget.rightPanel.citeKeyText.isHidden() is False
     assert widget.rightPanel.editCiteKeyErrorText.isHidden() is True
     # buttons should reset after one more backspace
-    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Backspace)
+    CPressBackspace(widget.rightPanel.editCiteKeyEntry, qtbot)
     assert widget.rightPanel.editCiteKeyButton.isHidden() is False
     assert widget.rightPanel.editCiteKeyEntry.isHidden() is True
     assert widget.rightPanel.citeKeyText.isHidden() is False
@@ -3901,8 +3917,8 @@ def test_edit_citation_keyword_entry_escape_exit_clears_text(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "abc")
-    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Escape)
+    CEnterText(widget.rightPanel.editCiteKeyEntry, "abc", qtbot)
+    CPressEscape(widget.rightPanel.editCiteKeyEntry, qtbot)
     assert widget.rightPanel.editCiteKeyEntry.text() == ""
 
 
@@ -3910,12 +3926,12 @@ def test_edit_citation_keywored_entry_backspace_exit_clears_text(qtbot, db_temp)
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "abc")
+    CEnterText(widget.rightPanel.editCiteKeyEntry, "abc", qtbot)
     # back out the text we entered
     for _ in range(3):
-        qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Backspace)
+        CPressBackspace(widget.rightPanel.editCiteKeyEntry, qtbot)
     # buttons should reset after one more backspace
-    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Backspace)
+    CPressBackspace(widget.rightPanel.editCiteKeyEntry, qtbot)
 
     assert widget.rightPanel.editCiteKeyEntry.text() == ""
 
@@ -3924,8 +3940,8 @@ def test_edit_citation_keywored_entry_escape_exit_doesnt_change_db(qtbot, db_tem
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "abc")
-    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Escape)
+    CEnterText(widget.rightPanel.editCiteKeyEntry, "abc", qtbot)
+    CPressEscape(widget.rightPanel.editCiteKeyEntry, qtbot)
     bibcode = widget.papersList.papers[0].bibcode
     assert db_temp.get_paper_attribute(bibcode, "citation_keyword") == bibcode
 
@@ -3934,12 +3950,12 @@ def test_edit_citation_keywored_entry_backspace_exit_doesnt_change_db(qtbot, db_
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "abc")
+    CEnterText(widget.rightPanel.editCiteKeyEntry, "abc", qtbot)
     # back out the text we entered
     for _ in range(3):
-        qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Backspace)
+        CPressBackspace(widget.rightPanel.editCiteKeyEntry, qtbot)
     # buttons should reset after one more backspace
-    qtbot.keyPress(widget.rightPanel.editCiteKeyEntry, Qt.Key_Backspace)
+    CPressBackspace(widget.rightPanel.editCiteKeyEntry, qtbot)
     bibcode = widget.papersList.papers[0].bibcode
     assert db_temp.get_paper_attribute(bibcode, "citation_keyword") == bibcode
 
@@ -4010,11 +4026,12 @@ def test_adding_long_tag_resizes_splitter(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     original_sizes = widget.splitter.sizes()
     CClick(widget.tagsList.addTagButton, qtbot)
-    qtbot.keyClicks(
+    CEnterText(
         widget.tagsList.addTagBar,
         "this is a very long tag, too long to realistically use",
+        qtbot,
     )
-    qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
+    CPressEnter(widget.tagsList.addTagBar, qtbot)
     new_sizes = widget.splitter.sizes()
     assert new_sizes[0] > original_sizes[0]
 
@@ -4034,8 +4051,8 @@ def test_deleting_long_tag_resizes_splitter(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     original_sizes = widget.splitter.sizes()
     CClick(widget.firstDeleteTagButton, qtbot)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, tag_name)
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    CEnterText(widget.secondDeleteTagEntry, tag_name, qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
     CClick(widget.thirdDeleteTagButton, qtbot)
     new_sizes = widget.splitter.sizes()
     assert new_sizes[0] < original_sizes[0]
@@ -4051,8 +4068,8 @@ def test_showing_delete_tag_confirm_resizes_splitter(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     original_sizes = widget.splitter.sizes()
     CClick(widget.firstDeleteTagButton, qtbot)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, tag_name)
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    CEnterText(widget.secondDeleteTagEntry, tag_name, qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
     new_sizes = widget.splitter.sizes()
     assert new_sizes[0] > original_sizes[0]
 
@@ -4062,8 +4079,8 @@ def test_confirming_tag_delete_resizes_splitter(qtbot, db_temp):
     db_temp.add_new_tag(tag_name)
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.firstDeleteTagButton, qtbot)
-    qtbot.keyClicks(widget.secondDeleteTagEntry, tag_name)
-    qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
+    CEnterText(widget.secondDeleteTagEntry, tag_name, qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
     original_sizes = widget.splitter.sizes()
     CClick(widget.thirdDeleteTagButton, qtbot)
     new_sizes = widget.splitter.sizes()
