@@ -168,6 +168,12 @@ def CAddPaper(mainWidget, bibcode, qtbot):
     CPressEnter(mainWidget.searchBar, qtbot)
 
 
+def CAddTag(mainWidget, tagName, qtbot):
+    CClick(mainWidget.tagsList.addTagButton, qtbot)
+    CEnterText(mainWidget.tagsList.addTagBar, tagName, qtbot)
+    CPressEnter(mainWidget.tagsList.addTagBar, qtbot)
+
+
 ########################################################################################
 #
 # test premade databases
@@ -846,8 +852,7 @@ def test_clicking_on_paper_puts_tags_in_right_panel(qtbot, db_no_tags):
     widget = CInitialize(qtbot, db_no_tags)
     # Add some tags to the database - this is tested below
     for tag in ["T1", "T2", "T3", "T4", "T5"]:
-        CEnterText(widget.tagsList.addTagBar, tag, qtbot)
-        CPressEnter(widget.tagsList.addTagBar, qtbot)
+        CAddTag(widget, tag, qtbot)
 
     # get one of the papers, not sure which
     paper = widget.papersList.papers[0]
@@ -1835,6 +1840,7 @@ def test_add_tag_text_bar_has_correct_placeholder_text(qtbot, db_empty):
 
 def test_can_add_tag_by_filling_tag_name_then_pressing_enter(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
+    # Don't use convenience function, for clarity on what I'm doing
     CClick(widget.tagsList.addTagButton, qtbot)
     CEnterText(widget.tagsList.addTagBar, "Test Tag", qtbot)
     CPressEnter(widget.tagsList.addTagBar, qtbot)
@@ -1843,6 +1849,7 @@ def test_can_add_tag_by_filling_tag_name_then_pressing_enter(qtbot, db_temp):
 
 def test_can_add_tag_to_list_by_filling_tag_name_then_pressing_enter(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
+    # Don't use convenience function, for clarity on what I'm doing
     CClick(widget.tagsList.addTagButton, qtbot)
     CEnterText(widget.tagsList.addTagBar, "Test Tag", qtbot)
     CPressEnter(widget.tagsList.addTagBar, qtbot)
@@ -1852,102 +1859,73 @@ def test_can_add_tag_to_list_by_filling_tag_name_then_pressing_enter(qtbot, db_t
 
 def test_tag_name_entry_is_cleared_after_successful_entry(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
-    CClick(widget.tagsList.addTagButton, qtbot)
-    CEnterText(widget.tagsList.addTagBar, "Test Tag", qtbot)
-    CPressEnter(widget.tagsList.addTagBar, qtbot)
-    # this has been tested to work
+    CAddTag(widget, "Test Tag", qtbot)
     assert widget.tagsList.addTagBar.text() == ""
 
 
 def test_tag_name_entry_is_hidden_after_successful_entry(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
-    CClick(widget.tagsList.addTagButton, qtbot)
-    CEnterText(widget.tagsList.addTagBar, "Test Tag", qtbot)
-    CPressEnter(widget.tagsList.addTagBar, qtbot)
+    CAddTag(widget, "Test Tag", qtbot)
     assert widget.tagsList.addTagBar.isHidden() is True
 
 
 def test_tag_name_button_is_shown_after_successful_entry(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
-    CClick(widget.tagsList.addTagButton, qtbot)
-    CEnterText(widget.tagsList.addTagBar, "Test Tag", qtbot)
-    CPressEnter(widget.tagsList.addTagBar, qtbot)
+    CAddTag(widget, "Test Tag", qtbot)
     assert widget.tagsList.addTagButton.isHidden() is False
 
 
 def test_tag_name_entry_is_not_cleared_after_duplicate_tag_attempt(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
-    CClick(widget.tagsList.addTagButton, qtbot)
-    CEnterText(widget.tagsList.addTagBar, "Test Tag", qtbot)
-    CPressEnter(widget.tagsList.addTagBar, qtbot)
-    # this has been tested to work and now be clear, so try it again
-    CEnterText(widget.tagsList.addTagBar, "Test Tag", qtbot)
-    CPressEnter(widget.tagsList.addTagBar, qtbot)
+    CAddTag(widget, "Test Tag", qtbot)
+    CAddTag(widget, "Test Tag", qtbot)
     assert widget.tagsList.addTagBar.text() == "Test Tag"
 
 
 def test_add_tag_error_message_shown_after_duplicate_tag_attempt(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
-    CClick(widget.tagsList.addTagButton, qtbot)
-    CEnterText(widget.tagsList.addTagBar, "Test Tag", qtbot)
-    CPressEnter(widget.tagsList.addTagBar, qtbot)
-    # this has been tested to work and now be clear, so try it again
-    CEnterText(widget.tagsList.addTagBar, "Test Tag", qtbot)
-    CPressEnter(widget.tagsList.addTagBar, qtbot)
+    CAddTag(widget, "Test Tag", qtbot)
+    CAddTag(widget, "Test Tag", qtbot)
     assert widget.tagsList.addTagErrorText.isHidden() is False
     assert widget.tagsList.addTagErrorText.text() == "This tag already exists"
 
 
 def test_tag_name_entry_is_not_cleared_after_duplicate_cap_tag_attempt(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
-    CClick(widget.tagsList.addTagButton, qtbot)
-    CEnterText(widget.tagsList.addTagBar, "Test Tag", qtbot)
-    CPressEnter(widget.tagsList.addTagBar, qtbot)
-    # this has been tested to work and now be clear, so try it again
-    CEnterText(widget.tagsList.addTagBar, "test tag", qtbot)
-    CPressEnter(widget.tagsList.addTagBar, qtbot)
+    CAddTag(widget, "Test Tag", qtbot)
+    CAddTag(widget, "test tag", qtbot)
     assert widget.tagsList.addTagBar.text() == "test tag"
 
 
 def test_tag_name_entry_is_not_cleared_after_whitespace_tag_attempt(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
-    CClick(widget.tagsList.addTagButton, qtbot)
-    CEnterText(widget.tagsList.addTagBar, "   ", qtbot)
-    CPressEnter(widget.tagsList.addTagBar, qtbot)
+    CAddTag(widget, "   ", qtbot)
     assert widget.tagsList.addTagBar.text() == "   "
 
 
 def test_add_tag_error_message_shown_after_whitesapce_tag_attempt(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
-    CClick(widget.tagsList.addTagButton, qtbot)
-    CEnterText(widget.tagsList.addTagBar, "   ", qtbot)
-    CPressEnter(widget.tagsList.addTagBar, qtbot)
+    CAddTag(widget, "   ", qtbot)
     assert widget.tagsList.addTagErrorText.isHidden() is False
     assert widget.tagsList.addTagErrorText.text() == "Pure whitespace isn't valid"
 
 
 def test_tag_name_entry_is_not_cleared_after_backtick_tag_attempt(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
-    CClick(widget.tagsList.addTagButton, qtbot)
-    CEnterText(widget.tagsList.addTagBar, "`", qtbot)
-    CPressEnter(widget.tagsList.addTagBar, qtbot)
+    CAddTag(widget, "`", qtbot)
     assert widget.tagsList.addTagBar.text() == "`"
 
 
 def test_add_tag_error_message_shown_after_backtick_tag_attempt(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
-    CClick(widget.tagsList.addTagButton, qtbot)
-    CEnterText(widget.tagsList.addTagBar, "`", qtbot)
-    CPressEnter(widget.tagsList.addTagBar, qtbot)
+    CAddTag(widget, "`", qtbot)
     assert widget.tagsList.addTagErrorText.isHidden() is False
     assert widget.tagsList.addTagErrorText.text() == "Backticks aren't allowed"
 
 
 def test_add_tag_error_message_hidden_after_text_changed(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
-    CClick(widget.tagsList.addTagButton, qtbot)
-    CEnterText(widget.tagsList.addTagBar, "   ", qtbot)
-    CPressEnter(widget.tagsList.addTagBar, qtbot)
+    CAddTag(widget, "   ", qtbot)
     assert widget.tagsList.addTagErrorText.isHidden() is False
     CPressBackspace(widget.tagsList.addTagBar, qtbot)
     assert widget.tagsList.addTagErrorText.isHidden() is True
@@ -1955,9 +1933,7 @@ def test_add_tag_error_message_hidden_after_text_changed(qtbot, db_temp):
 
 def test_add_tag_error_message_hidden_after_cursor_moved(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
-    CClick(widget.tagsList.addTagButton, qtbot)
-    CEnterText(widget.tagsList.addTagBar, "   ", qtbot)
-    CPressEnter(widget.tagsList.addTagBar, qtbot)
+    CAddTag(widget, "   ", qtbot)
     assert widget.tagsList.addTagErrorText.isHidden() is False
     widget.tagsList.addTagBar.setCursorPosition(0)
     assert widget.tagsList.addTagErrorText.isHidden() is True
@@ -2042,8 +2018,7 @@ def test_tag_has_correct_font_size(qtbot, db):
 
 def test_duplicate_in_internal_tags_list_raises_error(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
-    CEnterText(widget.tagsList.addTagBar, "Test Tag", qtbot)
-    CPressEnter(widget.tagsList.addTagBar, qtbot)
+    CAddTag(widget, "Test Tag", qtbot)
     new_tag = LeftPanelTag("Test Tag", widget.papersList, widget.tagsList)
     with pytest.raises(AssertionError):
         widget.tagsList.addTag(new_tag)
@@ -2235,9 +2210,7 @@ def test_clicking_on_show_all_in_left_panel_unlights_others(qtbot, db_temp):
 
 def test_newly_added_tag_is_unhighlighted(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
-    CClick(widget.tagsList.addTagButton, qtbot)
-    CEnterText(widget.tagsList.addTagBar, "newly added tag", qtbot)
-    CPressEnter(widget.tagsList.addTagBar, qtbot)
+    CAddTag(widget, "newly added tag", qtbot)
     for tag in widget.tagsList.tags:
         if tag.label.text() == "newly added tag":
             assert tag.property("is_highlighted") is False
@@ -3029,10 +3002,7 @@ def test_done_editing_button_is_hidden_when_paper_clicked(qtbot, db_temp):
 
 def test_newly_added_tags_appear_in_right_panel(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
-    # first add a tag
-    CEnterText(widget.tagsList.addTagBar, "Test Tag", qtbot)
-    CPressEnter(widget.tagsList.addTagBar, qtbot)
-    # then look at the tags in the right panel
+    CAddTag(widget, "Test Tag", qtbot)
     CClick(widget.papersList.papers[0], qtbot)
     assert "Test Tag" in [t.text() for t in widget.rightPanel.tags]
 
@@ -3040,17 +3010,11 @@ def test_newly_added_tags_appear_in_right_panel(qtbot, db_temp):
 def test_adding_tags_doesnt_duplicate_tags_in_right_panel(qtbot, db_empty):
     db_empty.add_paper(u.mine.bibcode)
     widget = CInitialize(qtbot, db_empty)
-    # first add a tag
-    CEnterText(widget.tagsList.addTagBar, "Test Tag", qtbot)
-    CPressEnter(widget.tagsList.addTagBar, qtbot)
-    # then look at the tags in the right panel
+    CAddTag(widget, "Test Tag", qtbot)
     CClick(widget.papersList.papers[0], qtbot)
     assert ["Test Tag"] == [t.text() for t in widget.rightPanel.tags]
-
     # add another tag, then check again
-    CEnterText(widget.tagsList.addTagBar, "Test Tag 2", qtbot)
-    CPressEnter(widget.tagsList.addTagBar, qtbot)
-    # then look at the tags in the right panel
+    CAddTag(widget, "Test Tag 2", qtbot)
     CClick(widget.papersList.papers[0], qtbot)
     assert ["Test Tag", "Test Tag 2"] == [t.text() for t in widget.rightPanel.tags]
 
@@ -3142,9 +3106,7 @@ def test_clicking_on_show_all_in_left_panel_removes_other_exports(qtbot, db_temp
 
 def test_newly_added_tag_has_hidden_export(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
-    CClick(widget.tagsList.addTagButton, qtbot)
-    CEnterText(widget.tagsList.addTagBar, "newly added tag", qtbot)
-    CPressEnter(widget.tagsList.addTagBar, qtbot)
+    CAddTag(widget, "newly added tag", qtbot)
     for tag in widget.tagsList.tags:
         if tag.label.text() == "newly added tag":
             assert tag.exportButton.isHidden() is True
@@ -3429,8 +3391,7 @@ def test_left_panel_tags_are_sorted_alphabetically_after_adding(qtbot, db_empty)
     # add tags
     tags = ["abc", "zyx", "Aye", "Test", "ZAA"]
     for tag in tags:
-        CEnterText(widget.tagsList.addTagBar, tag, qtbot)
-        CPressEnter(widget.tagsList.addTagBar, qtbot)
+        CAddTag(widget, tag, qtbot)
     tag_names = [tag.name for tag in widget.tagsList.tags]
     # in comparison, include read and unread, since those were included on widet
     # initialization too
@@ -3499,9 +3460,7 @@ def test_tag_checkboxes_are_sorted_properly_after_adding_new_tag(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.editTagsButton, qtbot)
     # then add one in the left panel
-    CClick(widget.tagsList.addTagButton, qtbot)
-    CEnterText(widget.tagsList.addTagBar, "Aye", qtbot)
-    CPressEnter(widget.tagsList.addTagBar, qtbot)
+    CAddTag(widget, "Aye", qtbot)
     # then ensure this new checkbox was added appropriately
     tags = [tag.text() for tag in widget.rightPanel.tags]
     assert "Aye" in tags
@@ -4025,13 +3984,7 @@ def test_resizing_splitter_keeps_sortchooser_at_top_right(qtbot, db_temp):
 def test_adding_long_tag_resizes_splitter(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     original_sizes = widget.splitter.sizes()
-    CClick(widget.tagsList.addTagButton, qtbot)
-    CEnterText(
-        widget.tagsList.addTagBar,
-        "this is a very long tag, too long to realistically use",
-        qtbot,
-    )
-    CPressEnter(widget.tagsList.addTagBar, qtbot)
+    CAddTag(widget, "this is a very long tag, too long to realistically use", qtbot)
     new_sizes = widget.splitter.sizes()
     assert new_sizes[0] > original_sizes[0]
 
