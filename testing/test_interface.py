@@ -132,14 +132,14 @@ def testing_database():
 # Convenience functions
 #
 ########################################################################################
-# All convenience functions will have "conv" at the beginning, just for clarity
-def conv_initialize(qtbot, db):
+# All convenience functions will have "C" at the beginning, just for clarity
+def CInitialize(qtbot, db):
     widget = MainWindow(db)
     qtbot.addWidget(widget)
     return widget
 
 
-def conv_add_paper(qtbot, widget, bibcode):
+def CAddPaper(qtbot, widget, bibcode):
     qtbot.keyClicks(widget.searchBar, bibcode)
     qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
 
@@ -206,81 +206,81 @@ def test_fonts_are_actually_in_the_font_database_after_set_up_fonts(qtbot):
 
 
 def test_window_initial_width(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert widget.size().width() == 1100
 
 
 def test_window_initial_height(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert widget.size().height() == 600
 
 
 def test_title_is_has_text_saying_library(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert widget.title.text() == "Library"
 
 
 def test_title_is_centered(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert widget.title.alignment() == Qt.AlignCenter
 
 
 def test_title_is_lobster_font(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert widget.title.font().family() == "Lobster"
 
 
 def test_title_is_correct_font_size(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert widget.title.font().pointSize() == 40
 
 
 def test_title_has_correct_height_in_pixels(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert widget.title.height() == 60
 
 
 def test_search_bar_has_placeholder_text(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     text = "Enter your paper URL or ADS bibcode here"
     assert widget.searchBar.placeholderText() == text
 
 
 def test_search_bar_has_correct_font_family(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert widget.searchBar.font().family() == "Cabin"
 
 
 def test_search_bar_has_correct_font_size(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert widget.searchBar.font().pointSize() == 14
 
 
 def test_add_button_has_correct_font_family(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert widget.addButton.font().family() == "Cabin"
 
 
 def test_add_button_has_correct_font_size(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert widget.addButton.font().pointSize() == 14
 
 
 def test_add_button_and_search_bar_have_almost_same_height(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     height_ratio = widget.addButton.height() / widget.searchBar.height()
     assert 0.8 < height_ratio < 1.3
 
 
 def test_add_button_and_search_bar_are_much_shorter_than_title(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert widget.addButton.height() < 0.6 * widget.title.height()
     assert widget.searchBar.height() < 0.6 * widget.title.height()
 
 
 def test_can_add_paper_by_filling_bibcode_then_clicking_button(qtbot, db_empty):
     assert len(db_empty.get_all_bibcodes()) == 0
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     qtbot.keyClicks(widget.searchBar, u.mine.bibcode)
     qtbot.mouseClick(widget.addButton, Qt.LeftButton)
     assert len(db_empty.get_all_bibcodes()) == 1
@@ -289,7 +289,7 @@ def test_can_add_paper_by_filling_bibcode_then_clicking_button(qtbot, db_empty):
 
 def test_can_add_paper_by_filling_bibcode_then_pressing_enter(qtbot, db_empty):
     assert len(db_empty.get_all_bibcodes()) == 0
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     qtbot.keyClicks(widget.searchBar, u.mine.bibcode)
     qtbot.keyPress(widget.searchBar, Qt.Key_Enter)
     assert len(db_empty.get_all_bibcodes()) == 1
@@ -303,7 +303,7 @@ def test_can_exit_action_actually_exit_the_app(qtbot, db, monkeypatch):
     exit_calls = []
     monkeypatch.setattr(QApplication, "quit", lambda: exit_calls.append(1))
 
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     widget.exitAction.trigger()
 
     assert exit_calls == [1]
@@ -316,7 +316,7 @@ def test_can_exit_keyboard_shortcut_exit_the_app(qtbot, db, monkeypatch):
     exit_calls = []
     monkeypatch.setattr(QApplication, "quit", lambda: exit_calls.append(1))
 
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     widget.show()  # needed to activate keyboard shortcuts
     qtbot.waitExposed(widget)
     qtbot.keyPress(widget, "q", Qt.ControlModifier)
@@ -325,213 +325,213 @@ def test_can_exit_keyboard_shortcut_exit_the_app(qtbot, db, monkeypatch):
 
 
 def test_right_panel_title_is_empty_at_beginning(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     assert widget.rightPanel.titleText.text() == ""
 
 
 def test_right_panel_cite_text_is_empty_at_beginning(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     assert widget.rightPanel.citeText.text() == ""
 
 
 def test_right_panel_abstract_is_placeholder_at_beginning(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     true_text = "Click on a paper to show its details here"
     assert widget.rightPanel.abstractText.text() == true_text
 
 
 def test_right_panel_tags_is_empty_at_beginning(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     assert widget.rightPanel.tagText.text() == ""
 
 
 def test_right_panel_title_text_has_correct_font_family(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     assert widget.rightPanel.titleText.font().family() == "Cabin"
 
 
 def test_right_panel_cite_text_has_correct_font_family(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     assert widget.rightPanel.citeText.font().family() == "Cabin"
 
 
 def test_right_panel_abstract_text_has_correct_font_family(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     assert widget.rightPanel.abstractText.font().family() == "Cabin"
 
 
 def test_right_panel_tag_text_has_correct_font_family(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     assert widget.rightPanel.tagText.font().family() == "Cabin"
 
 
 def test_right_panel_title_text_has_correct_font_size(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     assert widget.rightPanel.titleText.font().pointSize() == 20
 
 
 def test_right_panel_cite_text_has_correct_font_size(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     assert widget.rightPanel.citeText.font().pointSize() == 16
 
 
 def test_right_panel_abstract_text_has_correct_font_size(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     assert widget.rightPanel.abstractText.font().pointSize() == 14
 
 
 def test_right_panel_tag_text_has_correct_font_size(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     assert widget.rightPanel.tagText.font().pointSize() == 14
 
 
 def test_right_panel_title_text_has_word_wrap_on(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     assert widget.rightPanel.titleText.wordWrap()
 
 
 def test_right_panel_cite_text_has_word_wrap_on(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     assert widget.rightPanel.citeText.wordWrap()
 
 
 def test_right_panel_abstract_text_has_word_wrap_on(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     assert widget.rightPanel.abstractText.wordWrap()
 
 
 def test_right_panel_tag_text_has_word_wrap_on(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     assert widget.rightPanel.tagText.wordWrap()
 
 
 def test_right_panel_pdf_text_has_word_wrap_on(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     assert widget.rightPanel.pdfText.wordWrap()
 
 
 def test_right_panel_cite_key_has_word_wrap_on(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     assert widget.rightPanel.citeKeyText.wordWrap()
 
 
 def test_paper_initialization_has_correct_bibcode(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     new_paper = Paper(u.mine.bibcode, db, widget.rightPanel, widget.papersList)
     assert new_paper.bibcode == u.mine.bibcode
 
 
 def test_paper_initialization_has_correct_title_in_the_text(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     new_paper = Paper(u.mine.bibcode, db, widget.rightPanel, widget.papersList)
     assert new_paper.titleText.text() == u.mine.title
 
 
 def test_paper_title_has_correct_font_family(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     # get one of the papers, not sure which
     paper = widget.papersList.papers[0]
     assert paper.titleText.font().family() == "Cabin"
 
 
 def test_paper_cite_text_has_correct_font_family(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     # get one of the papers, not sure which
     paper = widget.papersList.papers[0]
     assert paper.citeText.font().family() == "Cabin"
 
 
 def test_paper_title_has_correct_font_size(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     # get one of the papers, not sure which
     paper = widget.papersList.papers[0]
     assert paper.titleText.font().pointSize() == 18
 
 
 def test_paper_cite_string_has_correct_font_size(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     # get one of the papers, not sure which
     paper = widget.papersList.papers[0]
     assert paper.citeText.font().pointSize() == 12
 
 
 def test_paper_initialization_has_correct_cite_string_in_the_text(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     new_paper = Paper(u.mine.bibcode, db, widget.rightPanel, widget.papersList)
     assert new_paper.citeText.text() == db.get_cite_string(u.mine.bibcode)
 
 
 def test_paper_initialization_has_accents_in_author_list(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     db_empty.add_paper(u.juan.bibcode)
     new_paper = Paper(u.juan.bibcode, db_empty, widget.rightPanel, widget.papersList)
     assert "á" in new_paper.citeText.text()
 
 
 def test_cannot_initialize_paper_thats_not_in_database(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     with pytest.raises(AssertionError):
         Paper(u.mine.bibcode, db_empty, widget.rightPanel, widget.papersList)
 
 
 def test_all_papers_in_database_are_in_the_paper_list_at_beginning(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     papers_list_bibcodes = [p.bibcode for p in widget.papersList.papers]
     assert sorted(papers_list_bibcodes) == sorted(db.get_all_bibcodes())
 
 
 def test_adding_paper_adds_paper_to_interface(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert len(widget.papersList.papers) == 0
-    conv_add_paper(qtbot, widget, u.mine.bibcode)
+    CAddPaper(qtbot, widget, u.mine.bibcode)
     assert len(widget.papersList.papers) == 1
 
 
 def test_adding_paper_adds_correct_paper_to_interface(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
-    conv_add_paper(qtbot, widget, u.mine.bibcode)
+    widget = CInitialize(qtbot, db_empty)
+    CAddPaper(qtbot, widget, u.mine.bibcode)
     assert widget.papersList.papers[0].bibcode == u.mine.bibcode
 
 
 def test_textedit_is_not_in_error_state_at_beginning(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert widget.searchBar.property("error") is False
 
 
 def test_textedit_error_message_hidden_at_beginning(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert widget.searchBarErrorText.isHidden() is True
 
 
 def test_add_paper_button_shown_at_beginning(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert widget.addButton.isHidden() is False
 
 
 def test_adding_paper_clears_search_bar_if_successful(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
-    conv_add_paper(qtbot, widget, u.mine.bibcode)
+    widget = CInitialize(qtbot, db_empty)
+    CAddPaper(qtbot, widget, u.mine.bibcode)
     assert widget.searchBar.text() == ""
 
 
 def test_adding_paper_does_not_clear_search_bar_if_not_successful(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert len(widget.papersList.papers) == 0
-    conv_add_paper(qtbot, widget, "nonsense")
+    CAddPaper(qtbot, widget, "nonsense")
     assert widget.searchBar.text() == "nonsense"
 
 
 def test_adding_bad_paper_shows_error_formatting_of_textedit(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert len(widget.papersList.papers) == 0
-    conv_add_paper(qtbot, widget, "nonsense")
+    CAddPaper(qtbot, widget, "nonsense")
     assert widget.searchBar.property("error") is True
 
 
 def test_adding_bad_paper_shows_error_text(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert len(widget.papersList.papers) == 0
-    conv_add_paper(qtbot, widget, "nonsense")
+    CAddPaper(qtbot, widget, "nonsense")
     assert widget.searchBarErrorText.isHidden() is False
     assert (
         widget.searchBarErrorText.text() == "This paper was not found in ADS. "
@@ -540,24 +540,24 @@ def test_adding_bad_paper_shows_error_text(qtbot, db_empty):
 
 
 def test_adding_bad_paper_hides_add_button(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert len(widget.papersList.papers) == 0
-    conv_add_paper(qtbot, widget, "nonsense")
+    CAddPaper(qtbot, widget, "nonsense")
     assert widget.addButton.isHidden() is True
 
 
 def test_search_bar_and_error_text_have_almost_same_height(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     # add a bad paper, which is when this situation arises
-    conv_add_paper(qtbot, widget, "nonsense")
+    CAddPaper(qtbot, widget, "nonsense")
     height_ratio = widget.searchBarErrorText.height() / widget.searchBar.height()
     assert 0.8 < height_ratio < 1.3
 
 
 def test_search_bar_and_error_text_are_much_shorter_than_title(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     # add a bad paper, which is when this situation arises
-    conv_add_paper(qtbot, widget, "nonsense")
+    CAddPaper(qtbot, widget, "nonsense")
     assert widget.searchBar.height() < 0.6 * widget.title.height()
     assert widget.searchBarErrorText.height() < 0.6 * widget.title.height()
 
@@ -565,25 +565,25 @@ def test_search_bar_and_error_text_are_much_shorter_than_title(qtbot, db_empty):
 def test_bad_paper_error_formatting_of_textedit_reset_after_any_clicking(
     qtbot, db_empty
 ):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert len(widget.papersList.papers) == 0
-    conv_add_paper(qtbot, widget, "nonsense")
+    CAddPaper(qtbot, widget, "nonsense")
     widget.searchBar.setCursorPosition(0)
     assert widget.searchBar.property("error") is False
 
 
 def test_bad_paper_error_message_of_textedit_reset_after_any_clicking(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert len(widget.papersList.papers) == 0
-    conv_add_paper(qtbot, widget, "nonsense")
+    CAddPaper(qtbot, widget, "nonsense")
     widget.searchBar.setCursorPosition(0)
     assert widget.searchBarErrorText.isHidden() is True
 
 
 def test_bad_paper_add_button_reshown_after_any_clicking(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert len(widget.papersList.papers) == 0
-    conv_add_paper(qtbot, widget, "nonsense")
+    CAddPaper(qtbot, widget, "nonsense")
     widget.searchBar.setCursorPosition(0)
     assert widget.addButton.isHidden() is False
 
@@ -591,92 +591,92 @@ def test_bad_paper_add_button_reshown_after_any_clicking(qtbot, db_empty):
 def test_bad_paper_error_formatting_of_textedit_reset_after_editing_text(
     qtbot, db_empty
 ):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert len(widget.papersList.papers) == 0
-    conv_add_paper(qtbot, widget, "nonsense")
+    CAddPaper(qtbot, widget, "nonsense")
     qtbot.keyClicks(widget.searchBar, "nonsens")
     assert widget.searchBar.property("error") is False
 
 
 def test_bad_paper_error_message_of_textedit_reset_after_editing_text(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert len(widget.papersList.papers) == 0
-    conv_add_paper(qtbot, widget, "nonsense")
+    CAddPaper(qtbot, widget, "nonsense")
     qtbot.keyClicks(widget.searchBar, "nonsens")
     assert widget.searchBarErrorText.isHidden() is True
 
 
 def test_bad_paper_add_button_reshown_after_editing_text(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert len(widget.papersList.papers) == 0
-    conv_add_paper(qtbot, widget, "nonsense")
+    CAddPaper(qtbot, widget, "nonsense")
     qtbot.keyClicks(widget.searchBar, "nonsens")
     assert widget.addButton.isHidden() is False
 
 
 def test_adding_paper_does_not_clear_search_bar_if_already_in_library(qtbot, db):
-    widget = conv_initialize(qtbot, db)
-    conv_add_paper(qtbot, widget, u.mine.bibcode)
+    widget = CInitialize(qtbot, db)
+    CAddPaper(qtbot, widget, u.mine.bibcode)
     assert widget.searchBar.text() == u.mine.bibcode
 
 
 def test_adding_duplicate_paper_shows_error_formatting_of_textedit(qtbot, db):
-    widget = conv_initialize(qtbot, db)
-    conv_add_paper(qtbot, widget, u.mine.bibcode)
+    widget = CInitialize(qtbot, db)
+    CAddPaper(qtbot, widget, u.mine.bibcode)
     assert widget.searchBar.property("error") is True
 
 
 def test_adding_duplicate_paper_shows_error_text(qtbot, db):
-    widget = conv_initialize(qtbot, db)
-    conv_add_paper(qtbot, widget, u.mine.bibcode)
+    widget = CInitialize(qtbot, db)
+    CAddPaper(qtbot, widget, u.mine.bibcode)
     assert widget.searchBarErrorText.isHidden() is False
     assert widget.searchBarErrorText.text() == "This paper is already in the library."
 
 
 def test_adding_duplicate_paper_hides_add_button(qtbot, db):
-    widget = conv_initialize(qtbot, db)
-    conv_add_paper(qtbot, widget, u.mine.bibcode)
+    widget = CInitialize(qtbot, db)
+    CAddPaper(qtbot, widget, u.mine.bibcode)
     assert widget.addButton.isHidden() is True
 
 
 def test_duplicate_error_formatting_of_textedit_reset_after_any_clicking(qtbot, db):
-    widget = conv_initialize(qtbot, db)
-    conv_add_paper(qtbot, widget, u.mine.bibcode)
+    widget = CInitialize(qtbot, db)
+    CAddPaper(qtbot, widget, u.mine.bibcode)
     widget.searchBar.setCursorPosition(0)
     assert widget.searchBar.property("error") is False
 
 
 def test_duplicate_error_message_of_textedit_reset_after_any_clicking(qtbot, db):
-    widget = conv_initialize(qtbot, db)
-    conv_add_paper(qtbot, widget, u.mine.bibcode)
+    widget = CInitialize(qtbot, db)
+    CAddPaper(qtbot, widget, u.mine.bibcode)
     widget.searchBar.setCursorPosition(0)
     assert widget.searchBarErrorText.isHidden() is True
 
 
 def test_duplicate_add_button_reshown_after_any_clicking(qtbot, db):
-    widget = conv_initialize(qtbot, db)
-    conv_add_paper(qtbot, widget, u.mine.bibcode)
+    widget = CInitialize(qtbot, db)
+    CAddPaper(qtbot, widget, u.mine.bibcode)
     widget.searchBar.setCursorPosition(0)
     assert widget.addButton.isHidden() is False
 
 
 def test_duplicate_error_formatting_of_textedit_reset_after_editing_text(qtbot, db):
-    widget = conv_initialize(qtbot, db)
-    conv_add_paper(qtbot, widget, u.mine.bibcode)
+    widget = CInitialize(qtbot, db)
+    CAddPaper(qtbot, widget, u.mine.bibcode)
     qtbot.keyClicks(widget.searchBar, "s")
     assert widget.searchBar.property("error") is False
 
 
 def test_duplicate_error_message_of_textedit_reset_after_editing_text(qtbot, db):
-    widget = conv_initialize(qtbot, db)
-    conv_add_paper(qtbot, widget, u.mine.bibcode)
+    widget = CInitialize(qtbot, db)
+    CAddPaper(qtbot, widget, u.mine.bibcode)
     qtbot.keyClicks(widget.searchBar, "s")
     assert widget.searchBarErrorText.isHidden() is True
 
 
 def test_duplicate_add_button_reshown_after_editing_text(qtbot, db):
-    widget = conv_initialize(qtbot, db)
-    conv_add_paper(qtbot, widget, u.mine.bibcode)
+    widget = CInitialize(qtbot, db)
+    CAddPaper(qtbot, widget, u.mine.bibcode)
     qtbot.keyClicks(widget.searchBar, "s")
     assert widget.addButton.isHidden() is False
 
@@ -684,23 +684,23 @@ def test_duplicate_add_button_reshown_after_editing_text(qtbot, db):
 def test_adding_paper_does_not_clear_search_bar_if_no_ads_key_set(
     qtbot, db_empty_change_ads_key
 ):
-    widget = conv_initialize(qtbot, db_empty_change_ads_key)
+    widget = CInitialize(qtbot, db_empty_change_ads_key)
     # need to use a paper that's not already stored in my ADS cache
-    conv_add_paper(qtbot, widget, u.used_for_no_ads_key.url)
+    CAddPaper(qtbot, widget, u.used_for_no_ads_key.url)
     assert widget.searchBar.text() == u.used_for_no_ads_key.url
 
 
 def test_adding_paper_no_ads_key_set_shows_error_formatting_of_textedit(
     qtbot, db_empty_change_ads_key
 ):
-    widget = conv_initialize(qtbot, db_empty_change_ads_key)
-    conv_add_paper(qtbot, widget, u.used_for_no_ads_key.url)
+    widget = CInitialize(qtbot, db_empty_change_ads_key)
+    CAddPaper(qtbot, widget, u.used_for_no_ads_key.url)
     assert widget.searchBar.property("error") is True
 
 
 def test_adding_paper_no_ads_key_set_shows_error_text(qtbot, db_empty_change_ads_key):
-    widget = conv_initialize(qtbot, db_empty_change_ads_key)
-    conv_add_paper(qtbot, widget, u.used_for_no_ads_key.url)
+    widget = CInitialize(qtbot, db_empty_change_ads_key)
+    CAddPaper(qtbot, widget, u.used_for_no_ads_key.url)
     assert widget.searchBarErrorText.isHidden() is False
     assert (
         widget.searchBarErrorText.text() == "You don't have an ADS key set. "
@@ -709,16 +709,16 @@ def test_adding_paper_no_ads_key_set_shows_error_text(qtbot, db_empty_change_ads
 
 
 def test_adding_paper_no_ads_key_hides_add_button(qtbot, db_empty_change_ads_key):
-    widget = conv_initialize(qtbot, db_empty_change_ads_key)
-    conv_add_paper(qtbot, widget, u.used_for_no_ads_key.url)
+    widget = CInitialize(qtbot, db_empty_change_ads_key)
+    CAddPaper(qtbot, widget, u.used_for_no_ads_key.url)
     assert widget.addButton.isHidden() is True
 
 
 def test_no_ads_key_set_error_formatting_of_textedit_reset_after_any_clicking(
     qtbot, db_empty_change_ads_key
 ):
-    widget = conv_initialize(qtbot, db_empty_change_ads_key)
-    conv_add_paper(qtbot, widget, u.used_for_no_ads_key.url)
+    widget = CInitialize(qtbot, db_empty_change_ads_key)
+    CAddPaper(qtbot, widget, u.used_for_no_ads_key.url)
     widget.searchBar.setCursorPosition(0)
     assert widget.searchBar.property("error") is False
 
@@ -726,8 +726,8 @@ def test_no_ads_key_set_error_formatting_of_textedit_reset_after_any_clicking(
 def test_no_ads_key_set_error_message_of_textedit_reset_after_any_clicking(
     qtbot, db_empty_change_ads_key
 ):
-    widget = conv_initialize(qtbot, db_empty_change_ads_key)
-    conv_add_paper(qtbot, widget, u.used_for_no_ads_key.url)
+    widget = CInitialize(qtbot, db_empty_change_ads_key)
+    CAddPaper(qtbot, widget, u.used_for_no_ads_key.url)
     widget.searchBar.setCursorPosition(0)
     assert widget.searchBarErrorText.isHidden() is True
 
@@ -735,8 +735,8 @@ def test_no_ads_key_set_error_message_of_textedit_reset_after_any_clicking(
 def test_no_ads_key_add_button_reshown_after_any_clicking(
     qtbot, db_empty_change_ads_key
 ):
-    widget = conv_initialize(qtbot, db_empty_change_ads_key)
-    conv_add_paper(qtbot, widget, u.used_for_no_ads_key.url)
+    widget = CInitialize(qtbot, db_empty_change_ads_key)
+    CAddPaper(qtbot, widget, u.used_for_no_ads_key.url)
     widget.searchBar.setCursorPosition(0)
     assert widget.addButton.isHidden() is False
 
@@ -744,8 +744,8 @@ def test_no_ads_key_add_button_reshown_after_any_clicking(
 def test_no_ads_key_set_error_formatting_of_textedit_reset_after_editing_text(
     qtbot, db_empty_change_ads_key
 ):
-    widget = conv_initialize(qtbot, db_empty_change_ads_key)
-    conv_add_paper(qtbot, widget, u.used_for_no_ads_key.url)
+    widget = CInitialize(qtbot, db_empty_change_ads_key)
+    CAddPaper(qtbot, widget, u.used_for_no_ads_key.url)
     qtbot.keyClicks(widget.searchBar, "s")
     assert widget.searchBar.property("error") is False
 
@@ -753,8 +753,8 @@ def test_no_ads_key_set_error_formatting_of_textedit_reset_after_editing_text(
 def test_no_ads_key_set_error_message_of_textedit_reset_after_editing_text(
     qtbot, db_empty_change_ads_key
 ):
-    widget = conv_initialize(qtbot, db_empty_change_ads_key)
-    conv_add_paper(qtbot, widget, u.used_for_no_ads_key.url)
+    widget = CInitialize(qtbot, db_empty_change_ads_key)
+    CAddPaper(qtbot, widget, u.used_for_no_ads_key.url)
     qtbot.keyClicks(widget.searchBar, "s")
     assert widget.searchBarErrorText.isHidden() is True
 
@@ -762,43 +762,43 @@ def test_no_ads_key_set_error_message_of_textedit_reset_after_editing_text(
 def test_no_ads_key_add_button_reshown_after_editing_text(
     qtbot, db_empty_change_ads_key
 ):
-    widget = conv_initialize(qtbot, db_empty_change_ads_key)
-    conv_add_paper(qtbot, widget, u.used_for_no_ads_key.url)
+    widget = CInitialize(qtbot, db_empty_change_ads_key)
+    CAddPaper(qtbot, widget, u.used_for_no_ads_key.url)
     qtbot.keyClicks(widget.searchBar, "s")
     assert widget.addButton.isHidden() is False
 
 
 def test_paper_cannot_be_added_twice(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert len(widget.papersList.papers) == 0
-    conv_add_paper(qtbot, widget, u.mine.bibcode)
+    CAddPaper(qtbot, widget, u.mine.bibcode)
     assert len(widget.papersList.papers) == 1
     # add it again
-    conv_add_paper(qtbot, widget, u.mine.bibcode)
+    CAddPaper(qtbot, widget, u.mine.bibcode)
     assert len(widget.papersList.papers) == 1
 
 
 def test_duplicate_in_internal_paper_list_raises_error(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     new_paper = Paper(u.mine.bibcode, db, widget.rightPanel, widget.papersList)
     with pytest.raises(AssertionError):
         widget.papersList.addPaper(new_paper)
 
 
 def test_paper_title_has_word_wrap_on(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     for paper in widget.papersList.papers:
         assert paper.titleText.wordWrap()
 
 
 def test_paper_cite_string_has_word_wrap_on(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     for paper in widget.papersList.papers:
         assert paper.citeText.wordWrap()
 
 
 def test_clicking_on_paper_puts_title_in_right_panel(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     # get one of the papers, not sure which
     paper = widget.papersList.papers[0]
     qtbot.mouseClick(paper, Qt.LeftButton)
@@ -806,7 +806,7 @@ def test_clicking_on_paper_puts_title_in_right_panel(qtbot, db):
 
 
 def test_clicking_on_paper_puts_cite_string_in_right_panel(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     # get one of the papers, not sure which
     paper = widget.papersList.papers[0]
     qtbot.mouseClick(paper, Qt.LeftButton)
@@ -818,7 +818,7 @@ def test_clicking_on_paper_puts_cite_string_in_right_panel(qtbot, db):
 
 
 def test_clicking_on_paper_puts_abstract_in_right_panel(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     # get one of the papers, not sure which
     paper = widget.papersList.papers[0]
     qtbot.mouseClick(paper, Qt.LeftButton)
@@ -829,7 +829,7 @@ def test_clicking_on_paper_puts_abstract_in_right_panel(qtbot, db):
 
 
 def test_clicking_on_paper_puts_tags_in_right_panel(qtbot, db_no_tags):
-    widget = conv_initialize(qtbot, db_no_tags)
+    widget = CInitialize(qtbot, db_no_tags)
     # Add some tags to the database - this is tested below
     for tag in ["T1", "T2", "T3", "T4", "T5"]:
         qtbot.keyClicks(widget.tagsList.addTagBar, tag)
@@ -848,13 +848,13 @@ def test_clicking_on_paper_puts_tags_in_right_panel(qtbot, db_no_tags):
 
 
 def test_clicking_on_paper_with_no_tags_puts_default_in_right_panel(qtbot, db_no_tags):
-    widget = conv_initialize(qtbot, db_no_tags)
+    widget = CInitialize(qtbot, db_no_tags)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     assert widget.rightPanel.tagText.text() == "Tags: None"
 
 
 def test_clicking_on_paper_highlights_it_in_center_panel(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     # get one of the papers, not sure which
     paper = widget.papersList.papers[0]
     qtbot.mouseClick(paper, Qt.LeftButton)
@@ -862,7 +862,7 @@ def test_clicking_on_paper_highlights_it_in_center_panel(qtbot, db):
 
 
 def test_clicking_on_paper_highlights_its_text_it_in_center_panel(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     # get one of the papers, not sure which
     paper = widget.papersList.papers[0]
     qtbot.mouseClick(paper, Qt.LeftButton)
@@ -871,14 +871,14 @@ def test_clicking_on_paper_highlights_its_text_it_in_center_panel(qtbot, db):
 
 
 def test_clicking_on_paper_scroll_is_at_top(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     assert widget.rightPanel.verticalScrollBar().value() == 0
     assert widget.rightPanel.horizontalScrollBar().value() == 0
 
 
 def test_clicking_on_paper_scroll_is_at_top_even_after_scrolling_down(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     widget.rightPanel.verticalScrollBar().setValue(100)
     assert widget.rightPanel.verticalScrollBar().value() == 100
@@ -887,7 +887,7 @@ def test_clicking_on_paper_scroll_is_at_top_even_after_scrolling_down(qtbot, db_
 
 
 def test_clicking_on_same_paper_doesnt_adjust_scroll_position(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     widget.rightPanel.verticalScrollBar().setValue(100)
     assert widget.rightPanel.verticalScrollBar().value() == 100
@@ -896,20 +896,20 @@ def test_clicking_on_same_paper_doesnt_adjust_scroll_position(qtbot, db_temp):
 
 
 def test_all_papers_are_unhilighted_to_start(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     for paper in widget.papersList.papers:
         assert paper.property("is_highlighted") is False
 
 
 def test_all_papers_text_are_unhilighted_to_start(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     for paper in widget.papersList.papers:
         assert paper.titleText.property("is_highlighted") is False
         assert paper.citeText.property("is_highlighted") is False
 
 
 def test_papers_are_unhighlighted_when_others_clicked(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     assert len(widget.papersList.papers) > 1
     for paper_click in widget.papersList.papers:
         qtbot.mouseClick(paper_click, Qt.LeftButton)
@@ -921,7 +921,7 @@ def test_papers_are_unhighlighted_when_others_clicked(qtbot, db):
 
 
 def test_paper_texts_are_unhighlighted_when_others_clicked(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     assert len(widget.papersList.papers) > 1
     for paper_click in widget.papersList.papers:
         qtbot.mouseClick(paper_click, Qt.LeftButton)
@@ -935,7 +935,7 @@ def test_paper_texts_are_unhighlighted_when_others_clicked(qtbot, db):
 
 
 def test_paper_pdf_buttons_are_hidden_at_start(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     assert widget.rightPanel.pdfText.isHidden() is True
     assert widget.rightPanel.pdfOpenButton.isHidden() is True
     assert widget.rightPanel.pdfChooseLocalFileButton.isHidden() is True
@@ -946,7 +946,7 @@ def test_paper_pdf_buttons_show_when_paper_clicked_with_local_file(qtbot, db_emp
     # fill a local file into the database
     db_empty.add_paper(u.mine.bibcode)
     db_empty.set_paper_attribute(u.mine.bibcode, "local_file", __file__)
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     assert widget.rightPanel.pdfText.isHidden() is False
     assert widget.rightPanel.pdfOpenButton.isHidden() is False
@@ -956,7 +956,7 @@ def test_paper_pdf_buttons_show_when_paper_clicked_with_local_file(qtbot, db_emp
 
 def test_paper_pdf_buttons_show_when_paper_clicked_without_local_file(qtbot, db_temp):
     # no local files are set in the temp database
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     assert widget.rightPanel.pdfText.isHidden() is False
     assert widget.rightPanel.pdfOpenButton.isHidden() is True
@@ -970,7 +970,7 @@ def test_paper_pdf_buttons_show_when_paper_clicked_with_nonexistent_local_file(
     # fill a local file into the database
     db_empty.add_paper(u.mine.bibcode)
     db_empty.set_paper_attribute(u.mine.bibcode, "local_file", "nonexistent_file.pdf")
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     assert widget.rightPanel.pdfText.isHidden() is False
     assert widget.rightPanel.pdfOpenButton.isHidden() is True
@@ -982,13 +982,13 @@ def test_paper_pdf_buttons_update_database_if_file_doesnt_exist(qtbot, db_empty)
     # fill a local file into the database
     db_empty.add_paper(u.mine.bibcode)
     db_empty.set_paper_attribute(u.mine.bibcode, "local_file", "nonexistent_file.pdf")
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     assert db_empty.get_paper_attribute(u.mine.bibcode, "local_file") is None
 
 
 def test_paper_pdf_buttons_have_correct_text(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     assert widget.rightPanel.pdfOpenButton.text() == "Open this paper's PDF"
     assert widget.rightPanel.pdfChooseLocalFileButton.text() == "Choose a local PDF"
     assert widget.rightPanel.pdfDownloadButton.text() == "Download the PDF"
@@ -998,14 +998,14 @@ def test_paper_pdf_text_has_correct_text_with_local_file(qtbot, db_empty):
     # fill a local file into the database
     db_empty.add_paper(u.mine.bibcode)
     db_empty.set_paper_attribute(u.mine.bibcode, "local_file", __file__)
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     assert widget.rightPanel.pdfText.text() == f"PDF Location: {__file__}"
 
 
 def test_paper_pdf_text_has_correct_text_without_local_file(qtbot, db_temp):
     # no local files are set in the temp database
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     assert widget.rightPanel.pdfText.text() == "No PDF location set"
 
@@ -1014,7 +1014,7 @@ def test_paper_pdf_text_has_correct_text_with_nonexistent_local_file(qtbot, db_e
     # fill a local file into the database
     db_empty.add_paper(u.mine.bibcode)
     db_empty.set_paper_attribute(u.mine.bibcode, "local_file", "nonexistent_file.pdf")
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     assert widget.rightPanel.pdfText.text() == "No PDF location set"
 
@@ -1030,7 +1030,7 @@ def test_paper_pdf_add_local_file_button_asks_user(qtbot, db_temp, monkeypatch):
 
     monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
 
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.pdfChooseLocalFileButton, Qt.LeftButton)
     assert get_file_calls == [1]
@@ -1047,7 +1047,7 @@ def test_paper_pdf_add_local_file_button_doesnt_add_if_cancelled(
 
     monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
 
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.pdfChooseLocalFileButton, Qt.LeftButton)
     assert (
@@ -1068,7 +1068,7 @@ def test_paper_pdf_add_local_file_button_doesnt_add_if_doesnt_exist(
 
     monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
 
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.pdfChooseLocalFileButton, Qt.LeftButton)
     assert (
@@ -1087,7 +1087,7 @@ def test_paper_pdf_add_local_file_button_adds_it_to_database(
 
     monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
 
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.pdfChooseLocalFileButton, Qt.LeftButton)
     assert (
@@ -1104,7 +1104,7 @@ def test_paper_pdf_add_local_file_button_updates_text(qtbot, db_temp, monkeypatc
 
     monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
 
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.pdfChooseLocalFileButton, Qt.LeftButton)
     assert widget.rightPanel.pdfText.text() == f"PDF Location: {__file__}"
@@ -1120,7 +1120,7 @@ def test_paper_pdf_add_local_file_button_cancel_doesnt_update_text(
 
     monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
 
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.pdfChooseLocalFileButton, Qt.LeftButton)
     assert widget.rightPanel.pdfText.text() == f"No PDF location set"
@@ -1136,7 +1136,7 @@ def test_paper_pdf_add_local_file_nonexistent_file_doesnt_update_text(
 
     monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
 
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.pdfChooseLocalFileButton, Qt.LeftButton)
     assert widget.rightPanel.pdfText.text() == f"No PDF location set"
@@ -1152,7 +1152,7 @@ def test_paper_pdf_add_local_file_button_resets_buttons_if_successful(
 
     monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
 
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.pdfChooseLocalFileButton, Qt.LeftButton)
 
@@ -1172,7 +1172,7 @@ def test_paper_pdf_add_local_file_button_doest_change_buttons_cancel(
 
     monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
 
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.pdfChooseLocalFileButton, Qt.LeftButton)
 
@@ -1192,7 +1192,7 @@ def test_paper_pdf_add_local_file_button_doest_change_buttons_nonexistent(
 
     monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
 
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.pdfChooseLocalFileButton, Qt.LeftButton)
 
@@ -1208,7 +1208,7 @@ def test_paper_pdf_open_pdf_button_opens_pdf(qtbot, db_empty, monkeypatch):
     # fill a local file into the database
     db_empty.add_paper(u.mine.bibcode)
     db_empty.set_paper_attribute(u.mine.bibcode, "local_file", __file__)
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.pdfOpenButton, Qt.LeftButton)
     assert open_calls == [f"file:{__file__}"]
@@ -1222,7 +1222,7 @@ def test_paper_pdf_open_bad_pdf_doesnt_open(qtbot, db_empty, monkeypatch):
     shutil.copy2(__file__, "example.py")
     db_empty.set_paper_attribute(u.mine.bibcode, "local_file", "example.py")
 
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     Path("example.py").unlink()
     qtbot.mouseClick(widget.rightPanel.pdfOpenButton, Qt.LeftButton)
@@ -1237,7 +1237,7 @@ def test_paper_pdf_open_bad_pdf_resets_buttons(qtbot, db_empty, monkeypatch):
     shutil.copy2(__file__, "example.py")
     db_empty.set_paper_attribute(u.mine.bibcode, "local_file", "example.py")
 
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     Path("example.py").unlink()
     qtbot.mouseClick(widget.rightPanel.pdfOpenButton, Qt.LeftButton)
@@ -1255,7 +1255,7 @@ def test_paper_pdf_open_bad_pdf_resets_database(qtbot, db_empty, monkeypatch):
     shutil.copy2(__file__, "example.py")
     db_empty.set_paper_attribute(u.mine.bibcode, "local_file", "example.py")
 
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     Path("example.py").unlink()
     qtbot.mouseClick(widget.rightPanel.pdfOpenButton, Qt.LeftButton)
@@ -1263,7 +1263,7 @@ def test_paper_pdf_open_bad_pdf_resets_database(qtbot, db_empty, monkeypatch):
 
 
 def test_paper_pdf_buttons_hidden_when_paper_deleted(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.secondDeletePaperButton, Qt.LeftButton)
@@ -1286,7 +1286,7 @@ def test_download_pdf_button_asks_user(qtbot, db_temp, monkeypatch):
 
     monkeypatch.setattr(QFileDialog, "getSaveFileName", mock_get_file)
 
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
 
     # monkeypatch the downloading
     download_links = []
@@ -1314,7 +1314,7 @@ def test_download_pdf_button_actually_downloads_paper(qtbot, db_temp, monkeypatc
 
     monkeypatch.setattr(QFileDialog, "getSaveFileName", mock_get_file)
 
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.pdfDownloadButton, Qt.LeftButton)
     assert test_loc.is_file()
@@ -1331,7 +1331,7 @@ def test_download_pdf_button_can_be_cancelled(qtbot, db_temp, monkeypatch):
 
     monkeypatch.setattr(QFileDialog, "getSaveFileName", mock_get_file)
 
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
 
     # monkeypatch the downloading
     download_links = []
@@ -1355,7 +1355,7 @@ def test_download_pdf_button_updates_database(qtbot, db_temp, monkeypatch):
 
     monkeypatch.setattr(QFileDialog, "getSaveFileName", mock_get_file)
 
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
 
     # I cannot monkeypatch the downloading, since the code checks if the PDF exists
     # when setting the buttons
@@ -1378,7 +1378,7 @@ def test_download_pdf_button_doesnt_update_database_if_cancelled(
 
     monkeypatch.setattr(QFileDialog, "getSaveFileName", mock_get_file)
 
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
 
     # monkeypatch the downloading
     download_links = []
@@ -1404,7 +1404,7 @@ def test_download_pdf_button_updates_buttons(qtbot, db_temp, monkeypatch):
 
     monkeypatch.setattr(QFileDialog, "getSaveFileName", mock_get_file)
 
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
 
     # I cannot monkeypatch the downloading, since the code checks if the PDF exists
     # when setting the buttons
@@ -1428,7 +1428,7 @@ def test_download_pdf_button_doesnt_update_buttons_if_cancelled(
 
     monkeypatch.setattr(QFileDialog, "getSaveFileName", mock_get_file)
 
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
 
     # monkeypatch the downloading
     download_links = []
@@ -1454,7 +1454,7 @@ def test_download_pdf_button_updates_text(qtbot, db_temp, monkeypatch):
 
     monkeypatch.setattr(QFileDialog, "getSaveFileName", mock_get_file)
 
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
 
     # I cannot monkeypatch the downloading, since the code checks if the PDF exists
     # when setting the buttons
@@ -1475,7 +1475,7 @@ def test_download_pdf_button_doesnt_reset_text_if_cancelled(
 
     monkeypatch.setattr(QFileDialog, "getSaveFileName", mock_get_file)
 
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
 
     # monkeypatch the downloading
     download_links = []
@@ -1500,7 +1500,7 @@ def test_download_pdf_doesnt_ask_user_if_none_available(qtbot, db_empty, monkeyp
         QFileDialog, "getSaveFileName", lambda x, y, z: get_file_calls.append(1)
     )
 
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
 
     # monkeypatch the downloading
     download_links = []
@@ -1525,7 +1525,7 @@ def test_download_pdf_doesnt_download_if_none_available(qtbot, db_empty, monkeyp
         QFileDialog, "getSaveFileName", lambda x, y, z: get_file_calls.append(1)
     )
 
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
 
     # monkeypatch the downloading
     download_links = []
@@ -1552,7 +1552,7 @@ def test_download_pdf_button_shows_error_message_if_none_available(
         QFileDialog, "getSaveFileName", lambda x, y, z: get_file_calls.append(1)
     )
 
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
 
     # monkeypatch the downloading
     download_links = []
@@ -1580,7 +1580,7 @@ def test_download_pdf_button_error_message_resets_on_new_paper_clicked(
         QFileDialog, "getSaveFileName", lambda x, y, z: get_file_calls.append(1)
     )
 
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
 
     # monkeypatch the downloading
     download_links = []
@@ -1602,9 +1602,9 @@ def test_double_clicking_on_paper_with_local_file_opens_it(
     open_calls = []
     monkeypatch.setattr(QDesktopServices, "openUrl", lambda x: open_calls.append(x))
 
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     # add a paper to this empty database to make the paper object
-    conv_add_paper(qtbot, widget, u.mine.bibcode)
+    CAddPaper(qtbot, widget, u.mine.bibcode)
     db_empty.set_paper_attribute(u.mine.bibcode, "local_file", test_loc)
     qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
     # since this already has a URL it should be added
@@ -1629,7 +1629,7 @@ def test_dclicking_on_paper_with_no_local_file_doesnt_ask_user(
         lambda filter, dir: user_asks.append("open"),
     )
 
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
     assert user_asks == []
 
@@ -1639,20 +1639,20 @@ def test_dclicking_on_paper_with_no_local_file_doesnt_open(qtbot, db_temp, monke
     open_calls = []
     monkeypatch.setattr(QDesktopServices, "openUrl", lambda x: open_calls.append(x))
 
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
     assert open_calls == []
 
 
 def test_dclicking_on_paper_with_no_local_file_highlights_right_panel(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
     assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == True
     assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == True
 
 
 def test_dclicking_on_paper_with_no_local_file_scrolls_to_show_buttons(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
     # I don't know exactly where this should end up, but not at the top or bottom
     assert (
@@ -1664,7 +1664,7 @@ def test_dclicking_on_paper_with_no_local_file_scrolls_to_show_buttons(qtbot, db
 
 
 def test_pdf_highlighting_goes_away_with_any_click(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
     assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == True
     assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == True
@@ -1679,7 +1679,7 @@ def test_pdf_highlighting_goes_away_with_choose_local_interaction(
     # mock the selection interaction
     monkeypatch.setattr(QFileDialog, "getOpenFileName", lambda filter, dir: ("", ""))
 
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
     assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == True
     assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == True
@@ -1694,7 +1694,7 @@ def test_pdf_highlighting_goes_away_with_download_interaction(
     # mock the selection interaction
     monkeypatch.setattr(QFileDialog, "getSaveFileName", lambda dir, caption: ("", ""))
 
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
     assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == True
     assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == True
@@ -1704,7 +1704,7 @@ def test_pdf_highlighting_goes_away_with_download_interaction(
 
 
 def test_pdf_highlighting_goes_away_when_new_paper_clicked(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
     assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == True
     assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == True
@@ -1725,7 +1725,7 @@ def test_dclicking_on_paper_with_nonexistent_file_redirects_to_right_panel(
     open_calls = []
     monkeypatch.setattr(QDesktopServices, "openUrl", lambda x: open_calls.append(x))
 
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     # add a paper to this empty database to make the paper object
     qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
     # check that we didn't open anything
@@ -1736,52 +1736,52 @@ def test_dclicking_on_paper_with_nonexistent_file_redirects_to_right_panel(
 
 
 def test_dclicking_on_paper_shows_details_in_right_panel(qtbot, db_empty, monkeypatch):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     # add a paper to this empty database to make the paper object
-    conv_add_paper(qtbot, widget, u.mine.bibcode)  # do not add file location
+    CAddPaper(qtbot, widget, u.mine.bibcode)  # do not add file location
     qtbot.mouseDClick(widget.papersList.papers[0], Qt.LeftButton)
     assert widget.rightPanel.titleText.text() == u.mine.title
 
 
 def test_get_tags_from_paper_object_is_correct(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     paper = widget.papersList.papers[0]
     assert paper.getTags() == db.get_paper_tags(paper.bibcode)
 
 
 def test_add_tag_button_is_shown_at_beginning(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert widget.tagsList.addTagButton.isHidden() is False
 
 
 def test_add_tag_text_button_has_correct_font_size(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert widget.tagsList.addTagButton.font().pointSize() == 14
 
 
 def test_add_tag_text_button_has_correct_font_family(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert widget.tagsList.addTagButton.font().family() == "Cabin"
 
 
 def test_add_tag_text_bar_is_hidden_at_beginning(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert widget.tagsList.addTagBar.isHidden() is True
 
 
 def test_add_tag_error_text_is_hidden_at_beginning(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert widget.tagsList.addTagErrorText.isHidden() is True
 
 
 def test_clicking_add_tag_button_hides_button(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     assert widget.tagsList.addTagButton.isHidden() is True
 
 
 def test_clicking_add_tag_button_shows_text_entry(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     assert widget.tagsList.addTagBar.isHidden() is False
 
@@ -1794,33 +1794,33 @@ def test_clicking_add_tag_button_puts_focus_on_text_entry(qtbot, db_empty, monke
     setFocus_calls = []
     monkeypatch.setattr(QLineEdit, "setFocus", lambda x: setFocus_calls.append(True))
 
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     # assert widget.tagsList.addTagBar.hasFocus() is True  # would be the best test
     assert setFocus_calls == [True]
 
 
 def test_add_tag_text_bar_has_correct_font_size(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     assert widget.tagsList.addTagBar.font().pointSize() == 14
 
 
 def test_add_tag_text_bar_has_correct_font_family(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     assert widget.tagsList.addTagBar.font().family() == "Cabin"
 
 
 def test_add_tag_text_bar_has_correct_placeholder_text(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     text = "Tag name"
     assert widget.tagsList.addTagBar.placeholderText() == text
 
 
 def test_can_add_tag_by_filling_tag_name_then_pressing_enter(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
     qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
@@ -1828,7 +1828,7 @@ def test_can_add_tag_by_filling_tag_name_then_pressing_enter(qtbot, db_temp):
 
 
 def test_can_add_tag_to_list_by_filling_tag_name_then_pressing_enter(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
     qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
@@ -1837,7 +1837,7 @@ def test_can_add_tag_to_list_by_filling_tag_name_then_pressing_enter(qtbot, db_t
 
 
 def test_tag_name_entry_is_cleared_after_successful_entry(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
     qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
@@ -1846,7 +1846,7 @@ def test_tag_name_entry_is_cleared_after_successful_entry(qtbot, db_temp):
 
 
 def test_tag_name_entry_is_hidden_after_successful_entry(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
     qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
@@ -1854,7 +1854,7 @@ def test_tag_name_entry_is_hidden_after_successful_entry(qtbot, db_temp):
 
 
 def test_tag_name_button_is_shown_after_successful_entry(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
     qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
@@ -1862,7 +1862,7 @@ def test_tag_name_button_is_shown_after_successful_entry(qtbot, db_temp):
 
 
 def test_tag_name_entry_is_not_cleared_after_duplicate_tag_attempt(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
     qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
@@ -1873,7 +1873,7 @@ def test_tag_name_entry_is_not_cleared_after_duplicate_tag_attempt(qtbot, db_tem
 
 
 def test_add_tag_error_message_shown_after_duplicate_tag_attempt(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
     qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
@@ -1885,7 +1885,7 @@ def test_add_tag_error_message_shown_after_duplicate_tag_attempt(qtbot, db_temp)
 
 
 def test_tag_name_entry_is_not_cleared_after_duplicate_cap_tag_attempt(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
     qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
@@ -1896,7 +1896,7 @@ def test_tag_name_entry_is_not_cleared_after_duplicate_cap_tag_attempt(qtbot, db
 
 
 def test_tag_name_entry_is_not_cleared_after_whitespace_tag_attempt(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.tagsList.addTagBar, "   ")
     qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
@@ -1904,7 +1904,7 @@ def test_tag_name_entry_is_not_cleared_after_whitespace_tag_attempt(qtbot, db_te
 
 
 def test_add_tag_error_message_shown_after_whitesapce_tag_attempt(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.tagsList.addTagBar, "   ")
     qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
@@ -1913,7 +1913,7 @@ def test_add_tag_error_message_shown_after_whitesapce_tag_attempt(qtbot, db_temp
 
 
 def test_tag_name_entry_is_not_cleared_after_backtick_tag_attempt(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.tagsList.addTagBar, "`")
     qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
@@ -1921,7 +1921,7 @@ def test_tag_name_entry_is_not_cleared_after_backtick_tag_attempt(qtbot, db_temp
 
 
 def test_add_tag_error_message_shown_after_backtick_tag_attempt(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.tagsList.addTagBar, "`")
     qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
@@ -1930,7 +1930,7 @@ def test_add_tag_error_message_shown_after_backtick_tag_attempt(qtbot, db_temp):
 
 
 def test_add_tag_error_message_hidden_after_text_changed(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.tagsList.addTagBar, "   ")
     qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
@@ -1940,7 +1940,7 @@ def test_add_tag_error_message_hidden_after_text_changed(qtbot, db_temp):
 
 
 def test_add_tag_error_message_hidden_after_cursor_moved(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.tagsList.addTagBar, "   ")
     qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
@@ -1950,7 +1950,7 @@ def test_add_tag_error_message_hidden_after_cursor_moved(qtbot, db_temp):
 
 
 def test_add_tag_entry_can_exit_with_escape_press_at_any_time(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.tagsList.addTagBar, "sdfsdf")
     qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Escape)
@@ -1960,7 +1960,7 @@ def test_add_tag_entry_can_exit_with_escape_press_at_any_time(qtbot, db):
 
 
 def test_add_tag_entry_can_exit_with_escape_press_at_any_time_clears_text(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.tagsList.addTagBar, "sdfsdf")
     qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Escape)
@@ -1968,7 +1968,7 @@ def test_add_tag_entry_can_exit_with_escape_press_at_any_time_clears_text(qtbot,
 
 
 def test_add_tag_entry_can_exit_with_backspace_when_empty(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.tagsList.addTagBar, "abc")
     # back out those three letters
@@ -1985,13 +1985,13 @@ def test_add_tag_entry_can_exit_with_backspace_when_empty(qtbot, db):
 
 
 def test_all_tags_in_database_are_in_the_tag_list_at_beginning(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     tags_list = [t.name for t in widget.tagsList.tags]
     assert sorted(tags_list) == sorted(db.get_all_tags())
 
 
 def test_read_and_unread_are_initialized_even_in_new_database(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     tags_list = [t.name for t in widget.tagsList.tags]
     assert sorted(tags_list) == ["Read", "Unread"]
 
@@ -1999,35 +1999,35 @@ def test_read_and_unread_are_initialized_even_in_new_database(qtbot, db_empty):
 def test_read_and_unread_arent_added_to_nonempty_database(qtbot, db_no_tags):
     db_no_tags.add_new_tag("lskdjlkj")
     db_no_tags.add_new_tag("ghjghjg")
-    widget = conv_initialize(qtbot, db_no_tags)
+    widget = CInitialize(qtbot, db_no_tags)
     tags_list = [t.name for t in widget.tagsList.tags]
     assert "Read" not in tags_list
     assert "Unread" not in tags_list
 
 
 def test_tag_has_correct_name(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     # get one of the tags, not sure which
     tag = widget.tagsList.tags[0]
     assert tag.label.text() == tag.name
 
 
 def test_tag_has_correct_font_family(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     # get one of the tags, not sure which
     tag = widget.tagsList.tags[0]
     assert tag.font().family() == "Cabin"
 
 
 def test_tag_has_correct_font_size(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     # get one of the tags, not sure which
     tag = widget.tagsList.tags[0]
     assert tag.font().family() == "Cabin"
 
 
 def test_duplicate_in_internal_tags_list_raises_error(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
     qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
     new_tag = LeftPanelTag("Test Tag", widget.papersList, widget.tagsList)
@@ -2036,7 +2036,7 @@ def test_duplicate_in_internal_tags_list_raises_error(qtbot, db_temp):
 
 
 def test_right_panel_tags_should_list_all_tags_in_database(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     # get all tags in both the list and database, then check that they're the same
     db_tags = db.get_all_tags()
     list_tags = [t.text() for t in widget.rightPanel.tags]
@@ -2044,7 +2044,7 @@ def test_right_panel_tags_should_list_all_tags_in_database(qtbot, db):
 
 
 def test_right_panel_tags_checked_match_paper_that_is_selected(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     # get a random paper, we already tested that it has at least one tag
     paper = widget.papersList.papers[0]
     qtbot.mouseClick(paper, Qt.LeftButton)
@@ -2060,7 +2060,7 @@ def test_checking_tag_in_checklist_adds_tag_to_paper_in_database(qtbot, db_no_ta
     # add some tags to this database
     for tag in ["T1", "T2", "T3", "T4", "T5"]:
         db_no_tags.add_new_tag(tag)
-    widget = conv_initialize(qtbot, db_no_tags)
+    widget = CInitialize(qtbot, db_no_tags)
     # get one of the papers, not sure which, then click on it
     paper = widget.papersList.papers[0]
     qtbot.mouseClick(paper, Qt.LeftButton)
@@ -2083,7 +2083,7 @@ def test_unchecking_tag_in_checklist_removes_tag_from_paper_in_database(
     # add some tags to this database
     for tag in ["T1", "T2", "T3", "T4", "T5"]:
         db_no_tags.add_new_tag(tag)
-    widget = conv_initialize(qtbot, db_no_tags)
+    widget = CInitialize(qtbot, db_no_tags)
     # get one of the papers, not sure which, then click on it
     paper = widget.papersList.papers[0]
     # add all tags to this paper
@@ -2108,7 +2108,7 @@ def test_checking_tag_in_checklist_adds_tag_to_interface(qtbot, db_no_tags):
     # add some tags to this database
     for tag in ["T1", "T2", "T3", "T4", "T5"]:
         db_no_tags.add_new_tag(tag)
-    widget = conv_initialize(qtbot, db_no_tags)
+    widget = CInitialize(qtbot, db_no_tags)
     # get one of the papers, not sure which, then click on it
     paper = widget.papersList.papers[0]
     qtbot.mouseClick(paper, Qt.LeftButton)
@@ -2129,7 +2129,7 @@ def test_unchecking_tag_in_checklist_removes_tag_from_interface(qtbot, db_no_tag
     # add some tags to this database
     for tag in ["T1", "T2", "T3", "T4", "T5"]:
         db_no_tags.add_new_tag(tag)
-    widget = conv_initialize(qtbot, db_no_tags)
+    widget = CInitialize(qtbot, db_no_tags)
     # get one of the papers, not sure which, then click on it
     paper = widget.papersList.papers[0]
     # add all tags to this paper
@@ -2149,13 +2149,13 @@ def test_unchecking_tag_in_checklist_removes_tag_from_interface(qtbot, db_no_tag
 
 
 def test_all_papers_start_not_hidden(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     for paper in widget.papersList.papers:
         assert not paper.isHidden()
 
 
 def test_clicking_on_tag_in_left_panel_hides_papers(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     # get a tag from the left panel to click on
     left_tag = widget.tagsList.tags[0]
     qtbot.mouseClick(left_tag, Qt.LeftButton)
@@ -2168,13 +2168,13 @@ def test_clicking_on_tag_in_left_panel_hides_papers(qtbot, db):
 
 
 def test_show_all_tags_button_starts_highlighted(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     assert widget.tagsList.showAllButton.property("is_highlighted") is True
     assert widget.tagsList.showAllButton.label.property("is_highlighted") is True
 
 
 def test_all_tags_start_unhighlighted(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     # get a tag from the left panel to click on
     for tag in widget.tagsList.tags:
         assert tag.property("is_highlighted") is False
@@ -2182,7 +2182,7 @@ def test_all_tags_start_unhighlighted(qtbot, db_temp):
 
 
 def test_clicking_on_tag_in_left_panel_highlights_tag_text(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     # get a tag from the left panel to click on
     tag = widget.tagsList.tags[0]
     qtbot.mouseClick(tag, Qt.LeftButton)
@@ -2191,14 +2191,14 @@ def test_clicking_on_tag_in_left_panel_highlights_tag_text(qtbot, db_temp):
 
 
 def test_clicking_on_show_all_in_left_panel_highlights_tag_text(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.tagsList.showAllButton, Qt.LeftButton)
     assert widget.tagsList.showAllButton.property("is_highlighted") is True
     assert widget.tagsList.showAllButton.label.property("is_highlighted") is True
 
 
 def test_clicking_on_tag_in_left_panel_unlights_others(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     # Click on one tag, then another
     for tag in widget.tagsList.tags:
         qtbot.mouseClick(tag, Qt.LeftButton)
@@ -2212,7 +2212,7 @@ def test_clicking_on_tag_in_left_panel_unlights_others(qtbot, db_temp):
 
 
 def test_clicking_on_show_all_in_left_panel_unlights_others(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.tagsList.showAllButton, Qt.LeftButton)
     for tag in widget.tagsList.tags:
         assert tag.property("is_highlighted") is False
@@ -2220,7 +2220,7 @@ def test_clicking_on_show_all_in_left_panel_unlights_others(qtbot, db_temp):
 
 
 def test_newly_added_tag_is_unhighlighted(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.tagsList.addTagBar, "newly added tag")
     qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
@@ -2231,22 +2231,22 @@ def test_newly_added_tag_is_unhighlighted(qtbot, db_temp):
 
 
 def test_show_all_button_fontsize(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     assert widget.tagsList.showAllButton.font().pointSize() == 14
 
 
 def test_show_all_button_has_correct_font_family(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert widget.tagsList.showAllButton.font().family() == "Cabin"
 
 
 def test_show_all_button_has_correct_text(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert widget.tagsList.showAllButton.label.text() == "All Papers"
 
 
 def test_clicking_on_show_all_button_shows_all_papers(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     # First click on a tag to restrict the number of papers shown
     left_tag = widget.tagsList.tags[0]
     qtbot.mouseClick(left_tag, Qt.LeftButton)
@@ -2258,56 +2258,56 @@ def test_clicking_on_show_all_button_shows_all_papers(qtbot, db):
 
 
 def test_tags_selection_checkboxes_is_hidden_at_beginning(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     for tag in widget.rightPanel.tags:
         assert tag.isHidden() is True
 
 
 def test_tags_selection_edit_button_is_hidden_at_beginning(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     assert widget.rightPanel.editTagsButton.isHidden() is True
 
 
 def test_tags_selection_done_editing_button_is_hidden_at_beginning(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     assert widget.rightPanel.doneEditingTagsButton.isHidden() is True
 
 
 def test_tags_selection_edit_button_appears_when_paper_clicked(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     assert widget.rightPanel.editTagsButton.isHidden() is False
 
 
 def test_tags_selection_done_editing_button_doesnt_appear_when_paper_clicked(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     assert widget.rightPanel.doneEditingTagsButton.isHidden() is True
 
 
 def test_tags_selection_checkboxes_doesnt_appear_when_paper_clicked(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     for tag in widget.rightPanel.tags:
         assert tag.isHidden() is True
 
 
 def test_tags_selection_edit_button_is_hidden_when_pressed(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.editTagsButton, Qt.LeftButton)
     assert widget.rightPanel.editTagsButton.isHidden() is True
 
 
 def test_tags_selection_done_editing_buttons_is_shown_when_edit_is_pressed(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.editTagsButton, Qt.LeftButton)
     assert widget.rightPanel.doneEditingTagsButton.isHidden() is False
 
 
 def test_tags_selection_edit_button_shown_again_when_done_editing_pressed(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.editTagsButton, Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.doneEditingTagsButton, Qt.LeftButton)
@@ -2315,7 +2315,7 @@ def test_tags_selection_edit_button_shown_again_when_done_editing_pressed(qtbot,
 
 
 def test_tags_selection_done_editing_button_is_hidden_when_pressed(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.editTagsButton, Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.doneEditingTagsButton, Qt.LeftButton)
@@ -2323,7 +2323,7 @@ def test_tags_selection_done_editing_button_is_hidden_when_pressed(qtbot, db):
 
 
 def test_tags_selection_checkboxes_are_unhidden_when_edit_is_pressed(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.editTagsButton, Qt.LeftButton)
     for tag in widget.rightPanel.tags:
@@ -2331,7 +2331,7 @@ def test_tags_selection_checkboxes_are_unhidden_when_edit_is_pressed(qtbot, db):
 
 
 def test_tags_selection_checkboxes_are_hidden_when_done_editing(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.editTagsButton, Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.doneEditingTagsButton, Qt.LeftButton)
@@ -2345,7 +2345,7 @@ def test_clicking_bibtex_button_copies_bibtex(qtbot, db, monkeypatch):
     texts = []
     monkeypatch.setattr(clipboard, "setText", lambda x: texts.append(x))
 
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     # get one of the papers in the right panel
     paper = widget.papersList.papers[0]
     qtbot.mouseClick(paper, Qt.LeftButton)
@@ -2356,39 +2356,39 @@ def test_clicking_bibtex_button_copies_bibtex(qtbot, db, monkeypatch):
 
 
 def test_copy_bibtex_button_hidden_at_beginning(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     assert widget.rightPanel.copyBibtexButton.isHidden() is True
 
 
 def test_copy_bibtex_button_appears_when_paper_clicked(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     assert widget.rightPanel.copyBibtexButton.isHidden() is False
 
 
 def test_first_delete_paper_button_hidden_at_beginning(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     assert widget.rightPanel.firstDeletePaperButton.isHidden() is True
 
 
 def test_second_delete_paper_button_hidden_at_beginning(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     assert widget.rightPanel.secondDeletePaperButton.isHidden() is True
 
 
 def test_second_delete_cancel_paper_button_hidden_at_beginning(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     assert widget.rightPanel.secondDeletePaperCancelButton.isHidden() is True
 
 
 def test_first_delete_paper_button_appears_when_paper_clicked(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     assert widget.rightPanel.firstDeletePaperButton.isHidden() is False
 
 
 def test_second_delete_paper_button_does_not_appear_when_paper_clicked(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     assert widget.rightPanel.secondDeletePaperButton.isHidden() is True
 
@@ -2396,34 +2396,34 @@ def test_second_delete_paper_button_does_not_appear_when_paper_clicked(qtbot, db
 def test_second_delete_paper_cancel_button_does_not_appear_when_paper_clicked(
     qtbot, db
 ):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     assert widget.rightPanel.secondDeletePaperCancelButton.isHidden() is True
 
 
 def test_second_delete_paper_button_appears_when_first_clicked(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
     assert widget.rightPanel.secondDeletePaperButton.isHidden() is False
 
 
 def test_second_delete_paper_cancel_button_appears_when_first_clicked(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
     assert widget.rightPanel.secondDeletePaperCancelButton.isHidden() is False
 
 
 def test_first_delete_paper_button_disappears_when_clicked(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
     assert widget.rightPanel.firstDeletePaperButton.isHidden() is True
 
 
 def test_first_delete_buttons_reset_when_on_new_paper(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
     qtbot.mouseClick(widget.papersList.papers[1], Qt.LeftButton)
@@ -2431,7 +2431,7 @@ def test_first_delete_buttons_reset_when_on_new_paper(qtbot, db):
 
 
 def test_second_delete_buttons_reset_when_on_new_paper(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
     qtbot.mouseClick(widget.papersList.papers[1], Qt.LeftButton)
@@ -2439,7 +2439,7 @@ def test_second_delete_buttons_reset_when_on_new_paper(qtbot, db):
 
 
 def test_second_delete_cancel_buttons_reset_when_on_new_paper(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
     qtbot.mouseClick(widget.papersList.papers[1], Qt.LeftButton)
@@ -2449,7 +2449,7 @@ def test_second_delete_cancel_buttons_reset_when_on_new_paper(qtbot, db):
 def test_second_delete_paper_button_deletes_paper_from_database_when_pressed(
     qtbot, db_temp
 ):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     paper = widget.papersList.papers[0]
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
@@ -2462,7 +2462,7 @@ def test_second_delete_paper_button_deletes_paper_from_database_when_pressed(
 def test_second_delete_paper_button_deletes_paper_from_interface_when_pressed(
     qtbot, db_temp
 ):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     bibcode = widget.papersList.papers[0].bibcode
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
@@ -2475,7 +2475,7 @@ def test_second_delete_paper_button_deletes_paper_from_interface_when_pressed(
 def test_second_delete_paper_cancel_button_does_not_delete_paper_from_database(
     qtbot, db_temp
 ):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     paper = widget.papersList.papers[0]
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
@@ -2487,7 +2487,7 @@ def test_second_delete_paper_cancel_button_does_not_delete_paper_from_database(
 def test_second_delete_paper_cancel_button_does_not_delete_paper_from_interface(
     qtbot, db_temp
 ):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     bibcode = widget.papersList.papers[0].bibcode
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
@@ -2501,7 +2501,7 @@ def test_second_delete_paper_cancel_button_does_not_delete_paper_from_interface(
 
 
 def test_second_delete_paper_cancel_button_resets_delete_buttons(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.secondDeletePaperCancelButton, Qt.LeftButton)
@@ -2511,7 +2511,7 @@ def test_second_delete_paper_cancel_button_resets_delete_buttons(qtbot, db_temp)
 
 
 def test_right_panel_edit_tags_button_is_hidden_when_paper_is_deleted(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.secondDeletePaperButton, Qt.LeftButton)
@@ -2521,7 +2521,7 @@ def test_right_panel_edit_tags_button_is_hidden_when_paper_is_deleted(qtbot, db_
 def test_right_panel_done_editing_tags_button_is_hidden_when_paper_is_deleted(
     qtbot, db_temp
 ):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.secondDeletePaperButton, Qt.LeftButton)
@@ -2529,7 +2529,7 @@ def test_right_panel_done_editing_tags_button_is_hidden_when_paper_is_deleted(
 
 
 def test_right_panel_copy_bibtex_button_is_hidden_when_paper_is_deleted(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.secondDeletePaperButton, Qt.LeftButton)
@@ -2537,7 +2537,7 @@ def test_right_panel_copy_bibtex_button_is_hidden_when_paper_is_deleted(qtbot, d
 
 
 def test_right_panel_open_ads_button_is_hidden_when_paper_is_deleted(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.secondDeletePaperButton, Qt.LeftButton)
@@ -2547,7 +2547,7 @@ def test_right_panel_open_ads_button_is_hidden_when_paper_is_deleted(qtbot, db_t
 def test_right_panel_first_delete_button_is_hidden_when_paper_is_deleted(
     qtbot, db_temp
 ):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.secondDeletePaperButton, Qt.LeftButton)
@@ -2557,7 +2557,7 @@ def test_right_panel_first_delete_button_is_hidden_when_paper_is_deleted(
 def test_right_panel_second_delete_button_is_hidden_when_paper_is_deleted(
     qtbot, db_temp
 ):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.secondDeletePaperButton, Qt.LeftButton)
@@ -2567,7 +2567,7 @@ def test_right_panel_second_delete_button_is_hidden_when_paper_is_deleted(
 def test_right_panel_second_delete_cancel_button_is_hidden_when_paper_is_deleted(
     qtbot, db_temp
 ):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.secondDeletePaperButton, Qt.LeftButton)
@@ -2575,7 +2575,7 @@ def test_right_panel_second_delete_cancel_button_is_hidden_when_paper_is_deleted
 
 
 def test_right_panel_title_text_is_blank_when_paper_is_deleted(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.secondDeletePaperButton, Qt.LeftButton)
@@ -2583,7 +2583,7 @@ def test_right_panel_title_text_is_blank_when_paper_is_deleted(qtbot, db_temp):
 
 
 def test_right_panel_cite_text_is_blank_when_paper_is_deleted(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.secondDeletePaperButton, Qt.LeftButton)
@@ -2591,7 +2591,7 @@ def test_right_panel_cite_text_is_blank_when_paper_is_deleted(qtbot, db_temp):
 
 
 def test_right_panel_tag_text_is_blank_when_paper_is_deleted(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.secondDeletePaperButton, Qt.LeftButton)
@@ -2599,7 +2599,7 @@ def test_right_panel_tag_text_is_blank_when_paper_is_deleted(qtbot, db_temp):
 
 
 def test_right_panel_abstract_text_is_default_when_paper_is_deleted(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.secondDeletePaperButton, Qt.LeftButton)
@@ -2610,37 +2610,37 @@ def test_right_panel_abstract_text_is_default_when_paper_is_deleted(qtbot, db_te
 
 
 def test_first_delete_tag_button_shown_at_beginning(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     assert widget.firstDeleteTagButton.isHidden() is False
 
 
 def test_first_delete_tag_button_has_correct_font_size(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert widget.firstDeleteTagButton.font().pointSize() == 14
 
 
 def test_first_delete_tag_button_has_correct_font_family(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     assert widget.firstDeleteTagButton.font().family() == "Cabin"
 
 
 def test_first_delete_tag_button_has_correct_text(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     assert widget.firstDeleteTagButton.text() == "Delete a tag"
 
 
 def test_second_delete_tag_entry_hidden_at_beginning(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     assert widget.secondDeleteTagEntry.isHidden() is True
 
 
 def test_second_delete_tag_error_text_hidden_at_beginning(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     assert widget.secondDeleteTagErrorText.isHidden() is True
 
 
 def test_clicking_first_tag_delete_button_shows_second_entry(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     assert widget.secondDeleteTagEntry.isHidden() is False
 
@@ -2655,49 +2655,49 @@ def test_clicking_first_tag_delete_button_puts_focus_on_entry(
     setFocus_calls = []
     monkeypatch.setattr(QLineEdit, "setFocus", lambda x: setFocus_calls.append(True))
 
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     # assert widget.secondDeleteTagEntry.hasFocus() is True  # would be the best test
     assert setFocus_calls == [True]
 
 
 def test_clicking_first_tag_delete_button_hides_first_button(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     assert widget.firstDeleteTagButton.isHidden() is True
 
 
 def test_second_delete_tag_button_has_correct_font_size(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     assert widget.secondDeleteTagEntry.font().pointSize() == 14
 
 
 def test_second_delete_tag_button_has_correct_font_family(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     assert widget.secondDeleteTagEntry.font().family() == "Cabin"
 
 
 def test_second_delete_tag_entry_has_placeholder_text(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     text = "Tag to delete"
     assert widget.secondDeleteTagEntry.placeholderText() == text
 
 
 def test_third_delete_tag_entry_hidden_at_beginning(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     assert widget.thirdDeleteTagButton.isHidden() is True
 
 
 def test_third_cancel_tag_entry_hidden_at_beginning(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     assert widget.thirdDeleteTagCancelButton.isHidden() is True
 
 
 def test_second_delete_tag_entry_is_hidden_when_entry_done(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")  # tag must exist
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
@@ -2705,7 +2705,7 @@ def test_second_delete_tag_entry_is_hidden_when_entry_done(qtbot, db_temp):
 
 
 def test_third_delete_tag_button_appears_when_first_entry_done(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
@@ -2713,7 +2713,7 @@ def test_third_delete_tag_button_appears_when_first_entry_done(qtbot, db_temp):
 
 
 def test_third_delete_tag_cancel_button_appears_when_first_entry_done(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
@@ -2721,7 +2721,7 @@ def test_third_delete_tag_cancel_button_appears_when_first_entry_done(qtbot, db_
 
 
 def test_second_tag_delete_error_text_hidden_when_first_entry_done(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
@@ -2729,7 +2729,7 @@ def test_second_tag_delete_error_text_hidden_when_first_entry_done(qtbot, db_tem
 
 
 def test_delete_tag_entry_can_exit_with_escape_press_at_any_time(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "sdfsdf")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Escape)
@@ -2738,7 +2738,7 @@ def test_delete_tag_entry_can_exit_with_escape_press_at_any_time(qtbot, db):
 
 
 def test_delete_tag_entry_can_exit_with_escape_press_at_any_time_clears_text(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "sdfsdf")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Escape)
@@ -2746,7 +2746,7 @@ def test_delete_tag_entry_can_exit_with_escape_press_at_any_time_clears_text(qtb
 
 
 def test_delete_tag_entry_can_exit_with_backspace_when_empty(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "abc")
     # back out those three letters
@@ -2762,7 +2762,7 @@ def test_delete_tag_entry_can_exit_with_backspace_when_empty(qtbot, db):
 
 
 def test_third_delete_tag_button_has_correct_font_size(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
@@ -2770,7 +2770,7 @@ def test_third_delete_tag_button_has_correct_font_size(qtbot, db_temp):
 
 
 def test_third_delete_tag_button_has_correct_font_family(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
@@ -2778,7 +2778,7 @@ def test_third_delete_tag_button_has_correct_font_family(qtbot, db_temp):
 
 
 def test_third_delete_tag_cancel_button_has_correct_font_size(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
@@ -2786,7 +2786,7 @@ def test_third_delete_tag_cancel_button_has_correct_font_size(qtbot, db_temp):
 
 
 def test_third_delete_tag_cancel_button_has_correct_font_family(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
@@ -2794,7 +2794,7 @@ def test_third_delete_tag_cancel_button_has_correct_font_family(qtbot, db_temp):
 
 
 def test_third_delete_tag_button_text_is_accurate(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
@@ -2802,7 +2802,7 @@ def test_third_delete_tag_button_text_is_accurate(qtbot, db_temp):
 
 
 def test_third_delete_tag_cancel_button_text_is_accurate(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
@@ -2812,7 +2812,7 @@ def test_third_delete_tag_cancel_button_text_is_accurate(qtbot, db_temp):
 
 
 def test_third_delete_tag_button_deletes_tag_from_db_when_pressed(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     original_tags = db_temp.get_all_tags()
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
@@ -2825,7 +2825,7 @@ def test_third_delete_tag_button_deletes_tag_from_db_when_pressed(qtbot, db_temp
 
 
 def test_third_delete_tag_button_deletes_tag_from_list_when_pressed(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     # first get the original number of tags
     num_original_tags = len([t.name for t in widget.tagsList.tags])
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
@@ -2839,7 +2839,7 @@ def test_third_delete_tag_button_deletes_tag_from_list_when_pressed(qtbot, db_te
 
 
 def test_first_delete_tag_button_comes_back_once_tag_deleted(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
@@ -2848,7 +2848,7 @@ def test_first_delete_tag_button_comes_back_once_tag_deleted(qtbot, db_temp):
 
 
 def test_second_delete_tag_entry_hidden_once_tag_deleted(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
@@ -2857,7 +2857,7 @@ def test_second_delete_tag_entry_hidden_once_tag_deleted(qtbot, db_temp):
 
 
 def test_third_delete_tag_button_hides_once_tag_deleted(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
@@ -2866,7 +2866,7 @@ def test_third_delete_tag_button_hides_once_tag_deleted(qtbot, db_temp):
 
 
 def test_third_delete_tag_cancel_button_hides_once_tag_deleted(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "Read")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
@@ -2875,7 +2875,7 @@ def test_third_delete_tag_cancel_button_hides_once_tag_deleted(qtbot, db_temp):
 
 
 def test_first_delete_tag_button_comes_back_once_cancelled(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
@@ -2884,7 +2884,7 @@ def test_first_delete_tag_button_comes_back_once_cancelled(qtbot, db_temp):
 
 
 def test_second_delete_tag_entry_hidden_once_cancelled(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
@@ -2893,7 +2893,7 @@ def test_second_delete_tag_entry_hidden_once_cancelled(qtbot, db_temp):
 
 
 def test_third_delete_tag_button_hides_once_cancelled(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
@@ -2902,7 +2902,7 @@ def test_third_delete_tag_button_hides_once_cancelled(qtbot, db_temp):
 
 
 def test_third_delete_tag_cancel_button_hides_once_cancelled(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "tag_1")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
@@ -2911,7 +2911,7 @@ def test_third_delete_tag_cancel_button_hides_once_cancelled(qtbot, db_temp):
 
 
 def test_cancel_tag_delete_doesnt_delete_any_tags_db(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     # first get the original tags
     original_tags = db_temp.get_all_tags()
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
@@ -2924,7 +2924,7 @@ def test_cancel_tag_delete_doesnt_delete_any_tags_db(qtbot, db_temp):
 
 
 def test_cancel_tag_delete_doesnt_delete_any_tags_interface(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     # first get the original tags
     original_tags = [t.name for t in widget.tagsList.tags]
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
@@ -2937,7 +2937,7 @@ def test_cancel_tag_delete_doesnt_delete_any_tags_interface(qtbot, db_temp):
 
 
 def test_invalid_tag_delete_entry_keeps_entry(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "sdfsdfadbsdf")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
@@ -2946,7 +2946,7 @@ def test_invalid_tag_delete_entry_keeps_entry(qtbot, db_temp):
 
 
 def test_invalid_tag_delete_entry_shows_error_text(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "sdfsdfadbsdf")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
@@ -2955,7 +2955,7 @@ def test_invalid_tag_delete_entry_shows_error_text(qtbot, db_temp):
 
 
 def test_invalid_tag_delete_entry_keeps_third_hidden(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "sdfsdfadbsdf")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
@@ -2963,7 +2963,7 @@ def test_invalid_tag_delete_entry_keeps_third_hidden(qtbot, db_temp):
 
 
 def test_invalid_tag_delete_entry_keeps_third_cancel_hidden(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "sdfsdfadbsdf")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
@@ -2971,7 +2971,7 @@ def test_invalid_tag_delete_entry_keeps_third_cancel_hidden(qtbot, db_temp):
 
 
 def test_invalid_tag_delete_error_text_hidden_when_clicked(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "sdfsdfadbsdf")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
@@ -2981,7 +2981,7 @@ def test_invalid_tag_delete_error_text_hidden_when_clicked(qtbot, db_temp):
 
 
 def test_invalid_tag_delete_error_text_hidden_when_text_modified(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, "sdfsdfadbsdf")
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
@@ -2991,7 +2991,7 @@ def test_invalid_tag_delete_error_text_hidden_when_text_modified(qtbot, db_temp)
 
 
 def test_tag_checkboxes_are_hidden_when_paper_clicked(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     # click on a paper, then click the edit tags button
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.editTagsButton, Qt.LeftButton)
@@ -3003,7 +3003,7 @@ def test_tag_checkboxes_are_hidden_when_paper_clicked(qtbot, db_temp):
 
 
 def test_done_editing_button_is_hidden_when_paper_clicked(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     # click on a paper, then click the edit tags button
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.editTagsButton, Qt.LeftButton)
@@ -3014,7 +3014,7 @@ def test_done_editing_button_is_hidden_when_paper_clicked(qtbot, db_temp):
 
 
 def test_newly_added_tags_appear_in_right_panel(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     # first add a tag
     qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
     qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
@@ -3025,7 +3025,7 @@ def test_newly_added_tags_appear_in_right_panel(qtbot, db_temp):
 
 def test_adding_tags_doesnt_duplicate_tags_in_right_panel(qtbot, db_empty):
     db_empty.add_paper(u.mine.bibcode)
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     # first add a tag
     qtbot.keyClicks(widget.tagsList.addTagBar, "Test Tag")
     qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
@@ -3042,12 +3042,12 @@ def test_adding_tags_doesnt_duplicate_tags_in_right_panel(qtbot, db_empty):
 
 
 def test_open_ads_button_hidden_at_beginning(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     assert widget.rightPanel.adsButton.isHidden() is True
 
 
 def test_open_ads_button_appears_when_paper_clicked(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     assert widget.rightPanel.adsButton.isHidden() is False
 
@@ -3057,9 +3057,9 @@ def test_clicking_on_ads_button_opens_paper_in_browser(qtbot, db_empty, monkeypa
     open_calls = []
     monkeypatch.setattr(QDesktopServices, "openUrl", lambda x: open_calls.append(x))
 
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     # add a paper to this empty database to make the paper object
-    conv_add_paper(qtbot, widget, u.mine.bibcode)
+    CAddPaper(qtbot, widget, u.mine.bibcode)
     # click on th epaper in the main panel, then click on the ADS button
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.adsButton, Qt.LeftButton)
@@ -3071,29 +3071,29 @@ def test_clicking_on_ads_button_opens_paper_in_browser(qtbot, db_empty, monkeypa
 
 
 def test_show_all_export_button_has_correct_text(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     assert widget.tagsList.showAllButton.exportButton.text() == "Export"
 
 
 def test_tag_export_button_has_correct_text(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     assert widget.tagsList.tags[0].exportButton.text() == "Export"
 
 
 def test_show_all_tags_button_starts_with_export_button(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     assert widget.tagsList.showAllButton.exportButton.isHidden() is False
 
 
 def test_all_tags_start_with_export_hidden(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     # get a tag from the left panel to click on
     for tag in widget.tagsList.tags:
         assert tag.exportButton.isHidden() is True
 
 
 def test_clicking_on_tag_in_left_panel_shows_export_button(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     # get a tag from the left panel to click on
     tag = widget.tagsList.tags[0]
     qtbot.mouseClick(tag, Qt.LeftButton)
@@ -3101,14 +3101,14 @@ def test_clicking_on_tag_in_left_panel_shows_export_button(qtbot, db_temp):
 
 
 def test_clicking_on_show_all_in_left_panel_shows_export_button(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.tagsList.tags[0], Qt.LeftButton)
     qtbot.mouseClick(widget.tagsList.showAllButton, Qt.LeftButton)
     assert widget.tagsList.showAllButton.exportButton.isHidden() is False
 
 
 def test_clicking_on_tag_in_left_panel_removes_export_button(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     # Click on one tag, then another
     for tag in widget.tagsList.tags:
         qtbot.mouseClick(tag, Qt.LeftButton)
@@ -3120,14 +3120,14 @@ def test_clicking_on_tag_in_left_panel_removes_export_button(qtbot, db_temp):
 
 
 def test_clicking_on_show_all_in_left_panel_removes_other_exports(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.tagsList.showAllButton, Qt.LeftButton)
     for tag in widget.tagsList.tags:
         assert tag.exportButton.isHidden() is True
 
 
 def test_newly_added_tag_has_hidden_export(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.tagsList.addTagBar, "newly added tag")
     qtbot.keyPress(widget.tagsList.addTagBar, Qt.Key_Enter)
@@ -3147,7 +3147,7 @@ def test_clicking_export_all_exports_all(qtbot, db, monkeypatch):
 
     monkeypatch.setattr(QFileDialog, "getSaveFileName", mock_get_file)
 
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     # click on the export all button
     qtbot.mouseClick(widget.tagsList.showAllButton.exportButton, Qt.LeftButton)
     # then open the file and compare it
@@ -3181,7 +3181,7 @@ def test_exporting_a_single_tag(qtbot, db_empty, monkeypatch):
 
     monkeypatch.setattr(QFileDialog, "getSaveFileName", mock_get_file)
 
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     # find the tag to click on, then click it's export button
     for tag in widget.tagsList.tags:
         if tag.name == "test_tag":
@@ -3212,7 +3212,7 @@ def test_no_export_happens_if_user_cancels(qtbot, db, monkeypatch):
     export_calls = []
     monkeypatch.setattr(db, "export", lambda x, y: export_calls.append(1))
 
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     # find the tag to click on, then click it's export button
     qtbot.mouseClick(widget.tagsList.showAllButton.exportButton, Qt.LeftButton)
     # then see if anything has happened. I did test my test by using an actual file for
@@ -3221,7 +3221,7 @@ def test_no_export_happens_if_user_cancels(qtbot, db, monkeypatch):
 
 
 def test_user_notes_fields_are_not_shown_on_initialization(qtbot, db_notes):
-    widget = conv_initialize(qtbot, db_notes)
+    widget = CInitialize(qtbot, db_notes)
     assert widget.rightPanel.userNotesText.isHidden() is True
     assert widget.rightPanel.userNotesTextEditButton.isHidden() is True
     assert widget.rightPanel.userNotesTextEditField.isHidden() is True
@@ -3229,7 +3229,7 @@ def test_user_notes_fields_are_not_shown_on_initialization(qtbot, db_notes):
 
 
 def test_user_notes_are_appropriately_shown_once_paper_clicked(qtbot, db_notes):
-    widget = conv_initialize(qtbot, db_notes)
+    widget = CInitialize(qtbot, db_notes)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     assert widget.rightPanel.userNotesText.isHidden() is False
     assert widget.rightPanel.userNotesTextEditButton.isHidden() is False
@@ -3238,32 +3238,32 @@ def test_user_notes_are_appropriately_shown_once_paper_clicked(qtbot, db_notes):
 
 
 def test_user_notes_has_correct_text(qtbot, db_notes):
-    widget = conv_initialize(qtbot, db_notes)
+    widget = CInitialize(qtbot, db_notes)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     assert widget.rightPanel.userNotesText.text() == "abc123"
 
 
 def test_user_notes_has_correct_text_if_originally_blank(qtbot, db_empty):
     db_empty.add_paper(u.mine.bibcode)
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     assert widget.rightPanel.userNotesText.text() == "No notes yet"
 
 
 def test_user_notes_has_word_wrap_on(qtbot, db_notes):
-    widget = conv_initialize(qtbot, db_notes)
+    widget = CInitialize(qtbot, db_notes)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     assert widget.rightPanel.userNotesText.wordWrap()
 
 
 def test_edit_user_notes_button_has_correct_text(qtbot, db_notes):
-    widget = conv_initialize(qtbot, db_notes)
+    widget = CInitialize(qtbot, db_notes)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     assert widget.rightPanel.userNotesTextEditButton.text() == "Edit Notes"
 
 
 def test_user_notes_finished_editing_button_has_correct_text(qtbot, db_notes):
-    widget = conv_initialize(qtbot, db_notes)
+    widget = CInitialize(qtbot, db_notes)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     assert (
         widget.rightPanel.userNotesTextEditFinishedButton.text() == "Done Editing Notes"
@@ -3271,28 +3271,28 @@ def test_user_notes_finished_editing_button_has_correct_text(qtbot, db_notes):
 
 
 def test_notes_static_text_disappears_when_edit_button_clicked(qtbot, db_notes):
-    widget = conv_initialize(qtbot, db_notes)
+    widget = CInitialize(qtbot, db_notes)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.userNotesTextEditButton, Qt.LeftButton)
     assert widget.rightPanel.userNotesText.isHidden() is True
 
 
 def test_notes_edit_button_disappears_when_edit_button_clicked(qtbot, db_notes):
-    widget = conv_initialize(qtbot, db_notes)
+    widget = CInitialize(qtbot, db_notes)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.userNotesTextEditButton, Qt.LeftButton)
     assert widget.rightPanel.userNotesTextEditButton.isHidden() is True
 
 
 def test_notes_finished_edit_button_appears_when_edit_button_clicked(qtbot, db_notes):
-    widget = conv_initialize(qtbot, db_notes)
+    widget = CInitialize(qtbot, db_notes)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.userNotesTextEditButton, Qt.LeftButton)
     assert widget.rightPanel.userNotesTextEditFinishedButton.isHidden() is False
 
 
 def test_notes_edit_field_has_original_text(qtbot, db_notes):
-    widget = conv_initialize(qtbot, db_notes)
+    widget = CInitialize(qtbot, db_notes)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.userNotesTextEditButton, Qt.LeftButton)
     assert widget.rightPanel.userNotesTextEditField.toPlainText() == "abc123"
@@ -3300,14 +3300,14 @@ def test_notes_edit_field_has_original_text(qtbot, db_notes):
 
 def test_notes_edit_field_is_blank_if_there_are_no_notes(qtbot, db_empty):
     db_empty.add_paper(u.mine.bibcode)
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.userNotesTextEditButton, Qt.LeftButton)
     assert widget.rightPanel.userNotesTextEditField.toPlainText() == ""
 
 
 def test_notes_edit_field_changes_database_when_finished(qtbot, db_notes):
-    widget = conv_initialize(qtbot, db_notes)
+    widget = CInitialize(qtbot, db_notes)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.userNotesTextEditButton, Qt.LeftButton)
     # simulate the user deleting the current into, then adding their own
@@ -3318,7 +3318,7 @@ def test_notes_edit_field_changes_database_when_finished(qtbot, db_notes):
 
 
 def test_notes_edit_field_changes_shown_text(qtbot, db_notes):
-    widget = conv_initialize(qtbot, db_notes)
+    widget = CInitialize(qtbot, db_notes)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.userNotesTextEditButton, Qt.LeftButton)
     # simulate the user deleting the current into, then adding their own
@@ -3329,7 +3329,7 @@ def test_notes_edit_field_changes_shown_text(qtbot, db_notes):
 
 
 def test_notes_user_enters_blank_doesnt_print_blank(qtbot, db_notes):
-    widget = conv_initialize(qtbot, db_notes)
+    widget = CInitialize(qtbot, db_notes)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.userNotesTextEditButton, Qt.LeftButton)
     # simulate the user deleting the current into, then adding their own
@@ -3339,7 +3339,7 @@ def test_notes_user_enters_blank_doesnt_print_blank(qtbot, db_notes):
 
 
 def test_notes_edit_finished_button_disappears_when_clicked(qtbot, db_notes):
-    widget = conv_initialize(qtbot, db_notes)
+    widget = CInitialize(qtbot, db_notes)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.userNotesTextEditButton, Qt.LeftButton)
     qtbot.keyClicks(widget.rightPanel.userNotesTextEditField, "987XYZ")
@@ -3348,7 +3348,7 @@ def test_notes_edit_finished_button_disappears_when_clicked(qtbot, db_notes):
 
 
 def test_notes_edit_field_disappears_when_editing_done(qtbot, db_notes):
-    widget = conv_initialize(qtbot, db_notes)
+    widget = CInitialize(qtbot, db_notes)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.userNotesTextEditButton, Qt.LeftButton)
     qtbot.keyClicks(widget.rightPanel.userNotesTextEditField, "987XYZ")
@@ -3357,7 +3357,7 @@ def test_notes_edit_field_disappears_when_editing_done(qtbot, db_notes):
 
 
 def test_notes_edit_button_reappears_when_editing_done(qtbot, db_notes):
-    widget = conv_initialize(qtbot, db_notes)
+    widget = CInitialize(qtbot, db_notes)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.userNotesTextEditButton, Qt.LeftButton)
     qtbot.keyClicks(widget.rightPanel.userNotesTextEditField, "987XYZ")
@@ -3366,7 +3366,7 @@ def test_notes_edit_button_reappears_when_editing_done(qtbot, db_notes):
 
 
 def test_user_notes_are_appropriately_shown_once_paper_deleted(qtbot, db_notes):
-    widget = conv_initialize(qtbot, db_notes)
+    widget = CInitialize(qtbot, db_notes)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.secondDeletePaperButton, Qt.LeftButton)
@@ -3377,20 +3377,20 @@ def test_user_notes_are_appropriately_shown_once_paper_deleted(qtbot, db_notes):
 
 
 def test_spacers_are_hidden_at_initialization(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     for spacer in widget.rightPanel.spacers:
         assert spacer.isHidden() is True
 
 
 def test_spacers_are_shown_when_paper_clicked(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     for spacer in widget.rightPanel.spacers:
         assert spacer.isHidden() is False
 
 
 def test_spacers_are_hidden_once_paper_deleted(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.secondDeletePaperButton, Qt.LeftButton)
@@ -3405,13 +3405,13 @@ def test_left_panel_tags_are_sorted_alphabetically(qtbot, db_empty):
     for t in tags:
         db_empty.add_new_tag(t)
 
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     tag_names = [tag.name for tag in widget.tagsList.tags]
     assert tag_names == sorted(tags, key=lambda t: t.lower())
 
 
 def test_left_panel_tags_are_sorted_alphabetically_after_adding(qtbot, db_empty):
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     # add tags
     tags = ["abc", "zyx", "Aye", "Test", "ZAA"]
     for tag in tags:
@@ -3431,7 +3431,7 @@ def test_paper_tag_list_is_sorted_alphabetically_not_case_sensitive(qtbot, db_em
         db_empty.add_new_tag(t)
         db_empty.tag_paper(u.mine.bibcode, t)
 
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     expected = "Tags: " + ", ".join(sorted(tags, key=lambda x: x.lower()))
     assert widget.rightPanel.tagText.text() == expected
@@ -3446,7 +3446,7 @@ def test_paper_tag_list_is_sorted_properly_after_modifying_tags(qtbot, db_empty)
     for t in tags[:3]:
         db_empty.tag_paper(u.mine.bibcode, t)
 
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     # then add the final tag in the list
     to_add = tags[-1]
@@ -3467,7 +3467,7 @@ def test_tag_checkboxes_are_sorted_alphabetically_not_case_sensitive(qtbot, db_t
     for t in tags:
         db_temp.add_new_tag(t)
 
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.editTagsButton, Qt.LeftButton)
     tags = [tag.text() for tag in widget.rightPanel.tags]
@@ -3480,7 +3480,7 @@ def test_tag_checkboxes_are_sorted_properly_after_adding_new_tag(qtbot, db_temp)
     for t in tags:
         db_temp.add_new_tag(t)
 
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     # click to show the checkboxes
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.editTagsButton, Qt.LeftButton)
@@ -3500,7 +3500,7 @@ def test_tag_checkboxes_are_sorted_properly_after_deleting_tag(qtbot, db_temp):
     for t in tags:
         db_temp.add_new_tag(t)
 
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     # click to show the checkboxes
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.editTagsButton, Qt.LeftButton)
@@ -3516,7 +3516,7 @@ def test_tag_checkboxes_are_sorted_properly_after_deleting_tag(qtbot, db_temp):
 
 
 def test_db_update_reflected_in_interface(qtbot, db_update):
-    widget = conv_initialize(qtbot, db_update)
+    widget = CInitialize(qtbot, db_update)
     cite_strings = [paper.citeText.text() for paper in widget.papersList.papers]
     assert "Brown, Gnedin, Li, 2018, ApJ, 864, 94" in cite_strings
     assert "Brown, Gnedin, Li, 2022, arXiv:1804.09819" not in cite_strings
@@ -3525,7 +3525,7 @@ def test_db_update_reflected_in_interface(qtbot, db_update):
 
 
 def test_papers_are_in_sorted_order_to_begin(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     dates = [
         db.get_paper_attribute(paper.bibcode, "pubdate")
         for paper in widget.papersList.papers
@@ -3535,10 +3535,10 @@ def test_papers_are_in_sorted_order_to_begin(qtbot, db):
 
 
 def test_papers_are_in_sorted_order_after_adding(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     # add two papers: one very old, one very recent
     for bibcode in [u.mine_recent.bibcode, u.bbfh.bibcode]:
-        conv_add_paper(qtbot, widget, bibcode)
+        CAddPaper(qtbot, widget, bibcode)
     # then check sorting
     dates = [
         db_temp.get_paper_attribute(paper.bibcode, "pubdate")
@@ -3548,13 +3548,13 @@ def test_papers_are_in_sorted_order_after_adding(qtbot, db_temp):
 
 
 def test_paper_sort_is_initially_by_date(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     bibcodes = [paper.bibcode for paper in widget.papersList.papers]
     assert bibcodes == [u.tremonti.bibcode, u.mine.bibcode]
 
 
 def test_paper_sort_dropdown_can_sort_by_author(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     # find the dropdown to sort by date
     index = widget.papersList.sortChooser.findText("Sort by First Author")
     widget.papersList.sortChooser.setCurrentIndex(index)
@@ -3566,7 +3566,7 @@ def test_paper_sort_dropdown_can_sort_by_author(qtbot, db):
 def test_paper_sort_dropdown_can_sort_by_author_same_last_name(qtbot, db_temp):
     # add another paper by Warren Brown, should be sorted after me (Gillen Brown)
     db_temp.add_paper("2015ApJ...804...49B")
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     # find the dropdown to sort by date
     index = widget.papersList.sortChooser.findText("Sort by First Author")
     widget.papersList.sortChooser.setCurrentIndex(index)
@@ -3576,7 +3576,7 @@ def test_paper_sort_dropdown_can_sort_by_author_same_last_name(qtbot, db_temp):
 
 
 def test_paper_sort_dropdown_can_sort_in_both_directions(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     # find the dropdown to sort by date
     index = widget.papersList.sortChooser.findText("Sort by First Author")
     widget.papersList.sortChooser.setCurrentIndex(index)
@@ -3601,7 +3601,7 @@ def test_paper_sort_dropdown_can_sort_by_author_single_author(qtbot, db_empty):
     # put some papers by me in the database
     for b in bibcodes_to_add:
         db_empty.add_paper(b)
-    widget = conv_initialize(qtbot, db_empty)
+    widget = CInitialize(qtbot, db_empty)
     # find the dropdown to sort by date
     index = widget.papersList.sortChooser.findText("Sort by First Author")
     widget.papersList.sortChooser.setCurrentIndex(index)
@@ -3617,45 +3617,45 @@ def test_paper_sort_dropdown_can_sort_by_author_single_author(qtbot, db_empty):
 
 
 def test_edit_citation_keyword_button_hidden_at_beginning(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     assert widget.rightPanel.editCiteKeyButton.isHidden() is True
 
 
 def test_citation_keyword_text_shown_at_beginning(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     assert widget.rightPanel.citeKeyText.isHidden() is True
 
 
 def test_edit_citation_keyword_edit_hidden_at_beginning(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     assert widget.rightPanel.editCiteKeyEntry.isHidden() is True
 
 
 def test_edit_citation_keyword_edit_error_text_hidden_at_beginning(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     assert widget.rightPanel.editCiteKeyErrorText.isHidden() is True
 
 
 def test_edit_citation_keyword_button_shown_when_paper_clicked(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     assert widget.rightPanel.editCiteKeyButton.isHidden() is False
 
 
 def test_edit_citation_keyword_button_text_is_correct(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     assert widget.rightPanel.editCiteKeyButton.text() == "Edit Citation Keyword"
 
 
 def test_citation_keyword_text_shown_when_paper_clicked(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     assert widget.rightPanel.citeKeyText.isHidden() is False
 
 
 def test_citation_keyword_text_is_correct(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     paper = widget.papersList.papers[0]
     qtbot.mouseClick(paper, Qt.LeftButton)
     true_cite_key = db.get_paper_attribute(paper.bibcode, "citation_keyword")
@@ -3663,33 +3663,33 @@ def test_citation_keyword_text_is_correct(qtbot, db):
 
 
 def test_edit_citation_keyword_edit_hidden_when_paper_clicked(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     assert widget.rightPanel.editCiteKeyEntry.isHidden() is True
 
 
 def test_edit_citation_keyword_edit_error_text_hidden_when_paper_clicked(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     assert widget.rightPanel.editCiteKeyErrorText.isHidden() is True
 
 
 def test_edit_citation_keyword_button_hidden_when_clicked(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
     assert widget.rightPanel.editCiteKeyButton.isHidden() is True
 
 
 def test_citation_keyword_text_not_hidden_when_button_clicked(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
     assert widget.rightPanel.citeKeyText.isHidden() is False
 
 
 def test_citation_keyword_text_has_placeholder_text(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
     correct_placeholder = "e.g. yourname_etal_2022"
@@ -3697,21 +3697,21 @@ def test_citation_keyword_text_has_placeholder_text(qtbot, db):
 
 
 def test_edit_citation_keyword_entry_shown_when_button_clicked(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
     assert widget.rightPanel.editCiteKeyEntry.isHidden() is False
 
 
 def test_edit_citation_keyword_error_text_not_shown_when_button_clicked(qtbot, db):
-    widget = conv_initialize(qtbot, db)
+    widget = CInitialize(qtbot, db)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
     assert widget.rightPanel.editCiteKeyErrorText.isHidden() is True
 
 
 def test_edit_citation_keyword_good_entry_updates_database(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
     qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test_key")
@@ -3723,7 +3723,7 @@ def test_edit_citation_keyword_good_entry_updates_database(qtbot, db_temp):
 
 
 def test_edit_citation_keyword_good_entry_updates_shown_text(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
     qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test_key")
@@ -3732,7 +3732,7 @@ def test_edit_citation_keyword_good_entry_updates_shown_text(qtbot, db_temp):
 
 
 def test_edit_citation_keyword_good_entry_resets_buttons(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
     qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test_key")
@@ -3744,7 +3744,7 @@ def test_edit_citation_keyword_good_entry_resets_buttons(qtbot, db_temp):
 
 
 def test_edit_citation_keyword_good_entry_clears_entry(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
     qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test_key")
@@ -3753,7 +3753,7 @@ def test_edit_citation_keyword_good_entry_clears_entry(qtbot, db_temp):
 
 
 def test_edit_citation_keyword_spaces_not_allowed(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
     qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test key")
@@ -3763,7 +3763,7 @@ def test_edit_citation_keyword_spaces_not_allowed(qtbot, db_temp):
 
 
 def test_edit_citation_keyword_duplicates_not_allowed(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
     qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test_key")
@@ -3780,7 +3780,7 @@ def test_edit_citation_keyword_duplicates_not_allowed(qtbot, db_temp):
 
 
 def test_edit_citation_keyword_spaces_doesnt_reset_buttons(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
     qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test key")
@@ -3792,7 +3792,7 @@ def test_edit_citation_keyword_spaces_doesnt_reset_buttons(qtbot, db_temp):
 
 
 def test_edit_citation_keyword_duplicates_doesnt_reset_buttons(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
     qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test_key")
@@ -3808,7 +3808,7 @@ def test_edit_citation_keyword_duplicates_doesnt_reset_buttons(qtbot, db_temp):
 
 
 def test_edit_citation_keyword_spaces_doesnt_clear_text(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
     qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test key")
@@ -3817,7 +3817,7 @@ def test_edit_citation_keyword_spaces_doesnt_clear_text(qtbot, db_temp):
 
 
 def test_edit_citation_keyword_duplicates_doesnt_clear_text(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
     qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test_key")
@@ -3830,7 +3830,7 @@ def test_edit_citation_keyword_duplicates_doesnt_clear_text(qtbot, db_temp):
 
 
 def test_edit_citation_keyword_spaces_doesnt_update_database(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
     qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test key")
@@ -3840,7 +3840,7 @@ def test_edit_citation_keyword_spaces_doesnt_update_database(qtbot, db_temp):
 
 
 def test_edit_citation_keyword_duplicates_doesnt_update_database(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
     qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "test_key")
@@ -3856,7 +3856,7 @@ def test_edit_citation_keyword_duplicates_doesnt_update_database(qtbot, db_temp)
 
 
 def test_edit_citation_keyword_buttons_hidden_when_paper_deleted(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.firstDeletePaperButton, Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.secondDeletePaperButton, Qt.LeftButton)
@@ -3867,7 +3867,7 @@ def test_edit_citation_keyword_buttons_hidden_when_paper_deleted(qtbot, db_temp)
 
 
 def test_edit_citation_keyword_entry_escape_exit_resets_buttons(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
     qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "abc")
@@ -3879,7 +3879,7 @@ def test_edit_citation_keyword_entry_escape_exit_resets_buttons(qtbot, db_temp):
 
 
 def test_edit_citation_keyword_entry_backspace_exit_resets_buttons(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
     qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "abc")
@@ -3900,7 +3900,7 @@ def test_edit_citation_keyword_entry_backspace_exit_resets_buttons(qtbot, db_tem
 
 
 def test_edit_citation_keyword_entry_escape_exit_clears_text(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
     qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "abc")
@@ -3909,7 +3909,7 @@ def test_edit_citation_keyword_entry_escape_exit_clears_text(qtbot, db_temp):
 
 
 def test_edit_citation_keywored_entry_backspace_exit_clears_text(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
     qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "abc")
@@ -3923,7 +3923,7 @@ def test_edit_citation_keywored_entry_backspace_exit_clears_text(qtbot, db_temp)
 
 
 def test_edit_citation_keywored_entry_escape_exit_doesnt_change_db(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
     qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "abc")
@@ -3933,7 +3933,7 @@ def test_edit_citation_keywored_entry_escape_exit_doesnt_change_db(qtbot, db_tem
 
 
 def test_edit_citation_keywored_entry_backspace_exit_doesnt_change_db(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     qtbot.mouseClick(widget.rightPanel.editCiteKeyButton, Qt.LeftButton)
     qtbot.keyClicks(widget.rightPanel.editCiteKeyEntry, "abc")
@@ -3947,7 +3947,7 @@ def test_edit_citation_keywored_entry_backspace_exit_doesnt_change_db(qtbot, db_
 
 
 def test_widgets_are_sized_appropriately_at_beginning(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     # get the original positions
     o_sizes = widget.splitter.sizes()
@@ -3956,7 +3956,7 @@ def test_widgets_are_sized_appropriately_at_beginning(qtbot, db_temp):
 
 
 def test_widgets_dont_go_outside_of_splitter(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     # get the original positions
     o_sizes = widget.splitter.sizes()
@@ -3967,7 +3967,7 @@ def test_widgets_dont_go_outside_of_splitter(qtbot, db_temp):
 
 
 def test_resizing_splitter_resizes_widgets(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     # get the original positions
     o_sizes = widget.splitter.sizes()
@@ -3987,7 +3987,7 @@ def test_resizing_splitter_resizes_widgets(qtbot, db_temp):
 
 
 def test_sortchooser_starts_at_top_right(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     position = widget.papersList.sortChooser.pos()
     expected_x = widget.papersList.width() - widget.papersList.sortChooser.width()
@@ -3996,7 +3996,7 @@ def test_sortchooser_starts_at_top_right(qtbot, db_temp):
 
 
 def test_resizing_splitter_keeps_sortchooser_at_top_right(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.papersList.papers[0], Qt.LeftButton)
     position = widget.papersList.sortChooser.pos()
     new_sizes = [250, 350, sum(widget.splitter.sizes()) - 500]
@@ -4009,7 +4009,7 @@ def test_resizing_splitter_keeps_sortchooser_at_top_right(qtbot, db_temp):
 
 
 def test_adding_long_tag_resizes_splitter(qtbot, db_temp):
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     original_sizes = widget.splitter.sizes()
     qtbot.mouseClick(widget.tagsList.addTagButton, Qt.LeftButton)
     qtbot.keyClicks(
@@ -4023,7 +4023,7 @@ def test_adding_long_tag_resizes_splitter(qtbot, db_temp):
 
 def test_db_with_long_tag_has_wide_tag_bar_at_beginning(qtbot, db_temp):
     db_temp.add_new_tag("this is a very long tag, too long to realistically use")
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     original_sizes = widget.splitter.sizes()
     assert original_sizes[0] > 200
     for tag in widget.tagsList.tags:
@@ -4033,7 +4033,7 @@ def test_db_with_long_tag_has_wide_tag_bar_at_beginning(qtbot, db_temp):
 def test_deleting_long_tag_resizes_splitter(qtbot, db_temp):
     tag_name = "this is a very long tag, too long to realistically use"
     db_temp.add_new_tag(tag_name)
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     original_sizes = widget.splitter.sizes()
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, tag_name)
@@ -4050,7 +4050,7 @@ def test_deleting_long_tag_resizes_splitter(qtbot, db_temp):
 def test_showing_delete_tag_confirm_resizes_splitter(qtbot, db_temp):
     tag_name = "this is a very long tag, too long to realistically use"
     db_temp.add_new_tag(tag_name)
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     original_sizes = widget.splitter.sizes()
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, tag_name)
@@ -4062,7 +4062,7 @@ def test_showing_delete_tag_confirm_resizes_splitter(qtbot, db_temp):
 def test_confirming_tag_delete_resizes_splitter(qtbot, db_temp):
     tag_name = "this is a very long tag, too long to realistically use"
     db_temp.add_new_tag(tag_name)
-    widget = conv_initialize(qtbot, db_temp)
+    widget = CInitialize(qtbot, db_temp)
     qtbot.mouseClick(widget.firstDeleteTagButton, Qt.LeftButton)
     qtbot.keyClicks(widget.secondDeleteTagEntry, tag_name)
     qtbot.keyPress(widget.secondDeleteTagEntry, Qt.Key_Enter)
