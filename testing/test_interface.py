@@ -524,21 +524,18 @@ def test_adding_paper_clears_search_bar_if_successful(qtbot, db_empty):
 
 def test_adding_paper_does_not_clear_search_bar_if_not_successful(qtbot, db_empty):
     widget = CInitialize(qtbot, db_empty)
-    assert len(widget.papersList.papers) == 0
     CAddPaper(qtbot, widget, "nonsense")
     assert widget.searchBar.text() == "nonsense"
 
 
 def test_adding_bad_paper_shows_error_formatting_of_textedit(qtbot, db_empty):
     widget = CInitialize(qtbot, db_empty)
-    assert len(widget.papersList.papers) == 0
     CAddPaper(qtbot, widget, "nonsense")
     assert widget.searchBar.property("error") is True
 
 
 def test_adding_bad_paper_shows_error_text(qtbot, db_empty):
     widget = CInitialize(qtbot, db_empty)
-    assert len(widget.papersList.papers) == 0
     CAddPaper(qtbot, widget, "nonsense")
     assert widget.searchBarErrorText.isHidden() is False
     assert (
@@ -549,7 +546,6 @@ def test_adding_bad_paper_shows_error_text(qtbot, db_empty):
 
 def test_adding_bad_paper_hides_add_button(qtbot, db_empty):
     widget = CInitialize(qtbot, db_empty)
-    assert len(widget.papersList.papers) == 0
     CAddPaper(qtbot, widget, "nonsense")
     assert widget.addButton.isHidden() is True
 
@@ -574,7 +570,6 @@ def test_bad_paper_error_formatting_of_textedit_reset_after_any_clicking(
     qtbot, db_empty
 ):
     widget = CInitialize(qtbot, db_empty)
-    assert len(widget.papersList.papers) == 0
     CAddPaper(qtbot, widget, "nonsense")
     widget.searchBar.setCursorPosition(0)
     assert widget.searchBar.property("error") is False
@@ -582,7 +577,6 @@ def test_bad_paper_error_formatting_of_textedit_reset_after_any_clicking(
 
 def test_bad_paper_error_message_of_textedit_reset_after_any_clicking(qtbot, db_empty):
     widget = CInitialize(qtbot, db_empty)
-    assert len(widget.papersList.papers) == 0
     CAddPaper(qtbot, widget, "nonsense")
     widget.searchBar.setCursorPosition(0)
     assert widget.searchBarErrorText.isHidden() is True
@@ -590,7 +584,6 @@ def test_bad_paper_error_message_of_textedit_reset_after_any_clicking(qtbot, db_
 
 def test_bad_paper_add_button_reshown_after_any_clicking(qtbot, db_empty):
     widget = CInitialize(qtbot, db_empty)
-    assert len(widget.papersList.papers) == 0
     CAddPaper(qtbot, widget, "nonsense")
     widget.searchBar.setCursorPosition(0)
     assert widget.addButton.isHidden() is False
@@ -600,7 +593,6 @@ def test_bad_paper_error_formatting_of_textedit_reset_after_editing_text(
     qtbot, db_empty
 ):
     widget = CInitialize(qtbot, db_empty)
-    assert len(widget.papersList.papers) == 0
     CAddPaper(qtbot, widget, "nonsense")
     qtbot.keyClicks(widget.searchBar, "nonsens")
     assert widget.searchBar.property("error") is False
@@ -608,7 +600,6 @@ def test_bad_paper_error_formatting_of_textedit_reset_after_editing_text(
 
 def test_bad_paper_error_message_of_textedit_reset_after_editing_text(qtbot, db_empty):
     widget = CInitialize(qtbot, db_empty)
-    assert len(widget.papersList.papers) == 0
     CAddPaper(qtbot, widget, "nonsense")
     qtbot.keyClicks(widget.searchBar, "nonsens")
     assert widget.searchBarErrorText.isHidden() is True
@@ -616,7 +607,6 @@ def test_bad_paper_error_message_of_textedit_reset_after_editing_text(qtbot, db_
 
 def test_bad_paper_add_button_reshown_after_editing_text(qtbot, db_empty):
     widget = CInitialize(qtbot, db_empty)
-    assert len(widget.papersList.papers) == 0
     CAddPaper(qtbot, widget, "nonsense")
     qtbot.keyClicks(widget.searchBar, "nonsens")
     assert widget.addButton.isHidden() is False
