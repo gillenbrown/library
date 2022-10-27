@@ -187,6 +187,13 @@ def CDeleteFirstPaper(mainWidget, qtbot):
     CClick(mainWidget.rightPanel.secondDeletePaperButton, qtbot)
 
 
+def CEditCiteKey(mainWidget, citeKey, qtbot):
+    # paper must already be clicked
+    CClick(mainWidget.rightPanel.editCiteKeyButton, qtbot)
+    CEnterText(mainWidget.rightPanel.editCiteKeyEntry, citeKey, qtbot)
+    CPressEnter(mainWidget.rightPanel.editCiteKeyEntry, qtbot)
+
+
 ########################################################################################
 #
 # test premade databases
@@ -3656,6 +3663,7 @@ def test_edit_citation_keyword_error_text_not_shown_when_button_clicked(qtbot, d
 def test_edit_citation_keyword_good_entry_updates_database(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
+    # don't use convenience function, for clarity
     CClick(widget.rightPanel.editCiteKeyButton, qtbot)
     CEnterText(widget.rightPanel.editCiteKeyEntry, "test_key", qtbot)
     CPressEnter(widget.rightPanel.editCiteKeyEntry, qtbot)
@@ -3668,18 +3676,14 @@ def test_edit_citation_keyword_good_entry_updates_database(qtbot, db_temp):
 def test_edit_citation_keyword_good_entry_updates_shown_text(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    CEnterText(widget.rightPanel.editCiteKeyEntry, "test_key", qtbot)
-    CPressEnter(widget.rightPanel.editCiteKeyEntry, qtbot)
+    CEditCiteKey(widget, "test_key", qtbot)
     assert widget.rightPanel.citeKeyText.text() == "Citation Keyword: test_key"
 
 
 def test_edit_citation_keyword_good_entry_resets_buttons(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    CEnterText(widget.rightPanel.editCiteKeyEntry, "test_key", qtbot)
-    CPressEnter(widget.rightPanel.editCiteKeyEntry, qtbot)
+    CEditCiteKey(widget, "test_key", qtbot)
     assert widget.rightPanel.editCiteKeyButton.isHidden() is False
     assert widget.rightPanel.editCiteKeyEntry.isHidden() is True
     assert widget.rightPanel.citeKeyText.isHidden() is False
@@ -3689,18 +3693,14 @@ def test_edit_citation_keyword_good_entry_resets_buttons(qtbot, db_temp):
 def test_edit_citation_keyword_good_entry_clears_entry(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    CEnterText(widget.rightPanel.editCiteKeyEntry, "test_key", qtbot)
-    CPressEnter(widget.rightPanel.editCiteKeyEntry, qtbot)
+    CEditCiteKey(widget, "test_key", qtbot)
     assert widget.rightPanel.editCiteKeyEntry.text() == ""
 
 
 def test_edit_citation_keyword_spaces_not_allowed(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    CEnterText(widget.rightPanel.editCiteKeyEntry, "test key", qtbot)
-    CPressEnter(widget.rightPanel.editCiteKeyEntry, qtbot)
+    CEditCiteKey(widget, "test key", qtbot)
     assert widget.rightPanel.editCiteKeyErrorText.isHidden() is False
     assert widget.rightPanel.editCiteKeyErrorText.text() == "Spaces not allowed"
 
@@ -3708,13 +3708,9 @@ def test_edit_citation_keyword_spaces_not_allowed(qtbot, db_temp):
 def test_edit_citation_keyword_duplicates_not_allowed(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    CEnterText(widget.rightPanel.editCiteKeyEntry, "test_key", qtbot)
-    CPressEnter(widget.rightPanel.editCiteKeyEntry, qtbot)
+    CEditCiteKey(widget, "test_key", qtbot)
     CClick(widget.papersList.papers[1], qtbot)
-    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    CEnterText(widget.rightPanel.editCiteKeyEntry, "test_key", qtbot)
-    CPressEnter(widget.rightPanel.editCiteKeyEntry, qtbot)
+    CEditCiteKey(widget, "test_key", qtbot)
     assert widget.rightPanel.editCiteKeyErrorText.isHidden() is False
     assert (
         widget.rightPanel.editCiteKeyErrorText.text()
@@ -3725,9 +3721,7 @@ def test_edit_citation_keyword_duplicates_not_allowed(qtbot, db_temp):
 def test_edit_citation_keyword_spaces_doesnt_reset_buttons(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    CEnterText(widget.rightPanel.editCiteKeyEntry, "test key", qtbot)
-    CPressEnter(widget.rightPanel.editCiteKeyEntry, qtbot)
+    CEditCiteKey(widget, "test key", qtbot)
     assert widget.rightPanel.editCiteKeyButton.isHidden() is True
     assert widget.rightPanel.editCiteKeyEntry.isHidden() is False
     assert widget.rightPanel.citeKeyText.isHidden() is False
@@ -3737,13 +3731,9 @@ def test_edit_citation_keyword_spaces_doesnt_reset_buttons(qtbot, db_temp):
 def test_edit_citation_keyword_duplicates_doesnt_reset_buttons(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    CEnterText(widget.rightPanel.editCiteKeyEntry, "test_key", qtbot)
-    CPressEnter(widget.rightPanel.editCiteKeyEntry, qtbot)
+    CEditCiteKey(widget, "test_key", qtbot)
     CClick(widget.papersList.papers[1], qtbot)
-    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    CEnterText(widget.rightPanel.editCiteKeyEntry, "test_key", qtbot)
-    CPressEnter(widget.rightPanel.editCiteKeyEntry, qtbot)
+    CEditCiteKey(widget, "test_key", qtbot)
     assert widget.rightPanel.editCiteKeyButton.isHidden() is True
     assert widget.rightPanel.editCiteKeyEntry.isHidden() is False
     assert widget.rightPanel.citeKeyText.isHidden() is False
@@ -3753,31 +3743,23 @@ def test_edit_citation_keyword_duplicates_doesnt_reset_buttons(qtbot, db_temp):
 def test_edit_citation_keyword_spaces_doesnt_clear_text(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    CEnterText(widget.rightPanel.editCiteKeyEntry, "test key", qtbot)
-    CPressEnter(widget.rightPanel.editCiteKeyEntry, qtbot)
+    CEditCiteKey(widget, "test key", qtbot)
     assert widget.rightPanel.editCiteKeyEntry.text() == "test key"
 
 
 def test_edit_citation_keyword_duplicates_doesnt_clear_text(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    CEnterText(widget.rightPanel.editCiteKeyEntry, "test_key", qtbot)
-    CPressEnter(widget.rightPanel.editCiteKeyEntry, qtbot)
+    CEditCiteKey(widget, "test_key", qtbot)
     CClick(widget.papersList.papers[1], qtbot)
-    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    CEnterText(widget.rightPanel.editCiteKeyEntry, "test_key", qtbot)
-    CPressEnter(widget.rightPanel.editCiteKeyEntry, qtbot)
+    CEditCiteKey(widget, "test_key", qtbot)
     assert widget.rightPanel.editCiteKeyEntry.text() == "test_key"
 
 
 def test_edit_citation_keyword_spaces_doesnt_update_database(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    CEnterText(widget.rightPanel.editCiteKeyEntry, "test key", qtbot)
-    CPressEnter(widget.rightPanel.editCiteKeyEntry, qtbot)
+    CEditCiteKey(widget, "test key", qtbot)
     bibcode = widget.papersList.papers[0].bibcode
     assert db_temp.get_paper_attribute(bibcode, "citation_keyword") == bibcode
 
@@ -3785,13 +3767,9 @@ def test_edit_citation_keyword_spaces_doesnt_update_database(qtbot, db_temp):
 def test_edit_citation_keyword_duplicates_doesnt_update_database(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    CEnterText(widget.rightPanel.editCiteKeyEntry, "test_key", qtbot)
-    CPressEnter(widget.rightPanel.editCiteKeyEntry, qtbot)
+    CEditCiteKey(widget, "test_key", qtbot)
     CClick(widget.papersList.papers[1], qtbot)
-    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    CEnterText(widget.rightPanel.editCiteKeyEntry, "test_key", qtbot)
-    CPressEnter(widget.rightPanel.editCiteKeyEntry, qtbot)
+    CEditCiteKey(widget, "test_key", qtbot)
     bibcode_update = widget.papersList.papers[0].bibcode
     assert db_temp.get_paper_attribute(bibcode_update, "citation_keyword") == "test_key"
     bibcode_dup = widget.papersList.papers[1].bibcode
