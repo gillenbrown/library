@@ -196,6 +196,43 @@ def CEditCiteKey(mainWidget, citeKey, qtbot):
 
 ########################################################################################
 #
+# mock functions for use with monkeypatch
+#
+########################################################################################
+# when we open an existing file, we have filter and dir kwargs, then return the filename
+# and some filter info, which my code ignores
+def MOpenFileNoResponse(filter="", dir=""):
+    # return an empty string, signifying no response by the user
+    return "", ""
+
+
+def MOpenFileNonexistent(filter="", dir=""):
+    # return a file that does not exist
+    return "nonexistent_file.pdf", ""
+
+
+def MOpenFileExists(filter="", dir=""):
+    return __file__, ""
+
+
+exampleSavePDF = Path(__file__).parent / "test.pdf"
+exampleSaveTXT = exampleSavePDF.parent / "test.txt"
+
+
+def MSaveFileValidPDF(filter="", dir="", caption=""):
+    return str(exampleSavePDF), ""
+
+
+def MSaveFileValidTXT(filter="", dir="", caption=""):
+    return str(exampleSaveTXT), ""
+
+
+def MSaveFileNoResponse(filter="", dir="", caption=""):
+    return "", ""
+
+
+########################################################################################
+#
 # test premade databases
 #
 ########################################################################################
@@ -1059,8 +1096,6 @@ def test_paper_pdf_text_has_correct_text_with_nonexistent_local_file(qtbot, db_e
 
 
 def test_paper_pdf_add_local_file_button_asks_user(qtbot, db_temp, monkeypatch):
-    # create a mock function to get the file. It needs to have the filter kwarg, since
-    # that is used in the actual call
     get_file_calls = []
 
     def mock_get_file(filter="", dir=""):
@@ -1068,7 +1103,6 @@ def test_paper_pdf_add_local_file_button_asks_user(qtbot, db_temp, monkeypatch):
         return __file__, "dummy filter"
 
     monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
-
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.pdfChooseLocalFileButton, qtbot)
@@ -1078,14 +1112,7 @@ def test_paper_pdf_add_local_file_button_asks_user(qtbot, db_temp, monkeypatch):
 def test_paper_pdf_add_local_file_button_doesnt_add_if_cancelled(
     qtbot, db_temp, monkeypatch
 ):
-    # create a mock function to get the file. It needs to have the filter kwarg, since
-    # that is used in the actual call. We return nothing, as that's the default
-    # value if the user cancels the file chooser in the actual use
-    def mock_get_file(filter="", dir=""):
-        return "", "dummy filter"
-
-    monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
-
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", MOpenFileNoResponse)
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.pdfChooseLocalFileButton, qtbot)
@@ -1098,15 +1125,7 @@ def test_paper_pdf_add_local_file_button_doesnt_add_if_cancelled(
 def test_paper_pdf_add_local_file_button_doesnt_add_if_doesnt_exist(
     qtbot, db_temp, monkeypatch
 ):
-    # I don't think this should happen in real usage, but validate
-    # create a mock function to get the file. It needs to have the filter kwarg, since
-    # that is used in the actual call. We return nothing, as that's the default
-    # value if the user cancels the file chooser in the actual use
-    def mock_get_file(filter="", dir=""):
-        return "nonexistent_file.pdf", "dummy filter"
-
-    monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
-
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", MOpenFileNonexistent)
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.pdfChooseLocalFileButton, qtbot)
@@ -1119,13 +1138,7 @@ def test_paper_pdf_add_local_file_button_doesnt_add_if_doesnt_exist(
 def test_paper_pdf_add_local_file_button_adds_it_to_database(
     qtbot, db_temp, monkeypatch
 ):
-    # create a mock function to get the file. It needs to have the filter kwarg, since
-    # that is used in the actual call
-    def mock_get_file(filter="", dir=""):
-        return __file__, "dummy filter"
-
-    monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
-
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", MOpenFileExists)
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.pdfChooseLocalFileButton, qtbot)
@@ -1136,13 +1149,7 @@ def test_paper_pdf_add_local_file_button_adds_it_to_database(
 
 
 def test_paper_pdf_add_local_file_button_updates_text(qtbot, db_temp, monkeypatch):
-    # create a mock function to get the file. It needs to have the filter kwarg, since
-    # that is used in the actual call
-    def mock_get_file(filter="", dir=""):
-        return __file__, "dummy filter"
-
-    monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
-
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", MOpenFileExists)
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.pdfChooseLocalFileButton, qtbot)
@@ -1152,13 +1159,7 @@ def test_paper_pdf_add_local_file_button_updates_text(qtbot, db_temp, monkeypatc
 def test_paper_pdf_add_local_file_button_cancel_doesnt_update_text(
     qtbot, db_temp, monkeypatch
 ):
-    # create a mock function to get the file. It needs to have the filter kwarg, since
-    # that is used in the actual call
-    def mock_get_file(filter="", dir=""):
-        return "", "dummy filter"
-
-    monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
-
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", MOpenFileNoResponse)
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.pdfChooseLocalFileButton, qtbot)
@@ -1168,13 +1169,7 @@ def test_paper_pdf_add_local_file_button_cancel_doesnt_update_text(
 def test_paper_pdf_add_local_file_nonexistent_file_doesnt_update_text(
     qtbot, db_temp, monkeypatch
 ):
-    # create a mock function to get the file. It needs to have the filter kwarg, since
-    # that is used in the actual call
-    def mock_get_file(filter="", dir=""):
-        return "nonexistent_file.pdf", "dummy filter"
-
-    monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
-
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", MOpenFileNonexistent)
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.pdfChooseLocalFileButton, qtbot)
@@ -1184,13 +1179,7 @@ def test_paper_pdf_add_local_file_nonexistent_file_doesnt_update_text(
 def test_paper_pdf_add_local_file_button_resets_buttons_if_successful(
     qtbot, db_temp, monkeypatch
 ):
-    # create a mock function to get the file. It needs to have the filter kwarg, since
-    # that is used in the actual call
-    def mock_get_file(filter="", dir=""):
-        return __file__, "dummy filter"
-
-    monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
-
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", MOpenFileExists)
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.pdfChooseLocalFileButton, qtbot)
@@ -1204,13 +1193,7 @@ def test_paper_pdf_add_local_file_button_resets_buttons_if_successful(
 def test_paper_pdf_add_local_file_button_doest_change_buttons_cancel(
     qtbot, db_temp, monkeypatch
 ):
-    # create a mock function to get the file. It needs to have the filter kwarg, since
-    # that is used in the actual call
-    def mock_get_file(filter="", dir=""):
-        return "", "dummy filter"
-
-    monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
-
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", MOpenFileNoResponse)
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.pdfChooseLocalFileButton, qtbot)
@@ -1224,13 +1207,7 @@ def test_paper_pdf_add_local_file_button_doest_change_buttons_cancel(
 def test_paper_pdf_add_local_file_button_doest_change_buttons_nonexistent(
     qtbot, db_temp, monkeypatch
 ):
-    # create a mock function to get the file. It needs to have the filter kwarg, since
-    # that is used in the actual call
-    def mock_get_file(filter="", dir=""):
-        return "nonexistent_file.pdf", "dummy filter"
-
-    monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
-
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", MOpenFileNonexistent)
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.pdfChooseLocalFileButton, qtbot)
@@ -1242,6 +1219,7 @@ def test_paper_pdf_add_local_file_button_doest_change_buttons_nonexistent(
 
 
 def test_paper_pdf_open_pdf_button_opens_pdf(qtbot, db_empty, monkeypatch):
+    # just record the files that were attempted to be opened
     open_calls = []
     monkeypatch.setattr(QDesktopServices, "openUrl", lambda x: open_calls.append(x))
     # fill a local file into the database
@@ -1254,6 +1232,7 @@ def test_paper_pdf_open_pdf_button_opens_pdf(qtbot, db_empty, monkeypatch):
 
 
 def test_paper_pdf_open_bad_pdf_doesnt_open(qtbot, db_empty, monkeypatch):
+    # just record the files that were attempted to be opened
     open_calls = []
     monkeypatch.setattr(QDesktopServices, "openUrl", lambda x: open_calls.append(x))
     # fill a local file into the database
@@ -1287,6 +1266,7 @@ def test_paper_pdf_open_bad_pdf_resets_buttons(qtbot, db_empty, monkeypatch):
 
 
 def test_paper_pdf_open_bad_pdf_resets_database(qtbot, db_empty, monkeypatch):
+    # just record the files that were attempted to be opened
     open_calls = []
     monkeypatch.setattr(QDesktopServices, "openUrl", lambda x: open_calls.append(x))
     # fill a local file into the database
@@ -1315,20 +1295,18 @@ def test_paper_pdf_buttons_hidden_when_paper_deleted(qtbot, db_temp):
 
 
 def test_download_pdf_button_asks_user(qtbot, db_temp, monkeypatch):
-    # Here we need to use monkeypatch to simulate user selecting a file location
-    test_loc = str(Path(__file__).parent / "test.pdf")
+    # record the files that were attempted to be used to save a file
     get_file_calls = []
-    # create a mock function to get the file. It needs to have the filter kwarg, since
-    # that is used in the actual call
+
     def mock_get_file(filter="", caption="", dir=""):
         get_file_calls.append(1)
-        return test_loc, "dummy filter"
+        return str(exampleSavePDF), "dummy filter"
 
     monkeypatch.setattr(QFileDialog, "getSaveFileName", mock_get_file)
 
     widget = CInitialize(qtbot, db_temp)
 
-    # monkeypatch the downloading
+    # record files where we attempted to download something
     download_links = []
     monkeypatch.setattr(
         widget.rightPanel, "_downloadURL", lambda x, y: download_links.append(x)
@@ -1344,87 +1322,46 @@ def test_download_pdf_button_asks_user(qtbot, db_temp, monkeypatch):
 
 
 def test_download_pdf_button_actually_downloads_paper(qtbot, db_temp, monkeypatch):
-    # Here we need to use monkeypatch to simulate user selecting a file location
-    test_loc = Path(__file__).parent / "test.pdf"
-
-    # create a mock function to get the file. It needs to have the filter kwarg, since
-    # that is used in the actual call
-    def mock_get_file(filter="", caption="", dir=""):
-        return str(test_loc), "dummy filter"
-
-    monkeypatch.setattr(QFileDialog, "getSaveFileName", mock_get_file)
-
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", MSaveFileValidPDF)
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.pdfDownloadButton, qtbot)
-    assert test_loc.is_file()
-    assert test_loc.stat().st_size > 1e6  # 1 Mb, in bytes
-    test_loc.unlink()  # remove the file we just downloaded
+    assert exampleSavePDF.is_file()
+    assert exampleSavePDF.stat().st_size > 1e6  # 1 Mb, in bytes
+    exampleSavePDF.unlink()  # remove the file we just downloaded
 
 
 def test_download_pdf_button_can_be_cancelled(qtbot, db_temp, monkeypatch):
-    # Here we need to use monkeypatch to simulate user selecting a file location
-    # create a mock function to get the file. It needs to have the filter kwarg, since
-    # that is used in the actual call
-    def mock_get_file(filter="", caption="", dir=""):
-        return "", "dummy filter"
-
-    monkeypatch.setattr(QFileDialog, "getSaveFileName", mock_get_file)
-
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", MSaveFileNoResponse)
     widget = CInitialize(qtbot, db_temp)
-
-    # monkeypatch the downloading
+    # record the files where we attemped to save something
     download_links = []
     monkeypatch.setattr(
         widget.rightPanel, "_downloadURL", lambda x, y: download_links.append(x)
     )
-
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.pdfDownloadButton, qtbot)
     assert download_links == []
 
 
 def test_download_pdf_button_updates_database(qtbot, db_temp, monkeypatch):
-    # Here we need to use monkeypatch to simulate user selecting a file location
-    test_loc = Path(__file__).parent / "test.pdf"
-
-    # create a mock function to get the file. It needs to have the filter kwarg, since
-    # that is used in the actual call
-    def mock_get_file(filter="", caption="", dir=""):
-        return str(test_loc), "dummy filter"
-
-    monkeypatch.setattr(QFileDialog, "getSaveFileName", mock_get_file)
-
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", MSaveFileValidPDF)
     widget = CInitialize(qtbot, db_temp)
-
     # I cannot monkeypatch the downloading, since the code checks if the PDF exists
     # when setting the buttons
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.pdfDownloadButton, qtbot)
     assert db_temp.get_paper_attribute(
         widget.papersList.papers[0].bibcode, "local_file"
-    ) == str(test_loc)
-    test_loc.unlink()
+    ) == str(exampleSavePDF)
+    exampleSavePDF.unlink()
 
 
 def test_download_pdf_button_doesnt_update_database_if_cancelled(
     qtbot, db_temp, monkeypatch
 ):
-    # Here we need to use monkeypatch to simulate user selecting a file location
-    # create a mock function to get the file. It needs to have the filter kwarg, since
-    # that is used in the actual call
-    def mock_get_file(filter="", caption="", dir=""):
-        return "", "dummy filter"
-
-    monkeypatch.setattr(QFileDialog, "getSaveFileName", mock_get_file)
-
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", MSaveFileNoResponse)
     widget = CInitialize(qtbot, db_temp)
-
-    # monkeypatch the downloading
-    download_links = []
-    monkeypatch.setattr(
-        widget.rightPanel, "_downloadURL", lambda x, y: download_links.append(x)
-    )
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.pdfDownloadButton, qtbot)
     assert (
@@ -1434,18 +1371,8 @@ def test_download_pdf_button_doesnt_update_database_if_cancelled(
 
 
 def test_download_pdf_button_updates_buttons(qtbot, db_temp, monkeypatch):
-    # Here we need to use monkeypatch to simulate user selecting a file location
-    test_loc = Path(__file__).parent / "test.pdf"
-
-    # create a mock function to get the file. It needs to have the filter kwarg, since
-    # that is used in the actual call
-    def mock_get_file(filter="", caption="", dir=""):
-        return str(test_loc), "dummy filter"
-
-    monkeypatch.setattr(QFileDialog, "getSaveFileName", mock_get_file)
-
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", MSaveFileValidPDF)
     widget = CInitialize(qtbot, db_temp)
-
     # I cannot monkeypatch the downloading, since the code checks if the PDF exists
     # when setting the buttons
     CClick(widget.papersList.papers[0], qtbot)
@@ -1454,27 +1381,14 @@ def test_download_pdf_button_updates_buttons(qtbot, db_temp, monkeypatch):
     assert widget.rightPanel.pdfOpenButton.isHidden() is False
     assert widget.rightPanel.pdfChooseLocalFileButton.isHidden() is True
     assert widget.rightPanel.pdfDownloadButton.isHidden() is True
-    test_loc.unlink()
+    exampleSavePDF.unlink()
 
 
 def test_download_pdf_button_doesnt_update_buttons_if_cancelled(
     qtbot, db_temp, monkeypatch
 ):
-    # Here we need to use monkeypatch to simulate user selecting a file location
-    # create a mock function to get the file. It needs to have the filter kwarg, since
-    # that is used in the actual call
-    def mock_get_file(filter="", caption="", dir=""):
-        return "", "dummy filter"
-
-    monkeypatch.setattr(QFileDialog, "getSaveFileName", mock_get_file)
-
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", MSaveFileNoResponse)
     widget = CInitialize(qtbot, db_temp)
-
-    # monkeypatch the downloading
-    download_links = []
-    monkeypatch.setattr(
-        widget.rightPanel, "_downloadURL", lambda x, y: download_links.append(x)
-    )
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.pdfDownloadButton, qtbot)
     assert widget.rightPanel.pdfText.isHidden() is False
@@ -1484,44 +1398,21 @@ def test_download_pdf_button_doesnt_update_buttons_if_cancelled(
 
 
 def test_download_pdf_button_updates_text(qtbot, db_temp, monkeypatch):
-    # Here we need to use monkeypatch to simulate user selecting a file location
-    test_loc = Path(__file__).parent / "test.pdf"
-
-    # create a mock function to get the file. It needs to have the filter kwarg, since
-    # that is used in the actual call
-    def mock_get_file(filter="", caption="", dir=""):
-        return str(test_loc), "dummy filter"
-
-    monkeypatch.setattr(QFileDialog, "getSaveFileName", mock_get_file)
-
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", MSaveFileValidPDF)
     widget = CInitialize(qtbot, db_temp)
-
     # I cannot monkeypatch the downloading, since the code checks if the PDF exists
     # when setting the buttons
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.pdfDownloadButton, qtbot)
-    assert widget.rightPanel.pdfText.text() == f"PDF Location: {str(test_loc)}"
-    test_loc.unlink()
+    assert widget.rightPanel.pdfText.text() == f"PDF Location: {str(exampleSavePDF)}"
+    exampleSavePDF.unlink()
 
 
 def test_download_pdf_button_doesnt_reset_text_if_cancelled(
     qtbot, db_temp, monkeypatch
 ):
-    # Here we need to use monkeypatch to simulate user selecting a file location
-    # create a mock function to get the file. It needs to have the filter kwarg, since
-    # that is used in the actual call
-    def mock_get_file(filter="", caption="", dir=""):
-        return "", "dummy filter"
-
-    monkeypatch.setattr(QFileDialog, "getSaveFileName", mock_get_file)
-
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", MSaveFileNoResponse)
     widget = CInitialize(qtbot, db_temp)
-
-    # monkeypatch the downloading
-    download_links = []
-    monkeypatch.setattr(
-        widget.rightPanel, "_downloadURL", lambda x, y: download_links.append(x)
-    )
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.pdfDownloadButton, qtbot)
     assert widget.rightPanel.pdfText.text() == "No PDF location set"
@@ -1530,23 +1421,13 @@ def test_download_pdf_button_doesnt_reset_text_if_cancelled(
 def test_download_pdf_doesnt_ask_user_if_none_available(qtbot, db_empty, monkeypatch):
     # add BBFH to the database, since it has no PDF
     db_empty.add_paper(u.bbfh.bibcode)
-    # Here we need to use monkeypatch to simulate user selecting a file location
-    # create a mock function to get the file. It needs to have the filter kwarg, since
-    # that is used in the actual call
-    test_loc = Path(__file__).parent / "test.pdf"
+    # record if we asked the user.
     get_file_calls = []
-
     monkeypatch.setattr(
         QFileDialog, "getSaveFileName", lambda x, y, z: get_file_calls.append(1)
     )
 
     widget = CInitialize(qtbot, db_empty)
-
-    # monkeypatch the downloading
-    download_links = []
-    monkeypatch.setattr(
-        widget.rightPanel, "_downloadURL", lambda x, y: download_links.append(x)
-    )
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.pdfDownloadButton, qtbot)
     assert get_file_calls == []
@@ -1555,19 +1436,8 @@ def test_download_pdf_doesnt_ask_user_if_none_available(qtbot, db_empty, monkeyp
 def test_download_pdf_doesnt_download_if_none_available(qtbot, db_empty, monkeypatch):
     # add BBFH to the database, since it has no PDF
     db_empty.add_paper(u.bbfh.bibcode)
-    # Here we need to use monkeypatch to simulate user selecting a file location
-    # create a mock function to get the file. It needs to have the filter kwarg, since
-    # that is used in the actual call
-    test_loc = Path(__file__).parent / "test.pdf"
-    get_file_calls = []
-
-    monkeypatch.setattr(
-        QFileDialog, "getSaveFileName", lambda x, y, z: get_file_calls.append(1)
-    )
-
     widget = CInitialize(qtbot, db_empty)
-
-    # monkeypatch the downloading
+    # record what we downloaded
     download_links = []
     monkeypatch.setattr(
         widget.rightPanel, "_downloadURL", lambda x, y: download_links.append(x)
@@ -1582,23 +1452,7 @@ def test_download_pdf_button_shows_error_message_if_none_available(
 ):
     # add BBFH to the database, since it has no PDF
     db_empty.add_paper(u.bbfh.bibcode)
-    # Here we need to use monkeypatch to simulate user selecting a file location
-    # create a mock function to get the file. It needs to have the filter kwarg, since
-    # that is used in the actual call
-    test_loc = Path(__file__).parent / "test.pdf"
-    get_file_calls = []
-
-    monkeypatch.setattr(
-        QFileDialog, "getSaveFileName", lambda x, y, z: get_file_calls.append(1)
-    )
-
     widget = CInitialize(qtbot, db_empty)
-
-    # monkeypatch the downloading
-    download_links = []
-    monkeypatch.setattr(
-        widget.rightPanel, "_downloadURL", lambda x, y: download_links.append(x)
-    )
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.pdfDownloadButton, qtbot)
     assert widget.rightPanel.pdfDownloadButton.text() == "Automatic Download Failed"
@@ -1610,23 +1464,7 @@ def test_download_pdf_button_error_message_resets_on_new_paper_clicked(
     # add BBFH to the database, since it has no PDF
     db_empty.add_paper(u.bbfh.bibcode)
     db_empty.add_paper(u.tremonti.bibcode)
-    # Here we need to use monkeypatch to simulate user selecting a file location
-    # create a mock function to get the file. It needs to have the filter kwarg, since
-    # that is used in the actual call
-    test_loc = Path(__file__).parent / "test.pdf"
-    get_file_calls = []
-
-    monkeypatch.setattr(
-        QFileDialog, "getSaveFileName", lambda x, y, z: get_file_calls.append(1)
-    )
-
     widget = CInitialize(qtbot, db_empty)
-
-    # monkeypatch the downloading
-    download_links = []
-    monkeypatch.setattr(
-        widget.rightPanel, "_downloadURL", lambda x, y: download_links.append(x)
-    )
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.pdfDownloadButton, qtbot)
     assert widget.rightPanel.pdfDownloadButton.text() == "Automatic Download Failed"
@@ -1637,7 +1475,6 @@ def test_download_pdf_button_error_message_resets_on_new_paper_clicked(
 def test_double_clicking_on_paper_with_local_file_opens_it(
     qtbot, db_empty, monkeypatch
 ):
-    # Here we need to use monkeypatch to simulate opening the file
     test_loc = __file__
     open_calls = []
     monkeypatch.setattr(QDesktopServices, "openUrl", lambda x: open_calls.append(x))
@@ -1654,9 +1491,6 @@ def test_double_clicking_on_paper_with_local_file_opens_it(
 def test_dclicking_on_paper_with_no_local_file_doesnt_ask_user(
     qtbot, db_temp, monkeypatch
 ):
-    # Here we need to use monkeypatch to simulate opening the file and asking user
-    open_calls = []
-    monkeypatch.setattr(QDesktopServices, "openUrl", lambda x: open_calls.append(x))
     user_asks = []
     monkeypatch.setattr(
         QFileDialog,
@@ -1716,9 +1550,7 @@ def test_pdf_highlighting_goes_away_with_any_click(qtbot, db_temp):
 def test_pdf_highlighting_goes_away_with_choose_local_interaction(
     qtbot, db_temp, monkeypatch
 ):
-    # mock the selection interaction
-    monkeypatch.setattr(QFileDialog, "getOpenFileName", lambda filter, dir: ("", ""))
-
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", MOpenFileNoResponse)
     widget = CInitialize(qtbot, db_temp)
     CDoubleClick(widget.papersList.papers[0], qtbot)
     assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == True
@@ -1731,9 +1563,7 @@ def test_pdf_highlighting_goes_away_with_choose_local_interaction(
 def test_pdf_highlighting_goes_away_with_download_interaction(
     qtbot, db_temp, monkeypatch
 ):
-    # mock the selection interaction
-    monkeypatch.setattr(QFileDialog, "getSaveFileName", lambda dir, caption: ("", ""))
-
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", MSaveFileNoResponse)
     widget = CInitialize(qtbot, db_temp)
     CDoubleClick(widget.papersList.papers[0], qtbot)
     assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == True
@@ -1775,7 +1605,7 @@ def test_dclicking_on_paper_with_nonexistent_file_redirects_to_right_panel(
     assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == True
 
 
-def test_dclicking_on_paper_shows_details_in_right_panel(qtbot, db_empty, monkeypatch):
+def test_dclicking_on_paper_shows_details_in_right_panel(qtbot, db_empty):
     widget = CInitialize(qtbot, db_empty)
     # add a paper to this empty database to make the paper object
     CAddPaper(widget, u.mine.bibcode, qtbot)  # do not add file location
@@ -3097,24 +2927,16 @@ def test_newly_added_tag_has_hidden_export(qtbot, db_temp):
 
 
 def test_clicking_export_all_exports_all(qtbot, db, monkeypatch):
-    # Here we need to use monkeypatch to simulate user input
-    test_loc = Path(__file__).parent / "test.txt"
-
-    # create a mock function to get the file. It needs to have a couple of kwargs,
-    # since those are used in the actual call. The filter is actually returned
-    def mock_get_file(filter="", caption="", dir=""):
-        return test_loc, "dummy filter"
-
-    monkeypatch.setattr(QFileDialog, "getSaveFileName", mock_get_file)
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", MSaveFileValidTXT)
 
     widget = CInitialize(qtbot, db)
     # click on the export all button
     CClick(widget.tagsList.showAllButton.exportButton, qtbot)
     # then open the file and compare it
-    with open(test_loc, "r") as out_file:
+    with open(exampleSaveTXT, "r") as out_file:
         file_contents = out_file.read()
     # remove the file now before the test, so it always gets deleted
-    test_loc.unlink()
+    exampleSaveTXT.unlink()
     # then compare the contents to what we expect
     expected_file_contents = u.tremonti.bibtex + "\n" + u.mine.bibtex + "\n"
     assert file_contents == expected_file_contents
@@ -3131,15 +2953,7 @@ def test_exporting_a_single_tag(qtbot, db_empty, monkeypatch):
     for paper in tagged_papers:
         db_empty.tag_paper(paper.bibcode, "test_tag")
 
-    # Here we need to use monkeypatch to simulate user input
-    test_loc = Path(__file__).parent / "test.txt"
-
-    # create a mock function to get the file. It needs to have a couple of kwargs,
-    # since those are used in the actual call. The filter is actually returned
-    def mock_get_file(filter="", caption="", dir=""):
-        return test_loc, "dummy filter"
-
-    monkeypatch.setattr(QFileDialog, "getSaveFileName", mock_get_file)
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", MSaveFileValidTXT)
 
     widget = CInitialize(qtbot, db_empty)
     # find the tag to click on, then click it's export button
@@ -3149,24 +2963,17 @@ def test_exporting_a_single_tag(qtbot, db_empty, monkeypatch):
 
     CClick(tag.exportButton, qtbot)
     # then open the file and compare it
-    with open(test_loc, "r") as out_file:
+    with open(exampleSaveTXT, "r") as out_file:
         file_contents = out_file.read()
     # remove the file now before the test, so it always gets deleted
-    test_loc.unlink()
+    exampleSaveTXT.unlink()
     # then compare the contents to what we expect
     expected_file_contents = "\n".join([p.bibtex for p in tagged_papers]) + "\n"
     assert file_contents == expected_file_contents
 
 
 def test_no_export_happens_if_user_cancels(qtbot, db, monkeypatch):
-    # create a mock function to get the file. It needs to have a couple of kwargs,
-    # since those are used in the actual call. The filter is actually returned. Since
-    # we're simulating no user interaction, return the emtpy string
-    def mock_get_file(filter="", caption="", dir=""):
-        return "", ""
-
-    monkeypatch.setattr(QFileDialog, "getSaveFileName", mock_get_file)
-
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", MSaveFileNoResponse)
     # Also set up a monkeypatch for the export, so that we can see if anything
     # happened
     export_calls = []
