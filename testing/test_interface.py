@@ -174,6 +174,13 @@ def CAddTag(mainWidget, tagName, qtbot):
     CPressEnter(mainWidget.tagsList.addTagBar, qtbot)
 
 
+def CDeleteTag(mainWidget, tagName, qtbot):
+    CClick(mainWidget.firstDeleteTagButton, qtbot)
+    CEnterText(mainWidget.secondDeleteTagEntry, tagName, qtbot)
+    CPressEnter(mainWidget.secondDeleteTagEntry, qtbot)
+    CClick(mainWidget.thirdDeleteTagButton, qtbot)
+
+
 ########################################################################################
 #
 # test premade databases
@@ -2801,6 +2808,7 @@ def test_third_delete_tag_cancel_button_text_is_accurate(qtbot, db_temp):
 def test_third_delete_tag_button_deletes_tag_from_db_when_pressed(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     original_tags = db_temp.get_all_tags()
+    # don't use convenience function, for clarity
     CClick(widget.firstDeleteTagButton, qtbot)
     CEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
     CPressEnter(widget.secondDeleteTagEntry, qtbot)
@@ -2827,37 +2835,25 @@ def test_third_delete_tag_button_deletes_tag_from_list_when_pressed(qtbot, db_te
 
 def test_first_delete_tag_button_comes_back_once_tag_deleted(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
-    CClick(widget.firstDeleteTagButton, qtbot)
-    CEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
-    CPressEnter(widget.secondDeleteTagEntry, qtbot)
-    CClick(widget.thirdDeleteTagButton, qtbot)
+    CDeleteTag(widget, "Read", qtbot)
     assert widget.firstDeleteTagButton.isHidden() is False
 
 
 def test_second_delete_tag_entry_hidden_once_tag_deleted(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
-    CClick(widget.firstDeleteTagButton, qtbot)
-    CEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
-    CPressEnter(widget.secondDeleteTagEntry, qtbot)
-    CClick(widget.thirdDeleteTagButton, qtbot)
+    CDeleteTag(widget, "Read", qtbot)
     assert widget.secondDeleteTagEntry.isHidden() is True
 
 
 def test_third_delete_tag_button_hides_once_tag_deleted(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
-    CClick(widget.firstDeleteTagButton, qtbot)
-    CEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
-    CPressEnter(widget.secondDeleteTagEntry, qtbot)
-    CClick(widget.thirdDeleteTagButton, qtbot)
+    CDeleteTag(widget, "Read", qtbot)
     assert widget.thirdDeleteTagButton.isHidden() is True
 
 
 def test_third_delete_tag_cancel_button_hides_once_tag_deleted(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
-    CClick(widget.firstDeleteTagButton, qtbot)
-    CEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
-    CPressEnter(widget.secondDeleteTagEntry, qtbot)
-    CClick(widget.thirdDeleteTagButton, qtbot)
+    CDeleteTag(widget, "Read", qtbot)
     assert widget.thirdDeleteTagCancelButton.isHidden() is True
 
 
@@ -3478,10 +3474,7 @@ def test_tag_checkboxes_are_sorted_properly_after_deleting_tag(qtbot, db_temp):
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.editTagsButton, qtbot)
     # then delete a tag from the left panel
-    CClick(widget.firstDeleteTagButton, qtbot)
-    CEnterText(widget.secondDeleteTagEntry, "Test", qtbot)
-    CPressEnter(widget.secondDeleteTagEntry, qtbot)
-    CClick(widget.thirdDeleteTagButton, qtbot)
+    CDeleteTag(widget, "Test", qtbot)
     # then ensure this new checkbox was removed appropriately
     tags = [tag.text() for tag in widget.rightPanel.tags]
     assert "Test" not in tags
@@ -4003,10 +3996,7 @@ def test_deleting_long_tag_resizes_splitter(qtbot, db_temp):
     db_temp.add_new_tag(tag_name)
     widget = CInitialize(qtbot, db_temp)
     original_sizes = widget.splitter.sizes()
-    CClick(widget.firstDeleteTagButton, qtbot)
-    CEnterText(widget.secondDeleteTagEntry, tag_name, qtbot)
-    CPressEnter(widget.secondDeleteTagEntry, qtbot)
-    CClick(widget.thirdDeleteTagButton, qtbot)
+    CDeleteTag(widget, tag_name, qtbot)
     new_sizes = widget.splitter.sizes()
     assert new_sizes[0] < original_sizes[0]
     assert new_sizes[0] == max(
@@ -4031,6 +4021,7 @@ def test_confirming_tag_delete_resizes_splitter(qtbot, db_temp):
     tag_name = "this is a very long tag, too long to realistically use"
     db_temp.add_new_tag(tag_name)
     widget = CInitialize(qtbot, db_temp)
+    # don't use convenience function, since we need size at intermediate steps
     CClick(widget.firstDeleteTagButton, qtbot)
     CEnterText(widget.secondDeleteTagEntry, tag_name, qtbot)
     CPressEnter(widget.secondDeleteTagEntry, qtbot)
