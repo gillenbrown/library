@@ -181,6 +181,12 @@ def CDeleteTag(mainWidget, tagName, qtbot):
     CClick(mainWidget.thirdDeleteTagButton, qtbot)
 
 
+def CDeleteFirstPaper(mainWidget, qtbot):
+    CClick(mainWidget.papersList.papers[0], qtbot)
+    CClick(mainWidget.rightPanel.firstDeletePaperButton, qtbot)
+    CClick(mainWidget.rightPanel.secondDeletePaperButton, qtbot)
+
+
 ########################################################################################
 #
 # test premade databases
@@ -1290,6 +1296,7 @@ def test_paper_pdf_open_bad_pdf_resets_database(qtbot, db_empty, monkeypatch):
 
 def test_paper_pdf_buttons_hidden_when_paper_deleted(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
+    # don't use convenience function, for clarity
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.firstDeletePaperButton, qtbot)
     CClick(widget.rightPanel.secondDeletePaperButton, qtbot)
@@ -2445,9 +2452,7 @@ def test_second_delete_paper_button_deletes_paper_from_database_when_pressed(
 ):
     widget = CInitialize(qtbot, db_temp)
     paper = widget.papersList.papers[0]
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.firstDeletePaperButton, qtbot)
-    CClick(widget.rightPanel.secondDeletePaperButton, qtbot)
+    CDeleteFirstPaper(widget, qtbot)
     # check that it's not in the database anymore
     with pytest.raises(ValueError):
         db_temp.get_paper_attribute(paper.bibcode, "title")
@@ -2458,9 +2463,7 @@ def test_second_delete_paper_button_deletes_paper_from_interface_when_pressed(
 ):
     widget = CInitialize(qtbot, db_temp)
     bibcode = widget.papersList.papers[0].bibcode
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.firstDeletePaperButton, qtbot)
-    CClick(widget.rightPanel.secondDeletePaperButton, qtbot)
+    CDeleteFirstPaper(widget, qtbot)
     # check that it's not in the center list anymore
     for paper in widget.papersList.papers:
         assert bibcode != paper.bibcode
@@ -2506,9 +2509,7 @@ def test_second_delete_paper_cancel_button_resets_delete_buttons(qtbot, db_temp)
 
 def test_right_panel_edit_tags_button_is_hidden_when_paper_is_deleted(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.firstDeletePaperButton, qtbot)
-    CClick(widget.rightPanel.secondDeletePaperButton, qtbot)
+    CDeleteFirstPaper(widget, qtbot)
     assert widget.rightPanel.editTagsButton.isHidden()
 
 
@@ -2516,25 +2517,19 @@ def test_right_panel_done_editing_tags_button_is_hidden_when_paper_is_deleted(
     qtbot, db_temp
 ):
     widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.firstDeletePaperButton, qtbot)
-    CClick(widget.rightPanel.secondDeletePaperButton, qtbot)
+    CDeleteFirstPaper(widget, qtbot)
     assert widget.rightPanel.doneEditingTagsButton.isHidden()
 
 
 def test_right_panel_copy_bibtex_button_is_hidden_when_paper_is_deleted(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.firstDeletePaperButton, qtbot)
-    CClick(widget.rightPanel.secondDeletePaperButton, qtbot)
+    CDeleteFirstPaper(widget, qtbot)
     assert widget.rightPanel.copyBibtexButton.isHidden()
 
 
 def test_right_panel_open_ads_button_is_hidden_when_paper_is_deleted(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.firstDeletePaperButton, qtbot)
-    CClick(widget.rightPanel.secondDeletePaperButton, qtbot)
+    CDeleteFirstPaper(widget, qtbot)
     assert widget.rightPanel.adsButton.isHidden()
 
 
@@ -2542,9 +2537,7 @@ def test_right_panel_first_delete_button_is_hidden_when_paper_is_deleted(
     qtbot, db_temp
 ):
     widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.firstDeletePaperButton, qtbot)
-    CClick(widget.rightPanel.secondDeletePaperButton, qtbot)
+    CDeleteFirstPaper(widget, qtbot)
     assert widget.rightPanel.firstDeletePaperButton.isHidden()
 
 
@@ -2552,9 +2545,7 @@ def test_right_panel_second_delete_button_is_hidden_when_paper_is_deleted(
     qtbot, db_temp
 ):
     widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.firstDeletePaperButton, qtbot)
-    CClick(widget.rightPanel.secondDeletePaperButton, qtbot)
+    CDeleteFirstPaper(widget, qtbot)
     assert widget.rightPanel.secondDeletePaperButton.isHidden()
 
 
@@ -2562,41 +2553,31 @@ def test_right_panel_second_delete_cancel_button_is_hidden_when_paper_is_deleted
     qtbot, db_temp
 ):
     widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.firstDeletePaperButton, qtbot)
-    CClick(widget.rightPanel.secondDeletePaperButton, qtbot)
+    CDeleteFirstPaper(widget, qtbot)
     assert widget.rightPanel.secondDeletePaperCancelButton.isHidden()
 
 
 def test_right_panel_title_text_is_blank_when_paper_is_deleted(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.firstDeletePaperButton, qtbot)
-    CClick(widget.rightPanel.secondDeletePaperButton, qtbot)
+    CDeleteFirstPaper(widget, qtbot)
     assert widget.rightPanel.titleText.text() == ""
 
 
 def test_right_panel_cite_text_is_blank_when_paper_is_deleted(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.firstDeletePaperButton, qtbot)
-    CClick(widget.rightPanel.secondDeletePaperButton, qtbot)
+    CDeleteFirstPaper(widget, qtbot)
     assert widget.rightPanel.citeText.text() == ""
 
 
 def test_right_panel_tag_text_is_blank_when_paper_is_deleted(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.firstDeletePaperButton, qtbot)
-    CClick(widget.rightPanel.secondDeletePaperButton, qtbot)
+    CDeleteFirstPaper(widget, qtbot)
     assert widget.rightPanel.tagText.text() == ""
 
 
 def test_right_panel_abstract_text_is_default_when_paper_is_deleted(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.firstDeletePaperButton, qtbot)
-    CClick(widget.rightPanel.secondDeletePaperButton, qtbot)
+    CDeleteFirstPaper(widget, qtbot)
     assert (
         widget.rightPanel.abstractText.text()
         == "Click on a paper to show its details here"
@@ -3339,9 +3320,7 @@ def test_notes_edit_button_reappears_when_editing_done(qtbot, db_notes):
 
 def test_user_notes_are_appropriately_shown_once_paper_deleted(qtbot, db_notes):
     widget = CInitialize(qtbot, db_notes)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.firstDeletePaperButton, qtbot)
-    CClick(widget.rightPanel.secondDeletePaperButton, qtbot)
+    CDeleteFirstPaper(widget, qtbot)
     assert widget.rightPanel.userNotesText.isHidden() is True
     assert widget.rightPanel.userNotesTextEditButton.isHidden() is True
     assert widget.rightPanel.userNotesTextEditField.isHidden() is True
@@ -3363,9 +3342,7 @@ def test_spacers_are_shown_when_paper_clicked(qtbot, db):
 
 def test_spacers_are_hidden_once_paper_deleted(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.firstDeletePaperButton, qtbot)
-    CClick(widget.rightPanel.secondDeletePaperButton, qtbot)
+    CDeleteFirstPaper(widget, qtbot)
     for spacer in widget.rightPanel.spacers:
         assert spacer.isHidden() is True
 
@@ -3823,9 +3800,7 @@ def test_edit_citation_keyword_duplicates_doesnt_update_database(qtbot, db_temp)
 
 def test_edit_citation_keyword_buttons_hidden_when_paper_deleted(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.firstDeletePaperButton, qtbot)
-    CClick(widget.rightPanel.secondDeletePaperButton, qtbot)
+    CDeleteFirstPaper(widget, qtbot)
     assert widget.rightPanel.editCiteKeyButton.isHidden() is True
     assert widget.rightPanel.editCiteKeyEntry.isHidden() is True
     assert widget.rightPanel.citeKeyText.isHidden() is True
