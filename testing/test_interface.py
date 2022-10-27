@@ -163,9 +163,9 @@ def CPressBackspace(widget, qtbot):
     qtbot.keyPress(widget, Qt.Key_Backspace)
 
 
-def CAddPaper(qtbot, widget, bibcode):
-    CEnterText(widget.searchBar, bibcode, qtbot)
-    CPressEnter(widget.searchBar, qtbot)
+def CAddPaper(mainWidget, bibcode, qtbot):
+    CEnterText(mainWidget.searchBar, bibcode, qtbot)
+    CPressEnter(mainWidget.searchBar, qtbot)
 
 
 ########################################################################################
@@ -507,13 +507,13 @@ def test_all_papers_in_database_are_in_the_paper_list_at_beginning(qtbot, db):
 def test_adding_paper_adds_paper_to_interface(qtbot, db_empty):
     widget = CInitialize(qtbot, db_empty)
     assert len(widget.papersList.papers) == 0
-    CAddPaper(qtbot, widget, u.mine.bibcode)
+    CAddPaper(widget, u.mine.bibcode, qtbot)
     assert len(widget.papersList.papers) == 1
 
 
 def test_adding_paper_adds_correct_paper_to_interface(qtbot, db_empty):
     widget = CInitialize(qtbot, db_empty)
-    CAddPaper(qtbot, widget, u.mine.bibcode)
+    CAddPaper(widget, u.mine.bibcode, qtbot)
     assert widget.papersList.papers[0].bibcode == u.mine.bibcode
 
 
@@ -534,25 +534,25 @@ def test_add_paper_button_shown_at_beginning(qtbot, db_empty):
 
 def test_adding_paper_clears_search_bar_if_successful(qtbot, db_empty):
     widget = CInitialize(qtbot, db_empty)
-    CAddPaper(qtbot, widget, u.mine.bibcode)
+    CAddPaper(widget, u.mine.bibcode, qtbot)
     assert widget.searchBar.text() == ""
 
 
 def test_adding_paper_does_not_clear_search_bar_if_not_successful(qtbot, db_empty):
     widget = CInitialize(qtbot, db_empty)
-    CAddPaper(qtbot, widget, "nonsense")
+    CAddPaper(widget, "nonsense", qtbot)
     assert widget.searchBar.text() == "nonsense"
 
 
 def test_adding_bad_paper_shows_error_formatting_of_textedit(qtbot, db_empty):
     widget = CInitialize(qtbot, db_empty)
-    CAddPaper(qtbot, widget, "nonsense")
+    CAddPaper(widget, "nonsense", qtbot)
     assert widget.searchBar.property("error") is True
 
 
 def test_adding_bad_paper_shows_error_text(qtbot, db_empty):
     widget = CInitialize(qtbot, db_empty)
-    CAddPaper(qtbot, widget, "nonsense")
+    CAddPaper(widget, "nonsense", qtbot)
     assert widget.searchBarErrorText.isHidden() is False
     assert (
         widget.searchBarErrorText.text() == "This paper was not found in ADS. "
@@ -562,14 +562,14 @@ def test_adding_bad_paper_shows_error_text(qtbot, db_empty):
 
 def test_adding_bad_paper_hides_add_button(qtbot, db_empty):
     widget = CInitialize(qtbot, db_empty)
-    CAddPaper(qtbot, widget, "nonsense")
+    CAddPaper(widget, "nonsense", qtbot)
     assert widget.addButton.isHidden() is True
 
 
 def test_search_bar_and_error_text_have_almost_same_height(qtbot, db_empty):
     widget = CInitialize(qtbot, db_empty)
     # add a bad paper, which is when this situation arises
-    CAddPaper(qtbot, widget, "nonsense")
+    CAddPaper(widget, "nonsense", qtbot)
     height_ratio = widget.searchBarErrorText.height() / widget.searchBar.height()
     assert 0.8 < height_ratio < 1.3
 
@@ -577,7 +577,7 @@ def test_search_bar_and_error_text_have_almost_same_height(qtbot, db_empty):
 def test_search_bar_and_error_text_are_much_shorter_than_title(qtbot, db_empty):
     widget = CInitialize(qtbot, db_empty)
     # add a bad paper, which is when this situation arises
-    CAddPaper(qtbot, widget, "nonsense")
+    CAddPaper(widget, "nonsense", qtbot)
     assert widget.searchBar.height() < 0.6 * widget.title.height()
     assert widget.searchBarErrorText.height() < 0.6 * widget.title.height()
 
@@ -586,21 +586,21 @@ def test_bad_paper_error_formatting_of_textedit_reset_after_any_clicking(
     qtbot, db_empty
 ):
     widget = CInitialize(qtbot, db_empty)
-    CAddPaper(qtbot, widget, "nonsense")
+    CAddPaper(widget, "nonsense", qtbot)
     widget.searchBar.setCursorPosition(0)
     assert widget.searchBar.property("error") is False
 
 
 def test_bad_paper_error_message_of_textedit_reset_after_any_clicking(qtbot, db_empty):
     widget = CInitialize(qtbot, db_empty)
-    CAddPaper(qtbot, widget, "nonsense")
+    CAddPaper(widget, "nonsense", qtbot)
     widget.searchBar.setCursorPosition(0)
     assert widget.searchBarErrorText.isHidden() is True
 
 
 def test_bad_paper_add_button_reshown_after_any_clicking(qtbot, db_empty):
     widget = CInitialize(qtbot, db_empty)
-    CAddPaper(qtbot, widget, "nonsense")
+    CAddPaper(widget, "nonsense", qtbot)
     widget.searchBar.setCursorPosition(0)
     assert widget.addButton.isHidden() is False
 
@@ -609,88 +609,88 @@ def test_bad_paper_error_formatting_of_textedit_reset_after_editing_text(
     qtbot, db_empty
 ):
     widget = CInitialize(qtbot, db_empty)
-    CAddPaper(qtbot, widget, "nonsense")
+    CAddPaper(widget, "nonsense", qtbot)
     CEnterText(widget.searchBar, "nonsens", qtbot)
     assert widget.searchBar.property("error") is False
 
 
 def test_bad_paper_error_message_of_textedit_reset_after_editing_text(qtbot, db_empty):
     widget = CInitialize(qtbot, db_empty)
-    CAddPaper(qtbot, widget, "nonsense")
+    CAddPaper(widget, "nonsense", qtbot)
     CEnterText(widget.searchBar, "nonsens", qtbot)
     assert widget.searchBarErrorText.isHidden() is True
 
 
 def test_bad_paper_add_button_reshown_after_editing_text(qtbot, db_empty):
     widget = CInitialize(qtbot, db_empty)
-    CAddPaper(qtbot, widget, "nonsense")
+    CAddPaper(widget, "nonsense", qtbot)
     CEnterText(widget.searchBar, "nonsens", qtbot)
     assert widget.addButton.isHidden() is False
 
 
 def test_adding_paper_does_not_clear_search_bar_if_already_in_library(qtbot, db):
     widget = CInitialize(qtbot, db)
-    CAddPaper(qtbot, widget, u.mine.bibcode)
+    CAddPaper(widget, u.mine.bibcode, qtbot)
     assert widget.searchBar.text() == u.mine.bibcode
 
 
 def test_adding_duplicate_paper_shows_error_formatting_of_textedit(qtbot, db):
     widget = CInitialize(qtbot, db)
-    CAddPaper(qtbot, widget, u.mine.bibcode)
+    CAddPaper(widget, u.mine.bibcode, qtbot)
     assert widget.searchBar.property("error") is True
 
 
 def test_adding_duplicate_paper_shows_error_text(qtbot, db):
     widget = CInitialize(qtbot, db)
-    CAddPaper(qtbot, widget, u.mine.bibcode)
+    CAddPaper(widget, u.mine.bibcode, qtbot)
     assert widget.searchBarErrorText.isHidden() is False
     assert widget.searchBarErrorText.text() == "This paper is already in the library."
 
 
 def test_adding_duplicate_paper_hides_add_button(qtbot, db):
     widget = CInitialize(qtbot, db)
-    CAddPaper(qtbot, widget, u.mine.bibcode)
+    CAddPaper(widget, u.mine.bibcode, qtbot)
     assert widget.addButton.isHidden() is True
 
 
 def test_duplicate_error_formatting_of_textedit_reset_after_any_clicking(qtbot, db):
     widget = CInitialize(qtbot, db)
-    CAddPaper(qtbot, widget, u.mine.bibcode)
+    CAddPaper(widget, u.mine.bibcode, qtbot)
     widget.searchBar.setCursorPosition(0)
     assert widget.searchBar.property("error") is False
 
 
 def test_duplicate_error_message_of_textedit_reset_after_any_clicking(qtbot, db):
     widget = CInitialize(qtbot, db)
-    CAddPaper(qtbot, widget, u.mine.bibcode)
+    CAddPaper(widget, u.mine.bibcode, qtbot)
     widget.searchBar.setCursorPosition(0)
     assert widget.searchBarErrorText.isHidden() is True
 
 
 def test_duplicate_add_button_reshown_after_any_clicking(qtbot, db):
     widget = CInitialize(qtbot, db)
-    CAddPaper(qtbot, widget, u.mine.bibcode)
+    CAddPaper(widget, u.mine.bibcode, qtbot)
     widget.searchBar.setCursorPosition(0)
     assert widget.addButton.isHidden() is False
 
 
 def test_duplicate_error_formatting_of_textedit_reset_after_editing_text(qtbot, db):
     widget = CInitialize(qtbot, db)
-    CAddPaper(qtbot, widget, u.mine.bibcode)
+    CAddPaper(widget, u.mine.bibcode, qtbot)
     CEnterText(widget.searchBar, "s", qtbot)
     assert widget.searchBar.property("error") is False
 
 
 def test_duplicate_error_message_of_textedit_reset_after_editing_text(qtbot, db):
     widget = CInitialize(qtbot, db)
-    CAddPaper(qtbot, widget, u.mine.bibcode)
+    CAddPaper(widget, u.mine.bibcode, qtbot)
     CEnterText(widget.searchBar, "s", qtbot)
     assert widget.searchBarErrorText.isHidden() is True
 
 
 def test_duplicate_add_button_reshown_after_editing_text(qtbot, db):
     widget = CInitialize(qtbot, db)
-    CAddPaper(qtbot, widget, u.mine.bibcode)
+    CAddPaper(widget, u.mine.bibcode, qtbot)
     CEnterText(widget.searchBar, "s", qtbot)
     assert widget.addButton.isHidden() is False
 
@@ -700,7 +700,7 @@ def test_adding_paper_does_not_clear_search_bar_if_no_ads_key_set(
 ):
     widget = CInitialize(qtbot, db_empty_change_ads_key)
     # need to use a paper that's not already stored in my ADS cache
-    CAddPaper(qtbot, widget, u.used_for_no_ads_key.url)
+    CAddPaper(widget, u.used_for_no_ads_key.url, qtbot)
     assert widget.searchBar.text() == u.used_for_no_ads_key.url
 
 
@@ -708,13 +708,13 @@ def test_adding_paper_no_ads_key_set_shows_error_formatting_of_textedit(
     qtbot, db_empty_change_ads_key
 ):
     widget = CInitialize(qtbot, db_empty_change_ads_key)
-    CAddPaper(qtbot, widget, u.used_for_no_ads_key.url)
+    CAddPaper(widget, u.used_for_no_ads_key.url, qtbot)
     assert widget.searchBar.property("error") is True
 
 
 def test_adding_paper_no_ads_key_set_shows_error_text(qtbot, db_empty_change_ads_key):
     widget = CInitialize(qtbot, db_empty_change_ads_key)
-    CAddPaper(qtbot, widget, u.used_for_no_ads_key.url)
+    CAddPaper(widget, u.used_for_no_ads_key.url, qtbot)
     assert widget.searchBarErrorText.isHidden() is False
     assert (
         widget.searchBarErrorText.text() == "You don't have an ADS key set. "
@@ -724,7 +724,7 @@ def test_adding_paper_no_ads_key_set_shows_error_text(qtbot, db_empty_change_ads
 
 def test_adding_paper_no_ads_key_hides_add_button(qtbot, db_empty_change_ads_key):
     widget = CInitialize(qtbot, db_empty_change_ads_key)
-    CAddPaper(qtbot, widget, u.used_for_no_ads_key.url)
+    CAddPaper(widget, u.used_for_no_ads_key.url, qtbot)
     assert widget.addButton.isHidden() is True
 
 
@@ -732,7 +732,7 @@ def test_no_ads_key_set_error_formatting_of_textedit_reset_after_any_clicking(
     qtbot, db_empty_change_ads_key
 ):
     widget = CInitialize(qtbot, db_empty_change_ads_key)
-    CAddPaper(qtbot, widget, u.used_for_no_ads_key.url)
+    CAddPaper(widget, u.used_for_no_ads_key.url, qtbot)
     widget.searchBar.setCursorPosition(0)
     assert widget.searchBar.property("error") is False
 
@@ -741,7 +741,7 @@ def test_no_ads_key_set_error_message_of_textedit_reset_after_any_clicking(
     qtbot, db_empty_change_ads_key
 ):
     widget = CInitialize(qtbot, db_empty_change_ads_key)
-    CAddPaper(qtbot, widget, u.used_for_no_ads_key.url)
+    CAddPaper(widget, u.used_for_no_ads_key.url, qtbot)
     widget.searchBar.setCursorPosition(0)
     assert widget.searchBarErrorText.isHidden() is True
 
@@ -750,7 +750,7 @@ def test_no_ads_key_add_button_reshown_after_any_clicking(
     qtbot, db_empty_change_ads_key
 ):
     widget = CInitialize(qtbot, db_empty_change_ads_key)
-    CAddPaper(qtbot, widget, u.used_for_no_ads_key.url)
+    CAddPaper(widget, u.used_for_no_ads_key.url, qtbot)
     widget.searchBar.setCursorPosition(0)
     assert widget.addButton.isHidden() is False
 
@@ -759,7 +759,7 @@ def test_no_ads_key_set_error_formatting_of_textedit_reset_after_editing_text(
     qtbot, db_empty_change_ads_key
 ):
     widget = CInitialize(qtbot, db_empty_change_ads_key)
-    CAddPaper(qtbot, widget, u.used_for_no_ads_key.url)
+    CAddPaper(widget, u.used_for_no_ads_key.url, qtbot)
     CEnterText(widget.searchBar, "s", qtbot)
     assert widget.searchBar.property("error") is False
 
@@ -768,7 +768,7 @@ def test_no_ads_key_set_error_message_of_textedit_reset_after_editing_text(
     qtbot, db_empty_change_ads_key
 ):
     widget = CInitialize(qtbot, db_empty_change_ads_key)
-    CAddPaper(qtbot, widget, u.used_for_no_ads_key.url)
+    CAddPaper(widget, u.used_for_no_ads_key.url, qtbot)
     CEnterText(widget.searchBar, "s", qtbot)
     assert widget.searchBarErrorText.isHidden() is True
 
@@ -777,7 +777,7 @@ def test_no_ads_key_add_button_reshown_after_editing_text(
     qtbot, db_empty_change_ads_key
 ):
     widget = CInitialize(qtbot, db_empty_change_ads_key)
-    CAddPaper(qtbot, widget, u.used_for_no_ads_key.url)
+    CAddPaper(widget, u.used_for_no_ads_key.url, qtbot)
     CEnterText(widget.searchBar, "s", qtbot)
     assert widget.addButton.isHidden() is False
 
@@ -785,10 +785,10 @@ def test_no_ads_key_add_button_reshown_after_editing_text(
 def test_paper_cannot_be_added_twice(qtbot, db_empty):
     widget = CInitialize(qtbot, db_empty)
     assert len(widget.papersList.papers) == 0
-    CAddPaper(qtbot, widget, u.mine.bibcode)
+    CAddPaper(widget, u.mine.bibcode, qtbot)
     assert len(widget.papersList.papers) == 1
     # add it again
-    CAddPaper(qtbot, widget, u.mine.bibcode)
+    CAddPaper(widget, u.mine.bibcode, qtbot)
     assert len(widget.papersList.papers) == 1
 
 
@@ -1618,7 +1618,7 @@ def test_double_clicking_on_paper_with_local_file_opens_it(
 
     widget = CInitialize(qtbot, db_empty)
     # add a paper to this empty database to make the paper object
-    CAddPaper(qtbot, widget, u.mine.bibcode)
+    CAddPaper(widget, u.mine.bibcode, qtbot)
     db_empty.set_paper_attribute(u.mine.bibcode, "local_file", test_loc)
     CDoubleClick(widget.papersList.papers[0], qtbot)
     # since this already has a URL it should be added
@@ -1752,7 +1752,7 @@ def test_dclicking_on_paper_with_nonexistent_file_redirects_to_right_panel(
 def test_dclicking_on_paper_shows_details_in_right_panel(qtbot, db_empty, monkeypatch):
     widget = CInitialize(qtbot, db_empty)
     # add a paper to this empty database to make the paper object
-    CAddPaper(qtbot, widget, u.mine.bibcode)  # do not add file location
+    CAddPaper(widget, u.mine.bibcode, qtbot)  # do not add file location
     CDoubleClick(widget.papersList.papers[0], qtbot)
     assert widget.rightPanel.titleText.text() == u.mine.title
 
@@ -3073,7 +3073,7 @@ def test_clicking_on_ads_button_opens_paper_in_browser(qtbot, db_empty, monkeypa
 
     widget = CInitialize(qtbot, db_empty)
     # add a paper to this empty database to make the paper object
-    CAddPaper(qtbot, widget, u.mine.bibcode)
+    CAddPaper(widget, u.mine.bibcode, qtbot)
     # click on th epaper in the main panel, then click on the ADS button
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.adsButton, qtbot)
@@ -3552,7 +3552,7 @@ def test_papers_are_in_sorted_order_after_adding(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     # add two papers: one very old, one very recent
     for bibcode in [u.mine_recent.bibcode, u.bbfh.bibcode]:
-        CAddPaper(qtbot, widget, bibcode)
+        CAddPaper(widget, bibcode, qtbot)
     # then check sorting
     dates = [
         db_temp.get_paper_attribute(paper.bibcode, "pubdate")
