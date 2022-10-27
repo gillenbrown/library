@@ -134,47 +134,136 @@ def testing_database():
 ########################################################################################
 # All convenience functions will have "C" at the beginning, just for clarity
 def CInitialize(qtbot, db):
+    """
+    Initialize the interface and make sure qtbot knows about it
+
+    :param qtbot: the qtbot instance used in a given test
+    :param db: The database to use for the interface
+    :type db: Database
+    :return: the main window widget
+    :rtype: MainWindow
+    """
     widget = MainWindow(db)
     qtbot.addWidget(widget)
     return widget
 
 
 def CClick(widget, qtbot):
+    """
+    Click on a given widget
+
+    :param widget: The widget to click on
+    :type widget: QWidget
+    :param qtbot: the qtbot instance used in a given test
+    :return: None
+    """
     qtbot.mouseClick(widget, Qt.LeftButton)
 
 
 def CDoubleClick(widget, qtbot):
+    """
+    Double click on a given widget
+
+    :param widget: The widget to double click
+    :type widget: QWidget
+    :param qtbot: the qtbot instance used in a given test
+    :return: None
+    """
     qtbot.mouseDClick(widget, Qt.LeftButton)
 
 
 def CEnterText(widget, text, qtbot):
+    """
+    Type some text into a widget
+
+    :param widget: The widget to enter text into
+    :type widget: QWidget
+    :param text: The text to enter
+    type text: str
+    :param qtbot: the qtbot instance used in a given test
+    :return: None
+    """
     qtbot.keyClicks(widget, text)
 
 
 def CPressEnter(widget, qtbot):
+    """
+    Press the enter key in a given text entry area
+
+    :param widget: The text entry area in which to press enter
+    :type widget: QWidget
+    :param qtbot: the qtbot instance used in a given test
+    :return: None
+    """
     qtbot.keyPress(widget, Qt.Key_Enter)
 
 
 def CPressEscape(widget, qtbot):
+    """
+    Press the escape key in a given text entry area
+
+    :param widget: The text entry area in which to press escape
+    :type widget: QWidget
+    :param qtbot: the qtbot instance used in a given test
+    :return: None
+    """
     qtbot.keyPress(widget, Qt.Key_Escape)
 
 
 def CPressBackspace(widget, qtbot):
+    """
+    Press backspace in a given text entry area
+
+    :param widget: The text entry area in which to press backspace
+    :type widget: QWidget
+    :param qtbot: the qtbot instance used in a given test
+    :return: None
+    """
     qtbot.keyPress(widget, Qt.Key_Backspace)
 
 
-def CAddPaper(mainWidget, bibcode, qtbot):
-    CEnterText(mainWidget.searchBar, bibcode, qtbot)
+def CAddPaper(mainWidget, identifier, qtbot):
+    """
+    Add a paper through the interface
+
+    :param mainWidget: The main window widget
+    :type mainWidget: MainWindow
+    :param identifier: the identifier for this paper (URL, bibcode)
+    :type identifier: str
+    :param qtbot: the qtbot instance used in a given test
+    :return: None
+    """
+    CEnterText(mainWidget.searchBar, identifier, qtbot)
     CPressEnter(mainWidget.searchBar, qtbot)
 
 
 def CAddTag(mainWidget, tagName, qtbot):
+    """
+    Add a tag through the interface
+
+    :param mainWidget: The main window widget
+    :type mainWidget: MainWindow
+    :param tagName: the name of the tag to add
+    :type tagName: str
+    :param qtbot: the qtbot instance used in a given test
+    :return: None
+    """
     CClick(mainWidget.tagsList.addTagButton, qtbot)
     CEnterText(mainWidget.tagsList.addTagBar, tagName, qtbot)
     CPressEnter(mainWidget.tagsList.addTagBar, qtbot)
 
 
 def CDeleteTag(mainWidget, tagName, qtbot):
+    """
+    Delete a tag through the interface
+
+    :param mainWidget: The main window widget
+    :type mainWidget: MainWindow
+    :param tagName: The name of the tag to delete
+    :type tagName: str
+    :param qtbot: the qtbot instance used in a given test
+    :return: None
+    """
     CClick(mainWidget.firstDeleteTagButton, qtbot)
     CEnterText(mainWidget.secondDeleteTagEntry, tagName, qtbot)
     CPressEnter(mainWidget.secondDeleteTagEntry, qtbot)
@@ -182,13 +271,34 @@ def CDeleteTag(mainWidget, tagName, qtbot):
 
 
 def CDeleteFirstPaper(mainWidget, qtbot):
+    """
+    Delete the first paper in the interface
+
+    :param mainWidget: The main window widget
+    :type mainWidget: MainWindow
+    :param qtbot: the qtbot instance used in a given test
+    :return: None
+    """
     CClick(mainWidget.papersList.papers[0], qtbot)
     CClick(mainWidget.rightPanel.firstDeletePaperButton, qtbot)
     CClick(mainWidget.rightPanel.secondDeletePaperButton, qtbot)
 
 
 def CEditCiteKey(mainWidget, citeKey, qtbot):
+    """
+    Edit the citation key of a paper using the interface
+
+    Note that a paper must be clicked before this can work
+
+    :param mainWidget: The main window widget
+    :type mainWidget: MainWindow
+    :param citeKey: The new citation key to give this paper
+    :type citeKey: str
+    :param qtbot: the qtbot instance used in a given test
+    :return: None
+    """
     # paper must already be clicked
+    assert mainWidget.rightPanel.bibcode is not None
     CClick(mainWidget.rightPanel.editCiteKeyButton, qtbot)
     CEnterText(mainWidget.rightPanel.editCiteKeyEntry, citeKey, qtbot)
     CPressEnter(mainWidget.rightPanel.editCiteKeyEntry, qtbot)
@@ -202,32 +312,51 @@ def CEditCiteKey(mainWidget, citeKey, qtbot):
 # when we open an existing file, we have filter and dir kwargs, then return the filename
 # and some filter info, which my code ignores
 def MOpenFileNoResponse(filter="", dir=""):
-    # return an empty string, signifying no response by the user
+    """
+    Mock the response if the user exists the file chooser window
+    """
+    # if the user cancels the real function, it returns an empty string
     return "", ""
 
 
 def MOpenFileNonexistent(filter="", dir=""):
-    # return a file that does not exist
+    """
+    Mock a response if the user chooses a file that does not exist
+    """
     return "nonexistent_file.pdf", ""
 
 
 def MOpenFileExists(filter="", dir=""):
+    """
+    Mock a response if the user chooses a file that exists, namely this file
+    """
     return __file__, ""
 
 
+# When saving a file, we have the filter and dir kwargs, but also a caption. We return
+# the same things we did when we open an existing file.
 exampleSavePDF = Path(__file__).parent / "test.pdf"
 exampleSaveTXT = exampleSavePDF.parent / "test.txt"
 
 
 def MSaveFileValidPDF(filter="", dir="", caption=""):
+    """
+    Mock a response if the user chooses a pdf file
+    """
     return str(exampleSavePDF), ""
 
 
 def MSaveFileValidTXT(filter="", dir="", caption=""):
+    """
+    Mock a response if the user chooses a txt file
+    """
     return str(exampleSaveTXT), ""
 
 
 def MSaveFileNoResponse(filter="", dir="", caption=""):
+    """
+    Mock a response if the user exits the file chooser without choosing anything
+    """
     return "", ""
 
 
