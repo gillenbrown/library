@@ -66,7 +66,7 @@ def temporary_database_with_papers_no_tags():
     file_path.unlink()  # removes this file
 
 
-@pytest.fixture(name="db_empty_change_ads_key")
+@pytest.fixture(name="db_empty_bad_ads")
 def temporary_database_with_changed_ads_key():
     """
     Fixture to get a database at a temporary path in the current directory. This will be
@@ -760,9 +760,7 @@ def test_search_bar_and_error_text_are_much_shorter_than_title(qtbot, db_empty):
     assert widget.searchBarErrorText.height() < 0.6 * widget.title.height()
 
 
-def test_bad_paper_error_formatting_of_textedit_reset_after_any_clicking(
-    qtbot, db_empty
-):
+def test_bad_paper_error_formatting_of_textedit_reset_after_clicking(qtbot, db_empty):
     widget = cInitialize(qtbot, db_empty)
     cAddPaper(widget, "nonsense", qtbot)
     widget.searchBar.setCursorPosition(0)
@@ -783,9 +781,7 @@ def test_bad_paper_add_button_reshown_after_any_clicking(qtbot, db_empty):
     assert widget.addButton.isHidden() is False
 
 
-def test_bad_paper_error_formatting_of_textedit_reset_after_editing_text(
-    qtbot, db_empty
-):
+def test_bad_paper_error_textedit_formatting_reset_after_editing_text(qtbot, db_empty):
     widget = cInitialize(qtbot, db_empty)
     cAddPaper(widget, "nonsense", qtbot)
     cEnterText(widget.searchBar, "nonsens", qtbot)
@@ -873,25 +869,21 @@ def test_duplicate_add_button_reshown_after_editing_text(qtbot, db):
     assert widget.addButton.isHidden() is False
 
 
-def test_adding_paper_does_not_clear_search_bar_if_no_ads_key_set(
-    qtbot, db_empty_change_ads_key
-):
-    widget = cInitialize(qtbot, db_empty_change_ads_key)
+def test_adding_paper_does_not_clear_search_bar_if_bad_ads_key(qtbot, db_empty_bad_ads):
+    widget = cInitialize(qtbot, db_empty_bad_ads)
     # need to use a paper that's not already stored in my ADS cache
     cAddPaper(widget, u.used_for_no_ads_key.url, qtbot)
     assert widget.searchBar.text() == u.used_for_no_ads_key.url
 
 
-def test_adding_paper_no_ads_key_set_shows_error_formatting_of_textedit(
-    qtbot, db_empty_change_ads_key
-):
-    widget = cInitialize(qtbot, db_empty_change_ads_key)
+def test_adding_paper_bad_ads_key_shows_error_in_textedit(qtbot, db_empty_bad_ads):
+    widget = cInitialize(qtbot, db_empty_bad_ads)
     cAddPaper(widget, u.used_for_no_ads_key.url, qtbot)
     assert widget.searchBar.property("error") is True
 
 
-def test_adding_paper_no_ads_key_set_shows_error_text(qtbot, db_empty_change_ads_key):
-    widget = cInitialize(qtbot, db_empty_change_ads_key)
+def test_adding_paper_bad_ads_key_shows_error_text(qtbot, db_empty_bad_ads):
+    widget = cInitialize(qtbot, db_empty_bad_ads)
     cAddPaper(widget, u.used_for_no_ads_key.url, qtbot)
     assert widget.searchBarErrorText.isHidden() is False
     assert (
@@ -900,61 +892,49 @@ def test_adding_paper_no_ads_key_set_shows_error_text(qtbot, db_empty_change_ads
     )
 
 
-def test_adding_paper_no_ads_key_hides_add_button(qtbot, db_empty_change_ads_key):
-    widget = cInitialize(qtbot, db_empty_change_ads_key)
+def test_adding_paper_no_ads_key_hides_add_button(qtbot, db_empty_bad_ads):
+    widget = cInitialize(qtbot, db_empty_bad_ads)
     cAddPaper(widget, u.used_for_no_ads_key.url, qtbot)
     assert widget.addButton.isHidden() is True
 
 
-def test_no_ads_key_set_error_formatting_of_textedit_reset_after_any_clicking(
-    qtbot, db_empty_change_ads_key
-):
-    widget = cInitialize(qtbot, db_empty_change_ads_key)
+def test_bad_ads_key_error_reset_after_any_clicking(qtbot, db_empty_bad_ads):
+    widget = cInitialize(qtbot, db_empty_bad_ads)
     cAddPaper(widget, u.used_for_no_ads_key.url, qtbot)
     widget.searchBar.setCursorPosition(0)
     assert widget.searchBar.property("error") is False
 
 
-def test_no_ads_key_set_error_message_of_textedit_reset_after_any_clicking(
-    qtbot, db_empty_change_ads_key
-):
-    widget = cInitialize(qtbot, db_empty_change_ads_key)
+def test_bad_ads_key_error_hidden_after_any_clicking(qtbot, db_empty_bad_ads):
+    widget = cInitialize(qtbot, db_empty_bad_ads)
     cAddPaper(widget, u.used_for_no_ads_key.url, qtbot)
     widget.searchBar.setCursorPosition(0)
     assert widget.searchBarErrorText.isHidden() is True
 
 
-def test_no_ads_key_add_button_reshown_after_any_clicking(
-    qtbot, db_empty_change_ads_key
-):
-    widget = cInitialize(qtbot, db_empty_change_ads_key)
+def test_no_ads_key_add_button_reshown_after_clicking(qtbot, db_empty_bad_ads):
+    widget = cInitialize(qtbot, db_empty_bad_ads)
     cAddPaper(widget, u.used_for_no_ads_key.url, qtbot)
     widget.searchBar.setCursorPosition(0)
     assert widget.addButton.isHidden() is False
 
 
-def test_no_ads_key_set_error_formatting_of_textedit_reset_after_editing_text(
-    qtbot, db_empty_change_ads_key
-):
-    widget = cInitialize(qtbot, db_empty_change_ads_key)
+def test_bad_ads_key_error_formatting_reset_after_editing_text(qtbot, db_empty_bad_ads):
+    widget = cInitialize(qtbot, db_empty_bad_ads)
     cAddPaper(widget, u.used_for_no_ads_key.url, qtbot)
     cEnterText(widget.searchBar, "s", qtbot)
     assert widget.searchBar.property("error") is False
 
 
-def test_no_ads_key_set_error_message_of_textedit_reset_after_editing_text(
-    qtbot, db_empty_change_ads_key
-):
-    widget = cInitialize(qtbot, db_empty_change_ads_key)
+def test_bad_ads_key_error_message_reset_after_editing_text(qtbot, db_empty_bad_ads):
+    widget = cInitialize(qtbot, db_empty_bad_ads)
     cAddPaper(widget, u.used_for_no_ads_key.url, qtbot)
     cEnterText(widget.searchBar, "s", qtbot)
     assert widget.searchBarErrorText.isHidden() is True
 
 
-def test_no_ads_key_add_button_reshown_after_editing_text(
-    qtbot, db_empty_change_ads_key
-):
-    widget = cInitialize(qtbot, db_empty_change_ads_key)
+def test_no_ads_key_add_button_reshown_after_editing_text(qtbot, db_empty_bad_ads):
+    widget = cInitialize(qtbot, db_empty_bad_ads)
     cAddPaper(widget, u.used_for_no_ads_key.url, qtbot)
     cEnterText(widget.searchBar, "s", qtbot)
     assert widget.addButton.isHidden() is False
@@ -1332,9 +1312,7 @@ def test_second_delete_paper_button_does_not_appear_when_paper_clicked(qtbot, db
     assert widget.rightPanel.secondDeletePaperButton.isHidden() is True
 
 
-def test_second_delete_paper_cancel_button_does_not_appear_when_paper_clicked(
-    qtbot, db
-):
+def test_second_delete_paper_cancel_button_doesnt_appear_when_paper_clicked(qtbot, db):
     widget = cInitialize(qtbot, db)
     cClick(widget.papersList.papers[0], qtbot)
     assert widget.rightPanel.secondDeletePaperCancelButton.isHidden() is True
@@ -1389,7 +1367,7 @@ def test_edit_citation_keyword_edit_error_text_hidden_when_paper_clicked(qtbot, 
 # =========================================================================
 # handling paper pdfs -- double clicking from center panel tested elsewhere
 # =========================================================================
-def test_paper_pdf_buttons_show_when_paper_clicked_with_local_file(qtbot, db_empty):
+def test_paper_pdf_buttons_show_paper_clicked_with_local_file(qtbot, db_empty):
     # fill a local file into the database
     db_empty.add_paper(u.mine.bibcode)
     db_empty.set_paper_attribute(u.mine.bibcode, "local_file", __file__)
@@ -1401,7 +1379,7 @@ def test_paper_pdf_buttons_show_when_paper_clicked_with_local_file(qtbot, db_emp
     assert widget.rightPanel.pdfDownloadButton.isHidden() is True
 
 
-def test_paper_pdf_buttons_show_when_paper_clicked_without_local_file(qtbot, db_temp):
+def test_paper_pdf_buttons_show_paper_clicked_without_local_file(qtbot, db_temp):
     # no local files are set in the temp database
     widget = cInitialize(qtbot, db_temp)
     cClick(widget.papersList.papers[0], qtbot)
@@ -1411,9 +1389,7 @@ def test_paper_pdf_buttons_show_when_paper_clicked_without_local_file(qtbot, db_
     assert widget.rightPanel.pdfDownloadButton.isHidden() is False
 
 
-def test_paper_pdf_buttons_show_when_paper_clicked_with_nonexistent_local_file(
-    qtbot, db_empty
-):
+def test_paper_pdf_buttons_show_paper_clicked_nonexistent_local_file(qtbot, db_empty):
     # fill a local file into the database
     db_empty.add_paper(u.mine.bibcode)
     db_empty.set_paper_attribute(u.mine.bibcode, "local_file", "nonexistent_file.pdf")
@@ -1459,7 +1435,7 @@ def test_paper_pdf_text_has_correct_text_with_nonexistent_local_file(qtbot, db_e
     assert widget.rightPanel.pdfText.text() == "No PDF location set"
 
 
-def test_paper_pdf_add_local_file_button_asks_user(qtbot, db_temp, monkeypatch):
+def test_paper_pdf_add_local_file_asks_user(qtbot, db_temp, monkeypatch):
     get_file_calls = []
 
     def mock_get_file(filter="", dir=""):
@@ -1473,9 +1449,7 @@ def test_paper_pdf_add_local_file_button_asks_user(qtbot, db_temp, monkeypatch):
     assert get_file_calls == [1]
 
 
-def test_paper_pdf_add_local_file_button_doesnt_add_if_cancelled(
-    qtbot, db_temp, monkeypatch
-):
+def test_paper_pdf_add_local_file_doesnt_add_if_cancelled(qtbot, db_temp, monkeypatch):
     monkeypatch.setattr(QFileDialog, "getOpenFileName", mOpenFileNoResponse)
     widget = cInitialize(qtbot, db_temp)
     cClick(widget.papersList.papers[0], qtbot)
@@ -1486,9 +1460,7 @@ def test_paper_pdf_add_local_file_button_doesnt_add_if_cancelled(
     )
 
 
-def test_paper_pdf_add_local_file_button_doesnt_add_if_doesnt_exist(
-    qtbot, db_temp, monkeypatch
-):
+def test_paper_pdf_add_local_file_doesnt_add_nonexistent(qtbot, db_temp, monkeypatch):
     monkeypatch.setattr(QFileDialog, "getOpenFileName", mOpenFileNonexistent)
     widget = cInitialize(qtbot, db_temp)
     cClick(widget.papersList.papers[0], qtbot)
@@ -1499,9 +1471,7 @@ def test_paper_pdf_add_local_file_button_doesnt_add_if_doesnt_exist(
     )
 
 
-def test_paper_pdf_add_local_file_button_adds_it_to_database(
-    qtbot, db_temp, monkeypatch
-):
+def test_paper_pdf_add_local_file_adds_it_to_database(qtbot, db_temp, monkeypatch):
     monkeypatch.setattr(QFileDialog, "getOpenFileName", mOpenFileExists)
     widget = cInitialize(qtbot, db_temp)
     cClick(widget.papersList.papers[0], qtbot)
@@ -1512,7 +1482,7 @@ def test_paper_pdf_add_local_file_button_adds_it_to_database(
     )
 
 
-def test_paper_pdf_add_local_file_button_updates_text(qtbot, db_temp, monkeypatch):
+def test_paper_pdf_add_local_file_updates_text(qtbot, db_temp, monkeypatch):
     monkeypatch.setattr(QFileDialog, "getOpenFileName", mOpenFileExists)
     widget = cInitialize(qtbot, db_temp)
     cClick(widget.papersList.papers[0], qtbot)
@@ -1520,9 +1490,7 @@ def test_paper_pdf_add_local_file_button_updates_text(qtbot, db_temp, monkeypatc
     assert widget.rightPanel.pdfText.text() == f"PDF Location: {__file__}"
 
 
-def test_paper_pdf_add_local_file_button_cancel_doesnt_update_text(
-    qtbot, db_temp, monkeypatch
-):
+def test_paper_pdf_add_local_file_cancel_no_text_diff(qtbot, db_temp, monkeypatch):
     monkeypatch.setattr(QFileDialog, "getOpenFileName", mOpenFileNoResponse)
     widget = cInitialize(qtbot, db_temp)
     cClick(widget.papersList.papers[0], qtbot)
@@ -1530,9 +1498,7 @@ def test_paper_pdf_add_local_file_button_cancel_doesnt_update_text(
     assert widget.rightPanel.pdfText.text() == f"No PDF location set"
 
 
-def test_paper_pdf_add_local_file_nonexistent_file_doesnt_update_text(
-    qtbot, db_temp, monkeypatch
-):
+def test_paper_pdf_add_local_file_nonexistent_no_text_diff(qtbot, db_temp, monkeypatch):
     monkeypatch.setattr(QFileDialog, "getOpenFileName", mOpenFileNonexistent)
     widget = cInitialize(qtbot, db_temp)
     cClick(widget.papersList.papers[0], qtbot)
@@ -1540,9 +1506,7 @@ def test_paper_pdf_add_local_file_nonexistent_file_doesnt_update_text(
     assert widget.rightPanel.pdfText.text() == f"No PDF location set"
 
 
-def test_paper_pdf_add_local_file_button_resets_buttons_if_successful(
-    qtbot, db_temp, monkeypatch
-):
+def test_paper_pdf_add_local_file_resets_buttons_if_good(qtbot, db_temp, monkeypatch):
     monkeypatch.setattr(QFileDialog, "getOpenFileName", mOpenFileExists)
     widget = cInitialize(qtbot, db_temp)
     cClick(widget.papersList.papers[0], qtbot)
@@ -1554,9 +1518,7 @@ def test_paper_pdf_add_local_file_button_resets_buttons_if_successful(
     assert widget.rightPanel.pdfDownloadButton.isHidden() is True
 
 
-def test_paper_pdf_add_local_file_button_doest_change_buttons_cancel(
-    qtbot, db_temp, monkeypatch
-):
+def test_paper_pdf_add_local_file_cancel_keep_buttons(qtbot, db_temp, monkeypatch):
     monkeypatch.setattr(QFileDialog, "getOpenFileName", mOpenFileNoResponse)
     widget = cInitialize(qtbot, db_temp)
     cClick(widget.papersList.papers[0], qtbot)
@@ -1568,9 +1530,7 @@ def test_paper_pdf_add_local_file_button_doest_change_buttons_cancel(
     assert widget.rightPanel.pdfDownloadButton.isHidden() is False
 
 
-def test_paper_pdf_add_local_file_button_doest_change_buttons_nonexistent(
-    qtbot, db_temp, monkeypatch
-):
+def test_paper_pdf_add_local_file_nonexistent_keep_buttons(qtbot, db_temp, monkeypatch):
     monkeypatch.setattr(QFileDialog, "getOpenFileName", mOpenFileNonexistent)
     widget = cInitialize(qtbot, db_temp)
     cClick(widget.papersList.papers[0], qtbot)
@@ -1721,9 +1681,7 @@ def test_download_pdf_button_updates_database(qtbot, db_temp, monkeypatch):
     mSaveLocPDF.unlink()
 
 
-def test_download_pdf_button_doesnt_update_database_if_cancelled(
-    qtbot, db_temp, monkeypatch
-):
+def test_download_pdf_button_doesnt_update_db_if_cancelled(qtbot, db_temp, monkeypatch):
     monkeypatch.setattr(QFileDialog, "getSaveFileName", mSaveFileNoResponse)
     widget = cInitialize(qtbot, db_temp)
     cClick(widget.papersList.papers[0], qtbot)
@@ -1748,9 +1706,7 @@ def test_download_pdf_button_updates_buttons(qtbot, db_temp, monkeypatch):
     mSaveLocPDF.unlink()
 
 
-def test_download_pdf_button_doesnt_update_buttons_if_cancelled(
-    qtbot, db_temp, monkeypatch
-):
+def test_download_pdf_button_cancel_doesnt_update_buttons(qtbot, db_temp, monkeypatch):
     monkeypatch.setattr(QFileDialog, "getSaveFileName", mSaveFileNoResponse)
     widget = cInitialize(qtbot, db_temp)
     cClick(widget.papersList.papers[0], qtbot)
@@ -1772,9 +1728,7 @@ def test_download_pdf_button_updates_text(qtbot, db_temp, monkeypatch):
     mSaveLocPDF.unlink()
 
 
-def test_download_pdf_button_doesnt_reset_text_if_cancelled(
-    qtbot, db_temp, monkeypatch
-):
+def test_download_pdf_button_cancel_doesnt_reset_text(qtbot, db_temp, monkeypatch):
     monkeypatch.setattr(QFileDialog, "getSaveFileName", mSaveFileNoResponse)
     widget = cInitialize(qtbot, db_temp)
     cClick(widget.papersList.papers[0], qtbot)
@@ -1811,9 +1765,7 @@ def test_download_pdf_doesnt_download_if_none_available(qtbot, db_empty, monkeyp
     assert download_links == []
 
 
-def test_download_pdf_button_shows_error_message_if_none_available(
-    qtbot, db_empty, monkeypatch
-):
+def test_download_pdf_button_shows_error_message_no_pdf(qtbot, db_empty, monkeypatch):
     # add BBFH to the database, since it has no PDF
     db_empty.add_paper(u.bbfh.bibcode)
     widget = cInitialize(qtbot, db_empty)
@@ -1822,9 +1774,7 @@ def test_download_pdf_button_shows_error_message_if_none_available(
     assert widget.rightPanel.pdfDownloadButton.text() == "Automatic Download Failed"
 
 
-def test_download_pdf_button_error_message_resets_on_new_paper_clicked(
-    qtbot, db_empty, monkeypatch
-):
+def test_download_pdf_button_error_resets_on_new_paper(qtbot, db_empty, monkeypatch):
     # add BBFH to the database, since it has no PDF
     db_empty.add_paper(u.bbfh.bibcode)
     db_empty.add_paper(u.tremonti.bibcode)
@@ -1928,9 +1878,7 @@ def test_checking_tag_in_checklist_adds_tag_to_paper_in_database(qtbot, db_no_ta
             assert db_no_tags.paper_has_tag(paper.bibcode, tag) is False
 
 
-def test_unchecking_tag_in_checklist_removes_tag_from_paper_in_database(
-    qtbot, db_no_tags
-):
+def test_unchecking_tag_in_checklist_removes_tag_from_paper_in_db(qtbot, db_no_tags):
     # add some tags to this database
     for tag in ["T1", "T2", "T3", "T4", "T5"]:
         db_no_tags.add_new_tag(tag)
@@ -2546,9 +2494,7 @@ def test_second_delete_cancel_buttons_reset_when_on_new_paper(qtbot, db):
     assert widget.rightPanel.secondDeletePaperCancelButton.isHidden() is True
 
 
-def test_second_delete_paper_button_deletes_paper_from_database_when_pressed(
-    qtbot, db_temp
-):
+def test_second_delete_paper_button_deletes_paper_from_database(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
     paper = widget.papersList.papers[0]
     cDeleteFirstPaper(widget, qtbot)
@@ -2557,9 +2503,7 @@ def test_second_delete_paper_button_deletes_paper_from_database_when_pressed(
         db_temp.get_paper_attribute(paper.bibcode, "title")
 
 
-def test_second_delete_paper_button_deletes_paper_from_interface_when_pressed(
-    qtbot, db_temp
-):
+def test_second_delete_paper_button_deletes_paper_from_interface(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
     bibcode = widget.papersList.papers[0].bibcode
     cDeleteFirstPaper(widget, qtbot)
@@ -2568,9 +2512,7 @@ def test_second_delete_paper_button_deletes_paper_from_interface_when_pressed(
         assert bibcode != paper.bibcode
 
 
-def test_second_delete_paper_cancel_button_does_not_delete_paper_from_database(
-    qtbot, db_temp
-):
+def test_second_delete_paper_cancel_doesnt_delete_paper_db(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
     paper = widget.papersList.papers[0]
     cClick(widget.papersList.papers[0], qtbot)
@@ -2580,9 +2522,7 @@ def test_second_delete_paper_cancel_button_does_not_delete_paper_from_database(
     assert db_temp.get_paper_attribute(paper.bibcode, "title") == paper.titleText.text()
 
 
-def test_second_delete_paper_cancel_button_does_not_delete_paper_from_interface(
-    qtbot, db_temp
-):
+def test_second_delete_paper_cancel_doesnt_delete_paper_interface(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
     bibcode = widget.papersList.papers[0].bibcode
     cClick(widget.papersList.papers[0], qtbot)
@@ -2596,7 +2536,7 @@ def test_second_delete_paper_cancel_button_does_not_delete_paper_from_interface(
     assert found
 
 
-def test_second_delete_paper_cancel_button_resets_delete_buttons(qtbot, db_temp):
+def test_second_delete_paper_cancel_resets_delete_buttons(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
     cClick(widget.papersList.papers[0], qtbot)
     cClick(widget.rightPanel.firstDeletePaperButton, qtbot)
@@ -2612,9 +2552,7 @@ def test_right_panel_edit_tags_button_is_hidden_when_paper_is_deleted(qtbot, db_
     assert widget.rightPanel.editTagsButton.isHidden()
 
 
-def test_right_panel_done_editing_tags_button_is_hidden_when_paper_is_deleted(
-    qtbot, db_temp
-):
+def test_right_panel_done_editing_tags_button_hidden_when_paper_deleted(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
     cDeleteFirstPaper(widget, qtbot)
     assert widget.rightPanel.doneEditingTagsButton.isHidden()
@@ -2632,25 +2570,19 @@ def test_right_panel_open_ads_button_is_hidden_when_paper_is_deleted(qtbot, db_t
     assert widget.rightPanel.adsButton.isHidden()
 
 
-def test_right_panel_first_delete_button_is_hidden_when_paper_is_deleted(
-    qtbot, db_temp
-):
+def test_right_panel_first_delete_button_is_hidden_when_paper_deleted(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
     cDeleteFirstPaper(widget, qtbot)
     assert widget.rightPanel.firstDeletePaperButton.isHidden()
 
 
-def test_right_panel_second_delete_button_is_hidden_when_paper_is_deleted(
-    qtbot, db_temp
-):
+def test_right_panel_second_delete_button_is_hidden_when_paper_deleted(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
     cDeleteFirstPaper(widget, qtbot)
     assert widget.rightPanel.secondDeletePaperButton.isHidden()
 
 
-def test_right_panel_second_delete_cancel_button_is_hidden_when_paper_is_deleted(
-    qtbot, db_temp
-):
+def test_right_panel_second_delete_cancel_button_hide_on_paper_delete(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
     cDeleteFirstPaper(widget, qtbot)
     assert widget.rightPanel.secondDeletePaperCancelButton.isHidden()
@@ -2864,9 +2796,7 @@ def test_paper_texts_are_unhighlighted_when_others_clicked(qtbot, db):
 # ================================================================
 # opening paper pdfs when double clicked, or modifying right panel
 # ================================================================
-def test_double_clicking_on_paper_with_local_file_opens_it(
-    qtbot, db_empty, monkeypatch
-):
+def test_dclicking_on_paper_with_local_file_opens_it(qtbot, db_empty, monkeypatch):
     test_loc = __file__
     open_calls = []
     monkeypatch.setattr(QDesktopServices, "openUrl", lambda x: open_calls.append(x))
@@ -2880,9 +2810,7 @@ def test_double_clicking_on_paper_with_local_file_opens_it(
     assert open_calls == [f"file:{test_loc}"]
 
 
-def test_dclicking_on_paper_with_no_local_file_doesnt_ask_user(
-    qtbot, db_temp, monkeypatch
-):
+def test_dclicking_on_paper_with_no_local_file_doesnt_ask(qtbot, db_temp, monkeypatch):
     user_asks = []
     monkeypatch.setattr(
         QFileDialog,
@@ -2939,9 +2867,7 @@ def test_pdf_highlighting_goes_away_with_any_click(qtbot, db_temp):
     assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == False
 
 
-def test_pdf_highlighting_goes_away_with_choose_local_interaction(
-    qtbot, db_temp, monkeypatch
-):
+def test_pdf_highlighting_hide_with_choose_local_click(qtbot, db_temp, monkeypatch):
     monkeypatch.setattr(QFileDialog, "getOpenFileName", mOpenFileNoResponse)
     widget = cInitialize(qtbot, db_temp)
     cDoubleClick(widget.papersList.papers[0], qtbot)
@@ -2952,9 +2878,7 @@ def test_pdf_highlighting_goes_away_with_choose_local_interaction(
     assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == False
 
 
-def test_pdf_highlighting_goes_away_with_download_interaction(
-    qtbot, db_temp, monkeypatch
-):
+def test_pdf_highlighting_hide_with_download_click(qtbot, db_temp, monkeypatch):
     monkeypatch.setattr(QFileDialog, "getSaveFileName", mSaveFileNoResponse)
     widget = cInitialize(qtbot, db_temp)
     cDoubleClick(widget.papersList.papers[0], qtbot)
@@ -2975,9 +2899,7 @@ def test_pdf_highlighting_goes_away_when_new_paper_clicked(qtbot, db_temp):
     assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == False
 
 
-def test_dclicking_on_paper_with_nonexistent_file_redirects_to_right_panel(
-    qtbot, db_empty, monkeypatch
-):
+def test_dclicking_paper_nonexistent_file_pdf_highlight(qtbot, db_empty, monkeypatch):
     # first, add a file to the database, then set the file to something nonsense. We'll
     # then try to open it, and check that the interface asks the user.
     db_empty.add_paper(u.mine.bibcode)
@@ -3641,9 +3563,7 @@ def test_clicking_first_tag_delete_button_shows_second_entry(qtbot, db_temp):
     assert widget.secondDeleteTagEntry.isHidden() is False
 
 
-def test_clicking_first_tag_delete_button_puts_focus_on_entry(
-    qtbot, db_temp, monkeypatch
-):
+def test_clicking_first_tag_delete_button_focus_on_entry(qtbot, db_temp, monkeypatch):
     # I tried to test this directly, but was having trouble getting the tests to work
     # properly. Specifically, widget.hasFocus() was not working propertly in tests for
     # whatever reasonSo instead, I'll monkeypatch the setFocus method. I have tested
