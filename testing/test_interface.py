@@ -387,6 +387,11 @@ def test_testing_database_has_each_tag_on_at_least_one_paper(db):
         assert tag_used
 
 
+########################################################################################
+#
+# test main window and similar
+#
+########################################################################################
 def test_all_fonts_are_found_by_get_fonts():
     font_dir = (Path(__file__).parent.parent / "fonts").absolute()
     true_fonts = [
@@ -456,6 +461,183 @@ def test_title_has_correct_height_in_pixels(qtbot, db_empty):
     assert widget.title.height() == 60
 
 
+def test_can_exit_action_actually_exit_the_app(qtbot, db, monkeypatch):
+    # see https://pytest-qt.readthedocs.io/en/3.3.0/app_exit.html
+    # It's hard to actually test the menu item, so I'll skip this for now
+    # https://github.com/pytest-dev/pytest-qt/issues/195
+    exit_calls = []
+    monkeypatch.setattr(QApplication, "quit", lambda: exit_calls.append(1))
+
+    widget = CInitialize(qtbot, db)
+    widget.exitAction.trigger()
+
+    assert exit_calls == [1]
+
+
+def test_can_exit_keyboard_shortcut_exit_the_app(qtbot, db, monkeypatch):
+    # see https://pytest-qt.readthedocs.io/en/3.3.0/app_exit.html
+    # It's hard to actually test the menu item, so I'll skip this for now
+    # https://github.com/pytest-dev/pytest-qt/issues/195
+    exit_calls = []
+    monkeypatch.setattr(QApplication, "quit", lambda: exit_calls.append(1))
+
+    widget = CInitialize(qtbot, db)
+    widget.show()  # needed to activate keyboard shortcuts
+    qtbot.waitExposed(widget)
+    qtbot.keyPress(widget, "q", Qt.ControlModifier)
+
+    assert exit_calls == [1]
+
+
+############################
+# sizing of the three panels
+############################
+def test_widgets_are_sized_appropriately_at_beginning(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CClick(widget.papersList.papers[0], qtbot)
+    # get the original positions
+    o_sizes = widget.splitter.sizes()
+    # check examples in each panel
+    assert o_sizes[0] < o_sizes[2] < o_sizes[1]
+
+
+def test_widgets_dont_go_outside_of_splitter(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CClick(widget.papersList.papers[0], qtbot)
+    # get the original positions
+    o_sizes = widget.splitter.sizes()
+    # check examples in each panel
+    assert widget.tagsList.addTagBar.size().width() <= o_sizes[0]
+    assert widget.papersList.papers[0].size().width() <= o_sizes[1]
+    assert widget.rightPanel.titleText.size().width() <= o_sizes[2]
+
+
+def test_resizing_splitter_resizes_widgets(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CClick(widget.papersList.papers[0], qtbot)
+    # get the original positions
+    o_sizes = widget.splitter.sizes()
+    assert sum(o_sizes) > 600
+    new_sizes = [250, 350, sum(o_sizes) - 500]
+    widget.splitter.setSizes(new_sizes)
+    # check examples in each panel. They won't be exact, but should be close
+    assert (
+        new_sizes[0] * 0.7 <= widget.tagsList.addTagBar.size().width() <= new_sizes[0]
+    )
+    assert (
+        new_sizes[1] * 0.7 <= widget.papersList.papers[0].size().width() <= new_sizes[1]
+    )
+    assert (
+        new_sizes[2] * 0.7 <= widget.rightPanel.titleText.size().width() <= new_sizes[2]
+    )
+
+
+def test_sortchooser_starts_at_top_right(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CClick(widget.papersList.papers[0], qtbot)
+    position = widget.papersList.sortChooser.pos()
+    expected_x = widget.papersList.width() - widget.papersList.sortChooser.width()
+    assert position.x() == expected_x
+    assert position.y() == 0
+
+
+def test_resizing_splitter_keeps_sortchooser_at_top_right(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CClick(widget.papersList.papers[0], qtbot)
+    position = widget.papersList.sortChooser.pos()
+    new_sizes = [250, 350, sum(widget.splitter.sizes()) - 500]
+    widget.splitter.setSizes(new_sizes)
+    new_position = widget.papersList.sortChooser.pos()
+    assert new_position.x() != position.x()
+    expected_x = widget.papersList.width() - widget.papersList.sortChooser.width()
+    assert new_position.x() == expected_x
+    assert new_position.y() == 0
+
+
+def test_adding_long_tag_resizes_splitter(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    original_sizes = widget.splitter.sizes()
+    CAddTag(widget, "this is a very long tag, too long to realistically use", qtbot)
+    new_sizes = widget.splitter.sizes()
+    assert new_sizes[0] > original_sizes[0]
+
+
+def test_db_with_long_tag_has_wide_tag_bar_at_beginning(qtbot, db_temp):
+    db_temp.add_new_tag("this is a very long tag, too long to realistically use")
+    widget = CInitialize(qtbot, db_temp)
+    original_sizes = widget.splitter.sizes()
+    assert original_sizes[0] > 200
+    for tag in widget.tagsList.tags:
+        assert tag.width() >= tag.sizeHint().width()
+
+
+def test_deleting_long_tag_resizes_splitter(qtbot, db_temp):
+    tag_name = "this is a very long tag, too long to realistically use"
+    db_temp.add_new_tag(tag_name)
+    widget = CInitialize(qtbot, db_temp)
+    original_sizes = widget.splitter.sizes()
+    CDeleteTag(widget, tag_name, qtbot)
+    new_sizes = widget.splitter.sizes()
+    assert new_sizes[0] < original_sizes[0]
+    assert new_sizes[0] == max(
+        widget.tagsList.default_min_width,
+        max([tag.sizeHint().width() for tag in widget.tagsList.tags]),
+    )
+
+
+def test_showing_delete_tag_confirm_resizes_splitter(qtbot, db_temp):
+    tag_name = "this is a very long tag, too long to realistically use"
+    db_temp.add_new_tag(tag_name)
+    widget = CInitialize(qtbot, db_temp)
+    original_sizes = widget.splitter.sizes()
+    CClick(widget.firstDeleteTagButton, qtbot)
+    CEnterText(widget.secondDeleteTagEntry, tag_name, qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
+    new_sizes = widget.splitter.sizes()
+    assert new_sizes[0] > original_sizes[0]
+
+
+def test_confirming_tag_delete_resizes_splitter(qtbot, db_temp):
+    tag_name = "this is a very long tag, too long to realistically use"
+    db_temp.add_new_tag(tag_name)
+    widget = CInitialize(qtbot, db_temp)
+    # don't use convenience function, since we need size at intermediate steps
+    CClick(widget.firstDeleteTagButton, qtbot)
+    CEnterText(widget.secondDeleteTagEntry, tag_name, qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
+    original_sizes = widget.splitter.sizes()
+    CClick(widget.thirdDeleteTagButton, qtbot)
+    new_sizes = widget.splitter.sizes()
+    assert new_sizes[0] < original_sizes[0]
+    assert new_sizes[0] == max(
+        widget.tagsList.default_min_width,
+        max([tag.sizeHint().width() for tag in widget.tagsList.tags]),
+    )
+
+
+########################################################################################
+#
+# test search bar and adding papers from it
+#
+########################################################################################
+###############
+# initial state
+###############
+def test_textedit_error_message_hidden_at_beginning(qtbot, db_empty):
+    widget = CInitialize(qtbot, db_empty)
+    assert widget.searchBarErrorText.isHidden() is True
+
+
+def test_add_paper_button_shown_at_beginning(qtbot, db_empty):
+    widget = CInitialize(qtbot, db_empty)
+    assert widget.addButton.isHidden() is False
+
+
+def test_textedit_is_not_in_error_state_at_beginning(qtbot, db_empty):
+    widget = CInitialize(qtbot, db_empty)
+    assert widget.searchBar.property("error") is False
+
+
 def test_search_bar_has_placeholder_text(qtbot, db_empty):
     widget = CInitialize(qtbot, db_empty)
     text = "Enter your paper URL or ADS bibcode here"
@@ -494,6 +676,9 @@ def test_add_button_and_search_bar_are_much_shorter_than_title(qtbot, db_empty):
     assert widget.searchBar.height() < 0.6 * widget.title.height()
 
 
+###############
+# adding papers
+###############
 def test_can_add_paper_by_filling_bibcode_then_clicking_button(qtbot, db_empty):
     assert len(db_empty.get_all_bibcodes()) == 0
     widget = CInitialize(qtbot, db_empty)
@@ -512,190 +697,6 @@ def test_can_add_paper_by_filling_bibcode_then_pressing_enter(qtbot, db_empty):
     assert u.mine.bibcode in db_empty.get_all_bibcodes()
 
 
-def test_can_exit_action_actually_exit_the_app(qtbot, db, monkeypatch):
-    # see https://pytest-qt.readthedocs.io/en/3.3.0/app_exit.html
-    # It's hard to actually test the menu item, so I'll skip this for now
-    # https://github.com/pytest-dev/pytest-qt/issues/195
-    exit_calls = []
-    monkeypatch.setattr(QApplication, "quit", lambda: exit_calls.append(1))
-
-    widget = CInitialize(qtbot, db)
-    widget.exitAction.trigger()
-
-    assert exit_calls == [1]
-
-
-def test_can_exit_keyboard_shortcut_exit_the_app(qtbot, db, monkeypatch):
-    # see https://pytest-qt.readthedocs.io/en/3.3.0/app_exit.html
-    # It's hard to actually test the menu item, so I'll skip this for now
-    # https://github.com/pytest-dev/pytest-qt/issues/195
-    exit_calls = []
-    monkeypatch.setattr(QApplication, "quit", lambda: exit_calls.append(1))
-
-    widget = CInitialize(qtbot, db)
-    widget.show()  # needed to activate keyboard shortcuts
-    qtbot.waitExposed(widget)
-    qtbot.keyPress(widget, "q", Qt.ControlModifier)
-
-    assert exit_calls == [1]
-
-
-def test_right_panel_title_is_empty_at_beginning(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    assert widget.rightPanel.titleText.text() == ""
-
-
-def test_right_panel_cite_text_is_empty_at_beginning(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    assert widget.rightPanel.citeText.text() == ""
-
-
-def test_right_panel_abstract_is_placeholder_at_beginning(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    true_text = "Click on a paper to show its details here"
-    assert widget.rightPanel.abstractText.text() == true_text
-
-
-def test_right_panel_tags_is_empty_at_beginning(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    assert widget.rightPanel.tagText.text() == ""
-
-
-def test_right_panel_title_text_has_correct_font_family(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    assert widget.rightPanel.titleText.font().family() == "Cabin"
-
-
-def test_right_panel_cite_text_has_correct_font_family(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    assert widget.rightPanel.citeText.font().family() == "Cabin"
-
-
-def test_right_panel_abstract_text_has_correct_font_family(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    assert widget.rightPanel.abstractText.font().family() == "Cabin"
-
-
-def test_right_panel_tag_text_has_correct_font_family(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    assert widget.rightPanel.tagText.font().family() == "Cabin"
-
-
-def test_right_panel_title_text_has_correct_font_size(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    assert widget.rightPanel.titleText.font().pointSize() == 20
-
-
-def test_right_panel_cite_text_has_correct_font_size(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    assert widget.rightPanel.citeText.font().pointSize() == 16
-
-
-def test_right_panel_abstract_text_has_correct_font_size(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    assert widget.rightPanel.abstractText.font().pointSize() == 14
-
-
-def test_right_panel_tag_text_has_correct_font_size(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    assert widget.rightPanel.tagText.font().pointSize() == 14
-
-
-def test_right_panel_title_text_has_word_wrap_on(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    assert widget.rightPanel.titleText.wordWrap()
-
-
-def test_right_panel_cite_text_has_word_wrap_on(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    assert widget.rightPanel.citeText.wordWrap()
-
-
-def test_right_panel_abstract_text_has_word_wrap_on(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    assert widget.rightPanel.abstractText.wordWrap()
-
-
-def test_right_panel_tag_text_has_word_wrap_on(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    assert widget.rightPanel.tagText.wordWrap()
-
-
-def test_right_panel_pdf_text_has_word_wrap_on(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    assert widget.rightPanel.pdfText.wordWrap()
-
-
-def test_right_panel_cite_key_has_word_wrap_on(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    assert widget.rightPanel.citeKeyText.wordWrap()
-
-
-def test_paper_initialization_has_correct_bibcode(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    new_paper = Paper(u.mine.bibcode, db, widget.rightPanel, widget.papersList)
-    assert new_paper.bibcode == u.mine.bibcode
-
-
-def test_paper_initialization_has_correct_title_in_the_text(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    new_paper = Paper(u.mine.bibcode, db, widget.rightPanel, widget.papersList)
-    assert new_paper.titleText.text() == u.mine.title
-
-
-def test_paper_title_has_correct_font_family(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    # get one of the papers, not sure which
-    paper = widget.papersList.papers[0]
-    assert paper.titleText.font().family() == "Cabin"
-
-
-def test_paper_cite_text_has_correct_font_family(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    # get one of the papers, not sure which
-    paper = widget.papersList.papers[0]
-    assert paper.citeText.font().family() == "Cabin"
-
-
-def test_paper_title_has_correct_font_size(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    # get one of the papers, not sure which
-    paper = widget.papersList.papers[0]
-    assert paper.titleText.font().pointSize() == 18
-
-
-def test_paper_cite_string_has_correct_font_size(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    # get one of the papers, not sure which
-    paper = widget.papersList.papers[0]
-    assert paper.citeText.font().pointSize() == 12
-
-
-def test_paper_initialization_has_correct_cite_string_in_the_text(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    new_paper = Paper(u.mine.bibcode, db, widget.rightPanel, widget.papersList)
-    assert new_paper.citeText.text() == db.get_cite_string(u.mine.bibcode)
-
-
-def test_paper_initialization_has_accents_in_author_list(qtbot, db_empty):
-    widget = CInitialize(qtbot, db_empty)
-    db_empty.add_paper(u.juan.bibcode)
-    new_paper = Paper(u.juan.bibcode, db_empty, widget.rightPanel, widget.papersList)
-    assert "á" in new_paper.citeText.text()
-
-
-def test_cannot_initialize_paper_thats_not_in_database(qtbot, db_empty):
-    widget = CInitialize(qtbot, db_empty)
-    with pytest.raises(AssertionError):
-        Paper(u.mine.bibcode, db_empty, widget.rightPanel, widget.papersList)
-
-
-def test_all_papers_in_database_are_in_the_paper_list_at_beginning(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    papers_list_bibcodes = [p.bibcode for p in widget.papersList.papers]
-    assert sorted(papers_list_bibcodes) == sorted(db.get_all_bibcodes())
-
-
 def test_adding_paper_adds_paper_to_interface(qtbot, db_empty):
     widget = CInitialize(qtbot, db_empty)
     assert len(widget.papersList.papers) == 0
@@ -707,21 +708,6 @@ def test_adding_paper_adds_correct_paper_to_interface(qtbot, db_empty):
     widget = CInitialize(qtbot, db_empty)
     CAddPaper(widget, u.mine.bibcode, qtbot)
     assert widget.papersList.papers[0].bibcode == u.mine.bibcode
-
-
-def test_textedit_is_not_in_error_state_at_beginning(qtbot, db_empty):
-    widget = CInitialize(qtbot, db_empty)
-    assert widget.searchBar.property("error") is False
-
-
-def test_textedit_error_message_hidden_at_beginning(qtbot, db_empty):
-    widget = CInitialize(qtbot, db_empty)
-    assert widget.searchBarErrorText.isHidden() is True
-
-
-def test_add_paper_button_shown_at_beginning(qtbot, db_empty):
-    widget = CInitialize(qtbot, db_empty)
-    assert widget.addButton.isHidden() is False
 
 
 def test_adding_paper_clears_search_bar_if_successful(qtbot, db_empty):
@@ -991,18 +977,244 @@ def test_duplicate_in_internal_paper_list_raises_error(qtbot, db):
         widget.papersList.addPaper(new_paper)
 
 
-def test_paper_title_has_word_wrap_on(qtbot, db):
+###############
+# update system
+###############
+def test_db_update_reflected_in_interface(qtbot, db_update):
+    widget = CInitialize(qtbot, db_update)
+    cite_strings = [paper.citeText.text() for paper in widget.papersList.papers]
+    assert "Brown, Gnedin, Li, 2018, ApJ, 864, 94" in cite_strings
+    assert "Brown, Gnedin, Li, 2022, arXiv:1804.09819" not in cite_strings
+    assert "Brown, Gnedin, 2022, MNRAS, 514, 280" in cite_strings
+    assert "Brown, Gnedin, 2022, arXiv:2203.00559" not in cite_strings
+
+
+########################################################################################
+#
+# test right panel
+#
+########################################################################################
+###############
+# initial state
+###############
+def test_right_panel_title_is_empty_at_beginning(qtbot, db):
     widget = CInitialize(qtbot, db)
-    for paper in widget.papersList.papers:
-        assert paper.titleText.wordWrap()
+    assert widget.rightPanel.titleText.text() == ""
 
 
-def test_paper_cite_string_has_word_wrap_on(qtbot, db):
+def test_right_panel_cite_text_is_empty_at_beginning(qtbot, db):
     widget = CInitialize(qtbot, db)
-    for paper in widget.papersList.papers:
-        assert paper.citeText.wordWrap()
+    assert widget.rightPanel.citeText.text() == ""
 
 
+def test_right_panel_abstract_is_placeholder_at_beginning(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    true_text = "Click on a paper to show its details here"
+    assert widget.rightPanel.abstractText.text() == true_text
+
+
+def test_right_panel_tags_is_empty_at_beginning(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    assert widget.rightPanel.tagText.text() == ""
+
+
+def test_right_panel_title_text_has_correct_font_family(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    assert widget.rightPanel.titleText.font().family() == "Cabin"
+
+
+def test_right_panel_cite_text_has_correct_font_family(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    assert widget.rightPanel.citeText.font().family() == "Cabin"
+
+
+def test_right_panel_abstract_text_has_correct_font_family(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    assert widget.rightPanel.abstractText.font().family() == "Cabin"
+
+
+def test_right_panel_tag_text_has_correct_font_family(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    assert widget.rightPanel.tagText.font().family() == "Cabin"
+
+
+def test_right_panel_title_text_has_correct_font_size(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    assert widget.rightPanel.titleText.font().pointSize() == 20
+
+
+def test_right_panel_cite_text_has_correct_font_size(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    assert widget.rightPanel.citeText.font().pointSize() == 16
+
+
+def test_right_panel_abstract_text_has_correct_font_size(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    assert widget.rightPanel.abstractText.font().pointSize() == 14
+
+
+def test_right_panel_tag_text_has_correct_font_size(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    assert widget.rightPanel.tagText.font().pointSize() == 14
+
+
+def test_right_panel_title_text_has_word_wrap_on(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    assert widget.rightPanel.titleText.wordWrap()
+
+
+def test_right_panel_cite_text_has_word_wrap_on(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    assert widget.rightPanel.citeText.wordWrap()
+
+
+def test_right_panel_abstract_text_has_word_wrap_on(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    assert widget.rightPanel.abstractText.wordWrap()
+
+
+def test_right_panel_tag_text_has_word_wrap_on(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    assert widget.rightPanel.tagText.wordWrap()
+
+
+def test_right_panel_pdf_text_has_word_wrap_on(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    assert widget.rightPanel.pdfText.wordWrap()
+
+
+def test_right_panel_cite_key_has_word_wrap_on(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    assert widget.rightPanel.citeKeyText.wordWrap()
+
+
+def test_tags_selection_checkboxes_is_hidden_at_beginning(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    for tag in widget.rightPanel.tags:
+        assert tag.isHidden() is True
+
+
+def test_tags_selection_edit_button_is_hidden_at_beginning(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    assert widget.rightPanel.editTagsButton.isHidden() is True
+
+
+def test_tags_selection_done_editing_button_is_hidden_at_beginning(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    assert widget.rightPanel.doneEditingTagsButton.isHidden() is True
+
+
+def test_copy_bibtex_button_hidden_at_beginning(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    assert widget.rightPanel.copyBibtexButton.isHidden() is True
+
+
+def test_first_delete_paper_button_hidden_at_beginning(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    assert widget.rightPanel.firstDeletePaperButton.isHidden() is True
+
+
+def test_second_delete_paper_button_hidden_at_beginning(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    assert widget.rightPanel.secondDeletePaperButton.isHidden() is True
+
+
+def test_second_delete_cancel_paper_button_hidden_at_beginning(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    assert widget.rightPanel.secondDeletePaperCancelButton.isHidden() is True
+
+
+def test_open_ads_button_hidden_at_beginning(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    assert widget.rightPanel.adsButton.isHidden() is True
+
+
+def test_user_notes_fields_are_not_shown_on_initialization(qtbot, db_notes):
+    widget = CInitialize(qtbot, db_notes)
+    assert widget.rightPanel.userNotesText.isHidden() is True
+    assert widget.rightPanel.userNotesTextEditButton.isHidden() is True
+    assert widget.rightPanel.userNotesTextEditField.isHidden() is True
+    assert widget.rightPanel.userNotesTextEditFinishedButton.isHidden() is True
+
+
+def test_user_notes_has_word_wrap_on(qtbot, db_notes):
+    widget = CInitialize(qtbot, db_notes)
+    CClick(widget.papersList.papers[0], qtbot)
+    assert widget.rightPanel.userNotesText.wordWrap()
+
+
+def test_edit_user_notes_button_has_correct_text(qtbot, db_notes):
+    widget = CInitialize(qtbot, db_notes)
+    CClick(widget.papersList.papers[0], qtbot)
+    assert widget.rightPanel.userNotesTextEditButton.text() == "Edit Notes"
+
+
+def test_user_notes_finished_editing_button_has_correct_text(qtbot, db_notes):
+    widget = CInitialize(qtbot, db_notes)
+    CClick(widget.papersList.papers[0], qtbot)
+    assert (
+        widget.rightPanel.userNotesTextEditFinishedButton.text() == "Done Editing Notes"
+    )
+
+
+def test_spacers_are_hidden_at_initialization(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    for spacer in widget.rightPanel.spacers:
+        assert spacer.isHidden() is True
+
+
+def test_edit_citation_keyword_button_hidden_at_beginning(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    assert widget.rightPanel.editCiteKeyButton.isHidden() is True
+
+
+def test_citation_keyword_text_shown_at_beginning(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    assert widget.rightPanel.citeKeyText.isHidden() is True
+
+
+def test_edit_citation_keyword_edit_hidden_at_beginning(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    assert widget.rightPanel.editCiteKeyEntry.isHidden() is True
+
+
+def test_citation_keyword_text_has_placeholder_text(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    CClick(widget.papersList.papers[0], qtbot)
+    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
+    correct_placeholder = "e.g. yourname_etal_2022"
+    assert widget.rightPanel.editCiteKeyEntry.placeholderText() == correct_placeholder
+
+
+def test_edit_citation_keyword_edit_error_text_hidden_at_beginning(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is True
+
+
+def test_edit_citation_keyword_button_text_is_correct(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    CClick(widget.papersList.papers[0], qtbot)
+    assert widget.rightPanel.editCiteKeyButton.text() == "Edit Citation Keyword"
+
+
+def test_paper_pdf_buttons_are_hidden_at_start(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    assert widget.rightPanel.pdfText.isHidden() is True
+    assert widget.rightPanel.pdfOpenButton.isHidden() is True
+    assert widget.rightPanel.pdfChooseLocalFileButton.isHidden() is True
+    assert widget.rightPanel.pdfDownloadButton.isHidden() is True
+
+
+def test_paper_pdf_buttons_have_correct_text(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    assert widget.rightPanel.pdfOpenButton.text() == "Open this paper's PDF"
+    assert widget.rightPanel.pdfChooseLocalFileButton.text() == "Choose a local PDF"
+    assert widget.rightPanel.pdfDownloadButton.text() == "Download the PDF"
+
+
+############################################
+# paper details added correctly when clicked
+############################################
 def test_clicking_on_paper_puts_title_in_right_panel(qtbot, db):
     widget = CInitialize(qtbot, db)
     # get one of the papers, not sure which
@@ -1058,23 +1270,6 @@ def test_clicking_on_paper_with_no_tags_puts_default_in_right_panel(qtbot, db_no
     assert widget.rightPanel.tagText.text() == "Tags: None"
 
 
-def test_clicking_on_paper_highlights_it_in_center_panel(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    # get one of the papers, not sure which
-    paper = widget.papersList.papers[0]
-    CClick(paper, qtbot)
-    assert paper.property("is_highlighted") is True
-
-
-def test_clicking_on_paper_highlights_its_text_it_in_center_panel(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    # get one of the papers, not sure which
-    paper = widget.papersList.papers[0]
-    CClick(paper, qtbot)
-    assert paper.titleText.property("is_highlighted") is True
-    assert paper.citeText.property("is_highlighted") is True
-
-
 def test_clicking_on_paper_scroll_is_at_top(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
@@ -1100,53 +1295,100 @@ def test_clicking_on_same_paper_doesnt_adjust_scroll_position(qtbot, db_temp):
     assert widget.rightPanel.verticalScrollBar().value() == 100
 
 
-def test_all_papers_are_unhilighted_to_start(qtbot, db):
+def test_tags_selection_edit_button_appears_when_paper_clicked(qtbot, db):
     widget = CInitialize(qtbot, db)
-    for paper in widget.papersList.papers:
-        assert paper.property("is_highlighted") is False
+    CClick(widget.papersList.papers[0], qtbot)
+    assert widget.rightPanel.editTagsButton.isHidden() is False
 
 
-def test_all_papers_text_are_unhilighted_to_start(qtbot, db):
+def test_tags_selection_done_editing_button_doesnt_appear_when_paper_clicked(qtbot, db):
     widget = CInitialize(qtbot, db)
-    for paper in widget.papersList.papers:
-        assert paper.titleText.property("is_highlighted") is False
-        assert paper.citeText.property("is_highlighted") is False
+    CClick(widget.papersList.papers[0], qtbot)
+    assert widget.rightPanel.doneEditingTagsButton.isHidden() is True
 
 
-def test_papers_are_unhighlighted_when_others_clicked(qtbot, db):
+def test_tags_selection_checkboxes_doesnt_appear_when_paper_clicked(qtbot, db):
     widget = CInitialize(qtbot, db)
-    assert len(widget.papersList.papers) > 1
-    for paper_click in widget.papersList.papers:
-        CClick(paper_click, qtbot)
-        for paper_test in widget.papersList.papers:
-            if paper_test.titleText == paper_click.titleText:
-                assert paper_test.property("is_highlighted") is True
-            else:
-                assert paper_test.property("is_highlighted") is False
+    CClick(widget.papersList.papers[0], qtbot)
+    for tag in widget.rightPanel.tags:
+        assert tag.isHidden() is True
 
 
-def test_paper_texts_are_unhighlighted_when_others_clicked(qtbot, db):
+def test_copy_bibtex_button_appears_when_paper_clicked(qtbot, db):
     widget = CInitialize(qtbot, db)
-    assert len(widget.papersList.papers) > 1
-    for paper_click in widget.papersList.papers:
-        CClick(paper_click, qtbot)
-        for paper_test in widget.papersList.papers:
-            if paper_test.titleText == paper_click.titleText:
-                assert paper_test.titleText.property("is_highlighted") is True
-                assert paper_test.citeText.property("is_highlighted") is True
-            else:
-                assert paper_test.titleText.property("is_highlighted") is False
-                assert paper_test.citeText.property("is_highlighted") is False
+    CClick(widget.papersList.papers[0], qtbot)
+    assert widget.rightPanel.copyBibtexButton.isHidden() is False
 
 
-def test_paper_pdf_buttons_are_hidden_at_start(qtbot, db):
+def test_first_delete_paper_button_appears_when_paper_clicked(qtbot, db):
     widget = CInitialize(qtbot, db)
-    assert widget.rightPanel.pdfText.isHidden() is True
-    assert widget.rightPanel.pdfOpenButton.isHidden() is True
-    assert widget.rightPanel.pdfChooseLocalFileButton.isHidden() is True
-    assert widget.rightPanel.pdfDownloadButton.isHidden() is True
+    CClick(widget.papersList.papers[0], qtbot)
+    assert widget.rightPanel.firstDeletePaperButton.isHidden() is False
 
 
+def test_second_delete_paper_button_does_not_appear_when_paper_clicked(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    CClick(widget.papersList.papers[0], qtbot)
+    assert widget.rightPanel.secondDeletePaperButton.isHidden() is True
+
+
+def test_second_delete_paper_cancel_button_does_not_appear_when_paper_clicked(
+    qtbot, db
+):
+    widget = CInitialize(qtbot, db)
+    CClick(widget.papersList.papers[0], qtbot)
+    assert widget.rightPanel.secondDeletePaperCancelButton.isHidden() is True
+
+
+def test_open_ads_button_appears_when_paper_clicked(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    CClick(widget.papersList.papers[0], qtbot)
+    assert widget.rightPanel.adsButton.isHidden() is False
+
+
+def test_user_notes_are_appropriately_shown_once_paper_clicked(qtbot, db_notes):
+    widget = CInitialize(qtbot, db_notes)
+    CClick(widget.papersList.papers[0], qtbot)
+    assert widget.rightPanel.userNotesText.isHidden() is False
+    assert widget.rightPanel.userNotesTextEditButton.isHidden() is False
+    assert widget.rightPanel.userNotesTextEditField.isHidden() is True
+    assert widget.rightPanel.userNotesTextEditFinishedButton.isHidden() is True
+
+
+def test_spacers_are_shown_when_paper_clicked(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    CClick(widget.papersList.papers[0], qtbot)
+    for spacer in widget.rightPanel.spacers:
+        assert spacer.isHidden() is False
+
+
+def test_edit_citation_keyword_button_shown_when_paper_clicked(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    CClick(widget.papersList.papers[0], qtbot)
+    assert widget.rightPanel.editCiteKeyButton.isHidden() is False
+
+
+def test_citation_keyword_text_shown_when_paper_clicked(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    CClick(widget.papersList.papers[0], qtbot)
+    assert widget.rightPanel.citeKeyText.isHidden() is False
+
+
+def test_edit_citation_keyword_edit_hidden_when_paper_clicked(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    CClick(widget.papersList.papers[0], qtbot)
+    assert widget.rightPanel.editCiteKeyEntry.isHidden() is True
+
+
+def test_edit_citation_keyword_edit_error_text_hidden_when_paper_clicked(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    CClick(widget.papersList.papers[0], qtbot)
+    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is True
+
+
+###########################################################################
+# handling paper pdfs -- double clicking from center panel tested elsewhere
+###########################################################################
 def test_paper_pdf_buttons_show_when_paper_clicked_with_local_file(qtbot, db_empty):
     # fill a local file into the database
     db_empty.add_paper(u.mine.bibcode)
@@ -1190,13 +1432,6 @@ def test_paper_pdf_buttons_update_database_if_file_doesnt_exist(qtbot, db_empty)
     widget = CInitialize(qtbot, db_empty)
     CClick(widget.papersList.papers[0], qtbot)
     assert db_empty.get_paper_attribute(u.mine.bibcode, "local_file") is None
-
-
-def test_paper_pdf_buttons_have_correct_text(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    assert widget.rightPanel.pdfOpenButton.text() == "Open this paper's PDF"
-    assert widget.rightPanel.pdfChooseLocalFileButton.text() == "Choose a local PDF"
-    assert widget.rightPanel.pdfDownloadButton.text() == "Download the PDF"
 
 
 def test_paper_pdf_text_has_correct_text_with_local_file(qtbot, db_empty):
@@ -1601,409 +1836,9 @@ def test_download_pdf_button_error_message_resets_on_new_paper_clicked(
     assert widget.rightPanel.pdfDownloadButton.text() == "Download the PDF"
 
 
-def test_double_clicking_on_paper_with_local_file_opens_it(
-    qtbot, db_empty, monkeypatch
-):
-    test_loc = __file__
-    open_calls = []
-    monkeypatch.setattr(QDesktopServices, "openUrl", lambda x: open_calls.append(x))
-
-    widget = CInitialize(qtbot, db_empty)
-    # add a paper to this empty database to make the paper object
-    CAddPaper(widget, u.mine.bibcode, qtbot)
-    db_empty.set_paper_attribute(u.mine.bibcode, "local_file", test_loc)
-    CDoubleClick(widget.papersList.papers[0], qtbot)
-    # since this already has a URL it should be added
-    assert open_calls == [f"file:{test_loc}"]
-
-
-def test_dclicking_on_paper_with_no_local_file_doesnt_ask_user(
-    qtbot, db_temp, monkeypatch
-):
-    user_asks = []
-    monkeypatch.setattr(
-        QFileDialog,
-        "getSaveFileName",
-        lambda filter, dir, caption: user_asks.append("save"),
-    )
-    monkeypatch.setattr(
-        QFileDialog,
-        "getOpenFileName",
-        lambda filter, dir: user_asks.append("open"),
-    )
-
-    widget = CInitialize(qtbot, db_temp)
-    CDoubleClick(widget.papersList.papers[0], qtbot)
-    assert user_asks == []
-
-
-def test_dclicking_on_paper_with_no_local_file_doesnt_open(qtbot, db_temp, monkeypatch):
-    # Here we need to use monkeypatch to simulate opening the file
-    open_calls = []
-    monkeypatch.setattr(QDesktopServices, "openUrl", lambda x: open_calls.append(x))
-
-    widget = CInitialize(qtbot, db_temp)
-    CDoubleClick(widget.papersList.papers[0], qtbot)
-    assert open_calls == []
-
-
-def test_dclicking_on_paper_with_no_local_file_highlights_right_panel(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CDoubleClick(widget.papersList.papers[0], qtbot)
-    assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == True
-    assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == True
-
-
-def test_dclicking_on_paper_with_no_local_file_scrolls_to_show_buttons(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CDoubleClick(widget.papersList.papers[0], qtbot)
-    # I don't know exactly where this should end up, but not at the top or bottom
-    assert (
-        0
-        < widget.rightPanel.verticalScrollBar().value()
-        < widget.rightPanel.verticalScrollBar().maximum()
-    )
-    assert widget.rightPanel.horizontalScrollBar().value() == 0
-
-
-def test_pdf_highlighting_goes_away_with_any_click(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CDoubleClick(widget.papersList.papers[0], qtbot)
-    assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == True
-    assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == True
-    CClick(widget.rightPanel.titleText, qtbot)
-    assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == False
-    assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == False
-
-
-def test_pdf_highlighting_goes_away_with_choose_local_interaction(
-    qtbot, db_temp, monkeypatch
-):
-    monkeypatch.setattr(QFileDialog, "getOpenFileName", MOpenFileNoResponse)
-    widget = CInitialize(qtbot, db_temp)
-    CDoubleClick(widget.papersList.papers[0], qtbot)
-    assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == True
-    assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == True
-    CClick(widget.rightPanel.pdfChooseLocalFileButton, qtbot)
-    assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == False
-    assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == False
-
-
-def test_pdf_highlighting_goes_away_with_download_interaction(
-    qtbot, db_temp, monkeypatch
-):
-    monkeypatch.setattr(QFileDialog, "getSaveFileName", MSaveFileNoResponse)
-    widget = CInitialize(qtbot, db_temp)
-    CDoubleClick(widget.papersList.papers[0], qtbot)
-    assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == True
-    assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == True
-    CClick(widget.rightPanel.pdfDownloadButton, qtbot)
-    assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == False
-    assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == False
-
-
-def test_pdf_highlighting_goes_away_when_new_paper_clicked(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CDoubleClick(widget.papersList.papers[0], qtbot)
-    assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == True
-    assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == True
-    CClick(widget.papersList.papers[1], qtbot)
-    assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == False
-    assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == False
-
-
-def test_dclicking_on_paper_with_nonexistent_file_redirects_to_right_panel(
-    qtbot, db_empty, monkeypatch
-):
-    # first, add a file to the database, then set the file to something nonsense. We'll
-    # then try to open it, and check that the interface asks the user.
-    db_empty.add_paper(u.mine.bibcode)
-    db_empty.set_paper_attribute(u.mine.bibcode, "local_file", "lskdlskdflskj")
-
-    # when we try to open files, just list the ones we tried to open
-    open_calls = []
-    monkeypatch.setattr(QDesktopServices, "openUrl", lambda x: open_calls.append(x))
-
-    widget = CInitialize(qtbot, db_empty)
-    # add a paper to this empty database to make the paper object
-    CDoubleClick(widget.papersList.papers[0], qtbot)
-    # check that we didn't open anything
-    assert open_calls == []
-    # check that the right panel is highlighted
-    assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == True
-    assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == True
-
-
-def test_dclicking_on_paper_shows_details_in_right_panel(qtbot, db_empty):
-    widget = CInitialize(qtbot, db_empty)
-    # add a paper to this empty database to make the paper object
-    CAddPaper(widget, u.mine.bibcode, qtbot)  # do not add file location
-    CDoubleClick(widget.papersList.papers[0], qtbot)
-    assert widget.rightPanel.titleText.text() == u.mine.title
-
-
-def test_get_tags_from_paper_object_is_correct(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    paper = widget.papersList.papers[0]
-    assert paper.getTags() == db.get_paper_tags(paper.bibcode)
-
-
-def test_add_tag_button_is_shown_at_beginning(qtbot, db_empty):
-    widget = CInitialize(qtbot, db_empty)
-    assert widget.tagsList.addTagButton.isHidden() is False
-
-
-def test_add_tag_text_button_has_correct_font_size(qtbot, db_empty):
-    widget = CInitialize(qtbot, db_empty)
-    assert widget.tagsList.addTagButton.font().pointSize() == 14
-
-
-def test_add_tag_text_button_has_correct_font_family(qtbot, db_empty):
-    widget = CInitialize(qtbot, db_empty)
-    assert widget.tagsList.addTagButton.font().family() == "Cabin"
-
-
-def test_add_tag_text_bar_is_hidden_at_beginning(qtbot, db_empty):
-    widget = CInitialize(qtbot, db_empty)
-    assert widget.tagsList.addTagBar.isHidden() is True
-
-
-def test_add_tag_error_text_is_hidden_at_beginning(qtbot, db_empty):
-    widget = CInitialize(qtbot, db_empty)
-    assert widget.tagsList.addTagErrorText.isHidden() is True
-
-
-def test_clicking_add_tag_button_hides_button(qtbot, db_empty):
-    widget = CInitialize(qtbot, db_empty)
-    CClick(widget.tagsList.addTagButton, qtbot)
-    assert widget.tagsList.addTagButton.isHidden() is True
-
-
-def test_clicking_add_tag_button_shows_text_entry(qtbot, db_empty):
-    widget = CInitialize(qtbot, db_empty)
-    CClick(widget.tagsList.addTagButton, qtbot)
-    assert widget.tagsList.addTagBar.isHidden() is False
-
-
-def test_clicking_add_tag_button_puts_focus_on_text_entry(qtbot, db_empty, monkeypatch):
-    # I tried to test this directly, but was having trouble getting the tests to work
-    # properly. Specifically, widget.hasFocus() was not working propertly in tests for
-    # whatever reasonSo instead, I'll monkeypatch the setFocus method. I have tested
-    # that this works in the actual interface
-    setFocus_calls = []
-    monkeypatch.setattr(QLineEdit, "setFocus", lambda x: setFocus_calls.append(True))
-
-    widget = CInitialize(qtbot, db_empty)
-    CClick(widget.tagsList.addTagButton, qtbot)
-    # assert widget.tagsList.addTagBar.hasFocus() is True  # would be the best test
-    assert setFocus_calls == [True]
-
-
-def test_add_tag_text_bar_has_correct_font_size(qtbot, db_empty):
-    widget = CInitialize(qtbot, db_empty)
-    CClick(widget.tagsList.addTagButton, qtbot)
-    assert widget.tagsList.addTagBar.font().pointSize() == 14
-
-
-def test_add_tag_text_bar_has_correct_font_family(qtbot, db_empty):
-    widget = CInitialize(qtbot, db_empty)
-    CClick(widget.tagsList.addTagButton, qtbot)
-    assert widget.tagsList.addTagBar.font().family() == "Cabin"
-
-
-def test_add_tag_text_bar_has_correct_placeholder_text(qtbot, db_empty):
-    widget = CInitialize(qtbot, db_empty)
-    CClick(widget.tagsList.addTagButton, qtbot)
-    text = "Tag name"
-    assert widget.tagsList.addTagBar.placeholderText() == text
-
-
-def test_can_add_tag_by_filling_tag_name_then_pressing_enter(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    # Don't use convenience function, for clarity on what I'm doing
-    CClick(widget.tagsList.addTagButton, qtbot)
-    CEnterText(widget.tagsList.addTagBar, "Test Tag", qtbot)
-    CPressEnter(widget.tagsList.addTagBar, qtbot)
-    assert db_temp.paper_has_tag(u.mine.bibcode, "Test Tag") is False
-
-
-def test_can_add_tag_to_list_by_filling_tag_name_then_pressing_enter(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    # Don't use convenience function, for clarity on what I'm doing
-    CClick(widget.tagsList.addTagButton, qtbot)
-    CEnterText(widget.tagsList.addTagBar, "Test Tag", qtbot)
-    CPressEnter(widget.tagsList.addTagBar, qtbot)
-    tag_names = [t.name for t in widget.tagsList.tags]
-    assert "Test Tag" in tag_names
-
-
-def test_tag_name_entry_is_cleared_after_successful_entry(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CAddTag(widget, "Test Tag", qtbot)
-    assert widget.tagsList.addTagBar.text() == ""
-
-
-def test_tag_name_entry_is_hidden_after_successful_entry(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CAddTag(widget, "Test Tag", qtbot)
-    assert widget.tagsList.addTagBar.isHidden() is True
-
-
-def test_tag_name_button_is_shown_after_successful_entry(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CAddTag(widget, "Test Tag", qtbot)
-    assert widget.tagsList.addTagButton.isHidden() is False
-
-
-def test_tag_name_entry_is_not_cleared_after_duplicate_tag_attempt(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CAddTag(widget, "Test Tag", qtbot)
-    CAddTag(widget, "Test Tag", qtbot)
-    assert widget.tagsList.addTagBar.text() == "Test Tag"
-
-
-def test_add_tag_error_message_shown_after_duplicate_tag_attempt(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CAddTag(widget, "Test Tag", qtbot)
-    CAddTag(widget, "Test Tag", qtbot)
-    assert widget.tagsList.addTagErrorText.isHidden() is False
-    assert widget.tagsList.addTagErrorText.text() == "This tag already exists"
-
-
-def test_tag_name_entry_is_not_cleared_after_duplicate_cap_tag_attempt(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CAddTag(widget, "Test Tag", qtbot)
-    CAddTag(widget, "test tag", qtbot)
-    assert widget.tagsList.addTagBar.text() == "test tag"
-
-
-def test_tag_name_entry_is_not_cleared_after_whitespace_tag_attempt(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CAddTag(widget, "   ", qtbot)
-    assert widget.tagsList.addTagBar.text() == "   "
-
-
-def test_add_tag_error_message_shown_after_whitesapce_tag_attempt(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CAddTag(widget, "   ", qtbot)
-    assert widget.tagsList.addTagErrorText.isHidden() is False
-    assert widget.tagsList.addTagErrorText.text() == "Pure whitespace isn't valid"
-
-
-def test_tag_name_entry_is_not_cleared_after_backtick_tag_attempt(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CAddTag(widget, "`", qtbot)
-    assert widget.tagsList.addTagBar.text() == "`"
-
-
-def test_add_tag_error_message_shown_after_backtick_tag_attempt(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CAddTag(widget, "`", qtbot)
-    assert widget.tagsList.addTagErrorText.isHidden() is False
-    assert widget.tagsList.addTagErrorText.text() == "Backticks aren't allowed"
-
-
-def test_add_tag_error_message_hidden_after_text_changed(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CAddTag(widget, "   ", qtbot)
-    assert widget.tagsList.addTagErrorText.isHidden() is False
-    CPressBackspace(widget.tagsList.addTagBar, qtbot)
-    assert widget.tagsList.addTagErrorText.isHidden() is True
-
-
-def test_add_tag_error_message_hidden_after_cursor_moved(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CAddTag(widget, "   ", qtbot)
-    assert widget.tagsList.addTagErrorText.isHidden() is False
-    widget.tagsList.addTagBar.setCursorPosition(0)
-    assert widget.tagsList.addTagErrorText.isHidden() is True
-
-
-def test_add_tag_entry_can_exit_with_escape_press_at_any_time(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    CClick(widget.tagsList.addTagButton, qtbot)
-    CEnterText(widget.tagsList.addTagBar, "sdfsdf", qtbot)
-    CPressEscape(widget.tagsList.addTagBar, qtbot)
-    assert widget.tagsList.addTagBar.isHidden() is True
-    assert widget.tagsList.addTagButton.isHidden() is False
-    assert widget.tagsList.addTagErrorText.isHidden() is True
-
-
-def test_add_tag_entry_can_exit_with_escape_press_at_any_time_clears_text(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    CClick(widget.tagsList.addTagButton, qtbot)
-    CEnterText(widget.tagsList.addTagBar, "sdfsdf", qtbot)
-    CPressEscape(widget.tagsList.addTagBar, qtbot)
-    assert widget.tagsList.addTagBar.text() == ""
-
-
-def test_add_tag_entry_can_exit_with_backspace_when_empty(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    CClick(widget.tagsList.addTagButton, qtbot)
-    CEnterText(widget.tagsList.addTagBar, "abc", qtbot)
-    # back out those three letters
-    for _ in range(3):
-        CPressBackspace(widget.tagsList.addTagBar, qtbot)
-    # entry should still be visible
-    assert widget.tagsList.addTagBar.isHidden() is False
-    assert widget.tagsList.addTagButton.isHidden() is True
-    # with one more backspace, we exit
-    CPressBackspace(widget.tagsList.addTagBar, qtbot)
-    assert widget.tagsList.addTagBar.isHidden() is True
-    assert widget.tagsList.addTagButton.isHidden() is False
-    assert widget.tagsList.addTagErrorText.isHidden() is True
-
-
-def test_all_tags_in_database_are_in_the_tag_list_at_beginning(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    tags_list = [t.name for t in widget.tagsList.tags]
-    assert sorted(tags_list) == sorted(db.get_all_tags())
-
-
-def test_read_and_unread_are_initialized_even_in_new_database(qtbot, db_empty):
-    widget = CInitialize(qtbot, db_empty)
-    tags_list = [t.name for t in widget.tagsList.tags]
-    assert sorted(tags_list) == ["Read", "Unread"]
-
-
-def test_read_and_unread_arent_added_to_nonempty_database(qtbot, db_no_tags):
-    db_no_tags.add_new_tag("lskdjlkj")
-    db_no_tags.add_new_tag("ghjghjg")
-    widget = CInitialize(qtbot, db_no_tags)
-    tags_list = [t.name for t in widget.tagsList.tags]
-    assert "Read" not in tags_list
-    assert "Unread" not in tags_list
-
-
-def test_tag_has_correct_name(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    # get one of the tags, not sure which
-    tag = widget.tagsList.tags[0]
-    assert tag.label.text() == tag.name
-
-
-def test_tag_has_correct_font_family(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    # get one of the tags, not sure which
-    tag = widget.tagsList.tags[0]
-    assert tag.font().family() == "Cabin"
-
-
-def test_tag_has_correct_font_size(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    # get one of the tags, not sure which
-    tag = widget.tagsList.tags[0]
-    assert tag.font().family() == "Cabin"
-
-
-def test_duplicate_in_internal_tags_list_raises_error(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CAddTag(widget, "Test Tag", qtbot)
-    new_tag = LeftPanelTag("Test Tag", widget.papersList, widget.tagsList)
-    with pytest.raises(AssertionError):
-        widget.tagsList.addTag(new_tag)
-
-
+######################
+# modifying paper tags
+######################
 def test_right_panel_tags_should_list_all_tags_in_database(qtbot, db):
     widget = CInitialize(qtbot, db)
     # get all tags in both the list and database, then check that they're the same
@@ -2023,6 +1858,53 @@ def test_right_panel_tags_checked_match_paper_that_is_selected(qtbot, db):
             assert tag.isChecked()
         else:
             assert not tag.isChecked()
+
+
+def test_tags_selection_edit_button_is_hidden_when_pressed(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    CClick(widget.papersList.papers[0], qtbot)
+    CClick(widget.rightPanel.editTagsButton, qtbot)
+    assert widget.rightPanel.editTagsButton.isHidden() is True
+
+
+def test_tags_selection_done_editing_buttons_is_shown_when_edit_is_pressed(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    CClick(widget.papersList.papers[0], qtbot)
+    CClick(widget.rightPanel.editTagsButton, qtbot)
+    assert widget.rightPanel.doneEditingTagsButton.isHidden() is False
+
+
+def test_tags_selection_edit_button_shown_again_when_done_editing_pressed(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    CClick(widget.papersList.papers[0], qtbot)
+    CClick(widget.rightPanel.editTagsButton, qtbot)
+    CClick(widget.rightPanel.doneEditingTagsButton, qtbot)
+    assert widget.rightPanel.editTagsButton.isHidden() is False
+
+
+def test_tags_selection_done_editing_button_is_hidden_when_pressed(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    CClick(widget.papersList.papers[0], qtbot)
+    CClick(widget.rightPanel.editTagsButton, qtbot)
+    CClick(widget.rightPanel.doneEditingTagsButton, qtbot)
+    assert widget.rightPanel.doneEditingTagsButton.isHidden() is True
+
+
+def test_tags_selection_checkboxes_are_unhidden_when_edit_is_pressed(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    CClick(widget.papersList.papers[0], qtbot)
+    CClick(widget.rightPanel.editTagsButton, qtbot)
+    for tag in widget.rightPanel.tags:
+        assert tag.isHidden() is False
+
+
+def test_tags_selection_checkboxes_are_hidden_when_done_editing(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    CClick(widget.papersList.papers[0], qtbot)
+    CClick(widget.rightPanel.editTagsButton, qtbot)
+    CClick(widget.rightPanel.doneEditingTagsButton, qtbot)
+    for tag in widget.rightPanel.tags:
+        assert tag.isHidden() is True
 
 
 def test_checking_tag_in_checklist_adds_tag_to_paper_in_database(qtbot, db_no_tags):
@@ -2117,195 +1999,122 @@ def test_unchecking_tag_in_checklist_removes_tag_from_interface(qtbot, db_no_tag
     assert widget.rightPanel.tagText.text() == "Tags: T2, T5"
 
 
-def test_all_papers_start_not_hidden(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    for paper in widget.papersList.papers:
-        assert not paper.isHidden()
-
-
-def test_clicking_on_tag_in_left_panel_hides_papers(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    # get a tag from the left panel to click on
-    left_tag = widget.tagsList.tags[0]
-    CClick(left_tag, qtbot)
-    # then check the tags that are in shown papers
-    for paper in widget.papersList.papers:
-        if left_tag.label.text() in db.get_paper_tags(paper.bibcode):
-            assert paper.isHidden() is False
-        else:
-            assert paper.isHidden() is True
-
-
-def test_show_all_tags_button_starts_highlighted(qtbot, db_temp):
+def test_tag_checkboxes_are_hidden_when_paper_clicked(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
-    assert widget.tagsList.showAllButton.property("is_highlighted") is True
-    assert widget.tagsList.showAllButton.label.property("is_highlighted") is True
+    # click on a paper, then click the edit tags button
+    CClick(widget.papersList.papers[0], qtbot)
+    CClick(widget.rightPanel.editTagsButton, qtbot)
+    # click on a different paper
+    CClick(widget.papersList.papers[1], qtbot)
+    # the tag edit checkboxes should all be hidden
+    for t in widget.rightPanel.tags:
+        assert t.isHidden()
 
 
-def test_all_tags_start_unhighlighted(qtbot, db_temp):
+def test_done_editing_button_is_hidden_when_paper_clicked(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
-    # get a tag from the left panel to click on
-    for tag in widget.tagsList.tags:
-        assert tag.property("is_highlighted") is False
-        assert tag.label.property("is_highlighted") is False
+    # click on a paper, then click the edit tags button
+    CClick(widget.papersList.papers[0], qtbot)
+    CClick(widget.rightPanel.editTagsButton, qtbot)
+    # click on a different paper
+    CClick(widget.papersList.papers[1], qtbot)
+    # the tag edit checkboxes should all be hidden
+    assert widget.rightPanel.doneEditingTagsButton.isHidden()
 
 
-def test_clicking_on_tag_in_left_panel_highlights_tag_text(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    # get a tag from the left panel to click on
-    tag = widget.tagsList.tags[0]
-    CClick(tag, qtbot)
-    assert tag.property("is_highlighted") is True
-    assert tag.label.property("is_highlighted") is True
+################################################
+# tags and their interaction with the left panel
+################################################
+def test_paper_tag_list_is_sorted_alphabetically_not_case_sensitive(qtbot, db_empty):
+    # set up tags to check
+    tags = ["abc", "zyx", "Aye", "Test", "ZAA"]
+    db_empty.add_paper(u.mine.bibcode)
+    for t in tags:
+        db_empty.add_new_tag(t)
+        db_empty.tag_paper(u.mine.bibcode, t)
 
-
-def test_clicking_on_show_all_in_left_panel_highlights_tag_text(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CClick(widget.tagsList.showAllButton, qtbot)
-    assert widget.tagsList.showAllButton.property("is_highlighted") is True
-    assert widget.tagsList.showAllButton.label.property("is_highlighted") is True
-
-
-def test_clicking_on_tag_in_left_panel_unlights_others(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    # Click on one tag, then another
-    for tag in widget.tagsList.tags:
-        CClick(tag, qtbot)
-        for tag_comp in widget.tagsList.tags:
-            if tag.label.text() == tag_comp.label.text():
-                assert tag_comp.property("is_highlighted") is True
-                assert tag_comp.label.property("is_highlighted") is True
-            else:
-                assert tag_comp.property("is_highlighted") is False
-                assert tag_comp.label.property("is_highlighted") is False
-
-
-def test_clicking_on_show_all_in_left_panel_unlights_others(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CClick(widget.tagsList.showAllButton, qtbot)
-    for tag in widget.tagsList.tags:
-        assert tag.property("is_highlighted") is False
-        assert tag.label.property("is_highlighted") is False
-
-
-def test_newly_added_tag_is_unhighlighted(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CAddTag(widget, "newly added tag", qtbot)
-    for tag in widget.tagsList.tags:
-        if tag.label.text() == "newly added tag":
-            assert tag.property("is_highlighted") is False
-            assert tag.label.property("is_highlighted") is False
-
-
-def test_show_all_button_fontsize(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    assert widget.tagsList.showAllButton.font().pointSize() == 14
-
-
-def test_show_all_button_has_correct_font_family(qtbot, db_empty):
     widget = CInitialize(qtbot, db_empty)
-    assert widget.tagsList.showAllButton.font().family() == "Cabin"
+    CClick(widget.papersList.papers[0], qtbot)
+    expected = "Tags: " + ", ".join(sorted(tags, key=lambda x: x.lower()))
+    assert widget.rightPanel.tagText.text() == expected
 
 
-def test_show_all_button_has_correct_text(qtbot, db_empty):
+def test_paper_tag_list_is_sorted_properly_after_modifying_tags(qtbot, db_empty):
+    # set up tags to check
+    tags = ["abc", "zyx", "Aye", "Test", "ZAA"]
+    db_empty.add_paper(u.mine.bibcode)
+    for t in tags:
+        db_empty.add_new_tag(t)
+    for t in tags[:3]:
+        db_empty.tag_paper(u.mine.bibcode, t)
+
     widget = CInitialize(qtbot, db_empty)
-    assert widget.tagsList.showAllButton.label.text() == "All Papers"
-
-
-def test_clicking_on_show_all_button_shows_all_papers(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    # First click on a tag to restrict the number of papers shown
-    left_tag = widget.tagsList.tags[0]
-    CClick(left_tag, qtbot)
-    # then click on the button to show all
-    CClick(widget.tagsList.showAllButton, qtbot)
-    # then check that all are shown
-    for paper in widget.papersList.papers:
-        assert paper.isHidden() is False
-
-
-def test_tags_selection_checkboxes_is_hidden_at_beginning(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    for tag in widget.rightPanel.tags:
-        assert tag.isHidden() is True
-
-
-def test_tags_selection_edit_button_is_hidden_at_beginning(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    assert widget.rightPanel.editTagsButton.isHidden() is True
-
-
-def test_tags_selection_done_editing_button_is_hidden_at_beginning(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    assert widget.rightPanel.doneEditingTagsButton.isHidden() is True
-
-
-def test_tags_selection_edit_button_appears_when_paper_clicked(qtbot, db):
-    widget = CInitialize(qtbot, db)
     CClick(widget.papersList.papers[0], qtbot)
-    assert widget.rightPanel.editTagsButton.isHidden() is False
-
-
-def test_tags_selection_done_editing_button_doesnt_appear_when_paper_clicked(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    CClick(widget.papersList.papers[0], qtbot)
-    assert widget.rightPanel.doneEditingTagsButton.isHidden() is True
-
-
-def test_tags_selection_checkboxes_doesnt_appear_when_paper_clicked(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    CClick(widget.papersList.papers[0], qtbot)
-    for tag in widget.rightPanel.tags:
-        assert tag.isHidden() is True
-
-
-def test_tags_selection_edit_button_is_hidden_when_pressed(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    CClick(widget.papersList.papers[0], qtbot)
+    # then add the final tag in the list
+    to_add = tags[-1]
     CClick(widget.rightPanel.editTagsButton, qtbot)
-    assert widget.rightPanel.editTagsButton.isHidden() is True
-
-
-def test_tags_selection_done_editing_buttons_is_shown_when_edit_is_pressed(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.editTagsButton, qtbot)
-    assert widget.rightPanel.doneEditingTagsButton.isHidden() is False
-
-
-def test_tags_selection_edit_button_shown_again_when_done_editing_pressed(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.editTagsButton, qtbot)
+    for tag_item in widget.rightPanel.tags:
+        if tag_item.text() == to_add:
+            tag_item.setChecked(True)
     CClick(widget.rightPanel.doneEditingTagsButton, qtbot)
-    assert widget.rightPanel.editTagsButton.isHidden() is False
+
+    expected_tags = tags[:3] + [tags[-1]]
+    expected = "Tags: " + ", ".join(sorted(expected_tags, key=lambda x: x.lower()))
+    assert widget.rightPanel.tagText.text() == expected
 
 
-def test_tags_selection_done_editing_button_is_hidden_when_pressed(qtbot, db):
-    widget = CInitialize(qtbot, db)
+def test_tag_checkboxes_are_sorted_alphabetically_not_case_sensitive(qtbot, db_temp):
+    # set up tags to check
+    tags = ["abc", "zyx", "Aye", "Test", "ZAA"]
+    for t in tags:
+        db_temp.add_new_tag(t)
+
+    widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.editTagsButton, qtbot)
-    CClick(widget.rightPanel.doneEditingTagsButton, qtbot)
-    assert widget.rightPanel.doneEditingTagsButton.isHidden() is True
+    tags = [tag.text() for tag in widget.rightPanel.tags]
+    assert tags == sorted(tags, key=lambda x: x.lower())
 
 
-def test_tags_selection_checkboxes_are_unhidden_when_edit_is_pressed(qtbot, db):
-    widget = CInitialize(qtbot, db)
+def test_tag_checkboxes_are_sorted_properly_after_adding_new_tag(qtbot, db_temp):
+    # set up tags to check
+    tags = ["abc", "zyx", "Test", "ZAA"]
+    for t in tags:
+        db_temp.add_new_tag(t)
+
+    widget = CInitialize(qtbot, db_temp)
+    # click to show the checkboxes
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.editTagsButton, qtbot)
-    for tag in widget.rightPanel.tags:
-        assert tag.isHidden() is False
+    # then add one in the left panel
+    CAddTag(widget, "Aye", qtbot)
+    # then ensure this new checkbox was added appropriately
+    tags = [tag.text() for tag in widget.rightPanel.tags]
+    assert "Aye" in tags
+    assert tags == sorted(tags, key=lambda x: x.lower())
 
 
-def test_tags_selection_checkboxes_are_hidden_when_done_editing(qtbot, db):
-    widget = CInitialize(qtbot, db)
+def test_tag_checkboxes_are_sorted_properly_after_deleting_tag(qtbot, db_temp):
+    # set up tags to check
+    tags = ["abc", "zyx", "Test", "ZAA"]
+    for t in tags:
+        db_temp.add_new_tag(t)
+
+    widget = CInitialize(qtbot, db_temp)
+    # click to show the checkboxes
     CClick(widget.papersList.papers[0], qtbot)
     CClick(widget.rightPanel.editTagsButton, qtbot)
-    CClick(widget.rightPanel.doneEditingTagsButton, qtbot)
-    for tag in widget.rightPanel.tags:
-        assert tag.isHidden() is True
+    # then delete a tag from the left panel
+    CDeleteTag(widget, "Test", qtbot)
+    # then ensure this new checkbox was removed appropriately
+    tags = [tag.text() for tag in widget.rightPanel.tags]
+    assert "Test" not in tags
+    assert tags == sorted(tags, key=lambda x: x.lower())
 
 
+#############################
+# copying bibtex to clipboard
+#############################
 def test_clicking_bibtex_button_copies_bibtex(qtbot, db, monkeypatch):
     # Here we need to use monkeypatch to simulate the clipboard
     clipboard = QGuiApplication.clipboard()
@@ -2322,52 +2131,376 @@ def test_clicking_bibtex_button_copies_bibtex(qtbot, db, monkeypatch):
     assert texts[0] in [u.mine.bibtex, u.tremonti.bibtex]
 
 
-def test_copy_bibtex_button_hidden_at_beginning(qtbot, db):
+###################
+# open paper in ADS
+###################
+def test_clicking_on_ads_button_opens_paper_in_browser(qtbot, db_empty, monkeypatch):
+    # Here we need to use monkeypatch to simulate opening the URL
+    open_calls = []
+    monkeypatch.setattr(QDesktopServices, "openUrl", lambda x: open_calls.append(x))
+
+    widget = CInitialize(qtbot, db_empty)
+    # add a paper to this empty database to make the paper object
+    CAddPaper(widget, u.mine.bibcode, qtbot)
+    # click on th epaper in the main panel, then click on the ADS button
+    CClick(widget.papersList.papers[0], qtbot)
+    CClick(widget.rightPanel.adsButton, qtbot)
+
+    # since this already has a URL it should be added
+    assert open_calls == [
+        f"https://ui.adsabs.harvard.edu/abs/2018ApJ...864...94B/abstract"
+    ]
+
+
+############
+# user notes
+############
+def test_user_notes_has_correct_text(qtbot, db_notes):
+    widget = CInitialize(qtbot, db_notes)
+    CClick(widget.papersList.papers[0], qtbot)
+    assert widget.rightPanel.userNotesText.text() == "abc123"
+
+
+def test_user_notes_has_correct_text_if_originally_blank(qtbot, db_empty):
+    db_empty.add_paper(u.mine.bibcode)
+    widget = CInitialize(qtbot, db_empty)
+    CClick(widget.papersList.papers[0], qtbot)
+    assert widget.rightPanel.userNotesText.text() == "No notes yet"
+
+
+def test_notes_static_text_disappears_when_edit_button_clicked(qtbot, db_notes):
+    widget = CInitialize(qtbot, db_notes)
+    CClick(widget.papersList.papers[0], qtbot)
+    CClick(widget.rightPanel.userNotesTextEditButton, qtbot)
+    assert widget.rightPanel.userNotesText.isHidden() is True
+
+
+def test_notes_edit_button_disappears_when_edit_button_clicked(qtbot, db_notes):
+    widget = CInitialize(qtbot, db_notes)
+    CClick(widget.papersList.papers[0], qtbot)
+    CClick(widget.rightPanel.userNotesTextEditButton, qtbot)
+    assert widget.rightPanel.userNotesTextEditButton.isHidden() is True
+
+
+def test_notes_finished_edit_button_appears_when_edit_button_clicked(qtbot, db_notes):
+    widget = CInitialize(qtbot, db_notes)
+    CClick(widget.papersList.papers[0], qtbot)
+    CClick(widget.rightPanel.userNotesTextEditButton, qtbot)
+    assert widget.rightPanel.userNotesTextEditFinishedButton.isHidden() is False
+
+
+def test_notes_edit_field_has_original_text(qtbot, db_notes):
+    widget = CInitialize(qtbot, db_notes)
+    CClick(widget.papersList.papers[0], qtbot)
+    CClick(widget.rightPanel.userNotesTextEditButton, qtbot)
+    assert widget.rightPanel.userNotesTextEditField.toPlainText() == "abc123"
+
+
+def test_notes_edit_field_is_blank_if_there_are_no_notes(qtbot, db_empty):
+    db_empty.add_paper(u.mine.bibcode)
+    widget = CInitialize(qtbot, db_empty)
+    CClick(widget.papersList.papers[0], qtbot)
+    CClick(widget.rightPanel.userNotesTextEditButton, qtbot)
+    assert widget.rightPanel.userNotesTextEditField.toPlainText() == ""
+
+
+def test_notes_edit_field_changes_database_when_finished(qtbot, db_notes):
+    widget = CInitialize(qtbot, db_notes)
+    CClick(widget.papersList.papers[0], qtbot)
+    CClick(widget.rightPanel.userNotesTextEditButton, qtbot)
+    # simulate the user deleting the current into, then adding their own
+    widget.rightPanel.userNotesTextEditField.clear()
+    CEnterText(widget.rightPanel.userNotesTextEditField, "987XYZ", qtbot)
+    CClick(widget.rightPanel.userNotesTextEditFinishedButton, qtbot)
+    assert db_notes.get_paper_attribute(u.mine.bibcode, "user_notes") == "987XYZ"
+
+
+def test_notes_edit_field_changes_shown_text(qtbot, db_notes):
+    widget = CInitialize(qtbot, db_notes)
+    CClick(widget.papersList.papers[0], qtbot)
+    CClick(widget.rightPanel.userNotesTextEditButton, qtbot)
+    # simulate the user deleting the current into, then adding their own
+    widget.rightPanel.userNotesTextEditField.clear()
+    CEnterText(widget.rightPanel.userNotesTextEditField, "987XYZ", qtbot)
+    CClick(widget.rightPanel.userNotesTextEditFinishedButton, qtbot)
+    assert widget.rightPanel.userNotesText.text() == "987XYZ"
+
+
+def test_notes_user_enters_blank_doesnt_print_blank(qtbot, db_notes):
+    widget = CInitialize(qtbot, db_notes)
+    CClick(widget.papersList.papers[0], qtbot)
+    CClick(widget.rightPanel.userNotesTextEditButton, qtbot)
+    # simulate the user deleting the current into, then adding their own
+    widget.rightPanel.userNotesTextEditField.clear()
+    CClick(widget.rightPanel.userNotesTextEditFinishedButton, qtbot)
+    assert widget.rightPanel.userNotesText.text() == "No notes yet"
+
+
+def test_notes_edit_finished_button_disappears_when_clicked(qtbot, db_notes):
+    widget = CInitialize(qtbot, db_notes)
+    CClick(widget.papersList.papers[0], qtbot)
+    CClick(widget.rightPanel.userNotesTextEditButton, qtbot)
+    CEnterText(widget.rightPanel.userNotesTextEditField, "987XYZ", qtbot)
+    CClick(widget.rightPanel.userNotesTextEditFinishedButton, qtbot)
+    assert widget.rightPanel.userNotesTextEditFinishedButton.isHidden() is True
+
+
+def test_notes_edit_field_disappears_when_editing_done(qtbot, db_notes):
+    widget = CInitialize(qtbot, db_notes)
+    CClick(widget.papersList.papers[0], qtbot)
+    CClick(widget.rightPanel.userNotesTextEditButton, qtbot)
+    CEnterText(widget.rightPanel.userNotesTextEditField, "987XYZ", qtbot)
+    CClick(widget.rightPanel.userNotesTextEditFinishedButton, qtbot)
+    assert widget.rightPanel.userNotesTextEditField.isHidden() is True
+
+
+def test_notes_edit_button_reappears_when_editing_done(qtbot, db_notes):
+    widget = CInitialize(qtbot, db_notes)
+    CClick(widget.papersList.papers[0], qtbot)
+    CClick(widget.rightPanel.userNotesTextEditButton, qtbot)
+    CEnterText(widget.rightPanel.userNotesTextEditField, "987XYZ", qtbot)
+    CClick(widget.rightPanel.userNotesTextEditFinishedButton, qtbot)
+    assert widget.rightPanel.userNotesTextEditButton.isHidden() is False
+
+
+##################
+# citation keyword
+##################
+def test_citation_keyword_text_is_correct(qtbot, db):
     widget = CInitialize(qtbot, db)
-    assert widget.rightPanel.copyBibtexButton.isHidden() is True
+    paper = widget.papersList.papers[0]
+    CClick(paper, qtbot)
+    true_cite_key = db.get_paper_attribute(paper.bibcode, "citation_keyword")
+    assert widget.rightPanel.citeKeyText.text() == f"Citation Keyword: {true_cite_key}"
 
 
-def test_copy_bibtex_button_appears_when_paper_clicked(qtbot, db):
+def test_edit_citation_keyword_button_hidden_when_clicked(qtbot, db):
     widget = CInitialize(qtbot, db)
     CClick(widget.papersList.papers[0], qtbot)
-    assert widget.rightPanel.copyBibtexButton.isHidden() is False
+    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
+    assert widget.rightPanel.editCiteKeyButton.isHidden() is True
 
 
-def test_first_delete_paper_button_hidden_at_beginning(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    assert widget.rightPanel.firstDeletePaperButton.isHidden() is True
-
-
-def test_second_delete_paper_button_hidden_at_beginning(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    assert widget.rightPanel.secondDeletePaperButton.isHidden() is True
-
-
-def test_second_delete_cancel_paper_button_hidden_at_beginning(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    assert widget.rightPanel.secondDeletePaperCancelButton.isHidden() is True
-
-
-def test_first_delete_paper_button_appears_when_paper_clicked(qtbot, db):
+def test_citation_keyword_text_not_hidden_when_button_clicked(qtbot, db):
     widget = CInitialize(qtbot, db)
     CClick(widget.papersList.papers[0], qtbot)
-    assert widget.rightPanel.firstDeletePaperButton.isHidden() is False
+    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
+    assert widget.rightPanel.citeKeyText.isHidden() is False
 
 
-def test_second_delete_paper_button_does_not_appear_when_paper_clicked(qtbot, db):
+def test_edit_citation_keyword_entry_shown_when_button_clicked(qtbot, db):
     widget = CInitialize(qtbot, db)
     CClick(widget.papersList.papers[0], qtbot)
-    assert widget.rightPanel.secondDeletePaperButton.isHidden() is True
+    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
+    assert widget.rightPanel.editCiteKeyEntry.isHidden() is False
 
 
-def test_second_delete_paper_cancel_button_does_not_appear_when_paper_clicked(
-    qtbot, db
-):
+def test_edit_citation_keyword_error_text_not_shown_when_button_clicked(qtbot, db):
     widget = CInitialize(qtbot, db)
     CClick(widget.papersList.papers[0], qtbot)
-    assert widget.rightPanel.secondDeletePaperCancelButton.isHidden() is True
+    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
+    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is True
 
 
+def test_edit_citation_keyword_good_entry_updates_database(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CClick(widget.papersList.papers[0], qtbot)
+    # don't use convenience function, for clarity
+    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
+    CEnterText(widget.rightPanel.editCiteKeyEntry, "test_key", qtbot)
+    CPressEnter(widget.rightPanel.editCiteKeyEntry, qtbot)
+    new_key = db_temp.get_paper_attribute(
+        widget.papersList.papers[0].bibcode, "citation_keyword"
+    )
+    assert new_key == "test_key"
+
+
+def test_edit_citation_keyword_good_entry_updates_shown_text(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CClick(widget.papersList.papers[0], qtbot)
+    CEditCiteKey(widget, "test_key", qtbot)
+    assert widget.rightPanel.citeKeyText.text() == "Citation Keyword: test_key"
+
+
+def test_edit_citation_keyword_good_entry_resets_buttons(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CClick(widget.papersList.papers[0], qtbot)
+    CEditCiteKey(widget, "test_key", qtbot)
+    assert widget.rightPanel.editCiteKeyButton.isHidden() is False
+    assert widget.rightPanel.editCiteKeyEntry.isHidden() is True
+    assert widget.rightPanel.citeKeyText.isHidden() is False
+    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is True
+
+
+def test_edit_citation_keyword_good_entry_clears_entry(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CClick(widget.papersList.papers[0], qtbot)
+    CEditCiteKey(widget, "test_key", qtbot)
+    assert widget.rightPanel.editCiteKeyEntry.text() == ""
+
+
+def test_edit_citation_keyword_spaces_not_allowed(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CClick(widget.papersList.papers[0], qtbot)
+    CEditCiteKey(widget, "test key", qtbot)
+    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is False
+    assert widget.rightPanel.editCiteKeyErrorText.text() == "Spaces not allowed"
+
+
+def test_edit_citation_keyword_duplicates_not_allowed(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CClick(widget.papersList.papers[0], qtbot)
+    CEditCiteKey(widget, "test_key", qtbot)
+    CClick(widget.papersList.papers[1], qtbot)
+    CEditCiteKey(widget, "test_key", qtbot)
+    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is False
+    assert (
+        widget.rightPanel.editCiteKeyErrorText.text()
+        == "Another paper already uses this"
+    )
+
+
+def test_edit_citation_keyword_spaces_doesnt_reset_buttons(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CClick(widget.papersList.papers[0], qtbot)
+    CEditCiteKey(widget, "test key", qtbot)
+    assert widget.rightPanel.editCiteKeyButton.isHidden() is True
+    assert widget.rightPanel.editCiteKeyEntry.isHidden() is False
+    assert widget.rightPanel.citeKeyText.isHidden() is False
+    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is False
+
+
+def test_edit_citation_keyword_duplicates_doesnt_reset_buttons(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CClick(widget.papersList.papers[0], qtbot)
+    CEditCiteKey(widget, "test_key", qtbot)
+    CClick(widget.papersList.papers[1], qtbot)
+    CEditCiteKey(widget, "test_key", qtbot)
+    assert widget.rightPanel.editCiteKeyButton.isHidden() is True
+    assert widget.rightPanel.editCiteKeyEntry.isHidden() is False
+    assert widget.rightPanel.citeKeyText.isHidden() is False
+    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is False
+
+
+def test_edit_citation_keyword_spaces_doesnt_clear_text(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CClick(widget.papersList.papers[0], qtbot)
+    CEditCiteKey(widget, "test key", qtbot)
+    assert widget.rightPanel.editCiteKeyEntry.text() == "test key"
+
+
+def test_edit_citation_keyword_duplicates_doesnt_clear_text(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CClick(widget.papersList.papers[0], qtbot)
+    CEditCiteKey(widget, "test_key", qtbot)
+    CClick(widget.papersList.papers[1], qtbot)
+    CEditCiteKey(widget, "test_key", qtbot)
+    assert widget.rightPanel.editCiteKeyEntry.text() == "test_key"
+
+
+def test_edit_citation_keyword_spaces_doesnt_update_database(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CClick(widget.papersList.papers[0], qtbot)
+    CEditCiteKey(widget, "test key", qtbot)
+    bibcode = widget.papersList.papers[0].bibcode
+    assert db_temp.get_paper_attribute(bibcode, "citation_keyword") == bibcode
+
+
+def test_edit_citation_keyword_duplicates_doesnt_update_database(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CClick(widget.papersList.papers[0], qtbot)
+    CEditCiteKey(widget, "test_key", qtbot)
+    CClick(widget.papersList.papers[1], qtbot)
+    CEditCiteKey(widget, "test_key", qtbot)
+    bibcode_update = widget.papersList.papers[0].bibcode
+    assert db_temp.get_paper_attribute(bibcode_update, "citation_keyword") == "test_key"
+    bibcode_dup = widget.papersList.papers[1].bibcode
+    assert db_temp.get_paper_attribute(bibcode_dup, "citation_keyword") == bibcode_dup
+
+
+def test_edit_citation_keyword_entry_escape_exit_resets_buttons(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CClick(widget.papersList.papers[0], qtbot)
+    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
+    CEnterText(widget.rightPanel.editCiteKeyEntry, "abc", qtbot)
+    CPressEscape(widget.rightPanel.editCiteKeyEntry, qtbot)
+    assert widget.rightPanel.editCiteKeyButton.isHidden() is False
+    assert widget.rightPanel.editCiteKeyEntry.isHidden() is True
+    assert widget.rightPanel.citeKeyText.isHidden() is False
+    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is True
+
+
+def test_edit_citation_keyword_entry_backspace_exit_resets_buttons(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CClick(widget.papersList.papers[0], qtbot)
+    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
+    CEnterText(widget.rightPanel.editCiteKeyEntry, "abc", qtbot)
+    # back out the text we entered
+    for _ in range(3):
+        CPressBackspace(widget.rightPanel.editCiteKeyEntry, qtbot)
+    # buttons should not be reset yet
+    assert widget.rightPanel.editCiteKeyButton.isHidden() is True
+    assert widget.rightPanel.editCiteKeyEntry.isHidden() is False
+    assert widget.rightPanel.citeKeyText.isHidden() is False
+    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is True
+    # buttons should reset after one more backspace
+    CPressBackspace(widget.rightPanel.editCiteKeyEntry, qtbot)
+    assert widget.rightPanel.editCiteKeyButton.isHidden() is False
+    assert widget.rightPanel.editCiteKeyEntry.isHidden() is True
+    assert widget.rightPanel.citeKeyText.isHidden() is False
+    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is True
+
+
+def test_edit_citation_keyword_entry_escape_exit_clears_text(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CClick(widget.papersList.papers[0], qtbot)
+    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
+    CEnterText(widget.rightPanel.editCiteKeyEntry, "abc", qtbot)
+    CPressEscape(widget.rightPanel.editCiteKeyEntry, qtbot)
+    assert widget.rightPanel.editCiteKeyEntry.text() == ""
+
+
+def test_edit_citation_keywored_entry_backspace_exit_clears_text(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CClick(widget.papersList.papers[0], qtbot)
+    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
+    CEnterText(widget.rightPanel.editCiteKeyEntry, "abc", qtbot)
+    # back out the text we entered
+    for _ in range(3):
+        CPressBackspace(widget.rightPanel.editCiteKeyEntry, qtbot)
+    # buttons should reset after one more backspace
+    CPressBackspace(widget.rightPanel.editCiteKeyEntry, qtbot)
+
+    assert widget.rightPanel.editCiteKeyEntry.text() == ""
+
+
+def test_edit_citation_keywored_entry_escape_exit_doesnt_change_db(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CClick(widget.papersList.papers[0], qtbot)
+    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
+    CEnterText(widget.rightPanel.editCiteKeyEntry, "abc", qtbot)
+    CPressEscape(widget.rightPanel.editCiteKeyEntry, qtbot)
+    bibcode = widget.papersList.papers[0].bibcode
+    assert db_temp.get_paper_attribute(bibcode, "citation_keyword") == bibcode
+
+
+def test_edit_citation_keywored_entry_backspace_exit_doesnt_change_db(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CClick(widget.papersList.papers[0], qtbot)
+    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
+    CEnterText(widget.rightPanel.editCiteKeyEntry, "abc", qtbot)
+    # back out the text we entered
+    for _ in range(3):
+        CPressBackspace(widget.rightPanel.editCiteKeyEntry, qtbot)
+    # buttons should reset after one more backspace
+    CPressBackspace(widget.rightPanel.editCiteKeyEntry, qtbot)
+    bibcode = widget.papersList.papers[0].bibcode
+    assert db_temp.get_paper_attribute(bibcode, "citation_keyword") == bibcode
+
+
+#################
+# deleting papers
+#################
 def test_second_delete_paper_button_appears_when_first_clicked(qtbot, db):
     widget = CInitialize(qtbot, db)
     CClick(widget.papersList.papers[0], qtbot)
@@ -2550,6 +2683,531 @@ def test_right_panel_abstract_text_is_default_when_paper_is_deleted(qtbot, db_te
     )
 
 
+def test_user_notes_are_appropriately_shown_once_paper_deleted(qtbot, db_notes):
+    widget = CInitialize(qtbot, db_notes)
+    CDeleteFirstPaper(widget, qtbot)
+    assert widget.rightPanel.userNotesText.isHidden() is True
+    assert widget.rightPanel.userNotesTextEditButton.isHidden() is True
+    assert widget.rightPanel.userNotesTextEditField.isHidden() is True
+    assert widget.rightPanel.userNotesTextEditFinishedButton.isHidden() is True
+
+
+def test_spacers_are_hidden_once_paper_deleted(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CDeleteFirstPaper(widget, qtbot)
+    for spacer in widget.rightPanel.spacers:
+        assert spacer.isHidden() is True
+
+
+def test_edit_citation_keyword_buttons_hidden_when_paper_deleted(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CDeleteFirstPaper(widget, qtbot)
+    assert widget.rightPanel.editCiteKeyButton.isHidden() is True
+    assert widget.rightPanel.editCiteKeyEntry.isHidden() is True
+    assert widget.rightPanel.citeKeyText.isHidden() is True
+    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is True
+
+
+########################################################################################
+#
+# test center panel papers list
+#
+########################################################################################
+###############
+# initial state
+###############
+def test_paper_title_has_correct_font_family(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    # get one of the papers, not sure which
+    paper = widget.papersList.papers[0]
+    assert paper.titleText.font().family() == "Cabin"
+
+
+def test_paper_cite_text_has_correct_font_family(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    # get one of the papers, not sure which
+    paper = widget.papersList.papers[0]
+    assert paper.citeText.font().family() == "Cabin"
+
+
+def test_paper_title_has_correct_font_size(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    # get one of the papers, not sure which
+    paper = widget.papersList.papers[0]
+    assert paper.titleText.font().pointSize() == 18
+
+
+def test_paper_cite_string_has_correct_font_size(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    # get one of the papers, not sure which
+    paper = widget.papersList.papers[0]
+    assert paper.citeText.font().pointSize() == 12
+
+
+def test_paper_title_has_word_wrap_on(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    for paper in widget.papersList.papers:
+        assert paper.titleText.wordWrap()
+
+
+def test_paper_cite_string_has_word_wrap_on(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    for paper in widget.papersList.papers:
+        assert paper.citeText.wordWrap()
+
+
+#################
+# creating papers
+#################
+def test_paper_initialization_has_correct_bibcode(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    new_paper = Paper(u.mine.bibcode, db, widget.rightPanel, widget.papersList)
+    assert new_paper.bibcode == u.mine.bibcode
+
+
+def test_paper_initialization_has_correct_title_in_the_text(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    new_paper = Paper(u.mine.bibcode, db, widget.rightPanel, widget.papersList)
+    assert new_paper.titleText.text() == u.mine.title
+
+
+def test_paper_initialization_has_correct_cite_string_in_the_text(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    new_paper = Paper(u.mine.bibcode, db, widget.rightPanel, widget.papersList)
+    assert new_paper.citeText.text() == db.get_cite_string(u.mine.bibcode)
+
+
+def test_paper_initialization_has_accents_in_author_list(qtbot, db_empty):
+    widget = CInitialize(qtbot, db_empty)
+    db_empty.add_paper(u.juan.bibcode)
+    new_paper = Paper(u.juan.bibcode, db_empty, widget.rightPanel, widget.papersList)
+    assert "á" in new_paper.citeText.text()
+
+
+def test_cannot_initialize_paper_thats_not_in_database(qtbot, db_empty):
+    widget = CInitialize(qtbot, db_empty)
+    with pytest.raises(AssertionError):
+        Paper(u.mine.bibcode, db_empty, widget.rightPanel, widget.papersList)
+
+
+def test_all_papers_in_database_are_in_the_paper_list_at_beginning(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    papers_list_bibcodes = [p.bibcode for p in widget.papersList.papers]
+    assert sorted(papers_list_bibcodes) == sorted(db.get_all_bibcodes())
+
+
+def test_get_tags_from_paper_object_is_correct(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    paper = widget.papersList.papers[0]
+    assert paper.getTags() == db.get_paper_tags(paper.bibcode)
+
+
+##############
+# highlighting
+##############
+def test_clicking_on_paper_highlights_it_in_center_panel(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    # get one of the papers, not sure which
+    paper = widget.papersList.papers[0]
+    CClick(paper, qtbot)
+    assert paper.property("is_highlighted") is True
+
+
+def test_clicking_on_paper_highlights_its_text_it_in_center_panel(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    # get one of the papers, not sure which
+    paper = widget.papersList.papers[0]
+    CClick(paper, qtbot)
+    assert paper.titleText.property("is_highlighted") is True
+    assert paper.citeText.property("is_highlighted") is True
+
+
+def test_all_papers_are_unhilighted_to_start(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    for paper in widget.papersList.papers:
+        assert paper.property("is_highlighted") is False
+
+
+def test_all_papers_text_are_unhilighted_to_start(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    for paper in widget.papersList.papers:
+        assert paper.titleText.property("is_highlighted") is False
+        assert paper.citeText.property("is_highlighted") is False
+
+
+def test_papers_are_unhighlighted_when_others_clicked(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    assert len(widget.papersList.papers) > 1
+    for paper_click in widget.papersList.papers:
+        CClick(paper_click, qtbot)
+        for paper_test in widget.papersList.papers:
+            if paper_test.titleText == paper_click.titleText:
+                assert paper_test.property("is_highlighted") is True
+            else:
+                assert paper_test.property("is_highlighted") is False
+
+
+def test_paper_texts_are_unhighlighted_when_others_clicked(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    assert len(widget.papersList.papers) > 1
+    for paper_click in widget.papersList.papers:
+        CClick(paper_click, qtbot)
+        for paper_test in widget.papersList.papers:
+            if paper_test.titleText == paper_click.titleText:
+                assert paper_test.titleText.property("is_highlighted") is True
+                assert paper_test.citeText.property("is_highlighted") is True
+            else:
+                assert paper_test.titleText.property("is_highlighted") is False
+                assert paper_test.citeText.property("is_highlighted") is False
+
+
+##################################################################
+# opening paper pdfs when double clicked, or modifying right panel
+##################################################################
+def test_double_clicking_on_paper_with_local_file_opens_it(
+    qtbot, db_empty, monkeypatch
+):
+    test_loc = __file__
+    open_calls = []
+    monkeypatch.setattr(QDesktopServices, "openUrl", lambda x: open_calls.append(x))
+
+    widget = CInitialize(qtbot, db_empty)
+    # add a paper to this empty database to make the paper object
+    CAddPaper(widget, u.mine.bibcode, qtbot)
+    db_empty.set_paper_attribute(u.mine.bibcode, "local_file", test_loc)
+    CDoubleClick(widget.papersList.papers[0], qtbot)
+    # since this already has a URL it should be added
+    assert open_calls == [f"file:{test_loc}"]
+
+
+def test_dclicking_on_paper_with_no_local_file_doesnt_ask_user(
+    qtbot, db_temp, monkeypatch
+):
+    user_asks = []
+    monkeypatch.setattr(
+        QFileDialog,
+        "getSaveFileName",
+        lambda filter, dir, caption: user_asks.append("save"),
+    )
+    monkeypatch.setattr(
+        QFileDialog,
+        "getOpenFileName",
+        lambda filter, dir: user_asks.append("open"),
+    )
+
+    widget = CInitialize(qtbot, db_temp)
+    CDoubleClick(widget.papersList.papers[0], qtbot)
+    assert user_asks == []
+
+
+def test_dclicking_on_paper_with_no_local_file_doesnt_open(qtbot, db_temp, monkeypatch):
+    # Here we need to use monkeypatch to simulate opening the file
+    open_calls = []
+    monkeypatch.setattr(QDesktopServices, "openUrl", lambda x: open_calls.append(x))
+
+    widget = CInitialize(qtbot, db_temp)
+    CDoubleClick(widget.papersList.papers[0], qtbot)
+    assert open_calls == []
+
+
+def test_dclicking_on_paper_with_no_local_file_highlights_right_panel(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CDoubleClick(widget.papersList.papers[0], qtbot)
+    assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == True
+    assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == True
+
+
+def test_dclicking_on_paper_with_no_local_file_scrolls_to_show_buttons(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CDoubleClick(widget.papersList.papers[0], qtbot)
+    # I don't know exactly where this should end up, but not at the top or bottom
+    assert (
+        0
+        < widget.rightPanel.verticalScrollBar().value()
+        < widget.rightPanel.verticalScrollBar().maximum()
+    )
+    assert widget.rightPanel.horizontalScrollBar().value() == 0
+
+
+def test_pdf_highlighting_goes_away_with_any_click(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CDoubleClick(widget.papersList.papers[0], qtbot)
+    assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == True
+    assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == True
+    CClick(widget.rightPanel.titleText, qtbot)
+    assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == False
+    assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == False
+
+
+def test_pdf_highlighting_goes_away_with_choose_local_interaction(
+    qtbot, db_temp, monkeypatch
+):
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", MOpenFileNoResponse)
+    widget = CInitialize(qtbot, db_temp)
+    CDoubleClick(widget.papersList.papers[0], qtbot)
+    assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == True
+    assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == True
+    CClick(widget.rightPanel.pdfChooseLocalFileButton, qtbot)
+    assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == False
+    assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == False
+
+
+def test_pdf_highlighting_goes_away_with_download_interaction(
+    qtbot, db_temp, monkeypatch
+):
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", MSaveFileNoResponse)
+    widget = CInitialize(qtbot, db_temp)
+    CDoubleClick(widget.papersList.papers[0], qtbot)
+    assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == True
+    assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == True
+    CClick(widget.rightPanel.pdfDownloadButton, qtbot)
+    assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == False
+    assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == False
+
+
+def test_pdf_highlighting_goes_away_when_new_paper_clicked(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CDoubleClick(widget.papersList.papers[0], qtbot)
+    assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == True
+    assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == True
+    CClick(widget.papersList.papers[1], qtbot)
+    assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == False
+    assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == False
+
+
+def test_dclicking_on_paper_with_nonexistent_file_redirects_to_right_panel(
+    qtbot, db_empty, monkeypatch
+):
+    # first, add a file to the database, then set the file to something nonsense. We'll
+    # then try to open it, and check that the interface asks the user.
+    db_empty.add_paper(u.mine.bibcode)
+    db_empty.set_paper_attribute(u.mine.bibcode, "local_file", "lskdlskdflskj")
+
+    # when we try to open files, just list the ones we tried to open
+    open_calls = []
+    monkeypatch.setattr(QDesktopServices, "openUrl", lambda x: open_calls.append(x))
+
+    widget = CInitialize(qtbot, db_empty)
+    # add a paper to this empty database to make the paper object
+    CDoubleClick(widget.papersList.papers[0], qtbot)
+    # check that we didn't open anything
+    assert open_calls == []
+    # check that the right panel is highlighted
+    assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == True
+    assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == True
+
+
+def test_dclicking_on_paper_shows_details_in_right_panel(qtbot, db_empty):
+    widget = CInitialize(qtbot, db_empty)
+    # add a paper to this empty database to make the paper object
+    CAddPaper(widget, u.mine.bibcode, qtbot)  # do not add file location
+    CDoubleClick(widget.papersList.papers[0], qtbot)
+    assert widget.rightPanel.titleText.text() == u.mine.title
+
+
+################
+# sorting papers
+################
+def test_papers_are_in_sorted_order_to_begin(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    dates = [
+        db.get_paper_attribute(paper.bibcode, "pubdate")
+        for paper in widget.papersList.papers
+    ]
+
+    assert dates == sorted(dates)
+
+
+def test_papers_are_in_sorted_order_after_adding(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    # add two papers: one very old, one very recent
+    for bibcode in [u.mine_recent.bibcode, u.bbfh.bibcode]:
+        CAddPaper(widget, bibcode, qtbot)
+    # then check sorting
+    dates = [
+        db_temp.get_paper_attribute(paper.bibcode, "pubdate")
+        for paper in widget.papersList.papers
+    ]
+    assert dates == sorted(dates)
+
+
+def test_paper_sort_is_initially_by_date(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    bibcodes = [paper.bibcode for paper in widget.papersList.papers]
+    assert bibcodes == [u.tremonti.bibcode, u.mine.bibcode]
+
+
+def test_paper_sort_dropdown_can_sort_by_author(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    # find the dropdown to sort by date
+    index = widget.papersList.sortChooser.findText("Sort by First Author")
+    widget.papersList.sortChooser.setCurrentIndex(index)
+    # then check the papers in the list
+    bibcodes = [paper.bibcode for paper in widget.papersList.papers]
+    assert bibcodes == [u.mine.bibcode, u.tremonti.bibcode]
+
+
+def test_paper_sort_dropdown_can_sort_by_author_same_last_name(qtbot, db_temp):
+    # add another paper by Warren Brown, should be sorted after me (Gillen Brown)
+    db_temp.add_paper("2015ApJ...804...49B")
+    widget = CInitialize(qtbot, db_temp)
+    # find the dropdown to sort by date
+    index = widget.papersList.sortChooser.findText("Sort by First Author")
+    widget.papersList.sortChooser.setCurrentIndex(index)
+    # then check the papers in the list
+    bibcodes = [paper.bibcode for paper in widget.papersList.papers]
+    assert bibcodes == [u.mine.bibcode, "2015ApJ...804...49B", u.tremonti.bibcode]
+
+
+def test_paper_sort_dropdown_can_sort_in_both_directions(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    # find the dropdown to sort by date
+    index = widget.papersList.sortChooser.findText("Sort by First Author")
+    widget.papersList.sortChooser.setCurrentIndex(index)
+    # then check the papers in the list
+    bibcodes = [paper.bibcode for paper in widget.papersList.papers]
+    assert bibcodes == [u.mine.bibcode, u.tremonti.bibcode]
+    # find the dropdown to sort by date
+    index = widget.papersList.sortChooser.findText("Sort by Date")
+    widget.papersList.sortChooser.setCurrentIndex(index)
+    # then check the papers in the list
+    bibcodes = [paper.bibcode for paper in widget.papersList.papers]
+    assert bibcodes == [u.tremonti.bibcode, u.mine.bibcode]
+
+
+def test_paper_sort_dropdown_can_sort_by_author_single_author(qtbot, db_empty):
+    bibcodes_to_add = [
+        u.mine.bibcode,
+        u.mine_recent.bibcode,
+        "2021MNRAS.508.5935B",
+        "2021NewA...8401501B",
+    ]
+    # put some papers by me in the database
+    for b in bibcodes_to_add:
+        db_empty.add_paper(b)
+    widget = CInitialize(qtbot, db_empty)
+    # find the dropdown to sort by date
+    index = widget.papersList.sortChooser.findText("Sort by First Author")
+    widget.papersList.sortChooser.setCurrentIndex(index)
+    # # then check the papers in the list
+    bibcodes = [paper.bibcode for paper in widget.papersList.papers]
+    # since these are all one author, they should be in date order
+    assert bibcodes == [
+        u.mine.bibcode,
+        "2021NewA...8401501B",
+        "2021MNRAS.508.5935B",
+        u.mine_recent.bibcode,
+    ]
+
+
+########################################################################################
+#
+# test the left panel tags list
+#
+########################################################################################
+###############
+# initial state
+###############
+def test_add_tag_button_is_shown_at_beginning(qtbot, db_empty):
+    widget = CInitialize(qtbot, db_empty)
+    assert widget.tagsList.addTagButton.isHidden() is False
+
+
+def test_add_tag_text_button_has_correct_font_size(qtbot, db_empty):
+    widget = CInitialize(qtbot, db_empty)
+    assert widget.tagsList.addTagButton.font().pointSize() == 14
+
+
+def test_add_tag_text_button_has_correct_font_family(qtbot, db_empty):
+    widget = CInitialize(qtbot, db_empty)
+    assert widget.tagsList.addTagButton.font().family() == "Cabin"
+
+
+def test_add_tag_text_bar_is_hidden_at_beginning(qtbot, db_empty):
+    widget = CInitialize(qtbot, db_empty)
+    assert widget.tagsList.addTagBar.isHidden() is True
+
+
+def test_add_tag_error_text_is_hidden_at_beginning(qtbot, db_empty):
+    widget = CInitialize(qtbot, db_empty)
+    assert widget.tagsList.addTagErrorText.isHidden() is True
+
+
+def test_add_tag_text_bar_has_correct_font_family(qtbot, db_empty):
+    widget = CInitialize(qtbot, db_empty)
+    CClick(widget.tagsList.addTagButton, qtbot)
+    assert widget.tagsList.addTagBar.font().family() == "Cabin"
+
+
+def test_add_tag_text_bar_has_correct_placeholder_text(qtbot, db_empty):
+    widget = CInitialize(qtbot, db_empty)
+    CClick(widget.tagsList.addTagButton, qtbot)
+    assert widget.tagsList.addTagBar.placeholderText() == "Tag name"
+
+
+def test_add_tag_text_bar_has_correct_font_size(qtbot, db_empty):
+    widget = CInitialize(qtbot, db_empty)
+    CClick(widget.tagsList.addTagButton, qtbot)
+    assert widget.tagsList.addTagBar.font().pointSize() == 14
+
+
+def test_tag_has_correct_font_family(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    # get one of the tags, not sure which
+    tag = widget.tagsList.tags[0]
+    assert tag.font().family() == "Cabin"
+
+
+def test_tag_has_correct_font_size(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    # get one of the tags, not sure which
+    tag = widget.tagsList.tags[0]
+    assert tag.font().family() == "Cabin"
+
+
+def test_all_tags_in_database_are_in_the_tag_list_at_beginning(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    tags_list = [t.name for t in widget.tagsList.tags]
+    assert sorted(tags_list) == sorted(db.get_all_tags())
+
+
+def test_read_and_unread_are_initialized_even_in_new_database(qtbot, db_empty):
+    widget = CInitialize(qtbot, db_empty)
+    tags_list = [t.name for t in widget.tagsList.tags]
+    assert sorted(tags_list) == ["Read", "Unread"]
+
+
+def test_read_and_unread_arent_added_to_nonempty_database(qtbot, db_no_tags):
+    db_no_tags.add_new_tag("lskdjlkj")
+    db_no_tags.add_new_tag("ghjghjg")
+    widget = CInitialize(qtbot, db_no_tags)
+    tags_list = [t.name for t in widget.tagsList.tags]
+    assert "Read" not in tags_list
+    assert "Unread" not in tags_list
+
+
+def test_tag_has_correct_name(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    # get one of the tags, not sure which
+    tag = widget.tagsList.tags[0]
+    assert tag.label.text() == tag.name
+
+
+def test_show_all_button_fontsize(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    assert widget.tagsList.showAllButton.font().pointSize() == 14
+
+
+def test_show_all_button_has_correct_font_family(qtbot, db_empty):
+    widget = CInitialize(qtbot, db_empty)
+    assert widget.tagsList.showAllButton.font().family() == "Cabin"
+
+
+def test_show_all_button_has_correct_text(qtbot, db_empty):
+    widget = CInitialize(qtbot, db_empty)
+    assert widget.tagsList.showAllButton.label.text() == "All Papers"
+
+
 def test_first_delete_tag_button_shown_at_beginning(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     assert widget.firstDeleteTagButton.isHidden() is False
@@ -2580,34 +3238,6 @@ def test_second_delete_tag_error_text_hidden_at_beginning(qtbot, db_temp):
     assert widget.secondDeleteTagErrorText.isHidden() is True
 
 
-def test_clicking_first_tag_delete_button_shows_second_entry(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CClick(widget.firstDeleteTagButton, qtbot)
-    assert widget.secondDeleteTagEntry.isHidden() is False
-
-
-def test_clicking_first_tag_delete_button_puts_focus_on_entry(
-    qtbot, db_temp, monkeypatch
-):
-    # I tried to test this directly, but was having trouble getting the tests to work
-    # properly. Specifically, widget.hasFocus() was not working propertly in tests for
-    # whatever reasonSo instead, I'll monkeypatch the setFocus method. I have tested
-    # that this works in the actual interface
-    setFocus_calls = []
-    monkeypatch.setattr(QLineEdit, "setFocus", lambda x: setFocus_calls.append(True))
-
-    widget = CInitialize(qtbot, db_temp)
-    CClick(widget.firstDeleteTagButton, qtbot)
-    # assert widget.secondDeleteTagEntry.hasFocus() is True  # would be the best test
-    assert setFocus_calls == [True]
-
-
-def test_clicking_first_tag_delete_button_hides_first_button(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CClick(widget.firstDeleteTagButton, qtbot)
-    assert widget.firstDeleteTagButton.isHidden() is True
-
-
 def test_second_delete_tag_button_has_correct_font_size(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.firstDeleteTagButton, qtbot)
@@ -2635,6 +3265,402 @@ def test_third_delete_tag_entry_hidden_at_beginning(qtbot, db_temp):
 def test_third_cancel_tag_entry_hidden_at_beginning(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     assert widget.thirdDeleteTagCancelButton.isHidden() is True
+
+
+def test_third_delete_tag_button_has_correct_font_size(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CClick(widget.firstDeleteTagButton, qtbot)
+    CEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
+    assert widget.thirdDeleteTagButton.font().pointSize() == 14
+
+
+def test_third_delete_tag_button_has_correct_font_family(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CClick(widget.firstDeleteTagButton, qtbot)
+    CEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
+    assert widget.thirdDeleteTagButton.font().family() == "Cabin"
+
+
+def test_third_delete_tag_cancel_button_has_correct_font_size(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CClick(widget.firstDeleteTagButton, qtbot)
+    CEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
+    assert widget.thirdDeleteTagCancelButton.font().pointSize() == 14
+
+
+def test_third_delete_tag_cancel_button_has_correct_font_family(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CClick(widget.firstDeleteTagButton, qtbot)
+    CEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
+    CPressEnter(widget.secondDeleteTagEntry, qtbot)
+    assert widget.thirdDeleteTagCancelButton.font().family() == "Cabin"
+
+
+def test_show_all_export_button_has_correct_text(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    assert widget.tagsList.showAllButton.exportButton.text() == "Export"
+
+
+def test_tag_export_button_has_correct_text(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    assert widget.tagsList.tags[0].exportButton.text() == "Export"
+
+
+def test_show_all_tags_button_starts_with_export_button(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    assert widget.tagsList.showAllButton.exportButton.isHidden() is False
+
+
+def test_all_tags_start_with_export_hidden(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    # get a tag from the left panel to click on
+    for tag in widget.tagsList.tags:
+        assert tag.exportButton.isHidden() is True
+
+
+def test_left_panel_tags_are_sorted_alphabetically(qtbot, db_empty):
+    # add tags to database before we initialize interface
+    # add tags
+    tags = ["abc", "zyx", "Aye", "Test", "ZAA"]
+    for t in tags:
+        db_empty.add_new_tag(t)
+
+    widget = CInitialize(qtbot, db_empty)
+    tag_names = [tag.name for tag in widget.tagsList.tags]
+    assert tag_names == sorted(tags, key=lambda t: t.lower())
+
+
+#############
+# adding tags
+#############
+def test_clicking_add_tag_button_hides_button(qtbot, db_empty):
+    widget = CInitialize(qtbot, db_empty)
+    CClick(widget.tagsList.addTagButton, qtbot)
+    assert widget.tagsList.addTagButton.isHidden() is True
+
+
+def test_clicking_add_tag_button_shows_text_entry(qtbot, db_empty):
+    widget = CInitialize(qtbot, db_empty)
+    CClick(widget.tagsList.addTagButton, qtbot)
+    assert widget.tagsList.addTagBar.isHidden() is False
+
+
+def test_clicking_add_tag_button_puts_focus_on_text_entry(qtbot, db_empty, monkeypatch):
+    # I tried to test this directly, but was having trouble getting the tests to work
+    # properly. Specifically, widget.hasFocus() was not working propertly in tests for
+    # whatever reasonSo instead, I'll monkeypatch the setFocus method. I have tested
+    # that this works in the actual interface
+    setFocus_calls = []
+    monkeypatch.setattr(QLineEdit, "setFocus", lambda x: setFocus_calls.append(True))
+
+    widget = CInitialize(qtbot, db_empty)
+    CClick(widget.tagsList.addTagButton, qtbot)
+    # assert widget.tagsList.addTagBar.hasFocus() is True  # would be the best test
+    assert setFocus_calls == [True]
+
+
+def test_can_add_tag_by_filling_tag_name_then_pressing_enter(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    # Don't use convenience function, for clarity on what I'm doing
+    CClick(widget.tagsList.addTagButton, qtbot)
+    CEnterText(widget.tagsList.addTagBar, "Test Tag", qtbot)
+    CPressEnter(widget.tagsList.addTagBar, qtbot)
+    assert db_temp.paper_has_tag(u.mine.bibcode, "Test Tag") is False
+
+
+def test_can_add_tag_to_list_by_filling_tag_name_then_pressing_enter(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    # Don't use convenience function, for clarity on what I'm doing
+    CClick(widget.tagsList.addTagButton, qtbot)
+    CEnterText(widget.tagsList.addTagBar, "Test Tag", qtbot)
+    CPressEnter(widget.tagsList.addTagBar, qtbot)
+    tag_names = [t.name for t in widget.tagsList.tags]
+    assert "Test Tag" in tag_names
+
+
+def test_tag_name_entry_is_cleared_after_successful_entry(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CAddTag(widget, "Test Tag", qtbot)
+    assert widget.tagsList.addTagBar.text() == ""
+
+
+def test_tag_name_entry_is_hidden_after_successful_entry(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CAddTag(widget, "Test Tag", qtbot)
+    assert widget.tagsList.addTagBar.isHidden() is True
+
+
+def test_tag_name_button_is_shown_after_successful_entry(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CAddTag(widget, "Test Tag", qtbot)
+    assert widget.tagsList.addTagButton.isHidden() is False
+
+
+def test_duplicate_in_internal_tags_list_raises_error(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CAddTag(widget, "Test Tag", qtbot)
+    new_tag = LeftPanelTag("Test Tag", widget.papersList, widget.tagsList)
+    with pytest.raises(AssertionError):
+        widget.tagsList.addTag(new_tag)
+
+
+def test_tag_name_entry_is_not_cleared_after_duplicate_tag_attempt(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CAddTag(widget, "Test Tag", qtbot)
+    CAddTag(widget, "Test Tag", qtbot)
+    assert widget.tagsList.addTagBar.text() == "Test Tag"
+
+
+def test_add_tag_error_message_shown_after_duplicate_tag_attempt(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CAddTag(widget, "Test Tag", qtbot)
+    CAddTag(widget, "Test Tag", qtbot)
+    assert widget.tagsList.addTagErrorText.isHidden() is False
+    assert widget.tagsList.addTagErrorText.text() == "This tag already exists"
+
+
+def test_tag_name_entry_is_not_cleared_after_duplicate_cap_tag_attempt(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CAddTag(widget, "Test Tag", qtbot)
+    CAddTag(widget, "test tag", qtbot)
+    assert widget.tagsList.addTagBar.text() == "test tag"
+
+
+def test_tag_name_entry_is_not_cleared_after_whitespace_tag_attempt(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CAddTag(widget, "   ", qtbot)
+    assert widget.tagsList.addTagBar.text() == "   "
+
+
+def test_add_tag_error_message_shown_after_whitesapce_tag_attempt(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CAddTag(widget, "   ", qtbot)
+    assert widget.tagsList.addTagErrorText.isHidden() is False
+    assert widget.tagsList.addTagErrorText.text() == "Pure whitespace isn't valid"
+
+
+def test_tag_name_entry_is_not_cleared_after_backtick_tag_attempt(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CAddTag(widget, "`", qtbot)
+    assert widget.tagsList.addTagBar.text() == "`"
+
+
+def test_add_tag_error_message_shown_after_backtick_tag_attempt(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CAddTag(widget, "`", qtbot)
+    assert widget.tagsList.addTagErrorText.isHidden() is False
+    assert widget.tagsList.addTagErrorText.text() == "Backticks aren't allowed"
+
+
+def test_add_tag_error_message_hidden_after_text_changed(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CAddTag(widget, "   ", qtbot)
+    assert widget.tagsList.addTagErrorText.isHidden() is False
+    CPressBackspace(widget.tagsList.addTagBar, qtbot)
+    assert widget.tagsList.addTagErrorText.isHidden() is True
+
+
+def test_add_tag_error_message_hidden_after_cursor_moved(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CAddTag(widget, "   ", qtbot)
+    assert widget.tagsList.addTagErrorText.isHidden() is False
+    widget.tagsList.addTagBar.setCursorPosition(0)
+    assert widget.tagsList.addTagErrorText.isHidden() is True
+
+
+def test_add_tag_entry_can_exit_with_escape_press_at_any_time(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    CClick(widget.tagsList.addTagButton, qtbot)
+    CEnterText(widget.tagsList.addTagBar, "sdfsdf", qtbot)
+    CPressEscape(widget.tagsList.addTagBar, qtbot)
+    assert widget.tagsList.addTagBar.isHidden() is True
+    assert widget.tagsList.addTagButton.isHidden() is False
+    assert widget.tagsList.addTagErrorText.isHidden() is True
+
+
+def test_add_tag_entry_can_exit_with_escape_press_at_any_time_clears_text(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    CClick(widget.tagsList.addTagButton, qtbot)
+    CEnterText(widget.tagsList.addTagBar, "sdfsdf", qtbot)
+    CPressEscape(widget.tagsList.addTagBar, qtbot)
+    assert widget.tagsList.addTagBar.text() == ""
+
+
+def test_add_tag_entry_can_exit_with_backspace_when_empty(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    CClick(widget.tagsList.addTagButton, qtbot)
+    CEnterText(widget.tagsList.addTagBar, "abc", qtbot)
+    # back out those three letters
+    for _ in range(3):
+        CPressBackspace(widget.tagsList.addTagBar, qtbot)
+    # entry should still be visible
+    assert widget.tagsList.addTagBar.isHidden() is False
+    assert widget.tagsList.addTagButton.isHidden() is True
+    # with one more backspace, we exit
+    CPressBackspace(widget.tagsList.addTagBar, qtbot)
+    assert widget.tagsList.addTagBar.isHidden() is True
+    assert widget.tagsList.addTagButton.isHidden() is False
+    assert widget.tagsList.addTagErrorText.isHidden() is True
+
+
+def test_newly_added_tags_appear_in_right_panel(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CAddTag(widget, "Test Tag", qtbot)
+    CClick(widget.papersList.papers[0], qtbot)
+    assert "Test Tag" in [t.text() for t in widget.rightPanel.tags]
+
+
+def test_adding_tags_doesnt_duplicate_tags_in_right_panel(qtbot, db_empty):
+    db_empty.add_paper(u.mine.bibcode)
+    widget = CInitialize(qtbot, db_empty)
+    CAddTag(widget, "Test Tag", qtbot)
+    CClick(widget.papersList.papers[0], qtbot)
+    assert ["Test Tag"] == [t.text() for t in widget.rightPanel.tags]
+    # add another tag, then check again
+    CAddTag(widget, "Test Tag 2", qtbot)
+    CClick(widget.papersList.papers[0], qtbot)
+    assert ["Test Tag", "Test Tag 2"] == [t.text() for t in widget.rightPanel.tags]
+
+
+########################################
+# clicking tags shows only tagged papers
+########################################
+def test_all_papers_start_not_hidden(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    for paper in widget.papersList.papers:
+        assert not paper.isHidden()
+
+
+def test_clicking_on_tag_in_left_panel_hides_papers(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    # get a tag from the left panel to click on
+    left_tag = widget.tagsList.tags[0]
+    CClick(left_tag, qtbot)
+    # then check the tags that are in shown papers
+    for paper in widget.papersList.papers:
+        if left_tag.label.text() in db.get_paper_tags(paper.bibcode):
+            assert paper.isHidden() is False
+        else:
+            assert paper.isHidden() is True
+
+
+def test_clicking_on_show_all_button_shows_all_papers(qtbot, db):
+    widget = CInitialize(qtbot, db)
+    # First click on a tag to restrict the number of papers shown
+    left_tag = widget.tagsList.tags[0]
+    CClick(left_tag, qtbot)
+    # then click on the button to show all
+    CClick(widget.tagsList.showAllButton, qtbot)
+    # then check that all are shown
+    for paper in widget.papersList.papers:
+        assert paper.isHidden() is False
+
+
+def test_show_all_tags_button_starts_highlighted(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    assert widget.tagsList.showAllButton.property("is_highlighted") is True
+    assert widget.tagsList.showAllButton.label.property("is_highlighted") is True
+
+
+def test_all_tags_start_unhighlighted(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    # get a tag from the left panel to click on
+    for tag in widget.tagsList.tags:
+        assert tag.property("is_highlighted") is False
+        assert tag.label.property("is_highlighted") is False
+
+
+def test_clicking_on_tag_in_left_panel_highlights_tag_text(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    # get a tag from the left panel to click on
+    tag = widget.tagsList.tags[0]
+    CClick(tag, qtbot)
+    assert tag.property("is_highlighted") is True
+    assert tag.label.property("is_highlighted") is True
+
+
+def test_clicking_on_show_all_in_left_panel_highlights_tag_text(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CClick(widget.tagsList.showAllButton, qtbot)
+    assert widget.tagsList.showAllButton.property("is_highlighted") is True
+    assert widget.tagsList.showAllButton.label.property("is_highlighted") is True
+
+
+def test_clicking_on_tag_in_left_panel_unlights_others(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    # Click on one tag, then another
+    for tag in widget.tagsList.tags:
+        CClick(tag, qtbot)
+        for tag_comp in widget.tagsList.tags:
+            if tag.label.text() == tag_comp.label.text():
+                assert tag_comp.property("is_highlighted") is True
+                assert tag_comp.label.property("is_highlighted") is True
+            else:
+                assert tag_comp.property("is_highlighted") is False
+                assert tag_comp.label.property("is_highlighted") is False
+
+
+def test_clicking_on_show_all_in_left_panel_unlights_others(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CClick(widget.tagsList.showAllButton, qtbot)
+    for tag in widget.tagsList.tags:
+        assert tag.property("is_highlighted") is False
+        assert tag.label.property("is_highlighted") is False
+
+
+def test_newly_added_tag_is_unhighlighted(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CAddTag(widget, "newly added tag", qtbot)
+    for tag in widget.tagsList.tags:
+        if tag.label.text() == "newly added tag":
+            assert tag.property("is_highlighted") is False
+            assert tag.label.property("is_highlighted") is False
+
+
+def test_left_panel_tags_are_sorted_alphabetically_after_adding(qtbot, db_empty):
+    widget = CInitialize(qtbot, db_empty)
+    # add tags
+    tags = ["abc", "zyx", "Aye", "Test", "ZAA"]
+    for tag in tags:
+        CAddTag(widget, tag, qtbot)
+    tag_names = [tag.name for tag in widget.tagsList.tags]
+    # in comparison, include read and unread, since those were included on widet
+    # initialization too
+    assert tag_names == sorted(tags + ["Read", "Unread"], key=lambda w: w.lower())
+
+
+###############
+# deleting tags
+###############
+def test_clicking_first_tag_delete_button_shows_second_entry(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CClick(widget.firstDeleteTagButton, qtbot)
+    assert widget.secondDeleteTagEntry.isHidden() is False
+
+
+def test_clicking_first_tag_delete_button_puts_focus_on_entry(
+    qtbot, db_temp, monkeypatch
+):
+    # I tried to test this directly, but was having trouble getting the tests to work
+    # properly. Specifically, widget.hasFocus() was not working propertly in tests for
+    # whatever reasonSo instead, I'll monkeypatch the setFocus method. I have tested
+    # that this works in the actual interface
+    setFocus_calls = []
+    monkeypatch.setattr(QLineEdit, "setFocus", lambda x: setFocus_calls.append(True))
+
+    widget = CInitialize(qtbot, db_temp)
+    CClick(widget.firstDeleteTagButton, qtbot)
+    # assert widget.secondDeleteTagEntry.hasFocus() is True  # would be the best test
+    assert setFocus_calls == [True]
+
+
+def test_clicking_first_tag_delete_button_hides_first_button(qtbot, db_temp):
+    widget = CInitialize(qtbot, db_temp)
+    CClick(widget.firstDeleteTagButton, qtbot)
+    assert widget.firstDeleteTagButton.isHidden() is True
 
 
 def test_second_delete_tag_entry_is_hidden_when_entry_done(qtbot, db_temp):
@@ -2700,38 +3726,6 @@ def test_delete_tag_entry_can_exit_with_backspace_when_empty(qtbot, db):
     CPressBackspace(widget.secondDeleteTagEntry, qtbot)
     assert widget.secondDeleteTagEntry.isHidden() is True
     assert widget.firstDeleteTagButton.isHidden() is False
-
-
-def test_third_delete_tag_button_has_correct_font_size(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CClick(widget.firstDeleteTagButton, qtbot)
-    CEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
-    CPressEnter(widget.secondDeleteTagEntry, qtbot)
-    assert widget.thirdDeleteTagButton.font().pointSize() == 14
-
-
-def test_third_delete_tag_button_has_correct_font_family(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CClick(widget.firstDeleteTagButton, qtbot)
-    CEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
-    CPressEnter(widget.secondDeleteTagEntry, qtbot)
-    assert widget.thirdDeleteTagButton.font().family() == "Cabin"
-
-
-def test_third_delete_tag_cancel_button_has_correct_font_size(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CClick(widget.firstDeleteTagButton, qtbot)
-    CEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
-    CPressEnter(widget.secondDeleteTagEntry, qtbot)
-    assert widget.thirdDeleteTagCancelButton.font().pointSize() == 14
-
-
-def test_third_delete_tag_cancel_button_has_correct_font_family(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CClick(widget.firstDeleteTagButton, qtbot)
-    CEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
-    CPressEnter(widget.secondDeleteTagEntry, qtbot)
-    assert widget.thirdDeleteTagCancelButton.font().family() == "Cabin"
 
 
 def test_third_delete_tag_button_text_is_accurate(qtbot, db_temp):
@@ -2920,99 +3914,9 @@ def test_invalid_tag_delete_error_text_hidden_when_text_modified(qtbot, db_temp)
     assert widget.secondDeleteTagErrorText.isHidden() is True
 
 
-def test_tag_checkboxes_are_hidden_when_paper_clicked(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    # click on a paper, then click the edit tags button
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.editTagsButton, qtbot)
-    # click on a different paper
-    CClick(widget.papersList.papers[1], qtbot)
-    # the tag edit checkboxes should all be hidden
-    for t in widget.rightPanel.tags:
-        assert t.isHidden()
-
-
-def test_done_editing_button_is_hidden_when_paper_clicked(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    # click on a paper, then click the edit tags button
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.editTagsButton, qtbot)
-    # click on a different paper
-    CClick(widget.papersList.papers[1], qtbot)
-    # the tag edit checkboxes should all be hidden
-    assert widget.rightPanel.doneEditingTagsButton.isHidden()
-
-
-def test_newly_added_tags_appear_in_right_panel(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CAddTag(widget, "Test Tag", qtbot)
-    CClick(widget.papersList.papers[0], qtbot)
-    assert "Test Tag" in [t.text() for t in widget.rightPanel.tags]
-
-
-def test_adding_tags_doesnt_duplicate_tags_in_right_panel(qtbot, db_empty):
-    db_empty.add_paper(u.mine.bibcode)
-    widget = CInitialize(qtbot, db_empty)
-    CAddTag(widget, "Test Tag", qtbot)
-    CClick(widget.papersList.papers[0], qtbot)
-    assert ["Test Tag"] == [t.text() for t in widget.rightPanel.tags]
-    # add another tag, then check again
-    CAddTag(widget, "Test Tag 2", qtbot)
-    CClick(widget.papersList.papers[0], qtbot)
-    assert ["Test Tag", "Test Tag 2"] == [t.text() for t in widget.rightPanel.tags]
-
-
-def test_open_ads_button_hidden_at_beginning(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    assert widget.rightPanel.adsButton.isHidden() is True
-
-
-def test_open_ads_button_appears_when_paper_clicked(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    CClick(widget.papersList.papers[0], qtbot)
-    assert widget.rightPanel.adsButton.isHidden() is False
-
-
-def test_clicking_on_ads_button_opens_paper_in_browser(qtbot, db_empty, monkeypatch):
-    # Here we need to use monkeypatch to simulate opening the URL
-    open_calls = []
-    monkeypatch.setattr(QDesktopServices, "openUrl", lambda x: open_calls.append(x))
-
-    widget = CInitialize(qtbot, db_empty)
-    # add a paper to this empty database to make the paper object
-    CAddPaper(widget, u.mine.bibcode, qtbot)
-    # click on th epaper in the main panel, then click on the ADS button
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.adsButton, qtbot)
-
-    # since this already has a URL it should be added
-    assert open_calls == [
-        f"https://ui.adsabs.harvard.edu/abs/2018ApJ...864...94B/abstract"
-    ]
-
-
-def test_show_all_export_button_has_correct_text(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    assert widget.tagsList.showAllButton.exportButton.text() == "Export"
-
-
-def test_tag_export_button_has_correct_text(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    assert widget.tagsList.tags[0].exportButton.text() == "Export"
-
-
-def test_show_all_tags_button_starts_with_export_button(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    assert widget.tagsList.showAllButton.exportButton.isHidden() is False
-
-
-def test_all_tags_start_with_export_hidden(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    # get a tag from the left panel to click on
-    for tag in widget.tagsList.tags:
-        assert tag.exportButton.isHidden() is True
-
-
+#######################
+# exporting a given tag
+#######################
 def test_clicking_on_tag_in_left_panel_shows_export_button(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     # get a tag from the left panel to click on
@@ -3114,811 +4018,3 @@ def test_no_export_happens_if_user_cancels(qtbot, db, monkeypatch):
     # then see if anything has happened. I did test my test by using an actual file for
     # the file dialog monkeypatch, and did get 1 export_call
     assert len(export_calls) == 0
-
-
-def test_user_notes_fields_are_not_shown_on_initialization(qtbot, db_notes):
-    widget = CInitialize(qtbot, db_notes)
-    assert widget.rightPanel.userNotesText.isHidden() is True
-    assert widget.rightPanel.userNotesTextEditButton.isHidden() is True
-    assert widget.rightPanel.userNotesTextEditField.isHidden() is True
-    assert widget.rightPanel.userNotesTextEditFinishedButton.isHidden() is True
-
-
-def test_user_notes_are_appropriately_shown_once_paper_clicked(qtbot, db_notes):
-    widget = CInitialize(qtbot, db_notes)
-    CClick(widget.papersList.papers[0], qtbot)
-    assert widget.rightPanel.userNotesText.isHidden() is False
-    assert widget.rightPanel.userNotesTextEditButton.isHidden() is False
-    assert widget.rightPanel.userNotesTextEditField.isHidden() is True
-    assert widget.rightPanel.userNotesTextEditFinishedButton.isHidden() is True
-
-
-def test_user_notes_has_correct_text(qtbot, db_notes):
-    widget = CInitialize(qtbot, db_notes)
-    CClick(widget.papersList.papers[0], qtbot)
-    assert widget.rightPanel.userNotesText.text() == "abc123"
-
-
-def test_user_notes_has_correct_text_if_originally_blank(qtbot, db_empty):
-    db_empty.add_paper(u.mine.bibcode)
-    widget = CInitialize(qtbot, db_empty)
-    CClick(widget.papersList.papers[0], qtbot)
-    assert widget.rightPanel.userNotesText.text() == "No notes yet"
-
-
-def test_user_notes_has_word_wrap_on(qtbot, db_notes):
-    widget = CInitialize(qtbot, db_notes)
-    CClick(widget.papersList.papers[0], qtbot)
-    assert widget.rightPanel.userNotesText.wordWrap()
-
-
-def test_edit_user_notes_button_has_correct_text(qtbot, db_notes):
-    widget = CInitialize(qtbot, db_notes)
-    CClick(widget.papersList.papers[0], qtbot)
-    assert widget.rightPanel.userNotesTextEditButton.text() == "Edit Notes"
-
-
-def test_user_notes_finished_editing_button_has_correct_text(qtbot, db_notes):
-    widget = CInitialize(qtbot, db_notes)
-    CClick(widget.papersList.papers[0], qtbot)
-    assert (
-        widget.rightPanel.userNotesTextEditFinishedButton.text() == "Done Editing Notes"
-    )
-
-
-def test_notes_static_text_disappears_when_edit_button_clicked(qtbot, db_notes):
-    widget = CInitialize(qtbot, db_notes)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.userNotesTextEditButton, qtbot)
-    assert widget.rightPanel.userNotesText.isHidden() is True
-
-
-def test_notes_edit_button_disappears_when_edit_button_clicked(qtbot, db_notes):
-    widget = CInitialize(qtbot, db_notes)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.userNotesTextEditButton, qtbot)
-    assert widget.rightPanel.userNotesTextEditButton.isHidden() is True
-
-
-def test_notes_finished_edit_button_appears_when_edit_button_clicked(qtbot, db_notes):
-    widget = CInitialize(qtbot, db_notes)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.userNotesTextEditButton, qtbot)
-    assert widget.rightPanel.userNotesTextEditFinishedButton.isHidden() is False
-
-
-def test_notes_edit_field_has_original_text(qtbot, db_notes):
-    widget = CInitialize(qtbot, db_notes)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.userNotesTextEditButton, qtbot)
-    assert widget.rightPanel.userNotesTextEditField.toPlainText() == "abc123"
-
-
-def test_notes_edit_field_is_blank_if_there_are_no_notes(qtbot, db_empty):
-    db_empty.add_paper(u.mine.bibcode)
-    widget = CInitialize(qtbot, db_empty)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.userNotesTextEditButton, qtbot)
-    assert widget.rightPanel.userNotesTextEditField.toPlainText() == ""
-
-
-def test_notes_edit_field_changes_database_when_finished(qtbot, db_notes):
-    widget = CInitialize(qtbot, db_notes)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.userNotesTextEditButton, qtbot)
-    # simulate the user deleting the current into, then adding their own
-    widget.rightPanel.userNotesTextEditField.clear()
-    CEnterText(widget.rightPanel.userNotesTextEditField, "987XYZ", qtbot)
-    CClick(widget.rightPanel.userNotesTextEditFinishedButton, qtbot)
-    assert db_notes.get_paper_attribute(u.mine.bibcode, "user_notes") == "987XYZ"
-
-
-def test_notes_edit_field_changes_shown_text(qtbot, db_notes):
-    widget = CInitialize(qtbot, db_notes)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.userNotesTextEditButton, qtbot)
-    # simulate the user deleting the current into, then adding their own
-    widget.rightPanel.userNotesTextEditField.clear()
-    CEnterText(widget.rightPanel.userNotesTextEditField, "987XYZ", qtbot)
-    CClick(widget.rightPanel.userNotesTextEditFinishedButton, qtbot)
-    assert widget.rightPanel.userNotesText.text() == "987XYZ"
-
-
-def test_notes_user_enters_blank_doesnt_print_blank(qtbot, db_notes):
-    widget = CInitialize(qtbot, db_notes)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.userNotesTextEditButton, qtbot)
-    # simulate the user deleting the current into, then adding their own
-    widget.rightPanel.userNotesTextEditField.clear()
-    CClick(widget.rightPanel.userNotesTextEditFinishedButton, qtbot)
-    assert widget.rightPanel.userNotesText.text() == "No notes yet"
-
-
-def test_notes_edit_finished_button_disappears_when_clicked(qtbot, db_notes):
-    widget = CInitialize(qtbot, db_notes)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.userNotesTextEditButton, qtbot)
-    CEnterText(widget.rightPanel.userNotesTextEditField, "987XYZ", qtbot)
-    CClick(widget.rightPanel.userNotesTextEditFinishedButton, qtbot)
-    assert widget.rightPanel.userNotesTextEditFinishedButton.isHidden() is True
-
-
-def test_notes_edit_field_disappears_when_editing_done(qtbot, db_notes):
-    widget = CInitialize(qtbot, db_notes)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.userNotesTextEditButton, qtbot)
-    CEnterText(widget.rightPanel.userNotesTextEditField, "987XYZ", qtbot)
-    CClick(widget.rightPanel.userNotesTextEditFinishedButton, qtbot)
-    assert widget.rightPanel.userNotesTextEditField.isHidden() is True
-
-
-def test_notes_edit_button_reappears_when_editing_done(qtbot, db_notes):
-    widget = CInitialize(qtbot, db_notes)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.userNotesTextEditButton, qtbot)
-    CEnterText(widget.rightPanel.userNotesTextEditField, "987XYZ", qtbot)
-    CClick(widget.rightPanel.userNotesTextEditFinishedButton, qtbot)
-    assert widget.rightPanel.userNotesTextEditButton.isHidden() is False
-
-
-def test_user_notes_are_appropriately_shown_once_paper_deleted(qtbot, db_notes):
-    widget = CInitialize(qtbot, db_notes)
-    CDeleteFirstPaper(widget, qtbot)
-    assert widget.rightPanel.userNotesText.isHidden() is True
-    assert widget.rightPanel.userNotesTextEditButton.isHidden() is True
-    assert widget.rightPanel.userNotesTextEditField.isHidden() is True
-    assert widget.rightPanel.userNotesTextEditFinishedButton.isHidden() is True
-
-
-def test_spacers_are_hidden_at_initialization(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    for spacer in widget.rightPanel.spacers:
-        assert spacer.isHidden() is True
-
-
-def test_spacers_are_shown_when_paper_clicked(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    CClick(widget.papersList.papers[0], qtbot)
-    for spacer in widget.rightPanel.spacers:
-        assert spacer.isHidden() is False
-
-
-def test_spacers_are_hidden_once_paper_deleted(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CDeleteFirstPaper(widget, qtbot)
-    for spacer in widget.rightPanel.spacers:
-        assert spacer.isHidden() is True
-
-
-def test_left_panel_tags_are_sorted_alphabetically(qtbot, db_empty):
-    # add tags to database before we initialize interface
-    # add tags
-    tags = ["abc", "zyx", "Aye", "Test", "ZAA"]
-    for t in tags:
-        db_empty.add_new_tag(t)
-
-    widget = CInitialize(qtbot, db_empty)
-    tag_names = [tag.name for tag in widget.tagsList.tags]
-    assert tag_names == sorted(tags, key=lambda t: t.lower())
-
-
-def test_left_panel_tags_are_sorted_alphabetically_after_adding(qtbot, db_empty):
-    widget = CInitialize(qtbot, db_empty)
-    # add tags
-    tags = ["abc", "zyx", "Aye", "Test", "ZAA"]
-    for tag in tags:
-        CAddTag(widget, tag, qtbot)
-    tag_names = [tag.name for tag in widget.tagsList.tags]
-    # in comparison, include read and unread, since those were included on widet
-    # initialization too
-    assert tag_names == sorted(tags + ["Read", "Unread"], key=lambda w: w.lower())
-
-
-def test_paper_tag_list_is_sorted_alphabetically_not_case_sensitive(qtbot, db_empty):
-    # set up tags to check
-    tags = ["abc", "zyx", "Aye", "Test", "ZAA"]
-    db_empty.add_paper(u.mine.bibcode)
-    for t in tags:
-        db_empty.add_new_tag(t)
-        db_empty.tag_paper(u.mine.bibcode, t)
-
-    widget = CInitialize(qtbot, db_empty)
-    CClick(widget.papersList.papers[0], qtbot)
-    expected = "Tags: " + ", ".join(sorted(tags, key=lambda x: x.lower()))
-    assert widget.rightPanel.tagText.text() == expected
-
-
-def test_paper_tag_list_is_sorted_properly_after_modifying_tags(qtbot, db_empty):
-    # set up tags to check
-    tags = ["abc", "zyx", "Aye", "Test", "ZAA"]
-    db_empty.add_paper(u.mine.bibcode)
-    for t in tags:
-        db_empty.add_new_tag(t)
-    for t in tags[:3]:
-        db_empty.tag_paper(u.mine.bibcode, t)
-
-    widget = CInitialize(qtbot, db_empty)
-    CClick(widget.papersList.papers[0], qtbot)
-    # then add the final tag in the list
-    to_add = tags[-1]
-    CClick(widget.rightPanel.editTagsButton, qtbot)
-    for tag_item in widget.rightPanel.tags:
-        if tag_item.text() == to_add:
-            tag_item.setChecked(True)
-    CClick(widget.rightPanel.doneEditingTagsButton, qtbot)
-
-    expected_tags = tags[:3] + [tags[-1]]
-    expected = "Tags: " + ", ".join(sorted(expected_tags, key=lambda x: x.lower()))
-    assert widget.rightPanel.tagText.text() == expected
-
-
-def test_tag_checkboxes_are_sorted_alphabetically_not_case_sensitive(qtbot, db_temp):
-    # set up tags to check
-    tags = ["abc", "zyx", "Aye", "Test", "ZAA"]
-    for t in tags:
-        db_temp.add_new_tag(t)
-
-    widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.editTagsButton, qtbot)
-    tags = [tag.text() for tag in widget.rightPanel.tags]
-    assert tags == sorted(tags, key=lambda x: x.lower())
-
-
-def test_tag_checkboxes_are_sorted_properly_after_adding_new_tag(qtbot, db_temp):
-    # set up tags to check
-    tags = ["abc", "zyx", "Test", "ZAA"]
-    for t in tags:
-        db_temp.add_new_tag(t)
-
-    widget = CInitialize(qtbot, db_temp)
-    # click to show the checkboxes
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.editTagsButton, qtbot)
-    # then add one in the left panel
-    CAddTag(widget, "Aye", qtbot)
-    # then ensure this new checkbox was added appropriately
-    tags = [tag.text() for tag in widget.rightPanel.tags]
-    assert "Aye" in tags
-    assert tags == sorted(tags, key=lambda x: x.lower())
-
-
-def test_tag_checkboxes_are_sorted_properly_after_deleting_tag(qtbot, db_temp):
-    # set up tags to check
-    tags = ["abc", "zyx", "Test", "ZAA"]
-    for t in tags:
-        db_temp.add_new_tag(t)
-
-    widget = CInitialize(qtbot, db_temp)
-    # click to show the checkboxes
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.editTagsButton, qtbot)
-    # then delete a tag from the left panel
-    CDeleteTag(widget, "Test", qtbot)
-    # then ensure this new checkbox was removed appropriately
-    tags = [tag.text() for tag in widget.rightPanel.tags]
-    assert "Test" not in tags
-    assert tags == sorted(tags, key=lambda x: x.lower())
-
-
-def test_db_update_reflected_in_interface(qtbot, db_update):
-    widget = CInitialize(qtbot, db_update)
-    cite_strings = [paper.citeText.text() for paper in widget.papersList.papers]
-    assert "Brown, Gnedin, Li, 2018, ApJ, 864, 94" in cite_strings
-    assert "Brown, Gnedin, Li, 2022, arXiv:1804.09819" not in cite_strings
-    assert "Brown, Gnedin, 2022, MNRAS, 514, 280" in cite_strings
-    assert "Brown, Gnedin, 2022, arXiv:2203.00559" not in cite_strings
-
-
-def test_papers_are_in_sorted_order_to_begin(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    dates = [
-        db.get_paper_attribute(paper.bibcode, "pubdate")
-        for paper in widget.papersList.papers
-    ]
-
-    assert dates == sorted(dates)
-
-
-def test_papers_are_in_sorted_order_after_adding(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    # add two papers: one very old, one very recent
-    for bibcode in [u.mine_recent.bibcode, u.bbfh.bibcode]:
-        CAddPaper(widget, bibcode, qtbot)
-    # then check sorting
-    dates = [
-        db_temp.get_paper_attribute(paper.bibcode, "pubdate")
-        for paper in widget.papersList.papers
-    ]
-    assert dates == sorted(dates)
-
-
-def test_paper_sort_is_initially_by_date(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    bibcodes = [paper.bibcode for paper in widget.papersList.papers]
-    assert bibcodes == [u.tremonti.bibcode, u.mine.bibcode]
-
-
-def test_paper_sort_dropdown_can_sort_by_author(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    # find the dropdown to sort by date
-    index = widget.papersList.sortChooser.findText("Sort by First Author")
-    widget.papersList.sortChooser.setCurrentIndex(index)
-    # then check the papers in the list
-    bibcodes = [paper.bibcode for paper in widget.papersList.papers]
-    assert bibcodes == [u.mine.bibcode, u.tremonti.bibcode]
-
-
-def test_paper_sort_dropdown_can_sort_by_author_same_last_name(qtbot, db_temp):
-    # add another paper by Warren Brown, should be sorted after me (Gillen Brown)
-    db_temp.add_paper("2015ApJ...804...49B")
-    widget = CInitialize(qtbot, db_temp)
-    # find the dropdown to sort by date
-    index = widget.papersList.sortChooser.findText("Sort by First Author")
-    widget.papersList.sortChooser.setCurrentIndex(index)
-    # then check the papers in the list
-    bibcodes = [paper.bibcode for paper in widget.papersList.papers]
-    assert bibcodes == [u.mine.bibcode, "2015ApJ...804...49B", u.tremonti.bibcode]
-
-
-def test_paper_sort_dropdown_can_sort_in_both_directions(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    # find the dropdown to sort by date
-    index = widget.papersList.sortChooser.findText("Sort by First Author")
-    widget.papersList.sortChooser.setCurrentIndex(index)
-    # then check the papers in the list
-    bibcodes = [paper.bibcode for paper in widget.papersList.papers]
-    assert bibcodes == [u.mine.bibcode, u.tremonti.bibcode]
-    # find the dropdown to sort by date
-    index = widget.papersList.sortChooser.findText("Sort by Date")
-    widget.papersList.sortChooser.setCurrentIndex(index)
-    # then check the papers in the list
-    bibcodes = [paper.bibcode for paper in widget.papersList.papers]
-    assert bibcodes == [u.tremonti.bibcode, u.mine.bibcode]
-
-
-def test_paper_sort_dropdown_can_sort_by_author_single_author(qtbot, db_empty):
-    bibcodes_to_add = [
-        u.mine.bibcode,
-        u.mine_recent.bibcode,
-        "2021MNRAS.508.5935B",
-        "2021NewA...8401501B",
-    ]
-    # put some papers by me in the database
-    for b in bibcodes_to_add:
-        db_empty.add_paper(b)
-    widget = CInitialize(qtbot, db_empty)
-    # find the dropdown to sort by date
-    index = widget.papersList.sortChooser.findText("Sort by First Author")
-    widget.papersList.sortChooser.setCurrentIndex(index)
-    # # then check the papers in the list
-    bibcodes = [paper.bibcode for paper in widget.papersList.papers]
-    # since these are all one author, they should be in date order
-    assert bibcodes == [
-        u.mine.bibcode,
-        "2021NewA...8401501B",
-        "2021MNRAS.508.5935B",
-        u.mine_recent.bibcode,
-    ]
-
-
-def test_edit_citation_keyword_button_hidden_at_beginning(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    assert widget.rightPanel.editCiteKeyButton.isHidden() is True
-
-
-def test_citation_keyword_text_shown_at_beginning(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    assert widget.rightPanel.citeKeyText.isHidden() is True
-
-
-def test_edit_citation_keyword_edit_hidden_at_beginning(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    assert widget.rightPanel.editCiteKeyEntry.isHidden() is True
-
-
-def test_edit_citation_keyword_edit_error_text_hidden_at_beginning(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is True
-
-
-def test_edit_citation_keyword_button_shown_when_paper_clicked(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    CClick(widget.papersList.papers[0], qtbot)
-    assert widget.rightPanel.editCiteKeyButton.isHidden() is False
-
-
-def test_edit_citation_keyword_button_text_is_correct(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    CClick(widget.papersList.papers[0], qtbot)
-    assert widget.rightPanel.editCiteKeyButton.text() == "Edit Citation Keyword"
-
-
-def test_citation_keyword_text_shown_when_paper_clicked(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    CClick(widget.papersList.papers[0], qtbot)
-    assert widget.rightPanel.citeKeyText.isHidden() is False
-
-
-def test_citation_keyword_text_is_correct(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    paper = widget.papersList.papers[0]
-    CClick(paper, qtbot)
-    true_cite_key = db.get_paper_attribute(paper.bibcode, "citation_keyword")
-    assert widget.rightPanel.citeKeyText.text() == f"Citation Keyword: {true_cite_key}"
-
-
-def test_edit_citation_keyword_edit_hidden_when_paper_clicked(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    CClick(widget.papersList.papers[0], qtbot)
-    assert widget.rightPanel.editCiteKeyEntry.isHidden() is True
-
-
-def test_edit_citation_keyword_edit_error_text_hidden_when_paper_clicked(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    CClick(widget.papersList.papers[0], qtbot)
-    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is True
-
-
-def test_edit_citation_keyword_button_hidden_when_clicked(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    assert widget.rightPanel.editCiteKeyButton.isHidden() is True
-
-
-def test_citation_keyword_text_not_hidden_when_button_clicked(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    assert widget.rightPanel.citeKeyText.isHidden() is False
-
-
-def test_citation_keyword_text_has_placeholder_text(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    correct_placeholder = "e.g. yourname_etal_2022"
-    assert widget.rightPanel.editCiteKeyEntry.placeholderText() == correct_placeholder
-
-
-def test_edit_citation_keyword_entry_shown_when_button_clicked(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    assert widget.rightPanel.editCiteKeyEntry.isHidden() is False
-
-
-def test_edit_citation_keyword_error_text_not_shown_when_button_clicked(qtbot, db):
-    widget = CInitialize(qtbot, db)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is True
-
-
-def test_edit_citation_keyword_good_entry_updates_database(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    # don't use convenience function, for clarity
-    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    CEnterText(widget.rightPanel.editCiteKeyEntry, "test_key", qtbot)
-    CPressEnter(widget.rightPanel.editCiteKeyEntry, qtbot)
-    new_key = db_temp.get_paper_attribute(
-        widget.papersList.papers[0].bibcode, "citation_keyword"
-    )
-    assert new_key == "test_key"
-
-
-def test_edit_citation_keyword_good_entry_updates_shown_text(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    CEditCiteKey(widget, "test_key", qtbot)
-    assert widget.rightPanel.citeKeyText.text() == "Citation Keyword: test_key"
-
-
-def test_edit_citation_keyword_good_entry_resets_buttons(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    CEditCiteKey(widget, "test_key", qtbot)
-    assert widget.rightPanel.editCiteKeyButton.isHidden() is False
-    assert widget.rightPanel.editCiteKeyEntry.isHidden() is True
-    assert widget.rightPanel.citeKeyText.isHidden() is False
-    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is True
-
-
-def test_edit_citation_keyword_good_entry_clears_entry(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    CEditCiteKey(widget, "test_key", qtbot)
-    assert widget.rightPanel.editCiteKeyEntry.text() == ""
-
-
-def test_edit_citation_keyword_spaces_not_allowed(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    CEditCiteKey(widget, "test key", qtbot)
-    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is False
-    assert widget.rightPanel.editCiteKeyErrorText.text() == "Spaces not allowed"
-
-
-def test_edit_citation_keyword_duplicates_not_allowed(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    CEditCiteKey(widget, "test_key", qtbot)
-    CClick(widget.papersList.papers[1], qtbot)
-    CEditCiteKey(widget, "test_key", qtbot)
-    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is False
-    assert (
-        widget.rightPanel.editCiteKeyErrorText.text()
-        == "Another paper already uses this"
-    )
-
-
-def test_edit_citation_keyword_spaces_doesnt_reset_buttons(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    CEditCiteKey(widget, "test key", qtbot)
-    assert widget.rightPanel.editCiteKeyButton.isHidden() is True
-    assert widget.rightPanel.editCiteKeyEntry.isHidden() is False
-    assert widget.rightPanel.citeKeyText.isHidden() is False
-    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is False
-
-
-def test_edit_citation_keyword_duplicates_doesnt_reset_buttons(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    CEditCiteKey(widget, "test_key", qtbot)
-    CClick(widget.papersList.papers[1], qtbot)
-    CEditCiteKey(widget, "test_key", qtbot)
-    assert widget.rightPanel.editCiteKeyButton.isHidden() is True
-    assert widget.rightPanel.editCiteKeyEntry.isHidden() is False
-    assert widget.rightPanel.citeKeyText.isHidden() is False
-    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is False
-
-
-def test_edit_citation_keyword_spaces_doesnt_clear_text(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    CEditCiteKey(widget, "test key", qtbot)
-    assert widget.rightPanel.editCiteKeyEntry.text() == "test key"
-
-
-def test_edit_citation_keyword_duplicates_doesnt_clear_text(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    CEditCiteKey(widget, "test_key", qtbot)
-    CClick(widget.papersList.papers[1], qtbot)
-    CEditCiteKey(widget, "test_key", qtbot)
-    assert widget.rightPanel.editCiteKeyEntry.text() == "test_key"
-
-
-def test_edit_citation_keyword_spaces_doesnt_update_database(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    CEditCiteKey(widget, "test key", qtbot)
-    bibcode = widget.papersList.papers[0].bibcode
-    assert db_temp.get_paper_attribute(bibcode, "citation_keyword") == bibcode
-
-
-def test_edit_citation_keyword_duplicates_doesnt_update_database(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    CEditCiteKey(widget, "test_key", qtbot)
-    CClick(widget.papersList.papers[1], qtbot)
-    CEditCiteKey(widget, "test_key", qtbot)
-    bibcode_update = widget.papersList.papers[0].bibcode
-    assert db_temp.get_paper_attribute(bibcode_update, "citation_keyword") == "test_key"
-    bibcode_dup = widget.papersList.papers[1].bibcode
-    assert db_temp.get_paper_attribute(bibcode_dup, "citation_keyword") == bibcode_dup
-
-
-def test_edit_citation_keyword_buttons_hidden_when_paper_deleted(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CDeleteFirstPaper(widget, qtbot)
-    assert widget.rightPanel.editCiteKeyButton.isHidden() is True
-    assert widget.rightPanel.editCiteKeyEntry.isHidden() is True
-    assert widget.rightPanel.citeKeyText.isHidden() is True
-    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is True
-
-
-def test_edit_citation_keyword_entry_escape_exit_resets_buttons(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    CEnterText(widget.rightPanel.editCiteKeyEntry, "abc", qtbot)
-    CPressEscape(widget.rightPanel.editCiteKeyEntry, qtbot)
-    assert widget.rightPanel.editCiteKeyButton.isHidden() is False
-    assert widget.rightPanel.editCiteKeyEntry.isHidden() is True
-    assert widget.rightPanel.citeKeyText.isHidden() is False
-    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is True
-
-
-def test_edit_citation_keyword_entry_backspace_exit_resets_buttons(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    CEnterText(widget.rightPanel.editCiteKeyEntry, "abc", qtbot)
-    # back out the text we entered
-    for _ in range(3):
-        CPressBackspace(widget.rightPanel.editCiteKeyEntry, qtbot)
-    # buttons should not be reset yet
-    assert widget.rightPanel.editCiteKeyButton.isHidden() is True
-    assert widget.rightPanel.editCiteKeyEntry.isHidden() is False
-    assert widget.rightPanel.citeKeyText.isHidden() is False
-    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is True
-    # buttons should reset after one more backspace
-    CPressBackspace(widget.rightPanel.editCiteKeyEntry, qtbot)
-    assert widget.rightPanel.editCiteKeyButton.isHidden() is False
-    assert widget.rightPanel.editCiteKeyEntry.isHidden() is True
-    assert widget.rightPanel.citeKeyText.isHidden() is False
-    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is True
-
-
-def test_edit_citation_keyword_entry_escape_exit_clears_text(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    CEnterText(widget.rightPanel.editCiteKeyEntry, "abc", qtbot)
-    CPressEscape(widget.rightPanel.editCiteKeyEntry, qtbot)
-    assert widget.rightPanel.editCiteKeyEntry.text() == ""
-
-
-def test_edit_citation_keywored_entry_backspace_exit_clears_text(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    CEnterText(widget.rightPanel.editCiteKeyEntry, "abc", qtbot)
-    # back out the text we entered
-    for _ in range(3):
-        CPressBackspace(widget.rightPanel.editCiteKeyEntry, qtbot)
-    # buttons should reset after one more backspace
-    CPressBackspace(widget.rightPanel.editCiteKeyEntry, qtbot)
-
-    assert widget.rightPanel.editCiteKeyEntry.text() == ""
-
-
-def test_edit_citation_keywored_entry_escape_exit_doesnt_change_db(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    CEnterText(widget.rightPanel.editCiteKeyEntry, "abc", qtbot)
-    CPressEscape(widget.rightPanel.editCiteKeyEntry, qtbot)
-    bibcode = widget.papersList.papers[0].bibcode
-    assert db_temp.get_paper_attribute(bibcode, "citation_keyword") == bibcode
-
-
-def test_edit_citation_keywored_entry_backspace_exit_doesnt_change_db(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    CClick(widget.rightPanel.editCiteKeyButton, qtbot)
-    CEnterText(widget.rightPanel.editCiteKeyEntry, "abc", qtbot)
-    # back out the text we entered
-    for _ in range(3):
-        CPressBackspace(widget.rightPanel.editCiteKeyEntry, qtbot)
-    # buttons should reset after one more backspace
-    CPressBackspace(widget.rightPanel.editCiteKeyEntry, qtbot)
-    bibcode = widget.papersList.papers[0].bibcode
-    assert db_temp.get_paper_attribute(bibcode, "citation_keyword") == bibcode
-
-
-def test_widgets_are_sized_appropriately_at_beginning(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    # get the original positions
-    o_sizes = widget.splitter.sizes()
-    # check examples in each panel
-    assert o_sizes[0] < o_sizes[2] < o_sizes[1]
-
-
-def test_widgets_dont_go_outside_of_splitter(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    # get the original positions
-    o_sizes = widget.splitter.sizes()
-    # check examples in each panel
-    assert widget.tagsList.addTagBar.size().width() <= o_sizes[0]
-    assert widget.papersList.papers[0].size().width() <= o_sizes[1]
-    assert widget.rightPanel.titleText.size().width() <= o_sizes[2]
-
-
-def test_resizing_splitter_resizes_widgets(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    # get the original positions
-    o_sizes = widget.splitter.sizes()
-    assert sum(o_sizes) > 600
-    new_sizes = [250, 350, sum(o_sizes) - 500]
-    widget.splitter.setSizes(new_sizes)
-    # check examples in each panel. They won't be exact, but should be close
-    assert (
-        new_sizes[0] * 0.7 <= widget.tagsList.addTagBar.size().width() <= new_sizes[0]
-    )
-    assert (
-        new_sizes[1] * 0.7 <= widget.papersList.papers[0].size().width() <= new_sizes[1]
-    )
-    assert (
-        new_sizes[2] * 0.7 <= widget.rightPanel.titleText.size().width() <= new_sizes[2]
-    )
-
-
-def test_sortchooser_starts_at_top_right(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    position = widget.papersList.sortChooser.pos()
-    expected_x = widget.papersList.width() - widget.papersList.sortChooser.width()
-    assert position.x() == expected_x
-    assert position.y() == 0
-
-
-def test_resizing_splitter_keeps_sortchooser_at_top_right(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    CClick(widget.papersList.papers[0], qtbot)
-    position = widget.papersList.sortChooser.pos()
-    new_sizes = [250, 350, sum(widget.splitter.sizes()) - 500]
-    widget.splitter.setSizes(new_sizes)
-    new_position = widget.papersList.sortChooser.pos()
-    assert new_position.x() != position.x()
-    expected_x = widget.papersList.width() - widget.papersList.sortChooser.width()
-    assert new_position.x() == expected_x
-    assert new_position.y() == 0
-
-
-def test_adding_long_tag_resizes_splitter(qtbot, db_temp):
-    widget = CInitialize(qtbot, db_temp)
-    original_sizes = widget.splitter.sizes()
-    CAddTag(widget, "this is a very long tag, too long to realistically use", qtbot)
-    new_sizes = widget.splitter.sizes()
-    assert new_sizes[0] > original_sizes[0]
-
-
-def test_db_with_long_tag_has_wide_tag_bar_at_beginning(qtbot, db_temp):
-    db_temp.add_new_tag("this is a very long tag, too long to realistically use")
-    widget = CInitialize(qtbot, db_temp)
-    original_sizes = widget.splitter.sizes()
-    assert original_sizes[0] > 200
-    for tag in widget.tagsList.tags:
-        assert tag.width() >= tag.sizeHint().width()
-
-
-def test_deleting_long_tag_resizes_splitter(qtbot, db_temp):
-    tag_name = "this is a very long tag, too long to realistically use"
-    db_temp.add_new_tag(tag_name)
-    widget = CInitialize(qtbot, db_temp)
-    original_sizes = widget.splitter.sizes()
-    CDeleteTag(widget, tag_name, qtbot)
-    new_sizes = widget.splitter.sizes()
-    assert new_sizes[0] < original_sizes[0]
-    assert new_sizes[0] == max(
-        widget.tagsList.default_min_width,
-        max([tag.sizeHint().width() for tag in widget.tagsList.tags]),
-    )
-
-
-def test_showing_delete_tag_confirm_resizes_splitter(qtbot, db_temp):
-    tag_name = "this is a very long tag, too long to realistically use"
-    db_temp.add_new_tag(tag_name)
-    widget = CInitialize(qtbot, db_temp)
-    original_sizes = widget.splitter.sizes()
-    CClick(widget.firstDeleteTagButton, qtbot)
-    CEnterText(widget.secondDeleteTagEntry, tag_name, qtbot)
-    CPressEnter(widget.secondDeleteTagEntry, qtbot)
-    new_sizes = widget.splitter.sizes()
-    assert new_sizes[0] > original_sizes[0]
-
-
-def test_confirming_tag_delete_resizes_splitter(qtbot, db_temp):
-    tag_name = "this is a very long tag, too long to realistically use"
-    db_temp.add_new_tag(tag_name)
-    widget = CInitialize(qtbot, db_temp)
-    # don't use convenience function, since we need size at intermediate steps
-    CClick(widget.firstDeleteTagButton, qtbot)
-    CEnterText(widget.secondDeleteTagEntry, tag_name, qtbot)
-    CPressEnter(widget.secondDeleteTagEntry, qtbot)
-    original_sizes = widget.splitter.sizes()
-    CClick(widget.thirdDeleteTagButton, qtbot)
-    new_sizes = widget.splitter.sizes()
-    assert new_sizes[0] < original_sizes[0]
-    assert new_sizes[0] == max(
-        widget.tagsList.default_min_width,
-        max([tag.sizeHint().width() for tag in widget.tagsList.tags]),
-    )
