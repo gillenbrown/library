@@ -134,6 +134,11 @@ def test_get_correct_paper_arxiv_id():
     assert results["arxiv_id"] == u.mine.arxiv_id
 
 
+# ======================================================================================
+#
+# Test accessing papers with various tricky differences
+#
+# ======================================================================================
 def test_get_correct_paper_title_unpublished():
     results = ads_call.get_info(u.forbes.bibcode)
     assert results["title"] == u.forbes.title

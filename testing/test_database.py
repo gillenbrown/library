@@ -28,7 +28,11 @@ punctuation_tags = [
     ":",
 ]
 
-
+# ======================================================================================
+#
+# Fixtures to use as temporary database
+#
+# ======================================================================================
 @pytest.fixture(name="db_empty")
 def temporary_db():
     """
@@ -85,6 +89,11 @@ def temporary_db_with_old_arxiv_paper():
     file_path.unlink()  # removes this file
 
 
+# ======================================================================================
+#
+# basic validation of databases
+#
+# ======================================================================================
 def test_database_has_one_table(db):
     tables = db._execute("SELECT name FROM sqlite_master WHERE type='table';")
     assert len(tables) == 1
@@ -96,6 +105,11 @@ def test_database_has_papers_table(db):
     assert "papers" in names
 
 
+# ======================================================================================
+#
+# test adding papers and getting attributes
+#
+# ======================================================================================
 def test_num_papers_is_correct_as_papers_are_added(db_empty):
     assert db_empty.num_papers() == 0
     db_empty.add_paper(u.mine.bibcode)
@@ -145,6 +159,11 @@ def test_add_unpublished_paper_from_ads_bibcode(db_empty):
     assert db_empty.get_paper_attribute(u.forbes.bibcode, "title") is not None
 
 
+# ======================================================================================
+#
+# test the accuracy of added paper details
+#
+# ======================================================================================
 def test_added_paper_has_correct_bibcode(db_empty):
     db_empty.add_paper(u.mine.bibcode)
     assert db_empty.get_paper_attribute(u.mine.bibcode, "bibcode") == u.mine.bibcode
@@ -317,6 +336,11 @@ def test_bibcode_correct_after_adding_paper(db_empty):
     assert db_empty.get_paper_attribute(u.mine.bibcode, "bibcode") == u.mine.bibcode
 
 
+# ======================================================================================
+#
+# error checking of adding and getting paper attributes
+#
+# ======================================================================================
 def test_error_raised_if_nonexistent_paper_is_searched_for(db_one):
     with pytest.raises(ValueError):
         db_one.get_paper_attribute(u.tremonti.bibcode, "bibcode")
@@ -329,6 +353,31 @@ def test_raise_custom_error_if_paper_is_already_in_database(db_empty):
     assert db_empty.num_papers() == 1
 
 
+def test_raises_errror_if_attribute_does_not_exist(db):
+    with pytest.raises(ValueError):
+        db.get_paper_attribute(u.mine.bibcode, "bad attribute")
+
+
+def test_raise_error_when_attempting_to_modify_nonexistent_attribute(db):
+    with pytest.raises(ValueError):
+        db.set_paper_attribute(u.mine.bibcode, "slkdfsldkj", "New value")
+
+
+def test_raise_error_when_attempting_to_modify_nonexistent_bibcode(db):
+    with pytest.raises(ValueError):
+        db.set_paper_attribute("sdlkfjsldfkj", "title", "new_title")
+
+
+def test_raise_error_when_attempting_to_modify_value_with_wrong_data_type(db):
+    with pytest.raises(ValueError):
+        db.set_paper_attribute(u.mine.bibcode, "title", (4, 3))
+
+
+# ======================================================================================
+#
+# test getting attribues
+#
+# ======================================================================================
 def test_get_all_bibcodes_does_what_it_says(db):
     # already has two papers
     # sort the lists of bibcodes so comparison can be made
@@ -377,37 +426,16 @@ def test_get_correct_attributes_bibtex(db):
     assert db.get_paper_attribute(u.tremonti.bibcode, "bibtex") == u.tremonti.bibtex
 
 
-def test_raises_errror_if_attribute_does_not_exist(db):
-    with pytest.raises(ValueError):
-        db.get_paper_attribute(u.mine.bibcode, "bad attribute")
+def test_accents_kept_in_author_list(db_empty):
+    db_empty.add_paper(u.juan.url)
+    assert db_empty.get_paper_attribute(u.juan.bibcode, "authors") == u.juan.authors
 
 
-def test_local_file_is_none_before_it_is_set(db):
-    assert db.get_paper_attribute(u.mine.bibcode, "local_file") == None
-    assert db.get_paper_attribute(u.tremonti.bibcode, "local_file") == None
-
-
-def test_add_attribute_file_loc_is_done_correctly(db):
-    test_loc = "/Users/gillenb/test.pdf"
-    db.set_paper_attribute(u.mine.bibcode, "local_file", test_loc)
-    assert db.get_paper_attribute(u.mine.bibcode, "local_file") == test_loc
-
-
-def test_raise_error_when_attempting_to_modify_nonexistent_attribute(db):
-    with pytest.raises(ValueError):
-        db.set_paper_attribute(u.mine.bibcode, "slkdfsldkj", "New value")
-
-
-def test_raise_error_when_attempting_to_modify_nonexistent_bibcode(db):
-    with pytest.raises(ValueError):
-        db.set_paper_attribute("sdlkfjsldfkj", "title", "new_title")
-
-
-def test_raise_error_when_attempting_to_modify_value_with_wrong_data_type(db):
-    with pytest.raises(ValueError):
-        db.set_paper_attribute(u.mine.bibcode, "title", (4, 3))
-
-
+# ======================================================================================
+#
+# test modifying paper attributes
+#
+# ======================================================================================
 def test_modify_title_as_an_example_with_set_paper_attribute(db):
     db.set_paper_attribute(u.mine.bibcode, "title", "New Title")
     assert db.get_paper_attribute(u.mine.bibcode, "title") == "New Title"
@@ -419,6 +447,27 @@ def test_modify_authors_list_with_set_paper_attribute(db):
     assert db.get_paper_attribute(u.mine.bibcode, "authors") == new_list
 
 
+# ======================================================================================
+#
+# local file
+#
+# ======================================================================================
+def test_local_file_is_none_before_it_is_set(db):
+    assert db.get_paper_attribute(u.mine.bibcode, "local_file") == None
+    assert db.get_paper_attribute(u.tremonti.bibcode, "local_file") == None
+
+
+def test_add_attribute_file_loc_is_done_correctly(db):
+    test_loc = "/Users/gillenb/test.pdf"
+    db.set_paper_attribute(u.mine.bibcode, "local_file", test_loc)
+    assert db.get_paper_attribute(u.mine.bibcode, "local_file") == test_loc
+
+
+# ======================================================================================
+#
+# test citation string
+#
+# ======================================================================================
 def test_cite_string_one_author(db):
     db.set_paper_attribute(u.mine.bibcode, "authors", ["Brown, Gillen"])
     true_cite_string = f"Brown, 2018, ApJ, {u.mine.volume}, {u.mine.page}"
@@ -483,6 +532,11 @@ def test_cite_string_no_page_no_arxiv(db):
     assert db.get_cite_string(u.grasha_thesis.bibcode) == true_cite_string
 
 
+# ======================================================================================
+#
+# tags
+#
+# ======================================================================================
 def test_can_add_long_tag_to_database(db):
     new_tag = "a b c d e f g h i j k l m n o p q r s t u v w x y z"
     db.add_new_tag(new_tag)
@@ -602,19 +656,6 @@ def test_get_all_tags_on_a_paper_is_sorted_ignoring_case(db):
     assert db.get_paper_tags(u.mine.bibcode) == sorted(tags, key=lambda x: x.lower())
 
 
-def test_delete_paper_removes_one(db):
-    assert db.num_papers() == 2
-    db.delete_paper(u.mine.bibcode)
-    assert db.num_papers() == 1
-
-
-def test_delete_paper_removes_correct_one(db):
-    db.delete_paper(u.mine.bibcode)
-    # test that the paper left is not mine
-    with pytest.raises(ValueError):
-        db.get_paper_attribute(u.mine.bibcode, "title")
-
-
 def test_delete_tag_removed_from_db(db):
     db.add_new_tag("test_tag")
     assert db.get_all_tags() == ["test_tag"]
@@ -663,11 +704,29 @@ def test_papers_unread_when_added_capitalization(db_empty, tag):
     assert db_empty.get_paper_tags(u.mine.bibcode) == [tag]
 
 
-def test_accents_kept_in_author_list(db_empty):
-    db_empty.add_paper(u.juan.url)
-    assert db_empty.get_paper_attribute(u.juan.bibcode, "authors") == u.juan.authors
+# ======================================================================================
+#
+# deleting papers
+#
+# ======================================================================================
+def test_delete_paper_removes_one(db):
+    assert db.num_papers() == 2
+    db.delete_paper(u.mine.bibcode)
+    assert db.num_papers() == 1
 
 
+def test_delete_paper_removes_correct_one(db):
+    db.delete_paper(u.mine.bibcode)
+    # test that the paper left is not mine
+    with pytest.raises(ValueError):
+        db.get_paper_attribute(u.mine.bibcode, "title")
+
+
+# ======================================================================================
+#
+# export papers of a given tag
+#
+# ======================================================================================
 def test_export_all_papers(db):
     out_file_loc = Path(__file__).parent / "test.txt"
     db.export("all", out_file_loc)
@@ -725,6 +784,11 @@ def test_export_tag_does_not_exist_raises_error(db):
         db.export("lklkjlkj", "test.txt")
 
 
+# ======================================================================================
+#
+# user notes
+#
+# ======================================================================================
 def test_user_notes_empty_at_start(db_empty):
     db_empty.add_paper(u.mine.bibcode)
     assert db_empty.get_paper_attribute(u.mine.bibcode, "user_notes") is None
@@ -737,6 +801,11 @@ def test_user_notes_can_be_saved(db_empty):
     assert db_empty.get_paper_attribute(u.mine.bibcode, "user_notes") == test_text
 
 
+# ======================================================================================
+#
+# the update system
+#
+# ======================================================================================
 # Test the updating of the database to get journal information for arXiv papers.
 # Note that this updating is done on initialization, so we don't need to do anything
 # to check that the update was done. The initial contents of the database will be
@@ -884,6 +953,11 @@ def test_update_system_does_not_update_published_papers(db_update):
     assert db_update.get_paper_attribute(u.forbes.bibcode, "bibtex") == u.forbes.bibtex
 
 
+# ======================================================================================
+#
+# citation keyword
+#
+# ======================================================================================
 def test_default_citation_keyword_is_bibcode(db):
     assert db.get_paper_attribute(u.mine.bibcode, "citation_keyword") == u.mine.bibcode
 

@@ -19,11 +19,11 @@ from library.database import Database
 import test_utils as u
 
 
-########################################################################################
+# ======================================================================================
 #
 # Database fixtures
 #
-########################################################################################
+# ======================================================================================
 @pytest.fixture(name="db_empty")
 def temporary_database():
     """
@@ -127,11 +127,11 @@ def testing_database():
     return Database(Path(__file__).parent / "testing.db")
 
 
-########################################################################################
+# ======================================================================================
 #
 # Convenience functions
 #
-########################################################################################
+# ======================================================================================
 # All convenience functions will have "C" at the beginning, just for clarity
 def CInitialize(qtbot, db):
     """
@@ -304,11 +304,11 @@ def CEditCiteKey(mainWidget, citeKey, qtbot):
     CPressEnter(mainWidget.rightPanel.editCiteKeyEntry, qtbot)
 
 
-########################################################################################
+# ======================================================================================
 #
 # mock functions for use with monkeypatch
 #
-########################################################################################
+# ======================================================================================
 # when we open an existing file, we have filter and dir kwargs, then return the filename
 # and some filter info, which my code ignores
 def MOpenFileNoResponse(filter="", dir=""):
@@ -360,11 +360,11 @@ def MSaveFileNoResponse(filter="", dir="", caption=""):
     return "", ""
 
 
-########################################################################################
+# ======================================================================================
 #
 # test premade databases
 #
-########################################################################################
+# ======================================================================================
 def test_testing_database_was_premade_with_some_papers(db):
     assert len(db.get_all_bibcodes()) > 0
 
@@ -387,11 +387,11 @@ def test_testing_database_has_each_tag_on_at_least_one_paper(db):
         assert tag_used
 
 
-########################################################################################
+# ======================================================================================
 #
 # test main window and similar
 #
-########################################################################################
+# ======================================================================================
 def test_all_fonts_are_found_by_get_fonts():
     font_dir = (Path(__file__).parent.parent / "fonts").absolute()
     true_fonts = [
@@ -489,9 +489,9 @@ def test_can_exit_keyboard_shortcut_exit_the_app(qtbot, db, monkeypatch):
     assert exit_calls == [1]
 
 
-############################
+# ==========================
 # sizing of the three panels
-############################
+# ==========================
 def test_widgets_are_sized_appropriately_at_beginning(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.papersList.papers[0], qtbot)
@@ -615,14 +615,14 @@ def test_confirming_tag_delete_resizes_splitter(qtbot, db_temp):
     )
 
 
-########################################################################################
+# ======================================================================================
 #
 # test search bar and adding papers from it
 #
-########################################################################################
-###############
+# ======================================================================================
+# =============
 # initial state
-###############
+# =============
 def test_textedit_error_message_hidden_at_beginning(qtbot, db_empty):
     widget = CInitialize(qtbot, db_empty)
     assert widget.searchBarErrorText.isHidden() is True
@@ -676,9 +676,9 @@ def test_add_button_and_search_bar_are_much_shorter_than_title(qtbot, db_empty):
     assert widget.searchBar.height() < 0.6 * widget.title.height()
 
 
-###############
+# =============
 # adding papers
-###############
+# =============
 def test_can_add_paper_by_filling_bibcode_then_clicking_button(qtbot, db_empty):
     assert len(db_empty.get_all_bibcodes()) == 0
     widget = CInitialize(qtbot, db_empty)
@@ -977,9 +977,9 @@ def test_duplicate_in_internal_paper_list_raises_error(qtbot, db):
         widget.papersList.addPaper(new_paper)
 
 
-###############
+# =============
 # update system
-###############
+# =============
 def test_db_update_reflected_in_interface(qtbot, db_update):
     widget = CInitialize(qtbot, db_update)
     cite_strings = [paper.citeText.text() for paper in widget.papersList.papers]
@@ -989,14 +989,14 @@ def test_db_update_reflected_in_interface(qtbot, db_update):
     assert "Brown, Gnedin, 2022, arXiv:2203.00559" not in cite_strings
 
 
-########################################################################################
+# ======================================================================================
 #
 # test right panel
 #
-########################################################################################
-###############
+# ======================================================================================
+# =============
 # initial state
-###############
+# =============
 def test_right_panel_title_is_empty_at_beginning(qtbot, db):
     widget = CInitialize(qtbot, db)
     assert widget.rightPanel.titleText.text() == ""
@@ -1212,9 +1212,9 @@ def test_paper_pdf_buttons_have_correct_text(qtbot, db_temp):
     assert widget.rightPanel.pdfDownloadButton.text() == "Download the PDF"
 
 
-############################################
+# ==========================================
 # paper details added correctly when clicked
-############################################
+# ==========================================
 def test_clicking_on_paper_puts_title_in_right_panel(qtbot, db):
     widget = CInitialize(qtbot, db)
     # get one of the papers, not sure which
@@ -1386,9 +1386,9 @@ def test_edit_citation_keyword_edit_error_text_hidden_when_paper_clicked(qtbot, 
     assert widget.rightPanel.editCiteKeyErrorText.isHidden() is True
 
 
-###########################################################################
+# =========================================================================
 # handling paper pdfs -- double clicking from center panel tested elsewhere
-###########################################################################
+# =========================================================================
 def test_paper_pdf_buttons_show_when_paper_clicked_with_local_file(qtbot, db_empty):
     # fill a local file into the database
     db_empty.add_paper(u.mine.bibcode)
@@ -1836,9 +1836,9 @@ def test_download_pdf_button_error_message_resets_on_new_paper_clicked(
     assert widget.rightPanel.pdfDownloadButton.text() == "Download the PDF"
 
 
-######################
+# ====================
 # modifying paper tags
-######################
+# ====================
 def test_right_panel_tags_should_list_all_tags_in_database(qtbot, db):
     widget = CInitialize(qtbot, db)
     # get all tags in both the list and database, then check that they're the same
@@ -2022,9 +2022,9 @@ def test_done_editing_button_is_hidden_when_paper_clicked(qtbot, db_temp):
     assert widget.rightPanel.doneEditingTagsButton.isHidden()
 
 
-################################################
+# ==============================================
 # tags and their interaction with the left panel
-################################################
+# ==============================================
 def test_paper_tag_list_is_sorted_alphabetically_not_case_sensitive(qtbot, db_empty):
     # set up tags to check
     tags = ["abc", "zyx", "Aye", "Test", "ZAA"]
@@ -2112,9 +2112,9 @@ def test_tag_checkboxes_are_sorted_properly_after_deleting_tag(qtbot, db_temp):
     assert tags == sorted(tags, key=lambda x: x.lower())
 
 
-#############################
+# ===========================
 # copying bibtex to clipboard
-#############################
+# ===========================
 def test_clicking_bibtex_button_copies_bibtex(qtbot, db, monkeypatch):
     # Here we need to use monkeypatch to simulate the clipboard
     clipboard = QGuiApplication.clipboard()
@@ -2131,9 +2131,9 @@ def test_clicking_bibtex_button_copies_bibtex(qtbot, db, monkeypatch):
     assert texts[0] in [u.mine.bibtex, u.tremonti.bibtex]
 
 
-###################
+# =================
 # open paper in ADS
-###################
+# =================
 def test_clicking_on_ads_button_opens_paper_in_browser(qtbot, db_empty, monkeypatch):
     # Here we need to use monkeypatch to simulate opening the URL
     open_calls = []
@@ -2152,9 +2152,9 @@ def test_clicking_on_ads_button_opens_paper_in_browser(qtbot, db_empty, monkeypa
     ]
 
 
-############
+# ==========
 # user notes
-############
+# ==========
 def test_user_notes_has_correct_text(qtbot, db_notes):
     widget = CInitialize(qtbot, db_notes)
     CClick(widget.papersList.papers[0], qtbot)
@@ -2263,9 +2263,9 @@ def test_notes_edit_button_reappears_when_editing_done(qtbot, db_notes):
     assert widget.rightPanel.userNotesTextEditButton.isHidden() is False
 
 
-##################
+# ================
 # citation keyword
-##################
+# ================
 def test_citation_keyword_text_is_correct(qtbot, db):
     widget = CInitialize(qtbot, db)
     paper = widget.papersList.papers[0]
@@ -2498,9 +2498,9 @@ def test_edit_citation_keywored_entry_backspace_exit_doesnt_change_db(qtbot, db_
     assert db_temp.get_paper_attribute(bibcode, "citation_keyword") == bibcode
 
 
-#################
+# ===============
 # deleting papers
-#################
+# ===============
 def test_second_delete_paper_button_appears_when_first_clicked(qtbot, db):
     widget = CInitialize(qtbot, db)
     CClick(widget.papersList.papers[0], qtbot)
@@ -2708,14 +2708,14 @@ def test_edit_citation_keyword_buttons_hidden_when_paper_deleted(qtbot, db_temp)
     assert widget.rightPanel.editCiteKeyErrorText.isHidden() is True
 
 
-########################################################################################
+# ======================================================================================
 #
 # test center panel papers list
 #
-########################################################################################
-###############
+# ======================================================================================
+# =============
 # initial state
-###############
+# =============
 def test_paper_title_has_correct_font_family(qtbot, db):
     widget = CInitialize(qtbot, db)
     # get one of the papers, not sure which
@@ -2756,9 +2756,9 @@ def test_paper_cite_string_has_word_wrap_on(qtbot, db):
         assert paper.citeText.wordWrap()
 
 
-#################
+# ===============
 # creating papers
-#################
+# ===============
 def test_paper_initialization_has_correct_bibcode(qtbot, db):
     widget = CInitialize(qtbot, db)
     new_paper = Paper(u.mine.bibcode, db, widget.rightPanel, widget.papersList)
@@ -2802,9 +2802,9 @@ def test_get_tags_from_paper_object_is_correct(qtbot, db):
     assert paper.getTags() == db.get_paper_tags(paper.bibcode)
 
 
-##############
+# ============
 # highlighting
-##############
+# ============
 def test_clicking_on_paper_highlights_it_in_center_panel(qtbot, db):
     widget = CInitialize(qtbot, db)
     # get one of the papers, not sure which
@@ -2861,9 +2861,9 @@ def test_paper_texts_are_unhighlighted_when_others_clicked(qtbot, db):
                 assert paper_test.citeText.property("is_highlighted") is False
 
 
-##################################################################
+# ================================================================
 # opening paper pdfs when double clicked, or modifying right panel
-##################################################################
+# ================================================================
 def test_double_clicking_on_paper_with_local_file_opens_it(
     qtbot, db_empty, monkeypatch
 ):
@@ -3005,9 +3005,9 @@ def test_dclicking_on_paper_shows_details_in_right_panel(qtbot, db_empty):
     assert widget.rightPanel.titleText.text() == u.mine.title
 
 
-################
+# ==============
 # sorting papers
-################
+# ==============
 def test_papers_are_in_sorted_order_to_begin(qtbot, db):
     widget = CInitialize(qtbot, db)
     dates = [
@@ -3100,14 +3100,14 @@ def test_paper_sort_dropdown_can_sort_by_author_single_author(qtbot, db_empty):
     ]
 
 
-########################################################################################
+# ======================================================================================
 #
 # test the left panel tags list
 #
-########################################################################################
-###############
+# ======================================================================================
+# =============
 # initial state
-###############
+# =============
 def test_add_tag_button_is_shown_at_beginning(qtbot, db_empty):
     widget = CInitialize(qtbot, db_empty)
     assert widget.tagsList.addTagButton.isHidden() is False
@@ -3333,9 +3333,9 @@ def test_left_panel_tags_are_sorted_alphabetically(qtbot, db_empty):
     assert tag_names == sorted(tags, key=lambda t: t.lower())
 
 
-#############
+# ===========
 # adding tags
-#############
+# ===========
 def test_clicking_add_tag_button_hides_button(qtbot, db_empty):
     widget = CInitialize(qtbot, db_empty)
     CClick(widget.tagsList.addTagButton, qtbot)
@@ -3525,9 +3525,9 @@ def test_adding_tags_doesnt_duplicate_tags_in_right_panel(qtbot, db_empty):
     assert ["Test Tag", "Test Tag 2"] == [t.text() for t in widget.rightPanel.tags]
 
 
-########################################
+# ======================================
 # clicking tags shows only tagged papers
-########################################
+# ======================================
 def test_all_papers_start_not_hidden(qtbot, db):
     widget = CInitialize(qtbot, db)
     for paper in widget.papersList.papers:
@@ -3632,9 +3632,9 @@ def test_left_panel_tags_are_sorted_alphabetically_after_adding(qtbot, db_empty)
     assert tag_names == sorted(tags + ["Read", "Unread"], key=lambda w: w.lower())
 
 
-###############
+# =============
 # deleting tags
-###############
+# =============
 def test_clicking_first_tag_delete_button_shows_second_entry(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     CClick(widget.firstDeleteTagButton, qtbot)
@@ -3914,9 +3914,9 @@ def test_invalid_tag_delete_error_text_hidden_when_text_modified(qtbot, db_temp)
     assert widget.secondDeleteTagErrorText.isHidden() is True
 
 
-#######################
+# =====================
 # exporting a given tag
-#######################
+# =====================
 def test_clicking_on_tag_in_left_panel_shows_export_button(qtbot, db_temp):
     widget = CInitialize(qtbot, db_temp)
     # get a tag from the left panel to click on
