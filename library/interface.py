@@ -1390,7 +1390,7 @@ class MainWindow(QMainWindow):
         :param db: database object that will be displayed in this interface.
         :type db: library.database.Database
         """
-        QMainWindow.__init__(self)
+        super().__init__()
 
         # Set up default stylesheets
         with open(Path(__file__).parent / "style.qss", "r") as style_file:
@@ -1553,7 +1553,7 @@ class MainWindow(QMainWindow):
         # I'll use "close" instead. This does automatically use the keyboard shortcut
         # ctrl+q to exit
         self.exitAction = QAction("Close", self)
-        self.exitAction.setShortcut(QKeySequence("Ctrl+q"))  # to be clear
+        self.exitAction.setShortcut(QKeySequence.Quit)  # to be clear
         # have to connect this to a function to actually do something
         self.exitAction.triggered.connect(QApplication.quit)
 
