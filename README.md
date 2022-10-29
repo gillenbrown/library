@@ -1,7 +1,6 @@
 [![Tests](https://github.com/gillenbrown/library/actions/workflows/tests.yaml/badge.svg)](https://github.com/gillenbrown/library/actions/workflows/tests.yaml)
 [![Coverage Status](https://coveralls.io/repos/github/gillenbrown/library/badge.svg)](https://coveralls.io/github/gillenbrown/library)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Black Code Style](https://github.com/gillenbrown/library/actions/workflows/black-code-style.yaml/badge.svg)](https://github.com/gillenbrown/library/actions/workflows/black-code-style.yaml)
 
 
 # library
@@ -34,6 +33,8 @@ python run.py
 You'll probably want to run this in a screen session or just move the process to the background to get your terminal back. 
 
 # Acknowledgements
+This would not be possible without the [ads library](https://github.com/andycasey/ads) maintained by Andy Casey.
+
 <a href="https://www.flaticon.com/free-icons/book" title="book icons">Book icons created by Icongeek26 - Flaticon</a>
 
 <a href="https://www.flaticon.com/free-icons/dropdown-arrow" title="dropdown arrow icons">Dropdown arrow icons created by NextGen - Flaticon</a>
