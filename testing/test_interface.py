@@ -1068,6 +1068,51 @@ def test_right_panel_cite_key_has_word_wrap_on(qtbot, db):
     assert widget.rightPanel.citeKeyText.wordWrap()
 
 
+def test_right_panel_title_is_copyable(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    assert (
+        widget.rightPanel.titleText.textInteractionFlags() == Qt.TextSelectableByMouse
+    )
+
+
+def test_right_panel_cite_string_is_copyable(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    assert widget.rightPanel.citeText.textInteractionFlags() == Qt.TextSelectableByMouse
+
+
+def test_right_panel_abstract_is_copyable(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    assert (
+        widget.rightPanel.abstractText.textInteractionFlags()
+        == Qt.TextSelectableByMouse
+    )
+
+
+def test_right_panel_cite_key_is_copyable(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    assert (
+        widget.rightPanel.citeKeyText.textInteractionFlags() == Qt.TextSelectableByMouse
+    )
+
+
+def test_right_panel_pdf_text_is_copyable(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    assert widget.rightPanel.pdfText.textInteractionFlags() == Qt.TextSelectableByMouse
+
+
+def test_right_panel_notes_is_copyable(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    assert (
+        widget.rightPanel.userNotesText.textInteractionFlags()
+        == Qt.TextSelectableByMouse
+    )
+
+
+def test_right_panel_tags_text_is_not_copyable(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    assert widget.rightPanel.tagText.textInteractionFlags() != Qt.TextSelectableByMouse
+
+
 def test_tags_selection_checkboxes_is_hidden_at_beginning(qtbot, db):
     widget = cInitialize(qtbot, db)
     for tag in widget.rightPanel.tags:
@@ -2858,11 +2903,13 @@ def test_dclicking_on_paper_with_no_local_file_scrolls_to_show_buttons(qtbot, db
 
 
 def test_pdf_highlighting_goes_away_with_any_click(qtbot, db_temp):
+    # any text that can be selected by the user will not remove the highlighting, but
+    # all other things should
     widget = cInitialize(qtbot, db_temp)
     cDoubleClick(widget.papersList.papers[0], qtbot)
     assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == True
     assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == True
-    cClick(widget.rightPanel.titleText, qtbot)
+    cClick(widget.rightPanel.spacers[0], qtbot)
     assert widget.rightPanel.pdfChooseLocalFileButton.property("pdf_highlight") == False
     assert widget.rightPanel.pdfDownloadButton.property("pdf_highlight") == False
 

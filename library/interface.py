@@ -470,6 +470,7 @@ class RightPanel(ScrollArea):
         self.secondDeletePaperCancelButton.setProperty("delete_cancel_button", True)
         self.tagText = QLabel("")
         self.userNotesText = QLabel("")
+        self.userNotesText.setTextInteractionFlags(Qt.TextSelectableByMouse)
         self.userNotesTextEditButton = QPushButton("Edit Notes")
         self.userNotesTextEditField = QTextEdit()
         self.userNotesTextEditFinishedButton = QPushButton("Done Editing Notes")
@@ -478,6 +479,10 @@ class RightPanel(ScrollArea):
         self.citeText.setObjectName("right_panel_cite_text")
         self.abstractText.setObjectName("right_panel_abstract_text")
         self.tagText.setObjectName("right_panel_tagText")
+        # make some things selectable
+        self.titleText.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.citeText.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.abstractText.setTextInteractionFlags(Qt.TextSelectableByMouse)
 
         # have buttons to hide and show the list of tag checkboxes
         self.editTagsButton = QPushButton("Edit Tags")
@@ -495,6 +500,7 @@ class RightPanel(ScrollArea):
 
         # have buttons to edit the citation keyword
         self.citeKeyText = QLabel("")
+        self.citeKeyText.setTextInteractionFlags(Qt.TextSelectableByMouse)
         self.editCiteKeyButton = QPushButton("Edit Citation Keyword")
         self.editCiteKeyEntry = EasyExitLineEdit(
             self.resetCiteTextButtons, self.changeCiteKey
@@ -506,6 +512,7 @@ class RightPanel(ScrollArea):
 
         # have buttons for the local PDF file
         self.pdfText = QLabel("")
+        self.pdfText.setTextInteractionFlags(Qt.TextSelectableByMouse)
         self.pdfOpenButton = QPushButton("Open this paper's PDF")
         self.pdfOpenButton.clicked.connect(self.openPDF)
         self.pdfChooseLocalFileButton = QPushButton("Choose a local PDF")
