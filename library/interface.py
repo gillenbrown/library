@@ -1555,7 +1555,7 @@ class MainWindow(QMainWindow):
         self.exitAction = QAction("Close", self)
         self.exitAction.setShortcut(QKeySequence("Ctrl+q"))  # to be clear
         # have to connect this to a function to actually do something
-        self.exitAction.triggered.connect(QApplication.quit())
+        self.exitAction.triggered.connect(QApplication.quit)
 
         # Then add all items to the menu
         self.file_menu.addAction(self.exitAction)
