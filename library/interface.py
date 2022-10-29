@@ -1543,23 +1543,6 @@ class MainWindow(QMainWindow):
         container.setLayout(vBoxMain)
         self.setCentralWidget(container)
 
-        # Then let's set up a menu.
-        self.menu = self.menuBar()
-        # have the file option
-        self.file_menu = self.menu.addMenu("File")
-
-        # Things to go in the menu
-        # Calling the Quit command can't be used, as it is caught by MacOS somehow
-        # I'll use "close" instead. This does automatically use the keyboard shortcut
-        # ctrl+q to exit
-        self.exitAction = QAction("Close", self)
-        self.exitAction.setShortcut(QKeySequence.Quit)  # to be clear
-        # have to connect this to a function to actually do something
-        self.exitAction.triggered.connect(QApplication.quit)
-
-        # Then add all items to the menu
-        self.file_menu.addAction(self.exitAction)
-
         # and the initial window size
         self.resize(1100, 600)
         # set the splitter

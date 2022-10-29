@@ -461,34 +461,6 @@ def test_title_has_correct_height_in_pixels(qtbot, db_empty):
     assert widget.title.height() == 60
 
 
-def test_can_exit_action_actually_exit_the_app(qtbot, db, monkeypatch):
-    # see https://pytest-qt.readthedocs.io/en/3.3.0/app_exit.html
-    # It's hard to actually test the menu item, so I'll skip this for now
-    # https://github.com/pytest-dev/pytest-qt/issues/195
-    exit_calls = []
-    monkeypatch.setattr(QApplication, "quit", lambda: exit_calls.append(1))
-
-    widget = cInitialize(qtbot, db)
-    widget.exitAction.trigger()
-
-    assert exit_calls == [1]
-
-
-def test_can_exit_keyboard_shortcut_exit_the_app(qtbot, db, monkeypatch):
-    # see https://pytest-qt.readthedocs.io/en/3.3.0/app_exit.html
-    # It's hard to actually test the menu item, so I'll skip this for now
-    # https://github.com/pytest-dev/pytest-qt/issues/195
-    exit_calls = []
-    monkeypatch.setattr(QApplication, "quit", lambda: exit_calls.append(1))
-
-    widget = cInitialize(qtbot, db)
-    widget.show()  # needed to activate keyboard shortcuts
-    qtbot.waitExposed(widget)
-    qtbot.keyPress(widget, "q", Qt.ControlModifier)
-
-    assert exit_calls == [1]
-
-
 # ==========================
 # sizing of the three panels
 # ==========================
