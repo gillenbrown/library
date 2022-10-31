@@ -595,12 +595,6 @@ class RightPanel(ScrollArea):
             else:
                 this_tag_checkbox.show()
 
-        # finally, update the text to account for the deleted tag, if we have a paper
-        # currently shown in this paper (this will get called at initialization, when
-        # there is no paper)
-        if self.bibcode != "":
-            self.update_tag_text()
-
     def resetPaperDetails(self):
         """
         Set the details in the right panel to be the default when no paper is shown
@@ -1793,6 +1787,11 @@ class MainWindow(QMainWindow):
         self.cancelTagDeletion()
         # and reset the checkboxes in the rightPanel
         self.rightPanel.populate_tags()
+        # finally, update the text to account for the deleted tag, if we have a paper
+        # currently shown in this paper (this will get called at initialization, when
+        # there is no paper)
+        if self.rightPanel.bibcode != "":
+            self.rightPanel.update_tag_text()
 
     def cancelTagDeletion(self):
         """
