@@ -12,7 +12,7 @@ import pytest
 import pytestqt
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFontDatabase, QDesktopServices, QGuiApplication
-from PySide6.QtWidgets import QApplication, QFileDialog, QLineEdit
+from PySide6.QtWidgets import QFileDialog, QLineEdit, QTextEdit
 
 from library.interface import MainWindow, get_fonts, set_up_fonts, Paper, LeftPanelTag
 from library.database import Database
@@ -2161,6 +2161,21 @@ def test_notes_edit_field_has_original_text(qtbot, db_notes):
     assert widget.rightPanel.userNotesTextEditField.toPlainText() == "abc123"
 
 
+def test_notes_edit_field_has_focus_when_shown(qtbot, db_temp, monkeypatch):
+    # I tried to test this directly, but was having trouble getting the tests to work
+    # properly. Specifically, widget.hasFocus() was not working propertly in tests for
+    # whatever reasonSo instead, I'll monkeypatch the setFocus method. I have tested
+    # that this works in the actual interface
+    setFocus_calls = []
+    monkeypatch.setattr(QTextEdit, "setFocus", lambda x: setFocus_calls.append(True))
+
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.papersList.papers[0], qtbot)
+    cClick(widget.rightPanel.userNotesTextEditButton, qtbot)
+    # assert widget.tagsList.addTagBar.hasFocus() is True  # would be the best test
+    assert setFocus_calls == [True]
+
+
 def test_notes_edit_field_is_blank_if_there_are_no_notes(qtbot, db_empty):
     db_empty.add_paper(u.mine.bibcode)
     widget = cInitialize(qtbot, db_empty)
@@ -2258,6 +2273,21 @@ def test_edit_citation_keyword_entry_shown_when_button_clicked(qtbot, db):
     cClick(widget.papersList.papers[0], qtbot)
     cClick(widget.rightPanel.editCiteKeyButton, qtbot)
     assert widget.rightPanel.editCiteKeyEntry.isHidden() is False
+
+
+def test_edit_citation_keyword_entry_has_focus_when_shown(qtbot, db_temp, monkeypatch):
+    # I tried to test this directly, but was having trouble getting the tests to work
+    # properly. Specifically, widget.hasFocus() was not working propertly in tests for
+    # whatever reasonSo instead, I'll monkeypatch the setFocus method. I have tested
+    # that this works in the actual interface
+    setFocus_calls = []
+    monkeypatch.setattr(QLineEdit, "setFocus", lambda x: setFocus_calls.append(True))
+
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.papersList.papers[0], qtbot)
+    cClick(widget.rightPanel.editCiteKeyButton, qtbot)
+    # assert widget.tagsList.addTagBar.hasFocus() is True  # would be the best test
+    assert setFocus_calls == [True]
 
 
 def test_edit_citation_keyword_error_text_not_shown_when_button_clicked(qtbot, db):

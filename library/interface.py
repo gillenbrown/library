@@ -824,6 +824,8 @@ class RightPanel(ScrollArea):
         self.userNotesText.hide()
         self.userNotesTextEditField.show()
         self.userNotesTextEditFinishedButton.show()
+        # and set the focus to put the cursor in the edit field
+        self.userNotesTextEditField.setFocus()
 
     def doneEditingUserNotes(self):
         """
@@ -851,6 +853,8 @@ class RightPanel(ScrollArea):
         """
         self.editCiteKeyButton.hide()
         self.editCiteKeyEntry.show()
+        # and set the focus to put the cursor in the edit field
+        self.editCiteKeyEntry.setFocus()
 
     def resetCiteTextButtons(self):
         """
