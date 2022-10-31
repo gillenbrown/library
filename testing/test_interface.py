@@ -926,7 +926,7 @@ def test_paper_cannot_be_added_twice(qtbot, db_empty):
 
 def test_duplicate_in_internal_paper_list_raises_error(qtbot, db):
     widget = cInitialize(qtbot, db)
-    new_paper = Paper(u.mine.bibcode, db, widget.rightPanel, widget.papersList)
+    new_paper = Paper(u.mine.bibcode, widget)
     with pytest.raises(AssertionError):
         widget.papersList.addPaper(new_paper)
 
@@ -2945,33 +2945,33 @@ def test_paper_cite_string_has_word_wrap_on(qtbot, db):
 # ===============
 def test_paper_initialization_has_correct_bibcode(qtbot, db):
     widget = cInitialize(qtbot, db)
-    new_paper = Paper(u.mine.bibcode, db, widget.rightPanel, widget.papersList)
+    new_paper = Paper(u.mine.bibcode, widget)
     assert new_paper.bibcode == u.mine.bibcode
 
 
 def test_paper_initialization_has_correct_title_in_the_text(qtbot, db):
     widget = cInitialize(qtbot, db)
-    new_paper = Paper(u.mine.bibcode, db, widget.rightPanel, widget.papersList)
+    new_paper = Paper(u.mine.bibcode, widget)
     assert new_paper.titleText.text() == u.mine.title
 
 
 def test_paper_initialization_has_correct_cite_string_in_the_text(qtbot, db):
     widget = cInitialize(qtbot, db)
-    new_paper = Paper(u.mine.bibcode, db, widget.rightPanel, widget.papersList)
+    new_paper = Paper(u.mine.bibcode, widget)
     assert new_paper.citeText.text() == db.get_cite_string(u.mine.bibcode)
 
 
 def test_paper_initialization_has_accents_in_author_list(qtbot, db_empty):
     widget = cInitialize(qtbot, db_empty)
     db_empty.add_paper(u.juan.bibcode)
-    new_paper = Paper(u.juan.bibcode, db_empty, widget.rightPanel, widget.papersList)
+    new_paper = Paper(u.juan.bibcode, widget)
     assert "á" in new_paper.citeText.text()
 
 
 def test_cannot_initialize_paper_thats_not_in_database(qtbot, db_empty):
     widget = cInitialize(qtbot, db_empty)
     with pytest.raises(AssertionError):
-        Paper(u.mine.bibcode, db_empty, widget.rightPanel, widget.papersList)
+        Paper(u.mine.bibcode, widget)
 
 
 def test_all_papers_in_database_are_in_the_paper_list_at_beginning(qtbot, db):
@@ -3578,7 +3578,7 @@ def test_tag_name_button_is_shown_after_successful_entry(qtbot, db_temp):
 def test_duplicate_in_internal_tags_list_raises_error(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
     cAddTag(widget, "Test Tag", qtbot)
-    new_tag = LeftPanelTag("Test Tag", widget.papersList, widget.tagsList)
+    new_tag = LeftPanelTag("Test Tag", widget)
     with pytest.raises(AssertionError):
         widget.tagsList.addTag(new_tag)
 

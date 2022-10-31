@@ -48,7 +48,7 @@ class LeftPanelTag(QWidget):
     Class holding a tag that goes in the left panel
     """
 
-    def __init__(self, tagName, papersList, tagsList):
+    def __init__(self, tagName, main):
         """
         Initialize a tag that goes in the left panel.
 
@@ -57,10 +57,8 @@ class LeftPanelTag(QWidget):
 
         :param tagName: Name of the tag to show.
         :type tagName: str
-        :param papersList: Papers list objects
-        :type papersList: PapersListScrollArea
-        :param tagsList: The parent list of tags.
-        :type tagsList: TagsListScrollArea
+        :param main: the main widget, which we'll use to access other widgets
+        :type main: MainWindow
         """
         QWidget.__init__(self)
         # this contains two parts: a tag name, then a button to export
@@ -78,8 +76,7 @@ class LeftPanelTag(QWidget):
 
         # also store some other info
         self.name = tagName
-        self.papersList = papersList
-        self.tagsList = tagsList
+        self.main = main
         # make sure the tag is unhighlighted. This first thing ensures that changes
         # are actually shown in the interface. Not sure why this is not automatically
         # set
@@ -102,16 +99,16 @@ class LeftPanelTag(QWidget):
                   the same thing for every click type.
         :return: None
         """
-        for paper in self.papersList.papers:
+        for paper in self.main.papersList.papers:
             if self.name in paper.getTags():
                 paper.show()
             else:
                 paper.hide()
 
         # Visually highlight this tag, and remove highlighting on other tags
-        for tag in self.tagsList.tags:
+        for tag in self.main.tagsList.tags:
             tag.unhighlight()
-        self.tagsList.showAllButton.unhighlight()
+        self.main.tagsList.showAllButton.unhighlight()
         self.highlight()
 
     def highlight(self):
@@ -159,20 +156,18 @@ class LeftPanelTag(QWidget):
         else:
             label = self.name
 
-        self.papersList.db.export(label, Path(local_file))
+        self.main.db.export(label, Path(local_file))
 
 
 class LeftPanelTagShowAll(LeftPanelTag):
-    def __init__(self, papersList, tagsList):
+    def __init__(self, main):
         """
         Create the button to show all papers, regardless of tag
 
-        :param papersList: Papers list objects
-        :type papersList: PapersListScrollArea
-        :param tagsList: The parent list of tags.
-        :type tagsList: TagsListScrollArea
+        :param main: the main widget, which we'll use to access other widgets
+        :type main: MainWindow
         """
-        super().__init__("All Papers", papersList, tagsList)
+        super().__init__("All Papers", main)
         # this starts highlighted
         self.highlight()
 
@@ -182,10 +177,10 @@ class LeftPanelTagShowAll(LeftPanelTag):
 
         :return: None
         """
-        for paper in self.papersList.papers:
+        for paper in self.main.papersList.papers:
             paper.show()
         # Visually highlight this tag, and remove highlighting on other tags
-        for tag in self.tagsList.tags:
+        for tag in self.main.tagsList.tags:
             tag.unhighlight()
         self.highlight()
 
@@ -195,38 +190,29 @@ class Paper(QWidget):
     Class holding paper details that goes in the central panel
     """
 
-    def __init__(self, bibcode, db, rightPanel, papersList):
+    def __init__(self, bibcode, main):
         """
         Initialize the paper object, which will hold the given bibcode
 
         :param bibcode: Bibcode of this paper
         :type bibcode: str
-        :param db: Database object this interface is using
-        :type db: library.database.Database
-        :param rightPanel: rightPanel object of this interface. This is only needed so
-                           we can call the update feature when this is clicked on
-        :type rightPanel: rightPanel
-        :param papersList: The list of papers that this paper will be added to. This is
-                           needed so we can unhighlight all other papers when one is
-                           selected
-        :type papersList: PapersListScrollArea
+        :param main: the main widget, which we'll use to access other widgets
+        :type main: MainWindow
         """
         QWidget.__init__(self)
 
         # store the information that will be needed later
         self.bibcode = bibcode
-        self.db = db
-        self.rightPanel = rightPanel
-        self.papersList = papersList
+        self.main = main
 
         # make sure this paper is actually in the database. This should never happen, but
         # might if I do something dumb in tests
-        assert self.bibcode in self.db.get_all_bibcodes()
+        assert self.bibcode in self.main.db.get_all_bibcodes()
 
         # Then set up the layout this uses. It will be vertical with the title (for now)
         vBox = QVBoxLayout()
-        self.titleText = QLabel(self.db.get_paper_attribute(self.bibcode, "title"))
-        self.citeText = QLabel(self.db.get_cite_string(self.bibcode))
+        self.titleText = QLabel(self.main.db.get_paper_attribute(self.bibcode, "title"))
+        self.citeText = QLabel(self.main.db.get_cite_string(self.bibcode))
 
         # name these for stylesheets
         self.titleText.setObjectName("center_panel_paper_title")
@@ -260,23 +246,23 @@ class Paper(QWidget):
         # right panel. If we have a double click, we'll open the paper pdf.
 
         # Pass the bibcode on to the right panel
-        self.rightPanel.setPaperDetails(self.bibcode)
+        self.main.rightPanel.setPaperDetails(self.bibcode)
         # unhighlight all papers
-        for paper in self.papersList.papers:
+        for paper in self.main.papersList.papers:
             paper.unhighlight()
         # then highlight this paper
         self.highlight()
 
         if event.type() is QEvent.Type.MouseButtonDblClick:
-            self.rightPanel.validatePDFPath()
-            local_file = self.db.get_paper_attribute(self.bibcode, "local_file")
+            self.main.rightPanel.validatePDFPath()
+            local_file = self.main.db.get_paper_attribute(self.bibcode, "local_file")
             # local_file will either be None or an existing file
             # if there is no file, highlight for the user where they can add the file
             if local_file is None:
-                self.rightPanel.highlightPDFButtons()
+                self.main.rightPanel.highlightPDFButtons()
             else:
                 # open the file. This function handles error checking
-                self.rightPanel.openPDF()
+                self.main.rightPanel.openPDF()
         # nothing should be done for other click types
 
     def getTags(self):
@@ -286,7 +272,7 @@ class Paper(QWidget):
         :return: List of tags
         :rtype: list
         """
-        return self.db.get_paper_tags(self.bibcode)
+        return self.main.db.get_paper_tags(self.bibcode)
 
     def highlight(self):
         """
@@ -316,17 +302,17 @@ class TagCheckBox(QCheckBox):
     This is only needed as a separate class to implement the changeState correctly.
     """
 
-    def __init__(self, text, rightPanel):
+    def __init__(self, text, main):
         """
         Create this tag Checkbox, with given text and belonging to some RightPanel.
 
         :param text: Label to show up next to this checkbox
         :type text: str
-        :param rightPanel: Right Panel this checkbox belongs to.
-        :type rightPanel: RightPanel
+        :param main: the main widget, which we'll use to access other widgets
+        :type main: MainWindow
         """
         QCheckBox.__init__(self, text)
-        self.rightPanel = rightPanel
+        self.main = main
         self.stateChanged.connect(self.changeState)
 
     def changeState(self):
@@ -335,7 +321,7 @@ class TagCheckBox(QCheckBox):
 
         :return: None
         """
-        self.rightPanel.changeTags(self.text(), self.isChecked())
+        self.main.rightPanel.changeTags(self.text(), self.isChecked())
 
 
 class HorizontalLine(QFrame):
@@ -434,19 +420,17 @@ class RightPanel(ScrollArea):
     The right panel area for the main window, holding paper info for a single paper
     """
 
-    def __init__(self, db):
+    def __init__(self, main):
         """
         Initialize the right panel.
 
-        :param db: Database object this interface is using
-        :type db: library.database.Database
+        :param main: the main widget, which we'll use to access other widgets
+        :type main: MainWindow
         """
         super().__init__(min_width=250, offset=25)
 
-        self.db = db
+        self.main = main
         self.bibcode = ""  # will be set later
-        self.papersList = None  # will be set by the papersList initializer, which
-        # will have this passed in to it
 
         # for clarity set text to empty, the default values will be set below
         self.titleText = QLabel("")
@@ -578,13 +562,13 @@ class RightPanel(ScrollArea):
             del t
         self.tags = []
         # go through the database and add checkboxes for each tag there.
-        for t in self.db.get_all_tags():
-            this_tag_checkbox = TagCheckBox(t, self)
+        for t in self.main.db.get_all_tags():
+            this_tag_checkbox = TagCheckBox(t, self.main)
             self.tags.append(this_tag_checkbox)
             self.vBoxTags.addWidget(this_tag_checkbox)
             # see whether we can check this box
             if self.bibcode != "":
-                if t in self.db.get_paper_tags(self.bibcode):
+                if t in self.main.db.get_paper_tags(self.bibcode):
                     this_tag_checkbox.setChecked(True)
                 else:
                     this_tag_checkbox.setChecked(False)
@@ -643,9 +627,11 @@ class RightPanel(ScrollArea):
         if self.bibcode == bibcode:
             return
         self.bibcode = bibcode
-        self.titleText.setText(self.db.get_paper_attribute(self.bibcode, "title"))
-        self.citeText.setText(self.db.get_cite_string(self.bibcode))
-        self.abstractText.setText(self.db.get_paper_attribute(self.bibcode, "abstract"))
+        self.titleText.setText(self.main.db.get_paper_attribute(self.bibcode, "title"))
+        self.citeText.setText(self.main.db.get_cite_string(self.bibcode))
+        self.abstractText.setText(
+            self.main.db.get_paper_attribute(self.bibcode, "abstract")
+        )
         self.update_tag_text()
         self.updateNotesText()
 
@@ -667,7 +653,7 @@ class RightPanel(ScrollArea):
         self.userNotesTextEditButton.show()
         # and the bibtex buttons
         self.citeKeyText.show()
-        cite_key = self.db.get_paper_attribute(self.bibcode, "citation_keyword")
+        cite_key = self.main.db.get_paper_attribute(self.bibcode, "citation_keyword")
         self.citeKeyText.setText(f"Citation Keyword: {cite_key}")
         self.editCiteKeyButton.show()
         self.copyBibtexButton.show()
@@ -690,7 +676,7 @@ class RightPanel(ScrollArea):
 
         :return: None
         """
-        tags_list = self.db.get_paper_tags(self.bibcode)
+        tags_list = self.main.db.get_paper_tags(self.bibcode)
         if len(tags_list) > 0:
             self.tagText.setText(f"Tags: {', '.join(tags_list)}")
         else:
@@ -735,9 +721,9 @@ class RightPanel(ScrollArea):
         :return: None
         """
         if checked:
-            self.db.tag_paper(self.bibcode, tagName)
+            self.main.db.tag_paper(self.bibcode, tagName)
         else:
-            self.db.untag_paper(self.bibcode, tagName)
+            self.main.db.untag_paper(self.bibcode, tagName)
 
     def copyBibtex(self):
         """
@@ -746,7 +732,7 @@ class RightPanel(ScrollArea):
         :return: None, but the text is copied to the clipboard
         :rtype: None
         """
-        this_bibtex = self.db.get_paper_attribute(self.bibcode, "bibtex")
+        this_bibtex = self.main.db.get_paper_attribute(self.bibcode, "bibtex")
         QGuiApplication.clipboard().setText(this_bibtex)
 
     def openADS(self):
@@ -788,8 +774,10 @@ class RightPanel(ScrollArea):
         :return: None, but the paper is deleted and text reset
         """
         self.resetPaperDetails()  # clean up right panel
-        self.papersList.deletePaper(self.bibcode)  # remove this frm the center panel
-        self.db.delete_paper(self.bibcode)
+        self.main.papersList.deletePaper(
+            self.bibcode
+        )  # remove this frm the center panel
+        self.main.db.delete_paper(self.bibcode)
 
     def updateNotesText(self):
         """
@@ -797,7 +785,7 @@ class RightPanel(ScrollArea):
 
         :return: None
         """
-        notes_text = self.db.get_paper_attribute(self.bibcode, "user_notes")
+        notes_text = self.main.db.get_paper_attribute(self.bibcode, "user_notes")
         if notes_text is None or len(notes_text.strip()) == 0:
             notes_text = "No notes yet"
         self.userNotesText.setText(notes_text)
@@ -812,7 +800,7 @@ class RightPanel(ScrollArea):
         # the text from the widget, since that may say "no notes yet" and I don't want
         # that to be in this text box
         self.userNotesTextEditField.setText(
-            self.db.get_paper_attribute(self.bibcode, "user_notes")
+            self.main.db.get_paper_attribute(self.bibcode, "user_notes")
         )
         # then show the appropriate buttons
         self.userNotesTextEditButton.hide()
@@ -842,7 +830,7 @@ class RightPanel(ScrollArea):
         """
         # save this info in the database
         text = self.userNotesTextEditField.toPlainText()
-        self.db.set_paper_attribute(self.bibcode, "user_notes", text)
+        self.main.db.set_paper_attribute(self.bibcode, "user_notes", text)
         # and put this text into the static text field
         self.updateNotesText()
 
@@ -856,7 +844,7 @@ class RightPanel(ScrollArea):
         :return: None
         """
         # put the text in the entry field. If it's the bibcode, leave it blank
-        current_key = self.db.get_paper_attribute(self.bibcode, "citation_keyword")
+        current_key = self.main.db.get_paper_attribute(self.bibcode, "citation_keyword")
         if self.bibcode == current_key:
             default_text = ""
         else:
@@ -893,7 +881,9 @@ class RightPanel(ScrollArea):
             user_entry = self.bibcode
         # try to add this, and then handle errors as needed
         try:
-            self.db.set_paper_attribute(self.bibcode, "citation_keyword", user_entry)
+            self.main.db.set_paper_attribute(
+                self.bibcode, "citation_keyword", user_entry
+            )
         except ValueError:  # space in keyword -- empty string handled earlier
             self.editCiteKeyErrorText.setText("Spaces not allowed")
             self.editCiteKeyErrorText.show()
@@ -916,10 +906,10 @@ class RightPanel(ScrollArea):
 
         :return: None
         """
-        local_file = self.db.get_paper_attribute(self.bibcode, "local_file")
+        local_file = self.main.db.get_paper_attribute(self.bibcode, "local_file")
         # if it does not exist, replace it
         if local_file is not None and not Path(local_file).is_file():
-            self.db.set_paper_attribute(self.bibcode, "local_file", None)
+            self.main.db.set_paper_attribute(self.bibcode, "local_file", None)
             local_file = None
 
         # now we either have None or a valid file
@@ -955,7 +945,7 @@ class RightPanel(ScrollArea):
         # Otherwise this returns a two item tuple, where the first item is the
         # absolute path to the file they picked
         if local_file != "":
-            self.db.set_paper_attribute(self.bibcode, "local_file", local_file)
+            self.main.db.set_paper_attribute(self.bibcode, "local_file", local_file)
             self.validatePDFPath()  # handles buttons and whatnot
 
     def openPDF(self):
@@ -967,7 +957,7 @@ class RightPanel(ScrollArea):
         # first validate
         self.validatePDFPath()
         # if it's valid, open the file
-        local_file = self.db.get_paper_attribute(self.bibcode, "local_file")
+        local_file = self.main.db.get_paper_attribute(self.bibcode, "local_file")
         if local_file is not None:
             QDesktopServices.openUrl(f"file:{local_file}")
 
@@ -1011,7 +1001,7 @@ class RightPanel(ScrollArea):
         self._downloadURL(this_url, local_file)
 
         # and set the database attribute and show buttons
-        self.db.set_paper_attribute(self.bibcode, "local_file", local_file)
+        self.main.db.set_paper_attribute(self.bibcode, "local_file", local_file)
         self.validatePDFPath()
 
     def _downloadURL(self, url, local_path):
@@ -1068,18 +1058,15 @@ class PapersListScrollArea(ScrollArea):
     It's just a ScrollArea that keeps track of the papers that have been added.
     """
 
-    def __init__(self, db, rightPanel):
+    def __init__(self, main):
         """
         Set up the papers list
 
         Stores the database and right panel, which are used by the paper objects
         themselves
 
-        :param db: Database object this interface is using
-        :type db: library.database.Database
-        :param rightPanel: rightPanel object of this interface. This is only needed so
-                           we can call the update feature when this is clicked on
-        :type rightPanel: rightPanel
+        :param main: the main widget, which we'll use to access other widgets
+        :type main: MainWindow
         """
         super().__init__(min_width=300, offset=6)  # match offset to scrollbar width
         # add space for top sortChooser, then matching space at the bottom so the
@@ -1087,9 +1074,7 @@ class PapersListScrollArea(ScrollArea):
         self.layout.setContentsMargins(0, 35, 0, 35)
         self.papers = []
 
-        self.rightPanel = rightPanel
-        self.db = db
-        rightPanel.papersList = self
+        self.main = main
 
         self.sortChooser = QComboBox()
         # set the options. By putting date first it's the default
@@ -1117,7 +1102,7 @@ class PapersListScrollArea(ScrollArea):
         assert bibcode not in [p.bibcode for p in self.papers]
 
         # create the paper object, than add to the list and center panel
-        paper = Paper(bibcode, self.db, self.rightPanel, self)
+        paper = Paper(bibcode, self.main)
         self.papers.append(paper)
         self.addWidget(paper)  # calls the ScrollArea addWidget
         self.sortPapers()
@@ -1160,7 +1145,9 @@ class PapersListScrollArea(ScrollArea):
         text = self.sortChooser.currentText()
         if text == "Sort by Date":
             # Here we just sort by publication date
-            self.sortKey = lambda p: self.db.get_paper_attribute(p.bibcode, "pubdate")
+            self.sortKey = lambda p: self.main.db.get_paper_attribute(
+                p.bibcode, "pubdate"
+            )
         elif text == "Sort by First Author":
             # Here we have to do something a bit more complex. We sort by the author's
             # last name first, then by their first name (to try to distinguish between
@@ -1168,11 +1155,11 @@ class PapersListScrollArea(ScrollArea):
             # year. To accomplish this, we return a three item tuple, as Python sorts
             # by comparing the first item of the tuple, then the second, etc.
             def author_sort(p):
-                first_author = self.db.get_paper_attribute(p.bibcode, "authors")[0]
+                first_author = self.main.db.get_paper_attribute(p.bibcode, "authors")[0]
 
                 last_name = first_author.split(",")[0]
                 rest_of_name = ",".join(first_author.split(",")[1:]).strip()
-                year = self.db.get_paper_attribute(p.bibcode, "pubdate")
+                year = self.main.db.get_paper_attribute(p.bibcode, "pubdate")
                 return last_name, rest_of_name, year
 
             self.sortKey = author_sort
@@ -1208,58 +1195,29 @@ class TagsListScrollArea(ScrollArea):
     a button to show all papers.
     """
 
-    def __init__(
-        self,
-        addTagButton,
-        addTagBar,
-        addTagErrorText,
-        papersList,
-        splitter,
-        firstDeleteTagButton,
-        secondDeleteTagEntry,
-        secondDeleteTagErrorText,
-        thirdDeleteTagButton,
-        thirdDeleteTagCancelButton,
-    ):
+    def __init__(self, main):
         """
-        :param addTagButton: The button to press to add a tag
-        :type addTagButton: QPushButton
-        :param addTagBar: The entry where new tag names are added
-        :type addTagBar: QLineEdit
-        :param addTagErrorText: the label showing if there's an error
-        :type addTagErrorText: QLabel
-        :param papersList: The object holding the central papers list
-        :type papersList: PapersListScrollArea
-        :param splitter: The splitter object in the main panel
-        :type splitter: QSplitter
-        :param firstDeleteTagButton: The button to delete a tag
-        :type firstDeleteTagButton: QPushButton
-        :param secondDeleteTagEntry: The entry where tags to delete are entered
-        :type secondDeleteTagEntry: QLineEdit
-        :param secondDeleteTagErrorText: the label showing if there's an error
-        :type secondDeleteTagErrorText: QLabel
-        :param thirdDeleteTagButton: The button to confirm deletion of a tag
-        :type thirdDeleteTagButton: QPushButton
-        :param thirdDeleteTagCancelButton: The button to cancel deletion of a tag
-        :type thirdDeleteTagCancelButton: QPushButton
+        :param main: the main widget, which we'll use to access other widgets
+        :type main: MainWindow
         """
         self.default_min_width = 200
         self.offset = 25
         super().__init__(min_width=self.default_min_width, offset=self.offset)
+        self.main = main
         self.tags = []
-        self.addTagButton = addTagButton
-        self.addTagBar = addTagBar
-        self.addTagErrorText = addTagErrorText
-        self.papersList = papersList
-        self.splitter = splitter
-        self.firstDeleteTagButton = firstDeleteTagButton
-        self.secondDeleteTagEntry = secondDeleteTagEntry
-        self.secondDeleteErrorText = secondDeleteTagErrorText
-        self.thirdDeleteTagButton = thirdDeleteTagButton
-        self.thirdDeleteTagCancelButton = thirdDeleteTagCancelButton
+        self.addTagButton = main.addTagButton
+        self.addTagBar = main.addTagBar
+        self.addTagErrorText = main.addTagErrorText
+        self.papersList = main.papersList
+        self.splitter = main.splitter
+        self.firstDeleteTagButton = main.firstDeleteTagButton
+        self.secondDeleteTagEntry = main.secondDeleteTagEntry
+        self.secondDeleteErrorText = main.secondDeleteTagErrorText
+        self.thirdDeleteTagButton = main.thirdDeleteTagButton
+        self.thirdDeleteTagCancelButton = main.thirdDeleteTagCancelButton
 
         # Make the button to show all the papers in the list
-        self.showAllButton = LeftPanelTagShowAll(papersList, self)
+        self.showAllButton = LeftPanelTagShowAll(self.main)
 
         # put the tag bar at the top of the list
         self.addWidget(self.addTagButton)  # calls ScrollArea addWidget
@@ -1517,13 +1475,13 @@ class MainWindow(QMainWindow):
 
         # The right panel is the details on a given paper. It holds the tags list,
         # which we need to initialize first
-        self.rightPanel = RightPanel(self.db)
+        self.rightPanel = RightPanel(self)
 
         # The central panel is the list of papers. This has to be set up after the
         # right panel because the paper objects need it, and before the left panel
         # because the tags need this panel. In the big picture, we have a main
         # wrapper so that we can keep the sort button at the top
-        self.papersList = PapersListScrollArea(db, self.rightPanel)
+        self.papersList = PapersListScrollArea(self)
         for b in self.db.get_all_bibcodes():
             self.papersList.addPaper(b)
 
@@ -1575,20 +1533,9 @@ class MainWindow(QMainWindow):
         self.thirdDeleteTagCancelButton.hide()
 
         # Then set up the final tagsList object
-        self.tagsList = TagsListScrollArea(
-            self.addTagButton,
-            self.addTagBar,
-            self.addTagErrorText,
-            self.papersList,
-            self.splitter,
-            self.firstDeleteTagButton,
-            self.secondDeleteTagEntry,
-            self.secondDeleteTagErrorText,
-            self.thirdDeleteTagButton,
-            self.thirdDeleteTagCancelButton,
-        )
+        self.tagsList = TagsListScrollArea(self)
         for t in self.db.get_all_tags():
-            self.tagsList.addTag(LeftPanelTag(t, self.papersList, self.tagsList))
+            self.tagsList.addTag(LeftPanelTag(t, self))
 
         # then add each of these widgets to the central splitter
         self.splitter.addWidget(self.tagsList)
@@ -1713,7 +1660,7 @@ class MainWindow(QMainWindow):
         # otherwise, try to add it to the database
         try:
             self.db.add_new_tag(tagName)
-            self.tagsList.addTag(LeftPanelTag(tagName, self.papersList, self.tagsList))
+            self.tagsList.addTag(LeftPanelTag(tagName, self))
             # add this checkbox to the right panel
             self.rightPanel.populate_tags()
         except ValueError:  # this tag is already in the database
