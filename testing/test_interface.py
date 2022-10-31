@@ -300,6 +300,8 @@ def cEditCiteKey(mainWidget, citeKey, qtbot):
     # paper must already be clicked
     assert mainWidget.rightPanel.bibcode is not None
     cClick(mainWidget.rightPanel.editCiteKeyButton, qtbot)
+    # since there may be text there already, clear it for clarity
+    mainWidget.rightPanel.editCiteKeyEntry.clear()
     cEnterText(mainWidget.rightPanel.editCiteKeyEntry, citeKey, qtbot)
     cPressEnter(mainWidget.rightPanel.editCiteKeyEntry, qtbot)
 
@@ -2387,6 +2389,24 @@ def test_edit_citation_keyword_entry_shown_when_button_clicked(qtbot, db):
     assert widget.rightPanel.editCiteKeyEntry.isHidden() is False
 
 
+def test_edit_citation_keyword_entry_has_current_cite_key(qtbot, db_empty):
+    # first set up the database
+    db_empty.add_paper(u.mine.bibcode)
+    db_empty.set_paper_attribute(u.mine.bibcode, "citation_keyword", "test")
+    # then show it in the interface
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.papersList.papers[0], qtbot)
+    cClick(widget.rightPanel.editCiteKeyButton, qtbot)
+    assert widget.rightPanel.editCiteKeyEntry.text() == "test"
+
+
+def test_edit_citation_keyword_entry_is_blank_if_none_currently_set(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.papersList.papers[0], qtbot)
+    cClick(widget.rightPanel.editCiteKeyButton, qtbot)
+    assert widget.rightPanel.editCiteKeyEntry.text() == ""
+
+
 def test_edit_citation_keyword_entry_has_focus_when_shown(qtbot, db_temp, monkeypatch):
     # I tried to test this directly, but was having trouble getting the tests to work
     # properly. Specifically, widget.hasFocus() was not working propertly in tests for
@@ -2400,6 +2420,19 @@ def test_edit_citation_keyword_entry_has_focus_when_shown(qtbot, db_temp, monkey
     cClick(widget.rightPanel.editCiteKeyButton, qtbot)
     # assert widget.tagsList.addTagBar.hasFocus() is True  # would be the best test
     assert setFocus_calls == [True]
+
+
+def test_edit_citation_keyword_entry_cursor_at_end(qtbot, db_empty):
+    # first set up the database, the show the interface
+    db_empty.add_paper(u.mine.bibcode)
+    db_empty.set_paper_attribute(u.mine.bibcode, "citation_keyword", "test")
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.papersList.papers[0], qtbot)
+    # we'll show the text, then click backspace, then check what's there to see if the
+    # cursor was really at the end
+    cClick(widget.rightPanel.editCiteKeyButton, qtbot)
+    cPressBackspace(widget.rightPanel.editCiteKeyEntry, qtbot)
+    assert widget.rightPanel.editCiteKeyEntry.text() == "tes"
 
 
 def test_edit_citation_keyword_error_text_not_shown_when_button_clicked(qtbot, db):

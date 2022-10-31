@@ -853,10 +853,19 @@ class RightPanel(ScrollArea):
 
         :return: None
         """
+        # put the text in the entry field. If it's the bibcode, leave it blank
+        current_key = self.db.get_paper_attribute(self.bibcode, "citation_keyword")
+        if self.bibcode == current_key:
+            default_text = ""
+        else:
+            default_text = current_key
+        self.editCiteKeyEntry.setText(default_text)
+        # show buttons
         self.editCiteKeyButton.hide()
         self.editCiteKeyEntry.show()
-        # and set the focus to put the cursor in the edit field
+        # and set the focus to put the cursor in the edit field, and move it to the end
         self.editCiteKeyEntry.setFocus()
+        self.editCiteKeyEntry.setCursorPosition(len(self.editCiteKeyEntry.text()))
 
     def resetCiteTextButtons(self):
         """
