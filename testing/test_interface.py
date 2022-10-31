@@ -264,10 +264,10 @@ def cDeleteTag(mainWidget, tagName, qtbot):
     :param qtbot: the qtbot instance used in a given test
     :return: None
     """
-    cClick(mainWidget.firstDeleteTagButton, qtbot)
-    cEnterText(mainWidget.secondDeleteTagEntry, tagName, qtbot)
-    cPressEnter(mainWidget.secondDeleteTagEntry, qtbot)
-    cClick(mainWidget.thirdDeleteTagButton, qtbot)
+    cClick(mainWidget.tagsList.firstDeleteTagButton, qtbot)
+    cEnterText(mainWidget.tagsList.secondDeleteTagEntry, tagName, qtbot)
+    cPressEnter(mainWidget.tagsList.secondDeleteTagEntry, qtbot)
+    cClick(mainWidget.tagsList.thirdDeleteTagButton, qtbot)
 
 
 def cDeleteFirstPaper(mainWidget, qtbot):
@@ -564,9 +564,9 @@ def test_showing_delete_tag_confirm_resizes_splitter(qtbot, db_temp):
     db_temp.add_new_tag(tag_name)
     widget = cInitialize(qtbot, db_temp)
     original_sizes = widget.splitter.sizes()
-    cClick(widget.firstDeleteTagButton, qtbot)
-    cEnterText(widget.secondDeleteTagEntry, tag_name, qtbot)
-    cPressEnter(widget.secondDeleteTagEntry, qtbot)
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    cEnterText(widget.tagsList.secondDeleteTagEntry, tag_name, qtbot)
+    cPressEnter(widget.tagsList.secondDeleteTagEntry, qtbot)
     new_sizes = widget.splitter.sizes()
     assert new_sizes[0] > original_sizes[0]
 
@@ -576,11 +576,11 @@ def test_confirming_tag_delete_resizes_splitter(qtbot, db_temp):
     db_temp.add_new_tag(tag_name)
     widget = cInitialize(qtbot, db_temp)
     # don't use convenience function, since we need size at intermediate steps
-    cClick(widget.firstDeleteTagButton, qtbot)
-    cEnterText(widget.secondDeleteTagEntry, tag_name, qtbot)
-    cPressEnter(widget.secondDeleteTagEntry, qtbot)
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    cEnterText(widget.tagsList.secondDeleteTagEntry, tag_name, qtbot)
+    cPressEnter(widget.tagsList.secondDeleteTagEntry, qtbot)
     original_sizes = widget.splitter.sizes()
-    cClick(widget.thirdDeleteTagButton, qtbot)
+    cClick(widget.tagsList.thirdDeleteTagButton, qtbot)
     new_sizes = widget.splitter.sizes()
     assert new_sizes[0] < original_sizes[0]
     assert new_sizes[0] == max(
@@ -3386,93 +3386,93 @@ def test_show_all_button_has_correct_text(qtbot, db_empty):
 
 def test_first_delete_tag_button_shown_at_beginning(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
-    assert widget.firstDeleteTagButton.isHidden() is False
+    assert widget.tagsList.firstDeleteTagButton.isHidden() is False
 
 
 def test_first_delete_tag_button_has_correct_font_size(qtbot, db_empty):
     widget = cInitialize(qtbot, db_empty)
-    assert widget.firstDeleteTagButton.font().pointSize() == 14
+    assert widget.tagsList.firstDeleteTagButton.font().pointSize() == 14
 
 
 def test_first_delete_tag_button_has_correct_font_family(qtbot, db_empty):
     widget = cInitialize(qtbot, db_empty)
-    assert widget.firstDeleteTagButton.font().family() == "Cabin"
+    assert widget.tagsList.firstDeleteTagButton.font().family() == "Cabin"
 
 
 def test_first_delete_tag_button_has_correct_text(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
-    assert widget.firstDeleteTagButton.text() == "Delete a tag"
+    assert widget.tagsList.firstDeleteTagButton.text() == "Delete a tag"
 
 
 def test_second_delete_tag_entry_hidden_at_beginning(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
-    assert widget.secondDeleteTagEntry.isHidden() is True
+    assert widget.tagsList.secondDeleteTagEntry.isHidden() is True
 
 
 def test_second_delete_tag_error_text_hidden_at_beginning(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
-    assert widget.secondDeleteTagErrorText.isHidden() is True
+    assert widget.tagsList.secondDeleteTagErrorText.isHidden() is True
 
 
 def test_second_delete_tag_button_has_correct_font_size(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
-    cClick(widget.firstDeleteTagButton, qtbot)
-    assert widget.secondDeleteTagEntry.font().pointSize() == 14
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    assert widget.tagsList.secondDeleteTagEntry.font().pointSize() == 14
 
 
 def test_second_delete_tag_button_has_correct_font_family(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
-    cClick(widget.firstDeleteTagButton, qtbot)
-    assert widget.secondDeleteTagEntry.font().family() == "Cabin"
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    assert widget.tagsList.secondDeleteTagEntry.font().family() == "Cabin"
 
 
 def test_second_delete_tag_entry_has_placeholder_text(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
-    cClick(widget.firstDeleteTagButton, qtbot)
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
     text = "Tag to delete"
-    assert widget.secondDeleteTagEntry.placeholderText() == text
+    assert widget.tagsList.secondDeleteTagEntry.placeholderText() == text
 
 
 def test_third_delete_tag_entry_hidden_at_beginning(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
-    assert widget.thirdDeleteTagButton.isHidden() is True
+    assert widget.tagsList.thirdDeleteTagButton.isHidden() is True
 
 
 def test_third_cancel_tag_entry_hidden_at_beginning(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
-    assert widget.thirdDeleteTagCancelButton.isHidden() is True
+    assert widget.tagsList.thirdDeleteTagCancelButton.isHidden() is True
 
 
 def test_third_delete_tag_button_has_correct_font_size(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
-    cClick(widget.firstDeleteTagButton, qtbot)
-    cEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
-    cPressEnter(widget.secondDeleteTagEntry, qtbot)
-    assert widget.thirdDeleteTagButton.font().pointSize() == 14
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    cEnterText(widget.tagsList.secondDeleteTagEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.secondDeleteTagEntry, qtbot)
+    assert widget.tagsList.thirdDeleteTagButton.font().pointSize() == 14
 
 
 def test_third_delete_tag_button_has_correct_font_family(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
-    cClick(widget.firstDeleteTagButton, qtbot)
-    cEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
-    cPressEnter(widget.secondDeleteTagEntry, qtbot)
-    assert widget.thirdDeleteTagButton.font().family() == "Cabin"
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    cEnterText(widget.tagsList.secondDeleteTagEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.secondDeleteTagEntry, qtbot)
+    assert widget.tagsList.thirdDeleteTagButton.font().family() == "Cabin"
 
 
 def test_third_delete_tag_cancel_button_has_correct_font_size(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
-    cClick(widget.firstDeleteTagButton, qtbot)
-    cEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
-    cPressEnter(widget.secondDeleteTagEntry, qtbot)
-    assert widget.thirdDeleteTagCancelButton.font().pointSize() == 14
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    cEnterText(widget.tagsList.secondDeleteTagEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.secondDeleteTagEntry, qtbot)
+    assert widget.tagsList.thirdDeleteTagCancelButton.font().pointSize() == 14
 
 
 def test_third_delete_tag_cancel_button_has_correct_font_family(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
-    cClick(widget.firstDeleteTagButton, qtbot)
-    cEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
-    cPressEnter(widget.secondDeleteTagEntry, qtbot)
-    assert widget.thirdDeleteTagCancelButton.font().family() == "Cabin"
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    cEnterText(widget.tagsList.secondDeleteTagEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.secondDeleteTagEntry, qtbot)
+    assert widget.tagsList.thirdDeleteTagCancelButton.font().family() == "Cabin"
 
 
 def test_show_all_export_button_has_correct_text(qtbot, db):
@@ -3578,9 +3578,8 @@ def test_tag_name_button_is_shown_after_successful_entry(qtbot, db_temp):
 def test_duplicate_in_internal_tags_list_raises_error(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
     cAddTag(widget, "Test Tag", qtbot)
-    new_tag = LeftPanelTag("Test Tag", widget)
     with pytest.raises(AssertionError):
-        widget.tagsList.addTag(new_tag)
+        widget.tagsList.addTagInternal("Test Tag")
 
 
 def test_tag_name_entry_is_not_cleared_after_duplicate_tag_attempt(qtbot, db_temp):
@@ -3813,8 +3812,8 @@ def test_left_panel_tags_are_sorted_alphabetically_after_adding(qtbot, db_empty)
 # =============
 def test_clicking_first_tag_delete_button_shows_second_entry(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
-    cClick(widget.firstDeleteTagButton, qtbot)
-    assert widget.secondDeleteTagEntry.isHidden() is False
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    assert widget.tagsList.secondDeleteTagEntry.isHidden() is False
 
 
 def test_clicking_first_tag_delete_button_focus_on_entry(qtbot, db_temp, monkeypatch):
@@ -3826,97 +3825,100 @@ def test_clicking_first_tag_delete_button_focus_on_entry(qtbot, db_temp, monkeyp
     monkeypatch.setattr(QLineEdit, "setFocus", lambda x: setFocus_calls.append(True))
 
     widget = cInitialize(qtbot, db_temp)
-    cClick(widget.firstDeleteTagButton, qtbot)
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
     # assert widget.secondDeleteTagEntry.hasFocus() is True  # would be the best test
     assert setFocus_calls == [True]
 
 
 def test_clicking_first_tag_delete_button_hides_first_button(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
-    cClick(widget.firstDeleteTagButton, qtbot)
-    assert widget.firstDeleteTagButton.isHidden() is True
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    assert widget.tagsList.firstDeleteTagButton.isHidden() is True
 
 
 def test_second_delete_tag_entry_is_hidden_when_entry_done(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
-    cClick(widget.firstDeleteTagButton, qtbot)
-    cEnterText(widget.secondDeleteTagEntry, "Read", qtbot)  # tag must exist
-    cPressEnter(widget.secondDeleteTagEntry, qtbot)
-    assert widget.secondDeleteTagEntry.isHidden() is True
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    cEnterText(widget.tagsList.secondDeleteTagEntry, "Read", qtbot)  # tag must exist
+    cPressEnter(widget.tagsList.secondDeleteTagEntry, qtbot)
+    assert widget.tagsList.secondDeleteTagEntry.isHidden() is True
 
 
 def test_third_delete_tag_button_appears_when_first_entry_done(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
-    cClick(widget.firstDeleteTagButton, qtbot)
-    cEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
-    cPressEnter(widget.secondDeleteTagEntry, qtbot)
-    assert widget.thirdDeleteTagButton.isHidden() is False
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    cEnterText(widget.tagsList.secondDeleteTagEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.secondDeleteTagEntry, qtbot)
+    assert widget.tagsList.thirdDeleteTagButton.isHidden() is False
 
 
 def test_third_delete_tag_cancel_button_appears_when_first_entry_done(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
-    cClick(widget.firstDeleteTagButton, qtbot)
-    cEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
-    cPressEnter(widget.secondDeleteTagEntry, qtbot)
-    assert widget.thirdDeleteTagCancelButton.isHidden() is False
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    cEnterText(widget.tagsList.secondDeleteTagEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.secondDeleteTagEntry, qtbot)
+    assert widget.tagsList.thirdDeleteTagCancelButton.isHidden() is False
 
 
 def test_second_tag_delete_error_text_hidden_when_first_entry_done(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
-    cClick(widget.firstDeleteTagButton, qtbot)
-    cEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
-    cPressEnter(widget.secondDeleteTagEntry, qtbot)
-    assert widget.secondDeleteTagErrorText.isHidden() is True
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    cEnterText(widget.tagsList.secondDeleteTagEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.secondDeleteTagEntry, qtbot)
+    assert widget.tagsList.secondDeleteTagErrorText.isHidden() is True
 
 
 def test_delete_tag_entry_can_exit_with_escape_press_at_any_time(qtbot, db):
     widget = cInitialize(qtbot, db)
-    cClick(widget.firstDeleteTagButton, qtbot)
-    cEnterText(widget.secondDeleteTagEntry, "sdfsdf", qtbot)
-    cPressEscape(widget.secondDeleteTagEntry, qtbot)
-    assert widget.secondDeleteTagEntry.isHidden() is True
-    assert widget.firstDeleteTagButton.isHidden() is False
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    cEnterText(widget.tagsList.secondDeleteTagEntry, "sdfsdf", qtbot)
+    cPressEscape(widget.tagsList.secondDeleteTagEntry, qtbot)
+    assert widget.tagsList.secondDeleteTagEntry.isHidden() is True
+    assert widget.tagsList.firstDeleteTagButton.isHidden() is False
 
 
 def test_delete_tag_entry_can_exit_with_escape_press_at_any_time_clears_text(qtbot, db):
     widget = cInitialize(qtbot, db)
-    cClick(widget.firstDeleteTagButton, qtbot)
-    cEnterText(widget.secondDeleteTagEntry, "sdfsdf", qtbot)
-    cPressEscape(widget.secondDeleteTagEntry, qtbot)
-    assert widget.secondDeleteTagEntry.text() == ""
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    cEnterText(widget.tagsList.secondDeleteTagEntry, "sdfsdf", qtbot)
+    cPressEscape(widget.tagsList.secondDeleteTagEntry, qtbot)
+    assert widget.tagsList.secondDeleteTagEntry.text() == ""
 
 
 def test_delete_tag_entry_can_exit_with_backspace_when_empty(qtbot, db):
     widget = cInitialize(qtbot, db)
-    cClick(widget.firstDeleteTagButton, qtbot)
-    cEnterText(widget.secondDeleteTagEntry, "abc", qtbot)
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    cEnterText(widget.tagsList.secondDeleteTagEntry, "abc", qtbot)
     # back out those three letters
     for _ in range(3):
-        cPressBackspace(widget.secondDeleteTagEntry, qtbot)
+        cPressBackspace(widget.tagsList.secondDeleteTagEntry, qtbot)
     # entry should still be visible
-    assert widget.secondDeleteTagEntry.isHidden() is False
-    assert widget.firstDeleteTagButton.isHidden() is True
+    assert widget.tagsList.secondDeleteTagEntry.isHidden() is False
+    assert widget.tagsList.firstDeleteTagButton.isHidden() is True
     # with one more backspace, we exit
-    cPressBackspace(widget.secondDeleteTagEntry, qtbot)
-    assert widget.secondDeleteTagEntry.isHidden() is True
-    assert widget.firstDeleteTagButton.isHidden() is False
+    cPressBackspace(widget.tagsList.secondDeleteTagEntry, qtbot)
+    assert widget.tagsList.secondDeleteTagEntry.isHidden() is True
+    assert widget.tagsList.firstDeleteTagButton.isHidden() is False
 
 
 def test_third_delete_tag_button_text_is_accurate(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
-    cClick(widget.firstDeleteTagButton, qtbot)
-    cEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
-    cPressEnter(widget.secondDeleteTagEntry, qtbot)
-    assert widget.thirdDeleteTagButton.text() == 'Confirm deletion of tag "Read"'
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    cEnterText(widget.tagsList.secondDeleteTagEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.secondDeleteTagEntry, qtbot)
+    assert (
+        widget.tagsList.thirdDeleteTagButton.text() == 'Confirm deletion of tag "Read"'
+    )
 
 
 def test_third_delete_tag_cancel_button_text_is_accurate(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
-    cClick(widget.firstDeleteTagButton, qtbot)
-    cEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
-    cPressEnter(widget.secondDeleteTagEntry, qtbot)
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    cEnterText(widget.tagsList.secondDeleteTagEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.secondDeleteTagEntry, qtbot)
     assert (
-        widget.thirdDeleteTagCancelButton.text() == "Oops, don't delete tag " + '"Read"'
+        widget.tagsList.thirdDeleteTagCancelButton.text()
+        == "Oops, don't delete tag " + '"Read"'
     )
 
 
@@ -3924,10 +3926,10 @@ def test_third_delete_tag_button_deletes_tag_from_db_when_pressed(qtbot, db_temp
     widget = cInitialize(qtbot, db_temp)
     original_tags = db_temp.get_all_tags()
     # don't use convenience function, for clarity
-    cClick(widget.firstDeleteTagButton, qtbot)
-    cEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
-    cPressEnter(widget.secondDeleteTagEntry, qtbot)
-    cClick(widget.thirdDeleteTagButton, qtbot)
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    cEnterText(widget.tagsList.secondDeleteTagEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.secondDeleteTagEntry, qtbot)
+    cClick(widget.tagsList.thirdDeleteTagButton, qtbot)
     # check that it's not in the database anymore
     new_tags = db_temp.get_all_tags()
     assert "Read" not in new_tags
@@ -3938,10 +3940,10 @@ def test_third_delete_tag_button_deletes_tag_from_list_when_pressed(qtbot, db_te
     widget = cInitialize(qtbot, db_temp)
     # first get the original number of tags
     num_original_tags = len([t.name for t in widget.tagsList.tags])
-    cClick(widget.firstDeleteTagButton, qtbot)
-    cEnterText(widget.secondDeleteTagEntry, "Read", qtbot)
-    cPressEnter(widget.secondDeleteTagEntry, qtbot)
-    cClick(widget.thirdDeleteTagButton, qtbot)
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    cEnterText(widget.tagsList.secondDeleteTagEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.secondDeleteTagEntry, qtbot)
+    cClick(widget.tagsList.thirdDeleteTagButton, qtbot)
     # Then see what tags are in the list now
     new_tags = [t.name for t in widget.tagsList.tags]
     assert len(new_tags) == num_original_tags - 1
@@ -3951,71 +3953,71 @@ def test_third_delete_tag_button_deletes_tag_from_list_when_pressed(qtbot, db_te
 def test_first_delete_tag_button_comes_back_once_tag_deleted(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
     cDeleteTag(widget, "Read", qtbot)
-    assert widget.firstDeleteTagButton.isHidden() is False
+    assert widget.tagsList.firstDeleteTagButton.isHidden() is False
 
 
 def test_second_delete_tag_entry_hidden_once_tag_deleted(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
     cDeleteTag(widget, "Read", qtbot)
-    assert widget.secondDeleteTagEntry.isHidden() is True
+    assert widget.tagsList.secondDeleteTagEntry.isHidden() is True
 
 
 def test_third_delete_tag_button_hides_once_tag_deleted(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
     cDeleteTag(widget, "Read", qtbot)
-    assert widget.thirdDeleteTagButton.isHidden() is True
+    assert widget.tagsList.thirdDeleteTagButton.isHidden() is True
 
 
 def test_third_delete_tag_cancel_button_hides_once_tag_deleted(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
     cDeleteTag(widget, "Read", qtbot)
-    assert widget.thirdDeleteTagCancelButton.isHidden() is True
+    assert widget.tagsList.thirdDeleteTagCancelButton.isHidden() is True
 
 
 def test_first_delete_tag_button_comes_back_once_cancelled(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
-    cClick(widget.firstDeleteTagButton, qtbot)
-    cEnterText(widget.secondDeleteTagEntry, "tag_1", qtbot)
-    cPressEnter(widget.secondDeleteTagEntry, qtbot)
-    cClick(widget.thirdDeleteTagCancelButton, qtbot)
-    assert widget.firstDeleteTagButton.isHidden() is False
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    cEnterText(widget.tagsList.secondDeleteTagEntry, "tag_1", qtbot)
+    cPressEnter(widget.tagsList.secondDeleteTagEntry, qtbot)
+    cClick(widget.tagsList.thirdDeleteTagCancelButton, qtbot)
+    assert widget.tagsList.firstDeleteTagButton.isHidden() is False
 
 
 def test_second_delete_tag_entry_hidden_once_cancelled(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
-    cClick(widget.firstDeleteTagButton, qtbot)
-    cEnterText(widget.secondDeleteTagEntry, "tag_1", qtbot)
-    cPressEnter(widget.secondDeleteTagEntry, qtbot)
-    cClick(widget.thirdDeleteTagCancelButton, qtbot)
-    assert widget.secondDeleteTagEntry.isHidden() is True
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    cEnterText(widget.tagsList.secondDeleteTagEntry, "tag_1", qtbot)
+    cPressEnter(widget.tagsList.secondDeleteTagEntry, qtbot)
+    cClick(widget.tagsList.thirdDeleteTagCancelButton, qtbot)
+    assert widget.tagsList.secondDeleteTagEntry.isHidden() is True
 
 
 def test_third_delete_tag_button_hides_once_cancelled(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
-    cClick(widget.firstDeleteTagButton, qtbot)
-    cEnterText(widget.secondDeleteTagEntry, "tag_1", qtbot)
-    cPressEnter(widget.secondDeleteTagEntry, qtbot)
-    cClick(widget.thirdDeleteTagCancelButton, qtbot)
-    assert widget.thirdDeleteTagButton.isHidden() is True
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    cEnterText(widget.tagsList.secondDeleteTagEntry, "tag_1", qtbot)
+    cPressEnter(widget.tagsList.secondDeleteTagEntry, qtbot)
+    cClick(widget.tagsList.thirdDeleteTagCancelButton, qtbot)
+    assert widget.tagsList.thirdDeleteTagButton.isHidden() is True
 
 
 def test_third_delete_tag_cancel_button_hides_once_cancelled(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
-    cClick(widget.firstDeleteTagButton, qtbot)
-    cEnterText(widget.secondDeleteTagEntry, "tag_1", qtbot)
-    cPressEnter(widget.secondDeleteTagEntry, qtbot)
-    cClick(widget.thirdDeleteTagCancelButton, qtbot)
-    assert widget.thirdDeleteTagCancelButton.isHidden() is True
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    cEnterText(widget.tagsList.secondDeleteTagEntry, "tag_1", qtbot)
+    cPressEnter(widget.tagsList.secondDeleteTagEntry, qtbot)
+    cClick(widget.tagsList.thirdDeleteTagCancelButton, qtbot)
+    assert widget.tagsList.thirdDeleteTagCancelButton.isHidden() is True
 
 
 def test_cancel_tag_delete_doesnt_delete_any_tags_db(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
     # first get the original tags
     original_tags = db_temp.get_all_tags()
-    cClick(widget.firstDeleteTagButton, qtbot)
-    cEnterText(widget.secondDeleteTagEntry, "tag_1", qtbot)
-    cPressEnter(widget.secondDeleteTagEntry, qtbot)
-    cClick(widget.thirdDeleteTagCancelButton, qtbot)
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    cEnterText(widget.tagsList.secondDeleteTagEntry, "tag_1", qtbot)
+    cPressEnter(widget.tagsList.secondDeleteTagEntry, qtbot)
+    cClick(widget.tagsList.thirdDeleteTagCancelButton, qtbot)
     new_tags = db_temp.get_all_tags()
     assert len(original_tags) == len(new_tags)
     assert original_tags == new_tags
@@ -4025,10 +4027,10 @@ def test_cancel_tag_delete_doesnt_delete_any_tags_interface(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
     # first get the original tags
     original_tags = [t.name for t in widget.tagsList.tags]
-    cClick(widget.firstDeleteTagButton, qtbot)
-    cEnterText(widget.secondDeleteTagEntry, "tag_1", qtbot)
-    cPressEnter(widget.secondDeleteTagEntry, qtbot)
-    cClick(widget.thirdDeleteTagCancelButton, qtbot)
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    cEnterText(widget.tagsList.secondDeleteTagEntry, "tag_1", qtbot)
+    cPressEnter(widget.tagsList.secondDeleteTagEntry, qtbot)
+    cClick(widget.tagsList.thirdDeleteTagCancelButton, qtbot)
     new_tags = [t.name for t in widget.tagsList.tags]
     assert len(original_tags) == len(new_tags)
     assert original_tags == new_tags
@@ -4036,56 +4038,56 @@ def test_cancel_tag_delete_doesnt_delete_any_tags_interface(qtbot, db_temp):
 
 def test_invalid_tag_delete_entry_keeps_entry(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
-    cClick(widget.firstDeleteTagButton, qtbot)
-    cEnterText(widget.secondDeleteTagEntry, "sdfsdfadbsdf", qtbot)
-    cPressEnter(widget.secondDeleteTagEntry, qtbot)
-    assert widget.secondDeleteTagEntry.isHidden() is False
-    assert widget.secondDeleteTagEntry.text() == "sdfsdfadbsdf"
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    cEnterText(widget.tagsList.secondDeleteTagEntry, "sdfsdfadbsdf", qtbot)
+    cPressEnter(widget.tagsList.secondDeleteTagEntry, qtbot)
+    assert widget.tagsList.secondDeleteTagEntry.isHidden() is False
+    assert widget.tagsList.secondDeleteTagEntry.text() == "sdfsdfadbsdf"
 
 
 def test_invalid_tag_delete_entry_shows_error_text(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
-    cClick(widget.firstDeleteTagButton, qtbot)
-    cEnterText(widget.secondDeleteTagEntry, "sdfsdfadbsdf", qtbot)
-    cPressEnter(widget.secondDeleteTagEntry, qtbot)
-    assert widget.secondDeleteTagErrorText.isHidden() is False
-    assert widget.secondDeleteTagErrorText.text() == "This tag does not exist"
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    cEnterText(widget.tagsList.secondDeleteTagEntry, "sdfsdfadbsdf", qtbot)
+    cPressEnter(widget.tagsList.secondDeleteTagEntry, qtbot)
+    assert widget.tagsList.secondDeleteTagErrorText.isHidden() is False
+    assert widget.tagsList.secondDeleteTagErrorText.text() == "This tag does not exist"
 
 
 def test_invalid_tag_delete_entry_keeps_third_hidden(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
-    cClick(widget.firstDeleteTagButton, qtbot)
-    cEnterText(widget.secondDeleteTagEntry, "sdfsdfadbsdf", qtbot)
-    cPressEnter(widget.secondDeleteTagEntry, qtbot)
-    assert widget.thirdDeleteTagButton.isHidden() is True
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    cEnterText(widget.tagsList.secondDeleteTagEntry, "sdfsdfadbsdf", qtbot)
+    cPressEnter(widget.tagsList.secondDeleteTagEntry, qtbot)
+    assert widget.tagsList.thirdDeleteTagButton.isHidden() is True
 
 
 def test_invalid_tag_delete_entry_keeps_third_cancel_hidden(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
-    cClick(widget.firstDeleteTagButton, qtbot)
-    cEnterText(widget.secondDeleteTagEntry, "sdfsdfadbsdf", qtbot)
-    cPressEnter(widget.secondDeleteTagEntry, qtbot)
-    assert widget.thirdDeleteTagCancelButton.isHidden() is True
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    cEnterText(widget.tagsList.secondDeleteTagEntry, "sdfsdfadbsdf", qtbot)
+    cPressEnter(widget.tagsList.secondDeleteTagEntry, qtbot)
+    assert widget.tagsList.thirdDeleteTagCancelButton.isHidden() is True
 
 
 def test_invalid_tag_delete_error_text_hidden_when_clicked(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
-    cClick(widget.firstDeleteTagButton, qtbot)
-    cEnterText(widget.secondDeleteTagEntry, "sdfsdfadbsdf", qtbot)
-    cPressEnter(widget.secondDeleteTagEntry, qtbot)
-    assert widget.secondDeleteTagErrorText.isHidden() is False
-    widget.secondDeleteTagEntry.setCursorPosition(0)
-    assert widget.secondDeleteTagErrorText.isHidden() is True
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    cEnterText(widget.tagsList.secondDeleteTagEntry, "sdfsdfadbsdf", qtbot)
+    cPressEnter(widget.tagsList.secondDeleteTagEntry, qtbot)
+    assert widget.tagsList.secondDeleteTagErrorText.isHidden() is False
+    widget.tagsList.secondDeleteTagEntry.setCursorPosition(0)
+    assert widget.tagsList.secondDeleteTagErrorText.isHidden() is True
 
 
 def test_invalid_tag_delete_error_text_hidden_when_text_modified(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
-    cClick(widget.firstDeleteTagButton, qtbot)
-    cEnterText(widget.secondDeleteTagEntry, "sdfsdfadbsdf", qtbot)
-    cPressEnter(widget.secondDeleteTagEntry, qtbot)
-    assert widget.secondDeleteTagErrorText.isHidden() is False
-    cPressBackspace(widget.secondDeleteTagEntry, qtbot)
-    assert widget.secondDeleteTagErrorText.isHidden() is True
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    cEnterText(widget.tagsList.secondDeleteTagEntry, "sdfsdfadbsdf", qtbot)
+    cPressEnter(widget.tagsList.secondDeleteTagEntry, qtbot)
+    assert widget.tagsList.secondDeleteTagErrorText.isHidden() is False
+    cPressBackspace(widget.tagsList.secondDeleteTagEntry, qtbot)
+    assert widget.tagsList.secondDeleteTagErrorText.isHidden() is True
 
 
 def test_deleting_currently_selected_tag_shows_all_papers(qtbot, db_temp):

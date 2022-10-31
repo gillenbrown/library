@@ -1205,16 +1205,53 @@ class TagsListScrollArea(ScrollArea):
         super().__init__(min_width=self.default_min_width, offset=self.offset)
         self.main = main
         self.tags = []
-        self.addTagButton = main.addTagButton
-        self.addTagBar = main.addTagBar
-        self.addTagErrorText = main.addTagErrorText
-        self.papersList = main.papersList
-        self.splitter = main.splitter
-        self.firstDeleteTagButton = main.firstDeleteTagButton
-        self.secondDeleteTagEntry = main.secondDeleteTagEntry
-        self.secondDeleteErrorText = main.secondDeleteTagErrorText
-        self.thirdDeleteTagButton = main.thirdDeleteTagButton
-        self.thirdDeleteTagCancelButton = main.thirdDeleteTagCancelButton
+
+        # The left panel of this is the list of tags the user has, plus the button to
+        # add papers, which will go at the top of that list. This has to go after the
+        # center panel since the tags need to access the paper list
+        self.addTagButton = QPushButton("Add a tag")
+        self.addTagButton.clicked.connect(self.showAddTagBar)
+        self.addTagBar = EasyExitLineEdit(self.resetAddTag, self.addTag)
+        self.addTagBar.setPlaceholderText("Tag name")
+        self.addTagBar.hide()
+        self.addTagErrorText = QLabel("")
+        self.addTagErrorText.setProperty("error_text", True)
+        self.addTagErrorText.hide()
+        # also allow the reset after an error
+        self.addTagBar.cursorPositionChanged.connect(self.addTagErrorText.hide)
+        self.addTagBar.textChanged.connect(self.addTagErrorText.hide)
+
+        # Then set up the buttons to remove tags. We'll have four buttons. The first
+        # will be a button to click to start the process of deleting a tag. Next
+        # will be a text entry box for the user to specify which tag to delete, then
+        # a confirm and cancel button
+        self.firstDeleteTagButton = QPushButton("Delete a tag")
+        self.firstDeleteTagButton.clicked.connect(self.revealSecondTagDeleteEntry)
+        self.secondDeleteTagEntry = EasyExitLineEdit(
+            self.cancelTagDeletion, self.revealThirdTagDeleteButtons
+        )
+        self.secondDeleteTagEntry.setPlaceholderText("Tag to delete")
+        self.secondDeleteTagEntry.hide()
+        self.secondDeleteTagErrorText = QLabel("This tag does not exist")
+        self.secondDeleteTagErrorText.hide()
+        self.secondDeleteTagErrorText.setProperty("error_text", True)
+        # also allow the reset after an error
+        self.secondDeleteTagEntry.cursorPositionChanged.connect(
+            self.secondDeleteTagErrorText.hide
+        )
+        self.secondDeleteTagEntry.textChanged.connect(
+            self.secondDeleteTagErrorText.hide
+        )
+
+        self.thirdDeleteTagButton = QPushButton("")
+        self.thirdDeleteTagButton.clicked.connect(self.confirmTagDeletion)
+        self.thirdDeleteTagButton.setProperty("delete_button", True)  # for style
+        self.thirdDeleteTagButton.hide()
+
+        self.thirdDeleteTagCancelButton = QPushButton("")
+        self.thirdDeleteTagCancelButton.clicked.connect(self.cancelTagDeletion)
+        self.thirdDeleteTagCancelButton.setProperty("delete_cancel_button", True)
+        self.thirdDeleteTagCancelButton.hide()
 
         # Make the button to show all the papers in the list
         self.showAllButton = LeftPanelTagShowAll(self.main)
@@ -1225,10 +1262,14 @@ class TagsListScrollArea(ScrollArea):
         self.addWidget(self.addTagErrorText)
         self.addWidget(self.firstDeleteTagButton)
         self.addWidget(self.secondDeleteTagEntry)
-        self.addWidget(self.secondDeleteErrorText)
+        self.addWidget(self.secondDeleteTagErrorText)
         self.addWidget(self.thirdDeleteTagButton)
         self.addWidget(self.thirdDeleteTagCancelButton)
         self.addWidget(self.showAllButton)
+
+        # Then set up the list of tags itself
+        for t in self.main.db.get_all_tags():
+            self.addTagInternal(t)
 
         # adjust the spacing between elements (i.e. tags). To compensate, increase the
         # margins around the buttons at the top, so they're not right on top of each
@@ -1239,22 +1280,48 @@ class TagsListScrollArea(ScrollArea):
         self.addTagBar.setProperty("is_left_panel_item", True)
         self.firstDeleteTagButton.setProperty("is_left_panel_item", True)
         self.secondDeleteTagEntry.setProperty("is_left_panel_item", True)
-        self.secondDeleteErrorText.setProperty("is_left_panel_item", True)
+        self.secondDeleteTagErrorText.setProperty("is_left_panel_item", True)
         self.thirdDeleteTagButton.setProperty("is_left_panel_item", True)
         self.thirdDeleteTagCancelButton.setProperty("is_left_panel_item", True)
 
-    def addTag(self, new_tag):
+    def showAddTagBar(self):
+        """
+        When the add tag button is clicked, hide that and show the text entry bar
+
+        :return: None
+        """
+        self.addTagButton.hide()
+        self.addTagBar.show()
+        self.addTagBar.setFocus()
+
+    def resetAddTag(self):
+        """
+        Reset the add tag buttons to be the original state.
+
+        This can either happen after successfull entry or cancellation
+
+        :return: None
+        """
+        self.addTagBar.clear()
+        self.addTagBar.hide()
+        self.addTagButton.show()
+        self.triggerResize()
+
+    def addTagInternal(self, tagName):
         """
         Add a tag to the tags scroll area.
 
         This adds it to the internal list of tags and puts the widget in the interface
 
-        :param tag: Tag object to be added to the list of stored tags.
-        :type tag: LeftPanelTag
+        :param tagName: the name of the tag to add to the interface
+        :type tagName: str
         :return: None
         """
         # check if this tag is already in the list. This should never happen
-        assert new_tag.name not in [t.name for t in self.tags]
+        assert tagName not in [t.name for t in self.tags]
+
+        # create a tag object
+        new_tag = LeftPanelTag(tagName, self.main)
 
         # We then need to add it to the layout. We want the tags to be sorted. So what
         # we do is remove all tags from the layout, figure out the sort order, then add
@@ -1271,6 +1338,123 @@ class TagsListScrollArea(ScrollArea):
             self.layout.addWidget(tag)
 
         # resize
+        self.triggerResize()
+
+    def addTag(self):
+        """
+        Adds a tag to the database, taking the name from the text box.
+
+        The text will be cleared if the tag was successfully added, which will only not
+        be the case if the tag is already in the database.
+
+        :return: None
+        """
+        # check for pure whitespace
+        tagName = self.addTagBar.text()
+        if tagName.strip() == "" or "`" in tagName:
+            if "`" in tagName:
+                self.addTagErrorText.setText("Backticks aren't allowed")
+            else:
+                self.addTagErrorText.setText("Pure whitespace isn't valid")
+            self.addTagErrorText.show()
+            return
+        # otherwise, try to add it to the database
+        try:
+            self.main.db.add_new_tag(tagName)
+            self.addTagInternal(tagName)
+            # add this checkbox to the right panel
+            self.main.rightPanel.populate_tags()
+        except ValueError:  # this tag is already in the database
+            self.addTagErrorText.setText("This tag already exists")
+            self.addTagErrorText.show()
+            return
+
+        # if we got here we had no error, so it was successfully added and we should
+        # clear the text box and reset the buttons
+        self.resetAddTag()
+
+    def revealSecondTagDeleteEntry(self):
+        """
+        When the tag delete button is pressed, hide the button and reveal the text entry
+
+        :return: None
+        """
+        self.firstDeleteTagButton.hide()
+        self.secondDeleteTagEntry.show()
+        self.secondDeleteTagEntry.setFocus()
+
+    def revealThirdTagDeleteButtons(self):
+        """
+        When the tag deletion entry is entered, figure out what to do.
+
+        If the entry is a valid tag, show the next two buttons. Otherwise reset it.
+        :return: None
+        """
+        # check that the entered text is valid. If not, show error message
+        tag_to_delete = self.secondDeleteTagEntry.text()
+        if tag_to_delete not in self.main.db.get_all_tags():
+            self.secondDeleteTagErrorText.show()
+            return
+        # if it is valid, show the next button and put the appropriate text on them
+        self.secondDeleteTagEntry.hide()
+        self.thirdDeleteTagButton.show()
+        self.thirdDeleteTagButton.setText(f'Confirm deletion of tag "{tag_to_delete}"')
+        self.thirdDeleteTagCancelButton.show()
+        self.thirdDeleteTagCancelButton.setText(
+            "Oops, don't delete tag " + f'"{tag_to_delete}"'
+        )
+        self.triggerResize()
+
+    def confirmTagDeletion(self):
+        """
+        Delete a tag from the database
+
+        This assumes that the text in the secondDeleteTagEntry is a valid tag. That
+        should be error checked previously, as we shouldn't let the user confirm the
+        deletion of an invalid tag.
+
+        :return: None
+        """
+        tag_to_delete = self.secondDeleteTagEntry.text()
+        # delete from database
+        self.main.db.delete_tag(tag_to_delete)
+        # find the tag to remove it from the interface
+        for tag in self.tags:
+            if tag.label.text() == tag_to_delete:
+                # if this tag was highlighted, show all papers
+                if tag.property("is_highlighted"):
+                    # send a dummy mouse click. The argument here would normally be a
+                    # mouse click event, but since I don't use that in the function,
+                    # I can send a dummy parameter.
+                    self.showAllButton.mousePressEvent(None)
+                # then handle deletion
+                tag.hide()  # just to be safe
+                self.tags.remove(tag)
+                del tag
+        # then reset the boxes, plus resize
+        self.cancelTagDeletion()
+        # and reset the checkboxes in the rightPanel
+        self.main.rightPanel.populate_tags()
+        # finally, update the text to account for the deleted tag, if we have a paper
+        # currently shown in this paper (this will get called at initialization, when
+        # there is no paper)
+        if self.main.rightPanel.bibcode != "":
+            self.main.rightPanel.update_tag_text()
+
+    def cancelTagDeletion(self):
+        """
+        Reset the tag cancel buttons.
+
+        This can be done after deleting a tag or if that deletion is cancelled, since
+        in either version we want to reset the buttons.
+
+        :return: None
+        """
+        self.firstDeleteTagButton.show()
+        self.secondDeleteTagEntry.hide()
+        self.secondDeleteTagEntry.setText("")
+        self.thirdDeleteTagButton.hide()
+        self.thirdDeleteTagCancelButton.hide()
         self.triggerResize()
 
     def triggerResize(self):
@@ -1297,14 +1481,14 @@ class TagsListScrollArea(ScrollArea):
         self.setMinimumWidth(needed_size)
         # then change the splitter sizes. Adjust the left panel to be the needed size,
         # adjusting the center panel to make room as needed
-        original_sizes = self.splitter.sizes()
+        original_sizes = self.main.splitter.sizes()
         # If the splitter hasn't been initialized, don't adjust it
         if len(original_sizes) == 0:
             return
         # otherwise do the adjustment
         diff = needed_size - original_sizes[0]
         new_sizes = [needed_size, original_sizes[1] - diff, original_sizes[2]]
-        self.splitter.setSizes(new_sizes)
+        self.main.splitter.setSizes(new_sizes)
 
 
 class EasyExitLineEdit(QLineEdit):
@@ -1485,57 +1669,8 @@ class MainWindow(QMainWindow):
         for b in self.db.get_all_bibcodes():
             self.papersList.addPaper(b)
 
-        # The left panel of this is the list of tags the user has, plus the button to
-        # add papers, which will go at the top of that list. This has to go after the
-        # center panel since the tags need to access the paper list
-        self.addTagButton = QPushButton("Add a tag")
-        self.addTagButton.clicked.connect(self.showAddTagBar)
-        self.addTagBar = EasyExitLineEdit(self.resetAddTag, self.addTag)
-        self.addTagBar.setPlaceholderText("Tag name")
-        self.addTagBar.hide()
-        self.addTagErrorText = QLabel("")
-        self.addTagErrorText.setProperty("error_text", True)
-        self.addTagErrorText.hide()
-        # also allow the reset after an error
-        self.addTagBar.cursorPositionChanged.connect(self.addTagErrorText.hide)
-        self.addTagBar.textChanged.connect(self.addTagErrorText.hide)
-
-        # Then set up the buttons to remove tags. We'll have four buttons. The first
-        # will be a button to click to start the process of deleting a tag. Next
-        # will be a text entry box for the user to specify which tag to delete, then
-        # a confirm and cancel button
-        self.firstDeleteTagButton = QPushButton("Delete a tag")
-        self.firstDeleteTagButton.clicked.connect(self.revealSecondTagDeleteEntry)
-        self.secondDeleteTagEntry = EasyExitLineEdit(
-            self.cancelTagDeletion, self.revealThirdTagDeleteButtons
-        )
-        self.secondDeleteTagEntry.setPlaceholderText("Tag to delete")
-        self.secondDeleteTagEntry.hide()
-        self.secondDeleteTagErrorText = QLabel("This tag does not exist")
-        self.secondDeleteTagErrorText.hide()
-        self.secondDeleteTagErrorText.setProperty("error_text", True)
-        # also allow the reset after an error
-        self.secondDeleteTagEntry.cursorPositionChanged.connect(
-            self.secondDeleteTagErrorText.hide
-        )
-        self.secondDeleteTagEntry.textChanged.connect(
-            self.secondDeleteTagErrorText.hide
-        )
-
-        self.thirdDeleteTagButton = QPushButton("")
-        self.thirdDeleteTagButton.clicked.connect(self.confirmTagDeletion)
-        self.thirdDeleteTagButton.setProperty("delete_button", True)  # for style
-        self.thirdDeleteTagButton.hide()
-
-        self.thirdDeleteTagCancelButton = QPushButton("")
-        self.thirdDeleteTagCancelButton.clicked.connect(self.cancelTagDeletion)
-        self.thirdDeleteTagCancelButton.setProperty("delete_cancel_button", True)
-        self.thirdDeleteTagCancelButton.hide()
-
-        # Then set up the final tagsList object
+        # then set up the tagslist
         self.tagsList = TagsListScrollArea(self)
-        for t in self.db.get_all_tags():
-            self.tagsList.addTag(LeftPanelTag(t, self))
 
         # then add each of these widgets to the central splitter
         self.splitter.addWidget(self.tagsList)
@@ -1615,146 +1750,6 @@ class MainWindow(QMainWindow):
         qss_trigger(self.searchBar, "error", False)
         self.searchBarErrorText.hide()
         self.addButton.show()
-
-    def showAddTagBar(self):
-        """
-        When the add tag button is clicked, hide that and show the text entry bar
-
-        :return: None
-        """
-        self.addTagButton.hide()
-        self.addTagBar.show()
-        self.addTagBar.setFocus()
-
-    def resetAddTag(self):
-        """
-        Reset the add tag buttons to be the original state.
-
-        This can either happen after successfull entry or cancellation
-
-        :return: None
-        """
-        self.addTagBar.clear()
-        self.addTagBar.hide()
-        self.addTagButton.show()
-        self.tagsList.triggerResize()
-
-    def addTag(self):
-        """
-        Adds a tag to the database, taking the name from the text box.
-
-        The text will be cleared if the tag was successfully added, which will only not
-        be the case if the tag is already in the database.
-
-        :return: None
-        """
-        # check for pure whitespace
-        tagName = self.addTagBar.text()
-        if tagName.strip() == "" or "`" in tagName:
-            if "`" in tagName:
-                self.tagsList.addTagErrorText.setText("Backticks aren't allowed")
-            else:
-                self.tagsList.addTagErrorText.setText("Pure whitespace isn't valid")
-            self.tagsList.addTagErrorText.show()
-            return
-        # otherwise, try to add it to the database
-        try:
-            self.db.add_new_tag(tagName)
-            self.tagsList.addTag(LeftPanelTag(tagName, self))
-            # add this checkbox to the right panel
-            self.rightPanel.populate_tags()
-        except ValueError:  # this tag is already in the database
-            self.tagsList.addTagErrorText.setText("This tag already exists")
-            self.tagsList.addTagErrorText.show()
-            return
-
-        # if we got here we had no error, so it was successfully added and we should
-        # clear the text box and reset the buttons
-        self.resetAddTag()
-
-    def revealSecondTagDeleteEntry(self):
-        """
-        When the tag delete button is pressed, hide the button and reveal the text entry
-
-        :return: None
-        """
-        self.firstDeleteTagButton.hide()
-        self.secondDeleteTagEntry.show()
-        self.secondDeleteTagEntry.setFocus()
-
-    def revealThirdTagDeleteButtons(self):
-        """
-        When the tag deletion entry is entered, figure out what to do.
-
-        If the entry is a valid tag, show the next two buttons. Otherwise reset it.
-        :return: None
-        """
-        # check that the entered text is valid. If not, show error message
-        tag_to_delete = self.secondDeleteTagEntry.text()
-        if tag_to_delete not in self.db.get_all_tags():
-            self.secondDeleteTagErrorText.show()
-            return
-        # if it is valid, show the next button and put the appropriate text on them
-        self.secondDeleteTagEntry.hide()
-        self.thirdDeleteTagButton.show()
-        self.thirdDeleteTagButton.setText(f'Confirm deletion of tag "{tag_to_delete}"')
-        self.thirdDeleteTagCancelButton.show()
-        self.thirdDeleteTagCancelButton.setText(
-            "Oops, don't delete tag " + f'"{tag_to_delete}"'
-        )
-        self.tagsList.triggerResize()
-
-    def confirmTagDeletion(self):
-        """
-        Delete a tag from the database
-
-        This assumes that the text in the secondDeleteTagEntry is a valid tag. That
-        should be error checked previously, as we shouldn't let the user confirm the
-        deletion of an invalid tag.
-
-        :return: None
-        """
-        tag_to_delete = self.secondDeleteTagEntry.text()
-        # delete from database
-        self.db.delete_tag(tag_to_delete)
-        # find the tag to remove it from the interface
-        for tag in self.tagsList.tags:
-            if tag.label.text() == tag_to_delete:
-                # if this tag was highlighted, show all papers
-                if tag.property("is_highlighted"):
-                    # send a dummy mouse click. The argument here would normally be a
-                    # mouse click event, but since I don't use that in the function,
-                    # I can send a dummy parameter.
-                    self.tagsList.showAllButton.mousePressEvent(None)
-                # then handle deletion
-                tag.hide()  # just to be safe
-                self.tagsList.tags.remove(tag)
-                del tag
-        # then reset the boxes, plus resize
-        self.cancelTagDeletion()
-        # and reset the checkboxes in the rightPanel
-        self.rightPanel.populate_tags()
-        # finally, update the text to account for the deleted tag, if we have a paper
-        # currently shown in this paper (this will get called at initialization, when
-        # there is no paper)
-        if self.rightPanel.bibcode != "":
-            self.rightPanel.update_tag_text()
-
-    def cancelTagDeletion(self):
-        """
-        Reset the tag cancel buttons.
-
-        This can be done after deleting a tag or if that deletion is cancelled, since
-        in either version we want to reset the buttons.
-
-        :return: None
-        """
-        self.firstDeleteTagButton.show()
-        self.secondDeleteTagEntry.hide()
-        self.secondDeleteTagEntry.setText("")
-        self.thirdDeleteTagButton.hide()
-        self.thirdDeleteTagCancelButton.hide()
-        self.tagsList.triggerResize()
 
 
 def get_fonts(directory, current_list):
