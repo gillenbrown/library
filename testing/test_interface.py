@@ -4069,6 +4069,15 @@ def test_invalid_tag_delete_error_text_hidden_when_text_modified(qtbot, db_temp)
     assert widget.secondDeleteTagErrorText.isHidden() is True
 
 
+def test_deleting_currently_selected_tag_shows_all_papers(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.tags[0], qtbot)
+    cDeleteTag(widget, widget.tagsList.tags[0].name, qtbot)
+    assert widget.tagsList.showAllButton.property("is_highlighted") is True
+    for paper in widget.papersList.papers:
+        assert paper.isHidden() is False
+
+
 # =====================
 # exporting a given tag
 # =====================

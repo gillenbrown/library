@@ -1771,6 +1771,13 @@ class MainWindow(QMainWindow):
         # find the tag to remove it from the interface
         for tag in self.tagsList.tags:
             if tag.label.text() == tag_to_delete:
+                # if this tag was highlighted, show all papers
+                if tag.property("is_highlighted"):
+                    # send a dummy mouse click. The argument here would normally be a
+                    # mouse click event, but since I don't use that in the function,
+                    # I can send a dummy parameter.
+                    self.tagsList.showAllButton.mousePressEvent(None)
+                # then handle deletion
                 tag.hide()  # just to be safe
                 self.tagsList.tags.remove(tag)
                 del tag
