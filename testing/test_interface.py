@@ -2090,6 +2090,47 @@ def test_tag_text_is_updated_appropriately_when_tag_deleted(qtbot, db_empty):
     assert widget.rightPanel.tagText.text() == "Tags: None"
 
 
+def test_unchecking_tag_in_checklist_removes_paper_from_center_panel(qtbot, db_empty):
+    db_empty.add_paper(u.mine.bibcode)
+    db_empty.add_new_tag("test")
+    db_empty.tag_paper(u.mine.bibcode, "test")
+
+    widget = cInitialize(qtbot, db_empty)
+    # click on the tag
+    for tag in widget.tagsList.tags:
+        if tag.name == "test":
+            cClick(tag, qtbot)
+    cClick(widget.papersList.papers[0], qtbot)
+    assert widget.papersList.papers[0].isHidden() is False
+    for tag_item in widget.rightPanel.tags:
+        if tag_item.text() == "test":
+            tag_item.setChecked(False)
+    cClick(widget.rightPanel.doneEditingTagsButton, qtbot)
+    # Then check that the paper is hidden, since it is not checked
+    assert widget.papersList.papers[0].isHidden() is True
+
+
+def test_checking_tag_in_checklist_puts_paper_in_center_panel(qtbot, db_empty):
+    db_empty.add_paper(u.mine.bibcode)
+    db_empty.add_new_tag("test")
+
+    widget = cInitialize(qtbot, db_empty)
+    # click on the paper, then click on a tag it does not have. The details will still
+    # be in the right panel, but it will not be in the center panel
+    cClick(widget.papersList.papers[0], qtbot)
+    for tag in widget.tagsList.tags:
+        if tag.name == "test":
+            cClick(tag, qtbot)
+
+    assert widget.papersList.papers[0].isHidden() is True
+    for tag_item in widget.rightPanel.tags:
+        if tag_item.text() == "test":
+            tag_item.setChecked(True)
+    cClick(widget.rightPanel.doneEditingTagsButton, qtbot)
+    # Then check that the paper is hidden, since it is not checked
+    assert widget.papersList.papers[0].isHidden() is False
+
+
 # ===========================
 # copying bibtex to clipboard
 # ===========================

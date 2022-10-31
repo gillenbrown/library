@@ -709,6 +709,12 @@ class RightPanel(ScrollArea):
             tag.hide()
         # Also update the text shown to the user
         self.update_tag_text()
+        # also reset the papers shown in the center panel, by mocking a click on the
+        # tag that is currently highlighted
+        for tag in self.main.tagsList.tags:
+            if tag.property("is_highlighted"):
+                # the mousePressEvent takes a dummy parameter
+                tag.mousePressEvent(None)
 
     def changeTags(self, tagName, checked):
         """
