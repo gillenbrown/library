@@ -2696,6 +2696,14 @@ def test_second_delete_paper_cancel_button_appears_when_first_clicked(qtbot, db)
     assert widget.rightPanel.secondDeletePaperCancelButton.isHidden() is False
 
 
+def test_scroll_to_show_all_second_delete_buttons_when_first_clicked(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    cClick(widget.papersList.papers[0], qtbot)
+    cClick(widget.rightPanel.firstDeletePaperButton, qtbot)
+    scrollbar = widget.rightPanel.verticalScrollBar()
+    assert scrollbar.value() == scrollbar.maximum()
+
+
 def test_first_delete_paper_button_disappears_when_clicked(qtbot, db):
     widget = cInitialize(qtbot, db)
     cClick(widget.papersList.papers[0], qtbot)

@@ -768,6 +768,8 @@ class RightPanel(ScrollArea):
         self.firstDeletePaperButton.hide()
         self.secondDeletePaperButton.show()
         self.secondDeletePaperCancelButton.show()
+        # scroll to bottom to be sure all buttons are visible to user
+        self.verticalScrollBar().setValue(self.verticalScrollBar().maximum())
 
     def resetDeleteButtons(self):
         """
