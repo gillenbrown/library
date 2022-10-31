@@ -2079,6 +2079,17 @@ def test_tag_checkboxes_are_sorted_properly_after_deleting_tag(qtbot, db_temp):
     assert tags == sorted(tags, key=lambda x: x.lower())
 
 
+def test_tag_text_is_updated_appropriately_when_tag_deleted(qtbot, db_empty):
+    db_empty.add_paper(u.mine.bibcode)
+    db_empty.add_new_tag("test tag")
+    db_empty.tag_paper(u.mine.bibcode, "test tag")
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.papersList.papers[0], qtbot)
+    assert widget.rightPanel.tagText.text() == "Tags: test tag"
+    cDeleteTag(widget, "test tag", qtbot)
+    assert widget.rightPanel.tagText.text() == "Tags: None"
+
+
 # ===========================
 # copying bibtex to clipboard
 # ===========================
