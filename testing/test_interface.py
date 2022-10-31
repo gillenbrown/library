@@ -2176,6 +2176,15 @@ def test_notes_edit_field_has_focus_when_shown(qtbot, db_temp, monkeypatch):
     assert setFocus_calls == [True]
 
 
+def test_notes_edit_field_cursor_at_end_when_clicked(qtbot, db_notes):
+    # we'll backspace one, then see what we have left to ensure we're at the end
+    widget = cInitialize(qtbot, db_notes)
+    cClick(widget.papersList.papers[0], qtbot)
+    cClick(widget.rightPanel.userNotesTextEditButton, qtbot)
+    cPressBackspace(widget.rightPanel.userNotesTextEditField, qtbot)
+    assert widget.rightPanel.userNotesTextEditField.toPlainText() == "abc12"
+
+
 def test_notes_edit_field_is_blank_if_there_are_no_notes(qtbot, db_empty):
     db_empty.add_paper(u.mine.bibcode)
     widget = cInitialize(qtbot, db_empty)
@@ -2241,6 +2250,109 @@ def test_notes_edit_button_reappears_when_editing_done(qtbot, db_notes):
     cEnterText(widget.rightPanel.userNotesTextEditField, "987XYZ", qtbot)
     cClick(widget.rightPanel.userNotesTextEditFinishedButton, qtbot)
     assert widget.rightPanel.userNotesTextEditButton.isHidden() is False
+
+
+def test_notes_edit_can_quit_with_escape_reset_buttons(qtbot, db_notes):
+    widget = cInitialize(qtbot, db_notes)
+    cClick(widget.papersList.papers[0], qtbot)
+    cClick(widget.rightPanel.userNotesTextEditButton, qtbot)
+    cPressEscape(widget.rightPanel.userNotesTextEditField, qtbot)
+    assert widget.rightPanel.userNotesText.isHidden() is False
+    assert widget.rightPanel.userNotesTextEditButton.isHidden() is False
+    assert widget.rightPanel.userNotesTextEditField.isHidden() is True
+    assert widget.rightPanel.userNotesTextEditFinishedButton.isHidden() is True
+
+
+def test_notes_edit_can_quit_with_backspace_reset_buttons(qtbot, db_notes):
+    widget = cInitialize(qtbot, db_notes)
+    cClick(widget.papersList.papers[0], qtbot)
+    cClick(widget.rightPanel.userNotesTextEditButton, qtbot)
+    # get rid of original text
+    for _ in range(6):
+        cPressBackspace(widget.rightPanel.userNotesTextEditField, qtbot)
+        text = widget.rightPanel.userNotesTextEditField.toPlainText()
+    text = widget.rightPanel.userNotesTextEditField.toPlainText()
+    assert widget.rightPanel.userNotesTextEditField.isHidden() is False
+    # one more backspace
+    cPressBackspace(widget.rightPanel.userNotesTextEditField, qtbot)
+    assert widget.rightPanel.userNotesText.isHidden() is False
+    assert widget.rightPanel.userNotesTextEditButton.isHidden() is False
+    assert widget.rightPanel.userNotesTextEditField.isHidden() is True
+    assert widget.rightPanel.userNotesTextEditFinishedButton.isHidden() is True
+
+
+def test_notes_edit_can_quit_with_escape_no_saving(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.papersList.papers[0], qtbot)
+    cClick(widget.rightPanel.userNotesTextEditButton, qtbot)
+    cEnterText(widget.rightPanel.userNotesTextEditField, "ABC123", qtbot)
+    cPressEscape(widget.rightPanel.userNotesTextEditField, qtbot)
+    bibcode = widget.papersList.papers[0].bibcode
+    assert db_temp.get_paper_attribute(bibcode, "user_notes") is None
+
+
+def test_notes_edit_can_quit_with_backspace_no_saving(qtbot, db_notes):
+    widget = cInitialize(qtbot, db_notes)
+    cClick(widget.papersList.papers[0], qtbot)
+    cClick(widget.rightPanel.userNotesTextEditButton, qtbot)
+    # get rid of original text
+    for _ in range(6):
+        cPressBackspace(widget.rightPanel.userNotesTextEditField, qtbot)
+    assert widget.rightPanel.userNotesTextEditField.isHidden() is False
+    # one more backspace
+    cPressBackspace(widget.rightPanel.userNotesTextEditField, qtbot)
+    bibcode = widget.papersList.papers[0].bibcode
+    assert db_notes.get_paper_attribute(bibcode, "user_notes") == "abc123"
+
+
+def test_notes_edit_can_quit_with_escape_original_text_shown(qtbot, db_notes):
+    widget = cInitialize(qtbot, db_notes)
+    cClick(widget.papersList.papers[0], qtbot)
+    cClick(widget.rightPanel.userNotesTextEditButton, qtbot)
+    cEnterText(widget.rightPanel.userNotesTextEditField, "ZYX987", qtbot)
+    cPressEscape(widget.rightPanel.userNotesTextEditField, qtbot)
+    # the original notes should still be there
+    assert widget.rightPanel.userNotesText.text() == "abc123"
+
+
+def test_notes_edit_can_quit_with_backspace_original_text_shown(qtbot, db_notes):
+    widget = cInitialize(qtbot, db_notes)
+    cClick(widget.papersList.papers[0], qtbot)
+    cClick(widget.rightPanel.userNotesTextEditButton, qtbot)
+    # get rid of original text
+    for _ in range(6):
+        cPressBackspace(widget.rightPanel.userNotesTextEditField, qtbot)
+    assert widget.rightPanel.userNotesTextEditField.isHidden() is False
+    # one more backspace
+    cPressBackspace(widget.rightPanel.userNotesTextEditField, qtbot)
+    # the original notes should still be there
+    assert widget.rightPanel.userNotesText.text() == "abc123"
+
+
+def test_notes_edit_quit_with_escape_shows_original_text_next_edit(qtbot, db_notes):
+    widget = cInitialize(qtbot, db_notes)
+    cClick(widget.papersList.papers[0], qtbot)
+    cClick(widget.rightPanel.userNotesTextEditButton, qtbot)
+    cEnterText(widget.rightPanel.userNotesTextEditField, "ZYX987", qtbot)
+    cPressEscape(widget.rightPanel.userNotesTextEditField, qtbot)
+    # the original notes should still be there
+    cClick(widget.rightPanel.userNotesTextEditButton, qtbot)
+    assert widget.rightPanel.userNotesTextEditField.toPlainText() == "abc123"
+
+
+def test_notes_edit_quit_with_backspace_shows_original_text_next_edit(qtbot, db_notes):
+    widget = cInitialize(qtbot, db_notes)
+    cClick(widget.papersList.papers[0], qtbot)
+    cClick(widget.rightPanel.userNotesTextEditButton, qtbot)
+    # get rid of original text
+    for _ in range(6):
+        cPressBackspace(widget.rightPanel.userNotesTextEditField, qtbot)
+    assert widget.rightPanel.userNotesTextEditField.isHidden() is False
+    # one more backspace
+    cPressBackspace(widget.rightPanel.userNotesTextEditField, qtbot)
+    # the original notes should still be there
+    cClick(widget.rightPanel.userNotesTextEditButton, qtbot)
+    assert widget.rightPanel.userNotesTextEditField.toPlainText() == "abc123"
 
 
 # ================

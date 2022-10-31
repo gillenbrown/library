@@ -3,15 +3,8 @@ import requests
 
 import ads.exceptions
 from PySide6.QtCore import Qt, QEvent
-from PySide6.QtGui import (
-    QKeySequence,
-    QFontDatabase,
-    QDesktopServices,
-    QGuiApplication,
-    QAction,
-)
+from PySide6.QtGui import QFontDatabase, QDesktopServices, QGuiApplication, QTextCursor
 from PySide6.QtWidgets import (
-    QApplication,
     QWidget,
     QMainWindow,
     QVBoxLayout,
@@ -472,7 +465,7 @@ class RightPanel(ScrollArea):
         self.userNotesText = QLabel("")
         self.userNotesText.setTextInteractionFlags(Qt.TextSelectableByMouse)
         self.userNotesTextEditButton = QPushButton("Edit Notes")
-        self.userNotesTextEditField = QTextEdit()
+        self.userNotesTextEditField = EasyExitTextEdit(self.exitUserNotesNoSave)
         self.userNotesTextEditFinishedButton = QPushButton("Done Editing Notes")
         # set names for use with stylesheets
         self.titleText.setObjectName("right_panel_paper_title")
@@ -824,8 +817,20 @@ class RightPanel(ScrollArea):
         self.userNotesText.hide()
         self.userNotesTextEditField.show()
         self.userNotesTextEditFinishedButton.show()
-        # and set the focus to put the cursor in the edit field
+        # and set the focus to put the cursor in the edit field, and move it to the end
         self.userNotesTextEditField.setFocus()
+        self.userNotesTextEditField.moveCursor(QTextCursor.End)
+
+    def exitUserNotesNoSave(self):
+        """
+        When the user bails on editing notes, exit without saving to the database
+        :return:
+        """
+        # reset buttons
+        self.userNotesTextEditButton.show()
+        self.userNotesText.show()
+        self.userNotesTextEditField.hide()
+        self.userNotesTextEditFinishedButton.hide()
 
     def doneEditingUserNotes(self):
         """
@@ -839,11 +844,8 @@ class RightPanel(ScrollArea):
         # and put this text into the static text field
         self.updateNotesText()
 
-        # reset buttons
-        self.userNotesTextEditButton.show()
-        self.userNotesText.show()
-        self.userNotesTextEditField.hide()
-        self.userNotesTextEditFinishedButton.hide()
+        # then clean things up in the same way we do if we don't save
+        self.exitUserNotesNoSave()
 
     def revealCiteKeyEntry(self):
         """
@@ -1338,7 +1340,7 @@ class TagsListScrollArea(ScrollArea):
 
 class EasyExitLineEdit(QLineEdit):
     """
-    Just like a textEdit, but they can call a function (which should exit) with escape
+    Just like a lineEdit, but they can call a function (which should exit) with escape
     or backspace when all text is empty
     """
 
@@ -1378,6 +1380,47 @@ class EasyExitLineEdit(QLineEdit):
             # if there is text still there, just do a normal backspace. If there's
             # nothing there, exit.
             if self.text() != "":
+                super().keyPressEvent(keyPressEvent)
+            else:
+                self.exitFunc()
+        else:  # all other chanracters are handled normally
+            super().keyPressEvent(keyPressEvent)
+
+
+class EasyExitTextEdit(QTextEdit):
+    """
+    Just like a textEdit, but they can call a function (which should exit) with escape
+    """
+
+    def __init__(self, exitFunc):
+        """
+        Initialize the TextEdit.
+
+        :param exitFunc: The function to be called if the user either hits escape or
+                         backspaces with the text empty
+        :type exitFunc: function
+        """
+        super().__init__()
+        self.exitFunc = exitFunc
+
+    def keyPressEvent(self, keyPressEvent):
+        """
+        Either add normal text or exit under certain conditions.
+
+        Any escape keypress exits, or a backspace when the text is empty
+
+        :param keyPressEvent: The key press event
+        :type keyPressEvent: ySide6.QtGui.QKeyEvent
+        :return: None
+        """
+        # We overwrite the Escape key, but let everything else be handled normally
+        if keyPressEvent.key() == Qt.Key_Escape:
+            # exit emmediately
+            self.exitFunc()
+        elif keyPressEvent.key() == Qt.Key_Backspace:
+            # if there is text still there, just do a normal backspace. If there's
+            # nothing there, exit.
+            if self.toPlainText() != "":
                 super().keyPressEvent(keyPressEvent)
             else:
                 self.exitFunc()
