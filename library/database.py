@@ -256,6 +256,8 @@ class Database(object):
         elif attribute == "citation_keyword":
             if " " in new_value:
                 raise ValueError("Spaces not allowed in citation keywords.")
+            elif len(new_value) == 0:
+                raise ValueError("Empty string not allowed as citation keyword.")
 
         sql = f"UPDATE papers SET `{attribute}` = ? WHERE bibcode = ?"
         try:

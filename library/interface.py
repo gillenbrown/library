@@ -871,10 +871,13 @@ class RightPanel(ScrollArea):
         :return: None
         """
         user_entry = self.editCiteKeyEntry.text()
+        # if there's an empty string, default to the bibcode
+        if len(user_entry) == 0:
+            user_entry = self.bibcode
         # try to add this, and then handle errors as needed
         try:
             self.db.set_paper_attribute(self.bibcode, "citation_keyword", user_entry)
-        except ValueError:  # space in keyword
+        except ValueError:  # space in keyword -- empty string handled earlier
             self.editCiteKeyErrorText.setText("Spaces not allowed")
             self.editCiteKeyErrorText.show()
             return

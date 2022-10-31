@@ -2304,6 +2304,47 @@ def test_edit_citation_keyword_good_entry_clears_entry(qtbot, db_temp):
     assert widget.rightPanel.editCiteKeyEntry.text() == ""
 
 
+def test_edit_citation_keyword_empty_string_uses_bibcode(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.papersList.papers[0], qtbot)
+    # first edit the cite key to something, then change it back
+    cEditCiteKey(widget, "should_not_stay", qtbot)
+    cEditCiteKey(widget, "", qtbot)
+    bibcode = widget.papersList.papers[0].bibcode
+    assert db_temp.get_paper_attribute(bibcode, "citation_keyword") == bibcode
+
+
+def test_edit_citation_keyword_empty_string_updates_shown_text(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.papersList.papers[0], qtbot)
+    # first edit the cite key to something, then change it back
+    cEditCiteKey(widget, "should_not_stay", qtbot)
+    cEditCiteKey(widget, "", qtbot)
+    bibcode = widget.papersList.papers[0].bibcode
+    assert widget.rightPanel.citeKeyText.text() == f"Citation Keyword: {bibcode}"
+
+
+def test_edit_citation_keyword_empty_string_resets_buttons(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.papersList.papers[0], qtbot)
+    # first edit the cite key to something, then change it back
+    cEditCiteKey(widget, "should_not_stay", qtbot)
+    cEditCiteKey(widget, "", qtbot)
+    assert widget.rightPanel.editCiteKeyButton.isHidden() is False
+    assert widget.rightPanel.editCiteKeyEntry.isHidden() is True
+    assert widget.rightPanel.citeKeyText.isHidden() is False
+    assert widget.rightPanel.editCiteKeyErrorText.isHidden() is True
+
+
+def test_edit_citation_keyword_empty_string_clears_entry(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.papersList.papers[0], qtbot)
+    # first edit the cite key to something, then change it back
+    cEditCiteKey(widget, "should_not_stay", qtbot)
+    cEditCiteKey(widget, "", qtbot)
+    assert widget.rightPanel.editCiteKeyEntry.text() == ""
+
+
 def test_edit_citation_keyword_spaces_not_allowed(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
     cClick(widget.papersList.papers[0], qtbot)
