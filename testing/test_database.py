@@ -837,6 +837,7 @@ def test_validate_test_update_db():
     new_bibcodes = [p["bibcode"] for p in sql("SELECT bibcode FROM papers")]
     assert new_bibcodes == [
         u.tremonti.bibcode,
+        u.grasha_thesis.bibcode,
         old_bibcode_1,
         u.forbes.bibcode,
         old_bibcode_2,
@@ -852,9 +853,11 @@ def test_validate_test_update_db():
 
 
 def test_update_system_can_update_bibcode(db_update):
+    # also checks that it does not crash for Grasha's thesis, which is not on the arxiv
     assert db_update.get_all_bibcodes() == [
         u.tremonti.bibcode,
         u.mine.bibcode,
+        u.grasha_thesis.bibcode,
         u.forbes.bibcode,
         u.mine_recent.bibcode,
     ]

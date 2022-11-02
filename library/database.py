@@ -525,10 +525,13 @@ class Database(object):
         :return: None
         """
         # need to get the new bibcode. This is actually non-trivial. The best thing to
-        # do is to pass the arXiv ID, which can then be sent to ADS
-        new_bibcode = ads_call.get_bibcode(
-            self.get_paper_attribute(old_bibcode, "arxiv_id")
-        )
+        # do is to pass the arXiv ID, which can then be sent to ADS. But some papers
+        # are not on the arXiv. So we skip these papers. I only found this applied to
+        # one paper, which was a PhD thesis, so it is an edge case.
+        arxiv_id = self.get_paper_attribute(old_bibcode, "arxiv_id")
+        if arxiv_id == "Not on the arXiv":
+            return
+        new_bibcode = ads_call.get_bibcode(arxiv_id)
         if old_bibcode == new_bibcode:
             # no update found, we can exit
             return
