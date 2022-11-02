@@ -1002,6 +1002,9 @@ class RightPanel(ScrollArea):
         # the user may cancel
         if local_file == "":
             return
+        # make sure it ends in .pdf
+        if not local_file.endswith(".pdf"):
+            local_file = local_file + ".pdf"
 
         # then download
         self._downloadURL(this_url, local_file)

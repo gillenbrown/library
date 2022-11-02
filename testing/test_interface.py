@@ -348,6 +348,13 @@ def mSaveFileValidPDF(filter="", dir="", caption=""):
     return str(mSaveLocPDF), ""
 
 
+def mSaveFileValidNoSuffix(filter="", dir="", caption=""):
+    """
+    Mock a response if the user chooses a file with no extension
+    """
+    return str(mSaveLocPDF).replace(".pdf", ""), ""
+
+
 def mSaveFileValidTXT(filter="", dir="", caption=""):
     """
     Mock a response if the user chooses a txt file
@@ -1674,6 +1681,16 @@ def test_download_pdf_button_actually_downloads_paper(qtbot, db_temp, monkeypatc
     mSaveLocPDF.unlink()  # remove the file we just downloaded
 
 
+def test_download_pdf_button_no_suffix_downloads_paper(qtbot, db_temp, monkeypatch):
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", mSaveFileValidNoSuffix)
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.papersList.papers[0], qtbot)
+    cClick(widget.rightPanel.pdfDownloadButton, qtbot)
+    assert mSaveLocPDF.is_file()
+    assert mSaveLocPDF.stat().st_size > 1e6  # 1 Mb, in bytes
+    mSaveLocPDF.unlink()  # remove the file we just downloaded
+
+
 def test_download_pdf_button_can_be_cancelled(qtbot, db_temp, monkeypatch):
     monkeypatch.setattr(QFileDialog, "getSaveFileName", mSaveFileNoResponse)
     widget = cInitialize(qtbot, db_temp)
@@ -1689,6 +1706,19 @@ def test_download_pdf_button_can_be_cancelled(qtbot, db_temp, monkeypatch):
 
 def test_download_pdf_button_updates_database(qtbot, db_temp, monkeypatch):
     monkeypatch.setattr(QFileDialog, "getSaveFileName", mSaveFileValidPDF)
+    widget = cInitialize(qtbot, db_temp)
+    # I cannot monkeypatch the downloading, since the code checks if the PDF exists
+    # when setting the buttons
+    cClick(widget.papersList.papers[0], qtbot)
+    cClick(widget.rightPanel.pdfDownloadButton, qtbot)
+    assert db_temp.get_paper_attribute(
+        widget.papersList.papers[0].bibcode, "local_file"
+    ) == str(mSaveLocPDF)
+    mSaveLocPDF.unlink()
+
+
+def test_download_pdf_button_no_suffix_updates_database(qtbot, db_temp, monkeypatch):
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", mSaveFileValidNoSuffix)
     widget = cInitialize(qtbot, db_temp)
     # I cannot monkeypatch the downloading, since the code checks if the PDF exists
     # when setting the buttons
