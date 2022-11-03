@@ -105,7 +105,7 @@ class LeftPanelTag(QWidget):
                   the same thing for every click type.
         :return: None
         """
-        for paper in self.main.papersList.papers:
+        for paper in self.main.papersList.getPapers():
             if self.name in paper.getTags():
                 paper.show()
             else:
@@ -183,7 +183,7 @@ class LeftPanelTagShowAll(LeftPanelTag):
 
         :return: None
         """
-        for paper in self.main.papersList.papers:
+        for paper in self.main.papersList.getPapers():
             paper.show()
         # Visually highlight this tag, and remove highlighting on other tags
         for tag in self.main.tagsList.tags:
@@ -254,7 +254,7 @@ class Paper(QWidget):
         # Pass the bibcode on to the right panel
         self.main.rightPanel.setPaperDetails(self.bibcode)
         # unhighlight all papers
-        for paper in self.main.papersList.papers:
+        for paper in self.main.papersList.getPapers():
             paper.unhighlight()
         # then highlight this paper
         self.highlight()
@@ -1090,7 +1090,6 @@ class PapersListScrollArea(ScrollArea):
         # add space for top sortChooser, then matching space at the bottom so the
         # last paper doesn't get cut off.
         self.layout.setContentsMargins(0, 35, 0, 35)
-        self.papers = []
 
         self.main = main
 
@@ -1105,6 +1104,15 @@ class PapersListScrollArea(ScrollArea):
 
         # initially sort by date
         self.changeSort()
+
+    def getPapers(self):
+        """
+        Get all paper widgets hosted in this layout
+
+        :return: List of paper widgets
+        :rtype: list[Paper]
+        """
+        return [self.layout.itemAt(i).widget() for i in range(self.layout.count())]
 
     def addPaper(self, bibcode, click=True):
         """
@@ -1123,11 +1131,10 @@ class PapersListScrollArea(ScrollArea):
         :return: None
         """
         # check if this paper is already in the list. This should never happen
-        assert bibcode not in [p.bibcode for p in self.papers]
+        assert bibcode not in [p.bibcode for p in self.getPapers()]
 
         # create the paper object, than add to the list and center panel
         paper = Paper(bibcode, self.main)
-        self.papers.append(paper)
         self.addWidget(paper)  # calls the ScrollArea addWidget
         self.sortPapers()
 
@@ -1156,10 +1163,10 @@ class PapersListScrollArea(ScrollArea):
         :param bibcode: Bibcode of the paper to delete
         :return: None, but the paper is deleted from the list
         """
-        for paper in self.papers:
+        for paper in self.getPapers():
             if paper.bibcode == bibcode:
                 paper.hide()  # just to be safe
-                self.papers.remove(paper)
+                self.layout.removeWidget(paper)
                 del paper
 
     def sortPapers(self):
@@ -1171,11 +1178,12 @@ class PapersListScrollArea(ScrollArea):
 
         # To do this, we'll remove all the papers from the layout, sort them, then
         # add them back
-        for paper in self.papers:
+        papers = self.getPapers()
+        for paper in papers:
             self.layout.removeWidget(paper)
         # sort by publication date
-        self.papers = sorted(self.papers, key=self.sortKey)
-        for paper in self.papers:
+        papers = sorted(papers, key=self.sortKey)
+        for paper in papers:
             self.layout.addWidget(paper)
 
     def changeSort(self):
