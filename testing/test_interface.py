@@ -703,6 +703,70 @@ def test_adding_paper_does_not_clear_search_bar_if_not_successful(qtbot, db_empt
     assert widget.searchBar.text() == "nonsense"
 
 
+def test_adding_paper_highlights_it_in_center_panel(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.papersList.papers[0], qtbot)
+    cAddPaper(widget, u.forbes.bibcode, qtbot)
+    for paper in widget.papersList.papers:
+        if paper.bibcode == u.forbes.bibcode:
+            assert paper.property("is_highlighted") is True
+        else:
+            assert paper.property("is_highlighted") is False
+
+
+def test_adding_paper_puts_details_in_right_panel(qtbot, db_temp):
+    # this is a cursory test. Full right panel details are tested elsewhere. I'm
+    # assuming that if the title is correct, the rest will be too
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.papersList.papers[0], qtbot)
+    cAddPaper(widget, u.forbes.bibcode, qtbot)
+    assert widget.rightPanel.titleText.text() == u.forbes.title
+
+
+def test_adding_paper_initial_highlights_it_in_center_panel(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cAddPaper(widget, u.forbes.bibcode, qtbot)
+    for paper in widget.papersList.papers:
+        if paper.bibcode == u.forbes.bibcode:
+            assert paper.property("is_highlighted") is True
+        else:
+            assert paper.property("is_highlighted") is False
+
+
+def test_adding_paper_initial_puts_details_in_right_panel(qtbot, db_temp):
+    # this is a cursory test. Full right panel details are tested elsewhere. I'm
+    # assuming that if the title is correct, the rest will be too
+    widget = cInitialize(qtbot, db_temp)
+    cAddPaper(widget, u.forbes.bibcode, qtbot)
+    assert widget.rightPanel.titleText.text() == u.forbes.title
+
+
+def test_adding_paper_after_delete_highlights_it_in_center_panel(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    bibcode = widget.papersList.papers[0].bibcode
+    cDeleteFirstPaper(widget, qtbot)
+    cAddPaper(widget, bibcode, qtbot)
+    for paper in widget.papersList.papers:
+        if paper.bibcode == bibcode:
+            assert paper.property("is_highlighted") is True
+        else:
+            assert paper.property("is_highlighted") is False
+
+
+def test_adding_paper_after_delete_puts_details_in_right_panel(qtbot, db_temp):
+    # this is a cursory test. Full right panel details are tested elsewhere. I'm
+    # assuming that if the title is correct, the rest will be too
+    widget = cInitialize(qtbot, db_temp)
+    bibcode = widget.papersList.papers[0].bibcode
+    title = widget.papersList.papers[0].titleText.text()
+    print(db_temp.get_all_bibcodes())
+    cDeleteFirstPaper(widget, qtbot)
+    print(db_temp.get_all_bibcodes())
+    print(bibcode)
+    cAddPaper(widget, bibcode, qtbot)
+    assert widget.rightPanel.titleText.text() == title
+
+
 def test_adding_bad_paper_shows_error_formatting_of_textedit(qtbot, db_empty):
     widget = cInitialize(qtbot, db_empty)
     cAddPaper(widget, "nonsense", qtbot)

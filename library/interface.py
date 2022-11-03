@@ -2,8 +2,14 @@ from pathlib import Path
 import requests
 
 import ads.exceptions
-from PySide6.QtCore import Qt, QEvent
-from PySide6.QtGui import QFontDatabase, QDesktopServices, QGuiApplication, QTextCursor
+from PySide6.QtCore import Qt, QEvent, QPoint
+from PySide6.QtGui import (
+    QFontDatabase,
+    QDesktopServices,
+    QGuiApplication,
+    QTextCursor,
+    QMouseEvent,
+)
 from PySide6.QtWidgets import (
     QWidget,
     QMainWindow,
@@ -780,10 +786,13 @@ class RightPanel(ScrollArea):
         :return: None, but the paper is deleted and text reset
         """
         self.resetPaperDetails()  # clean up right panel
-        self.main.papersList.deletePaper(
-            self.bibcode
-        )  # remove this frm the center panel
+        self.main.papersList.deletePaper(self.bibcode)  # center panel
         self.main.db.delete_paper(self.bibcode)
+
+        # then reset the currently shown bibcode. We don't do this first since the
+        # previous code requires the bibcode. Even the reset needs a bibcode to
+        # reset the tags correctly
+        self.bibcode = ""
 
     def updateNotesText(self):
         """
@@ -1097,7 +1106,7 @@ class PapersListScrollArea(ScrollArea):
         # initially sort by date
         self.changeSort()
 
-    def addPaper(self, bibcode):
+    def addPaper(self, bibcode, click=True):
         """
         Add a paper to the papers scroll area.
 
@@ -1105,6 +1114,12 @@ class PapersListScrollArea(ScrollArea):
 
         :param bibcode: Bibcode of the paper to be added
         :type bibcode: str
+        :param click: Whether or not to click on this paper, to highlight it and add
+                      details to the right panel. When initializing the interface we
+                      don't click (since we want to start with no papers highlighted),
+                      but in normal use we do click to show the paper that was just
+                      added
+        :type click: bool
         :return: None
         """
         # check if this paper is already in the list. This should never happen
@@ -1115,6 +1130,18 @@ class PapersListScrollArea(ScrollArea):
         self.papers.append(paper)
         self.addWidget(paper)  # calls the ScrollArea addWidget
         self.sortPapers()
+
+        # click on this paper. This is actually tricky, since I need to fully mock
+        # a mouse event.
+        if click:
+            event = QMouseEvent(
+                QMouseEvent.MouseButtonPress,
+                QPoint(),
+                Qt.LeftButton,
+                Qt.LeftButton,
+                Qt.NoModifier,
+            )
+            paper.mousePressEvent(event)
 
     def deletePaper(self, bibcode):
         """
@@ -1676,7 +1703,8 @@ class MainWindow(QMainWindow):
         # wrapper so that we can keep the sort button at the top
         self.papersList = PapersListScrollArea(self)
         for b in self.db.get_all_bibcodes():
-            self.papersList.addPaper(b)
+            # pass click=False so we leave the right panel blank
+            self.papersList.addPaper(b, click=False)
 
         # then set up the tagslist
         self.tagsList = TagsListScrollArea(self)
