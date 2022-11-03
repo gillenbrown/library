@@ -332,8 +332,14 @@ class Database(object):
         journal = self.get_paper_attribute(bibcode, "journal")
         abbreviations = {
             "The Astrophysical Journal": "ApJ",
+            "The Astrophysical Journal Supplement Series": "ApJS",
             "Monthly Notices of the Royal Astronomical Society": "MNRAS",
             "Astronomy and Astrophysics": "A&A",
+            "Astronomy and Astrophysics Supplement Series": "A&AS",
+            "The Astronomical Journal": "AJ",
+            "Annual Review of Astronomy and Astrophysics": "ARA&A",
+            "Publications of the Astronomical Society of the Pacific": "PASP",
+            "Publications of the Astronomical Society of Japan": "PASJ",
         }
         if journal in abbreviations:
             journal = abbreviations[journal]

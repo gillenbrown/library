@@ -506,6 +506,12 @@ def test_cite_string_apj_is_shortened(db):
     assert db.get_cite_string(u.mine.bibcode) == true_cite_string
 
 
+def test_cite_string_apjs_is_shortened(db):
+    bibcode = "2011ApJS..197...30Z"
+    db.add_paper(bibcode)
+    assert db.get_cite_string(bibcode) == "Zemp et al., 2011, ApJS, 197, 30"
+
+
 def test_cite_string_mnras_is_shortened_test_paper(db):
     db.set_paper_attribute(
         u.mine.bibcode, "journal", "Monthly Notices of the Royal Astronomical Society"
@@ -514,16 +520,46 @@ def test_cite_string_mnras_is_shortened_test_paper(db):
     assert db.get_cite_string(u.mine.bibcode) == true_cite_string
 
 
-def test_cite_string_unpublished(db):
-    db.add_paper(u.forbes.bibcode)
-    true_cite_string = "Forbes, 2020, arXiv:2003.14327"
-    assert db.get_cite_string(u.forbes.bibcode) == true_cite_string
+def test_cite_string_aj_is_shortened(db):
+    bibcode = "1999AJ....118..752Z"
+    db.add_paper(bibcode)
+    assert db.get_cite_string(bibcode) == "Zepf et al., 1999, AJ, 118, 752"
+
+
+def test_cite_string_araa_is_shortened(db):
+    bibcode = "2018ARA&A..56...83B"
+    db.add_paper(bibcode)
+    assert db.get_cite_string(bibcode) == "Bastian, Lardo, 2018, ARA&A, 56, 83"
+
+
+def test_cite_string_pasp_is_shortened(db):
+    bibcode = "2000PASP..112.1360A"
+    db.add_paper(bibcode)
+    assert db.get_cite_string(bibcode) == "Anderson, King, 2000, PASP, 112, 1360"
+
+
+def test_cite_string_pasj_is_shortened(db):
+    bibcode = "2021PASJ...73.1074F"
+    db.add_paper(bibcode)
+    assert db.get_cite_string(bibcode) == "Fujii et al., 2021, PASJ, 73, 1074"
 
 
 def test_cite_string_nonnumeric_page_and_a_and_a_journal_shortened(db):
     db.add_paper(u.marks.bibcode)
     true_cite_string = "Marks, Kroupa, 2012, A&A, 543, A8"
     assert db.get_cite_string(u.marks.bibcode) == true_cite_string
+
+
+def test_cite_string_a_and_a_supplment_shortened(db):
+    bibcode = "1999A&AS..139..393L"
+    db.add_paper(bibcode)
+    assert db.get_cite_string(bibcode) == "Larsen, 1999, A&AS, 139, 393"
+
+
+def test_cite_string_unpublished(db):
+    db.add_paper(u.forbes.bibcode)
+    true_cite_string = "Forbes, 2020, arXiv:2003.14327"
+    assert db.get_cite_string(u.forbes.bibcode) == true_cite_string
 
 
 def test_cite_string_no_page_no_arxiv(db):
