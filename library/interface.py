@@ -994,8 +994,8 @@ class RightPanel(ScrollArea):
         base_url = "https://ui.adsabs.harvard.edu/link_gateway/"
         for source in ["PUB_PDF", "EPRINT_PDF", "ADS_PDF"]:
             this_url = base_url + self.bibcode + "/" + source
-            r = requests.head(this_url, allow_redirects=True)
             try:
+                r = requests.head(this_url, allow_redirects=True)
                 page_type = r.headers["content-type"]
                 if page_type.startswith("application/pdf"):
                     break
