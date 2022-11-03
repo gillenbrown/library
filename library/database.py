@@ -262,7 +262,8 @@ class Database(object):
         sql = f"UPDATE papers SET `{attribute}` = ? WHERE bibcode = ?"
         try:
             self._execute(sql, (new_value, bibcode))
-        except sqlite3.InterfaceError:  # this is what's raised with bad data types
+        # two possible exceptions for bad data types
+        except (sqlite3.InterfaceError, sqlite3.ProgrammingError):
             raise ValueError(f"Bad datatype for attribute {attribute}: {new_value}")
         except sqlite3.IntegrityError:  # this is raised for nonunique citation keywords
             assert attribute == "citation_keyword"
