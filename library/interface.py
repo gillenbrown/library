@@ -992,12 +992,18 @@ class RightPanel(ScrollArea):
         # next request will be blocked. If that happens, I may need to redo this
         # by just downloading the whole thing for each and see what kind of file it is.
         base_url = "https://ui.adsabs.harvard.edu/link_gateway/"
-        for source in ["PUB_PDF", "EPRINT_PDF"]:
+        for source in ["PUB_PDF", "EPRINT_PDF", "ADS_PDF"]:
             this_url = base_url + self.bibcode + "/" + source
             r = requests.head(this_url, allow_redirects=True)
-            page_type = r.headers["content-type"]
-            if page_type.startswith("application/pdf"):
-                break
+            try:
+                page_type = r.headers["content-type"]
+                if page_type.startswith("application/pdf"):
+                    break
+            # if the page does not exist (for example if the paper is not on the arXiv),
+            # the header access will fail, and we'll end up here, where we continue to
+            # the next PDF type
+            except:
+                continue
         else:
             # no PDF found
             self.pdfDownloadButton.setText("Automatic Download Failed")

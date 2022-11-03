@@ -1772,6 +1772,19 @@ def test_download_pdf_button_actually_downloads_paper(qtbot, db_temp, monkeypatc
     mSaveLocPDF.unlink()  # remove the file we just downloaded
 
 
+def test_download_pdf_button_actually_downloads_old_paper(qtbot, db_empty, monkeypatch):
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", mSaveFileValidPDF)
+    # this paper has no publisher or arXiv pdfs even available, but does have an
+    # ADS pdf
+    db_empty.add_paper("1971ApJ...168..327S")
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.papersList.getPapers()[0], qtbot)
+    cClick(widget.rightPanel.pdfDownloadButton, qtbot)
+    assert mSaveLocPDF.is_file()
+    assert mSaveLocPDF.stat().st_size > 1e6  # 1 Mb, in bytes
+    mSaveLocPDF.unlink()  # remove the file we just downloaded
+
+
 def test_download_pdf_button_no_suffix_downloads_paper(qtbot, db_temp, monkeypatch):
     monkeypatch.setattr(QFileDialog, "getSaveFileName", mSaveFileValidNoSuffix)
     widget = cInitialize(qtbot, db_temp)
