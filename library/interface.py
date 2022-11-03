@@ -2,7 +2,7 @@ from pathlib import Path
 import requests
 
 import ads.exceptions
-from PySide6.QtCore import Qt, QEvent, QPoint
+from PySide6.QtCore import Qt, QEvent, QPoint, QTimer
 from PySide6.QtGui import (
     QFontDatabase,
     QDesktopServices,
@@ -1131,8 +1131,8 @@ class PapersListScrollArea(ScrollArea):
         self.addWidget(paper)  # calls the ScrollArea addWidget
         self.sortPapers()
 
-        # click on this paper. This is actually tricky, since I need to fully mock
-        # a mouse event.
+        # click on this paper, and scroll to where it is.
+        # This is actually tricky, since I need to fully mock a mouse event.
         if click:
             event = QMouseEvent(
                 QMouseEvent.MouseButtonPress,
@@ -1142,6 +1142,12 @@ class PapersListScrollArea(ScrollArea):
                 Qt.NoModifier,
             )
             paper.mousePressEvent(event)
+            # Getting the paper to scroll properly was a hassle. For some reason the
+            # plain ensureWidgetVisible call works during tests, but not the actual
+            # usage. I found that the QTimer approach works for the actual usage, but
+            # not the tests. So I call both. They do the same thing anyway.
+            self.ensureWidgetVisible(paper)
+            QTimer.singleShot(0, lambda: self.ensureWidgetVisible(paper))
 
     def deletePaper(self, bibcode):
         """

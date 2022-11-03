@@ -767,6 +767,28 @@ def test_adding_paper_after_delete_puts_details_in_right_panel(qtbot, db_temp):
     assert widget.rightPanel.titleText.text() == title
 
 
+def test_adding_paper_scrolls_to_show_paper(qtbot, db_empty):
+    # add a bunch of papers, to fill the available area, then add the last in
+    # chronological order (so it will be  at the bottom), then see where the bar is.
+    # I had problems getting this test to actually pass. The scroll.value() is sometimes
+    # zero even when the scroll is not at the top (tested via interface). So we need
+    # to add a lot of papers to make sure we have enough margin to make the end
+    # significantly nonzero
+    db_empty.add_paper(u.bbfh.bibcode)
+    db_empty.add_paper(u.tremonti.bibcode)
+    db_empty.add_paper(u.mvdbw_book.bibcode)
+    db_empty.add_paper(u.marks.bibcode)
+    db_empty.add_paper(u.grasha_thesis.bibcode)
+    db_empty.add_paper(u.mine.bibcode)
+    db_empty.add_paper(u.krumholz.bibcode)
+    db_empty.add_paper(u.forbes.bibcode)
+    db_empty.add_paper(u.juan.bibcode)
+    widget = cInitialize(qtbot, db_empty)
+    cAddPaper(widget, u.mine_recent.bibcode, qtbot)
+    scroll = widget.papersList.verticalScrollBar()
+    assert scroll.value() > 0
+
+
 def test_adding_bad_paper_shows_error_formatting_of_textedit(qtbot, db_empty):
     widget = cInitialize(qtbot, db_empty)
     cAddPaper(widget, "nonsense", qtbot)
