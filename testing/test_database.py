@@ -1,4 +1,5 @@
 import random
+import time
 from pathlib import Path
 import shutil
 import sqlite3
@@ -990,6 +991,30 @@ def test_update_system_does_not_update_published_papers(db_update):
         db_update.get_paper_attribute(u.tremonti.bibcode, "bibtex") == u.tremonti.bibtex
     )
     assert db_update.get_paper_attribute(u.forbes.bibcode, "bibtex") == u.forbes.bibtex
+
+
+def test_update_system_does_not_run_soon_after_last_check(db_update, monkeypatch):
+    # the update system runs automatically on creation. We'll make a new database
+    # using the same file, but monkeypatch the update system to check what papers
+    # are actually called to update
+    updates = []
+    monkeypatch.setattr(Database, "update_paper", lambda _, b: updates.append(b))
+    print(db_update.db_file)
+    Database(db_update.db_file)
+    assert updates == []
+
+
+def test_update_system_runs_again_after_a_day(db_update, monkeypatch):
+    # the update system runs automatically on creation. We'll modify the update time
+    # to be more than a day in the past, then make a new database using the same file.
+    # We'll monkeypatch the update system to check what papers are actually called
+    yesterday = time.time() - 25 * 60 * 60  # extra hour
+    for bibcode in db_update.get_all_bibcodes():
+        db_update.set_paper_attribute(bibcode, "update_time", yesterday)
+    updates = []
+    monkeypatch.setattr(Database, "update_paper", lambda _, b: updates.append(b))
+    Database(db_update.db_file)
+    assert updates == [u.grasha_thesis.bibcode, u.forbes.bibcode]
 
 
 # ======================================================================================

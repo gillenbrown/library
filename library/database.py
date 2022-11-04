@@ -1,4 +1,5 @@
 import sqlite3
+import time
 import contextlib
 
 from library import ads_wrapper
@@ -42,6 +43,7 @@ class Database(object):
         "bibtex",
         "arxiv_id",
         "citation_keyword",  # the thing within the \cite{} command in LaTeX
+        "update_time",  # then the paper was last updated
     ]
     # some columns won't be set when the paper is added, will be left NULL
     colnames_data = colnames_set_on_paper_add + ["local_file", "user_notes"]
@@ -71,17 +73,25 @@ class Database(object):
             "arxiv_id text,"
             "local_file text,"
             "user_notes text,"
-            "citation_keyword text UNIQUE"
+            "citation_keyword text UNIQUE,"
+            "update_time real"
             ")"
         )
 
         # then update all papers, as necessary
+        yesterday = time.time() - 24 * 60 * 60
         for bibcode in self.get_all_bibcodes():
             # don't simply check that the journal is set. Soemtimes there can be
             # intermediate updates to a paper, where the journal can be set but not
             # the full information. Once the page info is set, the paper will be
-            # fully updated
-            if self.get_paper_attribute(bibcode, "page") == -1:
+            # fully updated.
+            # we also check that the paper has not been checked in the last 24 hours.
+            # this is prevent unnecessary calls to ADS, and to let the interface
+            # open faster when not checking for updates.
+            if (
+                self.get_paper_attribute(bibcode, "page") == -1
+                and self.get_paper_attribute(bibcode, "update_time") <= yesterday
+            ):
                 self.update_paper(bibcode)
 
     def _execute(self, sql, parameters=()):
@@ -158,6 +168,7 @@ class Database(object):
                 paper_data["bibtex"],
                 paper_data["arxiv_id"],
                 bibcode,  # citation keyword
+                time.time(),  # update time
             )
             # then run this SQL
             self._execute(sql, parameters)
@@ -531,6 +542,8 @@ class Database(object):
         :type old_bibcode: str
         :return: None
         """
+        # note that we tried to update here, no matter what happens
+        self.set_paper_attribute(old_bibcode, "update_time", time.time())
         # need to get the new bibcode. This is actually non-trivial. The best thing to
         # do is to pass the arXiv ID, which can then be sent to ADS. But some papers
         # are not on the arXiv. So we skip these papers. I only found this applied to
