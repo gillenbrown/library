@@ -1111,6 +1111,13 @@ class PapersListScrollArea(ScrollArea):
         # initially sort by date
         self.changeSort()
 
+        # add all the papers
+        for b in self.main.db.get_all_bibcodes():
+            # pass click=False so we leave the right panel blank
+            self.addPaper(b, click=False)
+        # then sort all the papers. They were not sorted when initially added
+        self.sortPapers()
+
     def getPapers(self):
         """
         Get all paper widgets hosted in this layout
@@ -1142,11 +1149,18 @@ class PapersListScrollArea(ScrollArea):
         # create the paper object, than add to the list and center panel
         paper = Paper(bibcode, self.main)
         self.addWidget(paper)  # calls the ScrollArea addWidget
-        self.sortPapers()
 
-        # click on this paper, and scroll to where it is.
+        # click on this paper, and scroll to where it is. We do not do this at the
+        # beginning when adding papers initially, but otherwise do it whenever a user
+        # adds a paper.
         # This is actually tricky, since I need to fully mock a mouse event.
         if click:
+            # we do not sort when not clicking, since we do not click when adding all
+            # papers at the beginning, and to speed up the initial interface creation
+            # I don't want to sort each time a paper is added, just once they're all
+            # done
+            self.sortPapers()
+            # then click
             event = QMouseEvent(
                 QMouseEvent.MouseButtonPress,
                 QPoint(),
@@ -1718,9 +1732,6 @@ class MainWindow(QMainWindow):
         # because the tags need this panel. In the big picture, we have a main
         # wrapper so that we can keep the sort button at the top
         self.papersList = PapersListScrollArea(self)
-        for b in self.db.get_all_bibcodes():
-            # pass click=False so we leave the right panel blank
-            self.papersList.addPaper(b, click=False)
 
         # then set up the tagslist
         self.tagsList = TagsListScrollArea(self)
