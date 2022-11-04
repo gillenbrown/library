@@ -450,11 +450,6 @@ def test_title_is_has_text_saying_library(qtbot, db_empty):
     assert widget.title.text() == "Library"
 
 
-def test_title_is_centered(qtbot, db_empty):
-    widget = cInitialize(qtbot, db_empty)
-    assert widget.title.alignment() == Qt.AlignCenter
-
-
 def test_title_is_lobster_font(qtbot, db_empty):
     widget = cInitialize(qtbot, db_empty)
     assert widget.title.font().family() == "Lobster"

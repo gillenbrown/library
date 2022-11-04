@@ -42,6 +42,8 @@ QPushButton#add_button:hover {
 QLabel#big_title {
     font-family: Lobster;
     font-size: 40pt;
+    margin-right: 10px;
+    padding-bottom: 10px;
 }
 
 QLabel#center_panel_paper_title{

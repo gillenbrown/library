@@ -1662,23 +1662,17 @@ class MainWindow(QMainWindow):
             db.add_new_tag("Read")
             db.add_new_tag("Unread")
 
-        # Start with the layout. Our main layout is three vertical components:
-        # the first is the title, second is the search bar, where the user can paste
-        # URLs to add to the database, and the third is the place where we show all
+        # Start with the layout. Our main layout is two vertical components:
+        # the first is the title and search bar, where the user can paste
+        # URLs to add to the database, and the second is the place where we show all
         # the papers that have been added.
         vBoxMain = QVBoxLayout()
+        vBoxMain.setSpacing(5)
 
         # The title is first
         self.title = QLabel("Library")
         self.title.setObjectName("big_title")
-        # Mess around with the title formatting
-        self.title.setFixedHeight(60)
-        self.title.setAlignment(Qt.AlignCenter)
-        vBoxMain.addWidget(self.title)
-
-        # Then comes the search bar. This is it's own horizontal layout, with the
-        # text box and the button to add
-        hBoxSearchBar = QHBoxLayout()
+        # then the search bar
         self.searchBar = QLineEdit()
         self.searchBar.setPlaceholderText("Enter your paper URL or ADS bibcode here")
         self.searchBar.setProperty("error", False)
@@ -1696,12 +1690,14 @@ class MainWindow(QMainWindow):
         # also allow the reset after an error
         self.searchBar.cursorPositionChanged.connect(self.resetSearchBarError)
         self.searchBar.textChanged.connect(self.resetSearchBarError)
-        # have both of these quantities have a fixed height. These values are chosen to
+        # have these quantities have a fixed height. These values are chosen to
         # make it look nice.
         self.searchBar.setFixedHeight(30)
         self.searchBarErrorText.setFixedHeight(30)
         self.addButton.setFixedHeight(30)
         # Then add these to the layouts
+        hBoxSearchBar = QHBoxLayout()
+        hBoxSearchBar.addWidget(self.title)
         hBoxSearchBar.addWidget(self.searchBar)
         hBoxSearchBar.addWidget(self.searchBarErrorText)
         hBoxSearchBar.addWidget(self.addButton)
