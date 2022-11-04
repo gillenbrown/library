@@ -460,11 +460,6 @@ def test_title_is_correct_font_size(qtbot, db_empty):
     assert widget.title.font().pointSize() == 40
 
 
-def test_title_has_correct_height_in_pixels(qtbot, db_empty):
-    widget = cInitialize(qtbot, db_empty)
-    assert widget.title.height() == 60
-
-
 # ==========================
 # sizing of the three panels
 # ==========================
