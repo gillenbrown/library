@@ -510,7 +510,6 @@ class RightPanel(ScrollArea):
         self.spacers = [HorizontalLine() for _ in range(5)]
 
         # the Tags List has a bit of setup
-        self.tags = []  # store the tags that are in there
         self.vBoxTags = QVBoxLayout()
         self.populate_tags()
 
@@ -556,6 +555,15 @@ class RightPanel(ScrollArea):
         self.addWidget(self.secondDeletePaperButton)
         self.addWidget(self.secondDeletePaperCancelButton)
 
+    def getTagCheckboxes(self):
+        """
+        Get all tag checkbox widgets
+
+        :return: list of tag checkboxes
+        :rtype: list[TagCheckBox]
+        """
+        return [self.vBoxTags.itemAt(i).widget() for i in range(self.vBoxTags.count())]
+
     def populate_tags(self):
         """
         Reset the list of tags shown in the right panel, to account for any new ones.
@@ -566,14 +574,14 @@ class RightPanel(ScrollArea):
         :return: None
         """
         # first clean up the current tags, make sure they're gone from the interface
-        for t in self.tags:
+        for t in self.getTagCheckboxes():
             t.hide()
+            self.vBoxTags.removeWidget(t)
             del t
-        self.tags = []
+
         # go through the database and add checkboxes for each tag there.
         for t in self.main.db.get_all_tags():
             this_tag_checkbox = TagCheckBox(t, self.main)
-            self.tags.append(this_tag_checkbox)
             self.vBoxTags.addWidget(this_tag_checkbox)
             # see whether we can check this box
             if self.bibcode != "":
@@ -701,7 +709,7 @@ class RightPanel(ScrollArea):
         """
         self.editTagsButton.hide()
         self.doneEditingTagsButton.show()
-        for tag in self.tags:
+        for tag in self.getTagCheckboxes():
             tag.show()
 
     def doneTagEditing(self):
@@ -714,7 +722,7 @@ class RightPanel(ScrollArea):
         """
         self.editTagsButton.show()
         self.doneEditingTagsButton.hide()
-        for tag in self.tags:
+        for tag in self.getTagCheckboxes():
             tag.hide()
         # Also update the text shown to the user
         self.update_tag_text()

@@ -1171,7 +1171,7 @@ def test_right_panel_tags_text_is_not_copyable(qtbot, db):
 
 def test_tags_selection_checkboxes_is_hidden_at_beginning(qtbot, db):
     widget = cInitialize(qtbot, db)
-    for tag in widget.rightPanel.tags:
+    for tag in widget.rightPanel.getTagCheckboxes():
         assert tag.isHidden() is True
 
 
@@ -1391,7 +1391,7 @@ def test_tags_selection_done_editing_button_doesnt_appear_when_paper_clicked(qtb
 def test_tags_selection_checkboxes_doesnt_appear_when_paper_clicked(qtbot, db):
     widget = cInitialize(qtbot, db)
     cClick(widget.papersList.getPapers()[0], qtbot)
-    for tag in widget.rightPanel.tags:
+    for tag in widget.rightPanel.getTagCheckboxes():
         assert tag.isHidden() is True
 
 
@@ -1938,7 +1938,7 @@ def test_right_panel_tags_should_list_all_tags_in_database(qtbot, db):
     widget = cInitialize(qtbot, db)
     # get all tags in both the list and database, then check that they're the same
     db_tags = db.get_all_tags()
-    list_tags = [t.text() for t in widget.rightPanel.tags]
+    list_tags = [t.text() for t in widget.rightPanel.getTagCheckboxes()]
     assert sorted(db_tags) == sorted(list_tags)
 
 
@@ -1948,7 +1948,7 @@ def test_right_panel_tags_checked_match_paper_that_is_selected(qtbot, db):
     paper = widget.papersList.getPapers()[0]
     cClick(paper, qtbot)
     # go through each checkbox to verify the tag
-    for tag in widget.rightPanel.tags:
+    for tag in widget.rightPanel.getTagCheckboxes():
         if db.paper_has_tag(paper.bibcode, tag.text()):
             assert tag.isChecked()
         else:
@@ -1989,7 +1989,7 @@ def test_tags_selection_checkboxes_are_unhidden_when_edit_is_pressed(qtbot, db):
     widget = cInitialize(qtbot, db)
     cClick(widget.papersList.getPapers()[0], qtbot)
     cClick(widget.rightPanel.editTagsButton, qtbot)
-    for tag in widget.rightPanel.tags:
+    for tag in widget.rightPanel.getTagCheckboxes():
         assert tag.isHidden() is False
 
 
@@ -1998,7 +1998,7 @@ def test_tags_selection_checkboxes_are_hidden_when_done_editing(qtbot, db):
     cClick(widget.papersList.getPapers()[0], qtbot)
     cClick(widget.rightPanel.editTagsButton, qtbot)
     cClick(widget.rightPanel.doneEditingTagsButton, qtbot)
-    for tag in widget.rightPanel.tags:
+    for tag in widget.rightPanel.getTagCheckboxes():
         assert tag.isHidden() is True
 
 
@@ -2012,7 +2012,7 @@ def test_checking_tag_in_checklist_adds_tag_to_paper_in_database(qtbot, db_no_ta
     cClick(paper, qtbot)
     # this will show the tags in the right panel. Click on a few
     to_check = ["T1", "T3", "T4"]
-    for tag_item in widget.rightPanel.tags:
+    for tag_item in widget.rightPanel.getTagCheckboxes():
         if tag_item.text() in to_check:
             tag_item.setChecked(True)
     # Then check that these tags are listen in the database
@@ -2037,7 +2037,7 @@ def test_unchecking_tag_in_checklist_removes_tag_from_paper_in_db(qtbot, db_no_t
     cClick(paper, qtbot)
     # click on the tags we want to remove
     to_uncheck = ["T1", "T3", "T4"]
-    for tag_item in widget.rightPanel.tags:
+    for tag_item in widget.rightPanel.getTagCheckboxes():
         if tag_item.text() in to_uncheck:
             tag_item.setChecked(False)
     # Then check that these tags are listen in the database
@@ -2060,7 +2060,7 @@ def test_checking_tag_in_checklist_adds_tag_to_interface(qtbot, db_no_tags):
     assert widget.rightPanel.tagText.text() == "Tags: None"
     # this will show the tags in the right panel. Click on a few
     to_check = ["T1", "T3", "T4"]
-    for tag_item in widget.rightPanel.tags:
+    for tag_item in widget.rightPanel.getTagCheckboxes():
         if tag_item.text() in to_check:
             tag_item.setChecked(True)
     # click the done editing button
@@ -2083,7 +2083,7 @@ def test_unchecking_tag_in_checklist_removes_tag_from_interface(qtbot, db_no_tag
     cClick(paper, qtbot)
     # click on the tags we want to remove
     to_uncheck = ["T1", "T3", "T4"]
-    for tag_item in widget.rightPanel.tags:
+    for tag_item in widget.rightPanel.getTagCheckboxes():
         if tag_item.text() in to_uncheck:
             tag_item.setChecked(False)
     # click the done editing button
@@ -2100,7 +2100,7 @@ def test_tag_checkboxes_are_hidden_when_paper_clicked(qtbot, db_temp):
     # click on a different paper
     cClick(widget.papersList.getPapers()[1], qtbot)
     # the tag edit checkboxes should all be hidden
-    for t in widget.rightPanel.tags:
+    for t in widget.rightPanel.getTagCheckboxes():
         assert t.isHidden()
 
 
@@ -2146,7 +2146,7 @@ def test_paper_tag_list_is_sorted_properly_after_modifying_tags(qtbot, db_empty)
     # then add the final tag in the list
     to_add = tags[-1]
     cClick(widget.rightPanel.editTagsButton, qtbot)
-    for tag_item in widget.rightPanel.tags:
+    for tag_item in widget.rightPanel.getTagCheckboxes():
         if tag_item.text() == to_add:
             tag_item.setChecked(True)
     cClick(widget.rightPanel.doneEditingTagsButton, qtbot)
@@ -2165,7 +2165,7 @@ def test_tag_checkboxes_are_sorted_alphabetically_not_case_sensitive(qtbot, db_t
     widget = cInitialize(qtbot, db_temp)
     cClick(widget.papersList.getPapers()[0], qtbot)
     cClick(widget.rightPanel.editTagsButton, qtbot)
-    tags = [tag.text() for tag in widget.rightPanel.tags]
+    tags = [tag.text() for tag in widget.rightPanel.getTagCheckboxes()]
     assert tags == sorted(tags, key=lambda x: x.lower())
 
 
@@ -2182,7 +2182,7 @@ def test_tag_checkboxes_are_sorted_properly_after_adding_new_tag(qtbot, db_temp)
     # then add one in the left panel
     cAddTag(widget, "Aye", qtbot)
     # then ensure this new checkbox was added appropriately
-    tags = [tag.text() for tag in widget.rightPanel.tags]
+    tags = [tag.text() for tag in widget.rightPanel.getTagCheckboxes()]
     assert "Aye" in tags
     assert tags == sorted(tags, key=lambda x: x.lower())
 
@@ -2200,7 +2200,7 @@ def test_tag_checkboxes_are_sorted_properly_after_deleting_tag(qtbot, db_temp):
     # then delete a tag from the left panel
     cDeleteTag(widget, "Test", qtbot)
     # then ensure this new checkbox was removed appropriately
-    tags = [tag.text() for tag in widget.rightPanel.tags]
+    tags = [tag.text() for tag in widget.rightPanel.getTagCheckboxes()]
     assert "Test" not in tags
     assert tags == sorted(tags, key=lambda x: x.lower())
 
@@ -2228,7 +2228,7 @@ def test_unchecking_tag_in_checklist_removes_paper_from_center_panel(qtbot, db_e
             cClick(tag, qtbot)
     cClick(widget.papersList.getPapers()[0], qtbot)
     assert widget.papersList.getPapers()[0].isHidden() is False
-    for tag_item in widget.rightPanel.tags:
+    for tag_item in widget.rightPanel.getTagCheckboxes():
         if tag_item.text() == "test":
             tag_item.setChecked(False)
     cClick(widget.rightPanel.doneEditingTagsButton, qtbot)
@@ -2249,7 +2249,7 @@ def test_checking_tag_in_checklist_puts_paper_in_center_panel(qtbot, db_empty):
             cClick(tag, qtbot)
 
     assert widget.papersList.getPapers()[0].isHidden() is True
-    for tag_item in widget.rightPanel.tags:
+    for tag_item in widget.rightPanel.getTagCheckboxes():
         if tag_item.text() == "test":
             tag_item.setChecked(True)
     cClick(widget.rightPanel.doneEditingTagsButton, qtbot)
@@ -3852,7 +3852,7 @@ def test_newly_added_tags_appear_in_right_panel(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
     cAddTag(widget, "Test Tag", qtbot)
     cClick(widget.papersList.getPapers()[0], qtbot)
-    assert "Test Tag" in [t.text() for t in widget.rightPanel.tags]
+    assert "Test Tag" in [t.text() for t in widget.rightPanel.getTagCheckboxes()]
 
 
 def test_adding_tags_doesnt_duplicate_tags_in_right_panel(qtbot, db_empty):
@@ -3860,11 +3860,13 @@ def test_adding_tags_doesnt_duplicate_tags_in_right_panel(qtbot, db_empty):
     widget = cInitialize(qtbot, db_empty)
     cAddTag(widget, "Test Tag", qtbot)
     cClick(widget.papersList.getPapers()[0], qtbot)
-    assert ["Test Tag"] == [t.text() for t in widget.rightPanel.tags]
+    assert ["Test Tag"] == [t.text() for t in widget.rightPanel.getTagCheckboxes()]
     # add another tag, then check again
     cAddTag(widget, "Test Tag 2", qtbot)
     cClick(widget.papersList.getPapers()[0], qtbot)
-    assert ["Test Tag", "Test Tag 2"] == [t.text() for t in widget.rightPanel.tags]
+    assert ["Test Tag", "Test Tag 2"] == [
+        t.text() for t in widget.rightPanel.getTagCheckboxes()
+    ]
 
 
 # ======================================
