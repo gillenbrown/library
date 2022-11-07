@@ -22,7 +22,7 @@ if __name__ == "__main__":
     interface.set_up_fonts()
 
     # set up app icon
-    app.setWindowIcon(QIcon(str(home_path / "icon.png")))
+    app.setWindowIcon(QIcon(str(home_path / "library" / "resources" / "icon.png")))
 
     # The MainWindow class holds all the structure
     window = interface.MainWindow(db)
