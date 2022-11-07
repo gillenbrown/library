@@ -573,19 +573,25 @@ class RightPanel(ScrollArea):
 
         :return: None
         """
-        # first clean up the current tags, make sure they're gone from the interface
-        for t in self.getTagCheckboxes():
-            t.hide()
-            self.vBoxTags.removeWidget(t)
-            del t
+        # first remove all tags from the layout, then we'll go back and add
+        # everything in order
+        previous_tags = self.getTagCheckboxes()
 
         # go through the database and add checkboxes for each tag there.
-        for t in self.main.db.get_all_tags():
-            this_tag_checkbox = TagCheckBox(t, self.main)
-            self.vBoxTags.addWidget(this_tag_checkbox)
+        for idx, t_name in enumerate(self.main.db.get_all_tags()):
+            # see if it exists
+            for this_tag_checkbox in previous_tags:
+                if this_tag_checkbox.text() == t_name:
+                    # remove this from the list, since we found it. We'll delete ones
+                    # we didn't find later.
+                    previous_tags.remove(this_tag_checkbox)
+                    break
+            else:  # not found
+                this_tag_checkbox = TagCheckBox(t_name, self.main)
+                self.vBoxTags.insertWidget(idx, this_tag_checkbox)
             # see whether we can check this box
             if self.bibcode != "":
-                if self.main.db.paper_has_tag(self.bibcode, t):
+                if self.main.db.paper_has_tag(self.bibcode, t_name):
                     this_tag_checkbox.setChecked(True)
                 else:
                     this_tag_checkbox.setChecked(False)
@@ -595,6 +601,11 @@ class RightPanel(ScrollArea):
                 this_tag_checkbox.hide()
             else:
                 this_tag_checkbox.show()
+        # any leftover tags must be removed
+        for t in previous_tags:
+            t.hide()
+            self.vBoxTags.removeWidget(t)
+            del t
 
     def resetPaperDetails(self):
         """
