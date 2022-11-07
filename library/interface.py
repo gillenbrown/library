@@ -577,7 +577,7 @@ class RightPanel(ScrollArea):
             self.vBoxTags.addWidget(this_tag_checkbox)
             # see whether we can check this box
             if self.bibcode != "":
-                if t in self.main.db.get_paper_tags(self.bibcode):
+                if self.main.db.paper_has_tag(self.bibcode, t):
                     this_tag_checkbox.setChecked(True)
                 else:
                     this_tag_checkbox.setChecked(False)
