@@ -109,7 +109,7 @@ class LeftPanelTag(QWidget):
         :return: None
         """
         for paper in self.main.papersList.getPapers():
-            if self.name in paper.getTags():
+            if self.main.db.paper_has_tag(paper.bibcode, self.name):
                 paper.show()
             else:
                 paper.hide()
