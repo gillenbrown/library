@@ -45,6 +45,14 @@ python run.py
 ```
 You'll probably want to run this in a screen session or just move the process to the background to get your terminal back. 
 
+# Potential bugs to look out for
+
+This application is a work in progress, and so far has only been tested by me, so there are likely bugs I haven't found yet. If you find that something doesn't work how you expect, or you have suggestions on how to make the application more functional or easier to use, please [email me](mailto:gillenbrown@gmail.com)! In particular, here are some things that I suspect may still need work:
+- In the interface, I abbreviate some journal (e.g. MNRAS, ApJ). I got all the journals commonly used in the papers I've cited in my work, but of course that's not a representative sample. Let me know if there are any abbreviations I'm missing.
+- I've written a system that updates arXiv papers with the full publication details once those are available. But my testing for this has been mostly contrived examples that may or may not be totally realistic, so keep an eye on your arXiv-only papers to see if the publication details are correctly updated.
+- Downloading the paper PDFs works okay, but not great. It first tries to download the PDF from the publisher, but in my testing the publisher often blocks the download since it thinks it's a bot (which it really is, to be fair). The application uses the arXiv PDF as a fallback. But the publishers may block me in particular since I sent a lot of requests when testing. So I'd be interested in seeing how many publisher PDFs regular users are able to download.
+- On a lighter note, I need a better name for this! "Library" has been a placeholder, so if you have any ideas for a name let me know.
+
 # Acknowledgements
 This would not be possible without the [ads library](https://github.com/andycasey/ads) maintained by Andy Casey, which uses the [ADS API](https://github.com/adsabs/adsabs-dev-api).
 
