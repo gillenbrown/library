@@ -44,9 +44,12 @@ def qss_trigger(object, property, value):
     :param value: The value to set for the given property
     :return: None
     """
-    object.setProperty(property, value)
-    object.style().unpolish(object)
-    object.style().polish(object)
+    # first check whether or not the property is already set. If it is, we won't do
+    # any changes, to avoid unnecessary polish and unpolish calls, which are slow.
+    if object.property(property) != value:
+        object.setProperty(property, value)
+        object.style().unpolish(object)
+        object.style().polish(object)
 
 
 class LeftPanelTag(QWidget):
