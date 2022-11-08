@@ -8,6 +8,9 @@ from pathlib import Path
 import random
 import shutil
 
+# make sure tests do not appear on screen
+os.environ["QT_QPA_PLATFORM"] = "offscreen"
+
 import pytest
 import pytestqt
 from PySide6.QtCore import Qt
@@ -536,7 +539,7 @@ def test_adding_long_tag_resizes_splitter(qtbot, db_temp):
 
 
 def test_db_with_long_tag_has_wide_tag_bar_at_beginning(qtbot, db_temp):
-    db_temp.add_new_tag("this is a very long tag, too long to realistically use")
+    db_temp.add_new_tag("this is a very long tag, too long really")
     widget = cInitialize(qtbot, db_temp)
     original_sizes = widget.splitter.sizes()
     assert original_sizes[0] > 200
