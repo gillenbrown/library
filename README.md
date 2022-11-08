@@ -23,7 +23,7 @@ Before doing anything, please know that this application is a work in progress. 
 
 To start, you'll need an ADS key to be able for the application to connect with ADS. Follow the steps to generate a new key [here](https://github.com/adsabs/adsabs-dev-api#access) (just steps 1 and 2, don't worry about the `curl` command). Once you get that API key, save it as an environment variable named `ADS_DEV_KEY`. 
 
-Then you can install the Pyton application. You'll need to be using Python 3. I haven't yet made a simple executable, so for now you'll need to clone the repository and install it with pip. This will install all the dependencies too.
+Then you can install the Pyton application. You'll need to be using Python 3. I haven't yet made a simple executable, so for now you'll need to clone this repository and install it with pip. This will install all the dependencies too. Because of this, if you use virtual environments (e.g. `venv` or `conda`) you may want to create a new environment. 
 
 ```
 git clone https://github.com/gillenbrown/library.git
