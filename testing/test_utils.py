@@ -295,7 +295,7 @@ mine_recent = PaperDict(
         "       author = {{Brown}, Gillen and {Gnedin}, Oleg Y.},\n"
         '        title = "{Testing feedback from star clusters in simulations of the '
         'Milky Way formation}",\n'
-        "      journal = {\mnras},\n"
+        "      journal = {\\mnras},\n"
         "     keywords = {methods: numerical, galaxies: evolution, galaxies: formation, "
         "galaxies: star clusters: general, galaxies: star formation, Astrophysics - "
         "Astrophysics of Galaxies},\n"
