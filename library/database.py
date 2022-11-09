@@ -6,8 +6,8 @@ from library import ads_wrapper
 
 # validate that SQLite is of an appropriate version. I need at least 3.35.0 to use the
 # syntax to delete columns
-assert int(sqlite3.sqlite_version.split(".")[0]) >= 3
-assert int(sqlite3.sqlite_version.split(".")[1]) >= 35
+assert sqlite3.sqlite_version_info[0] >= 3
+assert sqlite3.sqlite_version_info[1] >= 35
 
 # set up the ADS wrapper object that will be used by the Library
 ads_call = ads_wrapper.ADSWrapper()
