@@ -591,6 +591,14 @@ def test_confirming_tag_delete_resizes_splitter(qtbot, db_temp):
     )
 
 
+def test_first_paper_takes_up_full_splitter_width(qtbot, db_empty):
+    widget = cInitialize(qtbot, db_empty)
+    cAddPaper(widget, u.mine.bibcode, qtbot)
+    paper_width = widget.papersList.getPapers()[0].width()
+    splitter_width = widget.splitter.sizes()[1]
+    assert paper_width == splitter_width
+
+
 # ======================================================================================
 #
 # test search bar and adding papers from it

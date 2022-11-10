@@ -8,7 +8,6 @@ from PySide6.QtGui import (
     QDesktopServices,
     QGuiApplication,
     QTextCursor,
-    QMouseEvent,
 )
 from PySide6.QtWidgets import (
     QWidget,
@@ -1810,6 +1809,12 @@ class MainWindow(QMainWindow):
         self.papersList.addPaper(bibcode)
         # clear the text so another paper can be added
         self.searchBar.clear()
+        # I also need to touch the splitter, to make sure the paper size of the
+        # first paper is set appropriately
+        if len(self.papersList.getPapers()) == 1:
+            self.papersList.resize_items_in_layout(
+                self.papersList.layout, self.splitter.sizes()[1]
+            )
 
     def formatSearchBarError(self, error_text):
         """
