@@ -61,17 +61,23 @@ One final note here is that sometimes ADS takes a bit of time to get the daily a
 
 Once you add papers, you can click on them in the center panel to show their details in the right panel. It shows the title, journal info, then the abstract. Below that, there are several other actions you can take on this paper.
 
-First, there is a place for you to take notes on the paper. 
+First, there is a place for you to take notes on the paper. When you're editing, you can click the "Done Editing Notes" button to save the notes, or hit Escape to discard your changes.
 
 Next, there are actions related to the PDF of the paper. If you have already downloaded the PDF, you can click "Choose a local PDF" to select an existing file on your machine. You can also try to get the code to download a PDF for you. This will first try to download the publisher version of the PDF, but this may be blocked by paywalls (or systems that identify this code as a bot). If the publisher PDF fails, it will download the arXiv PDF. Either way, you'll be prompted to select a place to save this PDF. Once you have a PDF set for a paper, you can open that PDF in your native PDF viewer by clicking the button or double clicking on the paper in the center panel. 
 
 After the PDF, there's a section to set the tags of this paper. I'll talk about tags more in the next section of this guide, but here you can edit the tags assigned to this paper.
 
-Next, there are actions related to the BibTeX entry for this paper. Here, you can modify what I call the "Citation Keyword" for the paper. This is the key you put inside the `\cite` keyword when citing a paper in LaTex, like so: `\citet{brown_etal_22}`. I prefer to modify these to be human friendly, and this allows that. Note that these keys are required to be unique. Here you can also copy the BibTeX entry for this paper to your clipboard (where it will reflect the modified citation keyword).
+Next, there are actions related to the BibTeX entry for this paper. Here, you can modify what I call the "citation keyword" for the paper. This is the key you put inside the `\cite` keyword when citing a paper in LaTex, like so: `\citet{brown_etal_22}`. When writing papers, I prefer to modify these to be human friendly, and this allows that. Note that these keys are required to be unique. When editing this citation keyword, you can hit Escape to exit without saving, or enter an empty string to reset the citation keyword to the default, which is the bibcode assigned by ADS.
 
 Finally, there is a button to open the paper's page in ADS, and a button to delete this paper. It will ask you to confirm before you delete it. 
 
 ### Tags
+
+The tag system allows you to organize your papers into groups. The left panel shows the list of tags. To show only the papers with a given tag, click on the name of the tag. As discussed above, you can edit the tags a given paper has after clicking it. A paper can have multiple tags. In the left panel you can also add new tags or delete existing ones. When entering the name of the tag to add or delete, you can exit without adding/deleting by pressing Escape or pressing backspace when the text field is empty. 
+
+### One final note...
+
+All the data used in this application (including the list of papers, your user notes, the locations of the PDFs, and the tags assigned to each paper) are stored in a database in the code directory called `USER_DATA_DO_NOT_DELETE.db`. As the name suggests, you'll lose everything if you delete this file. You may want to keep it backed up. 
 
 # Potential bugs to look out for
 
