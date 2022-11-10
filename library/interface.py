@@ -251,9 +251,20 @@ class Paper(QWidget):
         :type event: PySide2.QtGui.QMouseEvent
         :return: None
         """
-        # No matter whether we have a single or double click, show the details in the
-        # right panel. If we have a double click, we'll open the paper pdf.
+        # I refactored this into two separate functions to make it easier to call from
+        # elsewhere without simulating an actual mouse click
 
+        # we want a double click to show the paper details too
+        self.singleClick()
+        if event.type() is QEvent.Type.MouseButtonDblClick:
+            self.doubleClick()
+
+    def singleClick(self):
+        """
+        Handle a single click on the paper, showing the paper details in the right panel
+
+        :return: None
+        """
         # Pass the bibcode on to the right panel
         self.main.rightPanel.setPaperDetails(self.bibcode)
         # unhighlight all papers
@@ -262,17 +273,21 @@ class Paper(QWidget):
         # then highlight this paper
         self.highlight()
 
-        if event.type() is QEvent.Type.MouseButtonDblClick:
-            self.main.rightPanel.validatePDFPath()
-            local_file = self.main.db.get_paper_attribute(self.bibcode, "local_file")
-            # local_file will either be None or an existing file
-            # if there is no file, highlight for the user where they can add the file
-            if local_file is None:
-                self.main.rightPanel.highlightPDFButtons()
-            else:
-                # open the file. This function handles error checking
-                self.main.rightPanel.openPDF()
-        # nothing should be done for other click types
+    def doubleClick(self):
+        """
+        Handle the double click on a paper, opening its pdf
+
+        :return: None
+        """
+        self.main.rightPanel.validatePDFPath()
+        local_file = self.main.db.get_paper_attribute(self.bibcode, "local_file")
+        # local_file will either be None or an existing file
+        # if there is no file, highlight for the user where they can add the file
+        if local_file is None:
+            self.main.rightPanel.highlightPDFButtons()
+        else:
+            # open the file. This function handles error checking
+            self.main.rightPanel.openPDF()
 
     def getTags(self):
         """
@@ -1183,14 +1198,7 @@ class PapersListScrollArea(ScrollArea):
             # done
             self.sortPapers()
             # then click
-            event = QMouseEvent(
-                QMouseEvent.MouseButtonPress,
-                QPoint(),
-                Qt.LeftButton,
-                Qt.LeftButton,
-                Qt.NoModifier,
-            )
-            paper.mousePressEvent(event)
+            paper.singleClick()
             # Getting the paper to scroll properly was a hassle. For some reason the
             # plain ensureWidgetVisible call works during tests, but not the actual
             # usage. I found that the QTimer approach works for the actual usage, but
