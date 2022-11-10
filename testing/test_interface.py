@@ -810,6 +810,7 @@ def test_adding_bad_paper_hides_add_button(qtbot, db_empty):
     cAddPaper(widget, "nonsense", qtbot)
     assert widget.addButton.isHidden() is True
 
+
 def test_adding_bad_arXiv_paper_shows_error_text(qtbot, db_empty):
     widget = cInitialize(qtbot, db_empty)
     # Use future arXiv paper from 2035
