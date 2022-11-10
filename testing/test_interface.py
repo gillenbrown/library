@@ -3472,18 +3472,17 @@ def test_all_tags_in_database_are_in_the_tag_list_at_beginning(qtbot, db):
     assert sorted(tags_list) == sorted(db.get_all_tags())
 
 
-def test_read_and_unread_are_initialized_even_in_new_database(qtbot, db_empty):
+def test_unread_is_initialized_in_new_database(qtbot, db_empty):
     widget = cInitialize(qtbot, db_empty)
     tags_list = [t.name for t in widget.tagsList.tags]
-    assert sorted(tags_list) == ["Read", "Unread"]
+    assert sorted(tags_list) == ["Unread"]
 
 
-def test_read_and_unread_arent_added_to_nonempty_database(qtbot, db_no_tags):
+def test_unread_isnt_added_to_nonempty_database(qtbot, db_no_tags):
     db_no_tags.add_new_tag("lskdjlkj")
     db_no_tags.add_new_tag("ghjghjg")
     widget = cInitialize(qtbot, db_no_tags)
     tags_list = [t.name for t in widget.tagsList.tags]
-    assert "Read" not in tags_list
     assert "Unread" not in tags_list
 
 
@@ -3929,9 +3928,9 @@ def test_left_panel_tags_are_sorted_alphabetically_after_adding(qtbot, db_empty)
     for tag in tags:
         cAddTag(widget, tag, qtbot)
     tag_names = [tag.name for tag in widget.tagsList.tags]
-    # in comparison, include read and unread, since those were included on widet
+    # in comparison, include unread, since it was included on widget
     # initialization too
-    assert tag_names == sorted(tags + ["Read", "Unread"], key=lambda w: w.lower())
+    assert tag_names == sorted(tags + ["Unread"], key=lambda w: w.lower())
 
 
 # =============

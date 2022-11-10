@@ -1693,7 +1693,6 @@ class MainWindow(QMainWindow):
 
         # add read and unread tags if there is nothing in the database
         if len(self.db.get_all_bibcodes()) == 0 and len(self.db.get_all_tags()) == 0:
-            db.add_new_tag("Read")
             db.add_new_tag("Unread")
 
         # Start with the layout. Our main layout is two vertical components:
