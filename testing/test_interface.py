@@ -810,6 +810,16 @@ def test_adding_bad_paper_hides_add_button(qtbot, db_empty):
     cAddPaper(widget, "nonsense", qtbot)
     assert widget.addButton.isHidden() is True
 
+def test_adding_bad_arXiv_paper_shows_error_text(qtbot, db_empty):
+    widget = cInitialize(qtbot, db_empty)
+    # Use future arXiv paper from 2035
+    cAddPaper(widget, "https://arxiv.org/abs/3501.00001", qtbot)
+    assert widget.searchBarErrorText.isHidden() is False
+    assert (
+        widget.searchBarErrorText.text() == "This paper was not found in ADS. "
+        "If it was just added to the arXiv, ADS may not have registered it."
+    )
+
 
 def test_search_bar_and_error_text_have_almost_same_height(qtbot, db_empty):
     widget = cInitialize(qtbot, db_empty)

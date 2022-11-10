@@ -84,6 +84,12 @@ def test_raises_error_for_unrecognized_identifier():
         ads_call.get_bibcode("www.wrong.com")
 
 
+def test_raises_error_for_arxiv_paper_not_on_ads():
+    # use an identifier from the future (Jan 2035, to be specific)
+    with pytest.raises(ValueError):
+        ads_call.get_bibcode("https://arxiv.org/abs/3501.00001")
+
+
 # ======================================================================================
 #
 # Test getting various paper attributes from bibcodes

@@ -122,8 +122,14 @@ class ADSWrapper(object):
         except KeyError:
             self.num_queries += 1
 
-            query = ads.SearchQuery(q="arXiv:{}".format(arxiv_id), fl=["bibcode"])
-            bibcode = list(query)[0].bibcode
+            # we do need to be careful about arXiv papers that are not yet on ADS. This
+            # can be malformed arXiv IDs, but also today's set of papers that are not
+            # yet on ADS
+            try:
+                query = ads.SearchQuery(q="arXiv:{}".format(arxiv_id), fl=["bibcode"])
+                bibcode = list(query)[0].bibcode
+            except IndexError:  # no papers found
+                raise ValueError(f"arXiv ID {arxiv_id} not on ADS yet!")
 
             # store it in the cache
             self._bibcode_from_arxiv_id[arxiv_id] = bibcode
