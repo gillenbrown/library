@@ -59,7 +59,7 @@ One final note here is that sometimes ADS takes a bit of time to get the daily a
 
 ### Paper Details
 
-Once you add papers, you can click on them in the center panel to show their details in the right panel. It shows the title, journal info, then the abstract. Below that, there are several other actions you can take on this paper.
+Once you add papers, you can click on them in the center panel to show their details in the right panel. It shows the title, journal info, then the abstract. Below that, there are several other actions you can take on this paper. Note that you can resize this (and other panels) by clicking and dragging on the separator. You can also collapse each panel entirely by dragging to the edge.
 
 First, there is a place for you to take notes on the paper. When you're editing, you can click the "Done Editing Notes" button to save the notes, or hit Escape to discard your changes.
 
