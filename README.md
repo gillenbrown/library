@@ -34,7 +34,7 @@ I recommend including the `[test]` flag to install the dependencies needed to ru
 ```
 python -m pytest
 ```
-When the tests run, the interface may briefly appear in several flashes, but that is temporary and part of the tests. These tests will take a few minutes. The tests should all pass (warnings are okay), but if they don't, reach out and I'll help you figure out what's going wrong. 
+When the tests run, the interface may briefly appear in several flashes, but that is temporary and part of the tests. These tests will take a few minutes. The tests should all pass, but if they don't, reach out and I'll help you figure out what's going wrong. 
 
 One particular way the tests may fail is an old version of the [sqlite3](https://docs.python.org/3/library/sqlite3.html) library (you'll see an assertion error coming from lines 9 or 10 of `database.py`). If you use anaconda, you can try `conda install sqlite`. If that doesn't resolve the issue, you may need to update your Python version, as sqlite3 is bundled with Python. I believe Python version 3.6 or later comes with the needed sqlite3 version. Regardless, if you encounter this issue and have difficulty resolving it, please email me so we can figure it out together and I can improve these troubleshooting instructions.
 
