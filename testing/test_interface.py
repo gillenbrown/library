@@ -2446,22 +2446,20 @@ def test_notes_edit_can_quit_with_escape_reset_buttons(qtbot, db_notes):
     assert widget.rightPanel.userNotesTextEditFinishedButton.isHidden() is True
 
 
-def test_notes_edit_can_quit_with_backspace_reset_buttons(qtbot, db_notes):
+def test_notes_edit_cannot_quit_with_backspace_buttons(qtbot, db_notes):
     widget = cInitialize(qtbot, db_notes)
     cClick(widget.papersList.getPapers()[0], qtbot)
     cClick(widget.rightPanel.userNotesTextEditButton, qtbot)
     # get rid of original text
     for _ in range(6):
         cPressBackspace(widget.rightPanel.userNotesTextEditField, qtbot)
-        text = widget.rightPanel.userNotesTextEditField.toPlainText()
-    text = widget.rightPanel.userNotesTextEditField.toPlainText()
     assert widget.rightPanel.userNotesTextEditField.isHidden() is False
     # one more backspace
     cPressBackspace(widget.rightPanel.userNotesTextEditField, qtbot)
-    assert widget.rightPanel.userNotesText.isHidden() is False
-    assert widget.rightPanel.userNotesTextEditButton.isHidden() is False
-    assert widget.rightPanel.userNotesTextEditField.isHidden() is True
-    assert widget.rightPanel.userNotesTextEditFinishedButton.isHidden() is True
+    assert widget.rightPanel.userNotesText.isHidden() is True
+    assert widget.rightPanel.userNotesTextEditButton.isHidden() is True
+    assert widget.rightPanel.userNotesTextEditField.isHidden() is False
+    assert widget.rightPanel.userNotesTextEditFinishedButton.isHidden() is False
 
 
 def test_notes_edit_can_quit_with_escape_no_saving(qtbot, db_temp):
@@ -2474,20 +2472,6 @@ def test_notes_edit_can_quit_with_escape_no_saving(qtbot, db_temp):
     assert db_temp.get_paper_attribute(bibcode, "user_notes") is None
 
 
-def test_notes_edit_can_quit_with_backspace_no_saving(qtbot, db_notes):
-    widget = cInitialize(qtbot, db_notes)
-    cClick(widget.papersList.getPapers()[0], qtbot)
-    cClick(widget.rightPanel.userNotesTextEditButton, qtbot)
-    # get rid of original text
-    for _ in range(6):
-        cPressBackspace(widget.rightPanel.userNotesTextEditField, qtbot)
-    assert widget.rightPanel.userNotesTextEditField.isHidden() is False
-    # one more backspace
-    cPressBackspace(widget.rightPanel.userNotesTextEditField, qtbot)
-    bibcode = widget.papersList.getPapers()[0].bibcode
-    assert db_notes.get_paper_attribute(bibcode, "user_notes") == "abc123"
-
-
 def test_notes_edit_can_quit_with_escape_original_text_shown(qtbot, db_notes):
     widget = cInitialize(qtbot, db_notes)
     cClick(widget.papersList.getPapers()[0], qtbot)
@@ -2498,41 +2482,12 @@ def test_notes_edit_can_quit_with_escape_original_text_shown(qtbot, db_notes):
     assert widget.rightPanel.userNotesText.text() == "abc123"
 
 
-def test_notes_edit_can_quit_with_backspace_original_text_shown(qtbot, db_notes):
-    widget = cInitialize(qtbot, db_notes)
-    cClick(widget.papersList.getPapers()[0], qtbot)
-    cClick(widget.rightPanel.userNotesTextEditButton, qtbot)
-    # get rid of original text
-    for _ in range(6):
-        cPressBackspace(widget.rightPanel.userNotesTextEditField, qtbot)
-    assert widget.rightPanel.userNotesTextEditField.isHidden() is False
-    # one more backspace
-    cPressBackspace(widget.rightPanel.userNotesTextEditField, qtbot)
-    # the original notes should still be there
-    assert widget.rightPanel.userNotesText.text() == "abc123"
-
-
 def test_notes_edit_quit_with_escape_shows_original_text_next_edit(qtbot, db_notes):
     widget = cInitialize(qtbot, db_notes)
     cClick(widget.papersList.getPapers()[0], qtbot)
     cClick(widget.rightPanel.userNotesTextEditButton, qtbot)
     cEnterText(widget.rightPanel.userNotesTextEditField, "ZYX987", qtbot)
     cPressEscape(widget.rightPanel.userNotesTextEditField, qtbot)
-    # the original notes should still be there
-    cClick(widget.rightPanel.userNotesTextEditButton, qtbot)
-    assert widget.rightPanel.userNotesTextEditField.toPlainText() == "abc123"
-
-
-def test_notes_edit_quit_with_backspace_shows_original_text_next_edit(qtbot, db_notes):
-    widget = cInitialize(qtbot, db_notes)
-    cClick(widget.papersList.getPapers()[0], qtbot)
-    cClick(widget.rightPanel.userNotesTextEditButton, qtbot)
-    # get rid of original text
-    for _ in range(6):
-        cPressBackspace(widget.rightPanel.userNotesTextEditField, qtbot)
-    assert widget.rightPanel.userNotesTextEditField.isHidden() is False
-    # one more backspace
-    cPressBackspace(widget.rightPanel.userNotesTextEditField, qtbot)
     # the original notes should still be there
     cClick(widget.rightPanel.userNotesTextEditButton, qtbot)
     assert widget.rightPanel.userNotesTextEditField.toPlainText() == "abc123"

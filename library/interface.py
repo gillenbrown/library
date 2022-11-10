@@ -1618,7 +1618,7 @@ class EasyExitLineEdit(QLineEdit):
         Any escape keypress exits, or a backspace when the text is empty
 
         :param keyPressEvent: The key press event
-        :type keyPressEvent: ySide6.QtGui.QKeyEvent
+        :type keyPressEvent: PySide6.QtGui.QKeyEvent
         :return: None
         """
         # We overwrite the Enter, Escape, and Backspace keys, but let everything
@@ -1649,8 +1649,7 @@ class EasyExitTextEdit(QTextEdit):
         """
         Initialize the TextEdit.
 
-        :param exitFunc: The function to be called if the user either hits escape or
-                         backspaces with the text empty
+        :param exitFunc: The function to be called if the user hits escape
         :type exitFunc: function
         """
         super().__init__()
@@ -1658,26 +1657,17 @@ class EasyExitTextEdit(QTextEdit):
 
     def keyPressEvent(self, keyPressEvent):
         """
-        Either add normal text or exit under certain conditions.
-
-        Any escape keypress exits, or a backspace when the text is empty
+        Either add normal text or exit when clicking Escape
 
         :param keyPressEvent: The key press event
-        :type keyPressEvent: ySide6.QtGui.QKeyEvent
+        :type keyPressEvent: PySide6.QtGui.QKeyEvent
         :return: None
         """
         # We overwrite the Escape key, but let everything else be handled normally
         if keyPressEvent.key() == Qt.Key_Escape:
             # exit emmediately
             self.exitFunc()
-        elif keyPressEvent.key() == Qt.Key_Backspace:
-            # if there is text still there, just do a normal backspace. If there's
-            # nothing there, exit.
-            if self.toPlainText() != "":
-                super().keyPressEvent(keyPressEvent)
-            else:
-                self.exitFunc()
-        else:  # all other chanracters are handled normally
+        else:  # all other characters are handled normally, including backspace
             super().keyPressEvent(keyPressEvent)
 
 
