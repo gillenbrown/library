@@ -720,10 +720,10 @@ def test_delete_tag_removed_from_db(db):
 
 
 def test_delete_tag_removed_from_db_but_not_others(db):
-    for t in ["1", "2", "3", "4", "5", "6"]:
+    for t in ["1", "2", "3", "4", "5", "6"] + punctuation_tags:
         db.add_new_tag(t)
     db.delete_tag("3")
-    assert db.get_all_tags() == ["1", "2", "4", "5", "6"]
+    assert db.get_all_tags() == sorted(["1", "2", "4", "5", "6"] + punctuation_tags)
 
 
 def test_delete_tag_raises_error_if_not_exist(db):
