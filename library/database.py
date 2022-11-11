@@ -4,11 +4,6 @@ import contextlib
 
 from library import ads_wrapper
 
-# validate that SQLite is of an appropriate version. I need at least 3.35.0 to use the
-# syntax to delete columns
-assert sqlite3.sqlite_version_info[0] >= 3
-assert sqlite3.sqlite_version_info[1] >= 35
-
 # set up the ADS wrapper object that will be used by the Library
 ads_call = ads_wrapper.ADSWrapper()
 
@@ -432,12 +427,82 @@ class Database(object):
         :type tag_name: str
         :return: None
         """
-        internal_tag = self._to_internal_tag_name(tag_name)
-        try:
-            # This syntax requires sqlite3>=3.35.0. I checked this at the top
-            self._execute(f"ALTER TABLE papers DROP COLUMN `{internal_tag}`")
-        except sqlite3.OperationalError:  # will happen if this tag does not exist
+        # first check if the tag is valid
+        if tag_name not in self.get_all_tags():
             raise ValueError("Tag does not exist!")
+
+        # The easy way to do this is to do:
+        # ALTER TABLE papers DROP COLUMN internal_tag
+        # but this requires sqlite > 3.35. This came out in 2021, so some people
+        # likely do not have it, especially if they're using an older version of
+        # python. I won't want users to have to install their own version of sqlite
+        # just for this. So instead, I'll do the long way to deleting a column.
+        # Documentation found here:
+        # sqlite.org/lang_altertable.html#making_other_kinds_of_table_schema_changes
+        # first create a new tabls
+        self._execute(
+            "CREATE TABLE IF NOT EXISTS new_papers"
+            "("
+            "bibcode text PRIMARY KEY,"
+            "title text,"
+            "authors text,"
+            "pubdate text,"
+            "journal text,"
+            "volume integer,"
+            "page text,"
+            "abstract text,"
+            "bibtex text,"
+            "arxiv_id text,"
+            "local_file text,"
+            "user_notes text,"
+            "citation_keyword text UNIQUE,"
+            "update_time real"
+            ")"
+        )
+
+        # first add columns for all the tags. I'll also keep track of all the columns
+        # that will be in the new table, so I can keep track of them. When we use these
+        # later, they must be in the same order as when we added them in the previous
+        # command (so we can't use the self.colnames_data, which has a different order)
+        all_keys = [
+            "bibcode",
+            "title",
+            "authors",
+            "pubdate",
+            "journal",
+            "volume",
+            "page",
+            "abstract",
+            "bibtex",
+            "arxiv_id",
+            "local_file",
+            "user_notes",
+            "citation_keyword",
+            "update_time",
+        ]
+        for internal_tag in self._get_all_tags_internal():
+            # don't add the tag we're trying to delete
+            if self._undo_internal_tag_name(internal_tag) != tag_name:
+                # add it to the table, and store it in the list of names we'll
+                # transfer data
+                self._execute(
+                    f"ALTER TABLE new_papers "
+                    f"ADD COLUMN `{internal_tag}` INTEGER NOT NULL "
+                    f"DEFAULT 0;"
+                )
+                all_keys.append(internal_tag)
+        # then transfer all the data
+        # basic format is INSERT INTO new_papers SELECT col1, col2 FROM papers;
+        # need to use backticks to enclose each key, to make sure nothing weird happens
+        # with certain characters
+        self._execute(
+            f"INSERT INTO new_papers "
+            f'SELECT {",".join([f"`{k}`" for k in all_keys])} '
+            f"FROM papers"
+        )
+        # delete the original, then rename the temp to be the regular table
+        self._execute("DROP TABLE papers")
+        self._execute("ALTER TABLE new_papers RENAME TO papers")
 
     def paper_has_tag(self, bibcode, tag_name):
         """

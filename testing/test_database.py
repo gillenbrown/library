@@ -693,11 +693,37 @@ def test_get_all_tags_on_a_paper_is_sorted_ignoring_case(db):
     assert db.get_paper_tags(u.mine.bibcode) == sorted(tags, key=lambda x: x.lower())
 
 
+def test_papers_unread_when_added(db_empty):
+    db_empty.add_new_tag("Unread")
+    db_empty.add_paper(u.mine.bibcode)
+    assert db_empty.get_paper_tags(u.mine.bibcode) == ["Unread"]
+
+
+@pytest.mark.parametrize("tag", ["unread", "Unread", "UNREAD", "UnReAd"])
+def test_papers_unread_when_added_capitalization(db_empty, tag):
+    db_empty.add_new_tag(tag)
+    db_empty.add_paper(u.mine.bibcode)
+    assert db_empty.get_paper_tags(u.mine.bibcode) == [tag]
+
+
+# =============
+# deleting tags
+# =============
+# I put this in a separate section since there's a lot of testing here, since I use
+# the method of completely remaking the table just to delete one column. So I want to
+# make sure nothing else gets messed up
 def test_delete_tag_removed_from_db(db):
     db.add_new_tag("test_tag")
     assert db.get_all_tags() == ["test_tag"]
     db.delete_tag("test_tag")
     assert db.get_all_tags() == []
+
+
+def test_delete_tag_removed_from_db_but_not_others(db):
+    for t in ["1", "2", "3", "4", "5", "6"]:
+        db.add_new_tag(t)
+    db.delete_tag("3")
+    assert db.get_all_tags() == ["1", "2", "4", "5", "6"]
 
 
 def test_delete_tag_raises_error_if_not_exist(db):
@@ -716,9 +742,11 @@ def test_delete_nonexistent_tag_doesnt_mess_up_others(db):
 
 def test_delete_tag_removes_it_from_papers(db):
     db.add_new_tag("test_tag")
+    db.add_new_tag("test_tag 2")
     db.tag_paper(u.mine.bibcode, "test_tag")
+    db.tag_paper(u.mine.bibcode, "test_tag 2")
     db.delete_tag("test_tag")
-    assert db.get_paper_tags(u.mine.bibcode) == []
+    assert db.get_paper_tags(u.mine.bibcode) == ["test_tag 2"]
 
 
 def test_can_delete_tag_with_punctuation(db):
@@ -728,17 +756,38 @@ def test_can_delete_tag_with_punctuation(db):
     assert db.get_all_tags() == []
 
 
-def test_papers_unread_when_added(db_empty):
-    db_empty.add_new_tag("Unread")
-    db_empty.add_paper(u.mine.bibcode)
-    assert db_empty.get_paper_tags(u.mine.bibcode) == ["Unread"]
+def test_delete_tag_doesnt_mess_up_papers(db):
+    db.add_new_tag("test_tag")
+    db.tag_paper(u.mine.bibcode, "test_tag")
+    db.delete_tag("test_tag")
+    assert db.get_all_bibcodes() == [u.tremonti.bibcode, u.mine.bibcode]
 
 
-@pytest.mark.parametrize("tag", ["unread", "Unread", "UNREAD", "UnReAd"])
-def test_papers_unread_when_added_capitalization(db_empty, tag):
-    db_empty.add_new_tag(tag)
-    db_empty.add_paper(u.mine.bibcode)
-    assert db_empty.get_paper_tags(u.mine.bibcode) == [tag]
+def test_delete_tag_doesnt_mess_up_local_file(db):
+    db.set_paper_attribute(u.mine.bibcode, "local_file", __file__)
+    db.add_new_tag("test_tag")
+    db.tag_paper(u.mine.bibcode, "test_tag")
+    db.delete_tag("test_tag")
+    assert db.get_paper_attribute(u.mine.bibcode, "local_file") == __file__
+
+
+def test_delete_tag_doesnt_mess_up_user_notes(db):
+    db.set_paper_attribute(u.mine.bibcode, "user_notes", "These are some great notes!")
+    db.add_new_tag("test_tag")
+    db.tag_paper(u.mine.bibcode, "test_tag")
+    db.delete_tag("test_tag")
+    assert (
+        db.get_paper_attribute(u.mine.bibcode, "user_notes")
+        == "These are some great notes!"
+    )
+
+
+def test_delete_tag_doesnt_mess_up_citation_keyword(db):
+    db.set_paper_attribute(u.mine.bibcode, "citation_keyword", "brown_etal_18")
+    db.add_new_tag("test_tag")
+    db.tag_paper(u.mine.bibcode, "test_tag")
+    db.delete_tag("test_tag")
+    assert db.get_paper_attribute(u.mine.bibcode, "citation_keyword") == "brown_etal_18"
 
 
 # ======================================================================================
