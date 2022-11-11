@@ -16,14 +16,12 @@ punctuation_tags = [
     '"',
     "'",
     """ this is "single ' and double " quotes" """,
-    """ this has everything: ['"'"] """,
+    """ this has everything: '"('");.,!-: """,
     ";",
     ".",
     ",",
     "(",
     ")",
-    "[",
-    "]",
     "!",
     "-",
     ":",
@@ -583,6 +581,13 @@ def test_can_add_long_tag_to_database(db):
 def test_cannot_use_backticks_in_tag_name(db):
     with pytest.raises(ValueError):
         db.add_new_tag("`")
+
+
+def test_cannot_use_square_brackets_in_tag_name(db):
+    with pytest.raises(ValueError):
+        db.add_new_tag("[")
+    with pytest.raises(ValueError):
+        db.add_new_tag("]")
 
 
 def test_can_add_tag_with_punctuation(db):

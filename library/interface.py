@@ -1450,9 +1450,11 @@ class TagsListScrollArea(ScrollArea):
         """
         # check for pure whitespace
         tagName = self.addTagBar.text()
-        if tagName.strip() == "" or "`" in tagName:
+        if tagName.strip() == "" or "`" in tagName or "[" in tagName or "]" in tagName:
             if "`" in tagName:
                 self.addTagErrorText.setText("Backticks aren't allowed")
+            elif "[" in tagName or "]" in tagName:
+                self.addTagErrorText.setText("Square brackets aren't allowed")
             else:
                 self.addTagErrorText.setText("Pure whitespace isn't valid")
             self.addTagErrorText.show()

@@ -3766,11 +3766,24 @@ def test_tag_name_entry_is_not_cleared_after_backtick_tag_attempt(qtbot, db_temp
     assert widget.tagsList.addTagBar.text() == "`"
 
 
+def test_tag_name_entry_is_not_cleared_after_square_bracket_tag_attempt(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cAddTag(widget, "[]", qtbot)
+    assert widget.tagsList.addTagBar.text() == "[]"
+
+
 def test_add_tag_error_message_shown_after_backtick_tag_attempt(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
     cAddTag(widget, "`", qtbot)
     assert widget.tagsList.addTagErrorText.isHidden() is False
     assert widget.tagsList.addTagErrorText.text() == "Backticks aren't allowed"
+
+
+def test_add_tag_error_message_shown_after_square_bracket_tag_attempt(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cAddTag(widget, "[]", qtbot)
+    assert widget.tagsList.addTagErrorText.isHidden() is False
+    assert widget.tagsList.addTagErrorText.text() == "Square brackets aren't allowed"
 
 
 def test_add_tag_error_message_hidden_after_text_changed(qtbot, db_temp):

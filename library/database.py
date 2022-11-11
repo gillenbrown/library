@@ -406,8 +406,11 @@ class Database(object):
         # options were single quotes, double quotes, or square brackets, but I figured
         # backticks were less likely to be included than those other choices
         # See this for more: https://www.sqlite.org/lang_keywords.html
-        elif "`" in tag_name:
-            raise ValueError("Tag cannot include backticks")
+        # I did later find that for old versions of sqlite (I specifically tested
+        # 3.30.0, but I don't know what other versions this applies to), square
+        # brackets didn't work in tag names, even when surrounded by backticks
+        elif "`" in tag_name or "[" in tag_name or "]" in tag_name:
+            raise ValueError("Tag cannot include backticks or square brackets")
         # convert the tag name
         internal_tag = self._to_internal_tag_name(tag_name)
         try:
