@@ -519,6 +519,8 @@ class RightPanel(ScrollArea):
         self.pdfChooseLocalFileButton.clicked.connect(self.userChooseLocalPDF)
         self.pdfDownloadButton = QPushButton("Download the PDF")
         self.pdfDownloadButton.clicked.connect(self.downloadPDF)
+        self.pdfClearButton = QPushButton("Clear the selected PDF")
+        self.pdfClearButton.clicked.connect(self.clearPDF)
 
         # have some horizontal lines to visually distinguish sections
         self.spacers = [HorizontalLine() for _ in range(5)]
@@ -550,6 +552,7 @@ class RightPanel(ScrollArea):
         self.addWidget(self.spacers[1])
         self.addWidget(self.pdfText)
         self.addWidget(self.pdfOpenButton)
+        self.addWidget(self.pdfClearButton)
         self.addWidget(self.pdfChooseLocalFileButton)
         self.addWidget(self.pdfDownloadButton)
         self.addWidget(self.spacers[2])
@@ -635,6 +638,7 @@ class RightPanel(ScrollArea):
         # all of the buttons
         self.pdfText.hide()
         self.pdfOpenButton.hide()
+        self.pdfClearButton.hide()
         self.pdfChooseLocalFileButton.hide()
         self.pdfDownloadButton.hide()
         self.editTagsButton.hide()
@@ -967,11 +971,13 @@ class RightPanel(ScrollArea):
         if local_file is None:
             self.pdfText.setText("No PDF location set")
             self.pdfOpenButton.hide()
+            self.pdfClearButton.hide()
             self.pdfChooseLocalFileButton.show()
             self.pdfDownloadButton.show()
         else:  # valid file
             self.pdfText.setText(f"PDF Location: {local_file}")
             self.pdfOpenButton.show()
+            self.pdfClearButton.show()
             self.pdfChooseLocalFileButton.hide()
             self.pdfDownloadButton.hide()
 
@@ -1076,6 +1082,16 @@ class RightPanel(ScrollArea):
         """
         r = requests.get(url, allow_redirects=True)
         Path(local_path).write_bytes(r.content)
+
+    def clearPDF(self):
+        """
+        Remove the pdf for the selected paper
+
+        :return: None
+        """
+        self.main.db.set_paper_attribute(self.bibcode, "local_file", None)
+        # then redo all the buttons
+        self.validatePDFPath()
 
     def highlightPDFButtons(self):
         """
