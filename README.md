@@ -32,7 +32,7 @@ git clone https://github.com/gillenbrown/library.git
 cd library
 pip install -e .[test]
 ```
-I recommend including the `[test]` flag to install the dependencies needed to run the tests, so you can validate that everything is working on your system (note that if you use zsh, you'll need quotes: ```pip install -e ".[test]"```). To run the tests, navigate to the main repository directory and run 
+I recommend including the `[test]` flag to install the dependencies needed to run the tests, so you can validate that everything is working on your system (note that if you use zsh, you'll need quotes: ```pip install -e ".[test]"```). To run the tests run this command from the main repository directory: 
 ```
 python -m pytest
 ```
