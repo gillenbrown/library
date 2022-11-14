@@ -90,6 +90,18 @@ def temporary_db_with_old_arxiv_paper():
 
 # ======================================================================================
 #
+# convenience function for creating import bibtex files
+#
+# ======================================================================================
+def create_bibtex(text):
+    file_path = Path(f"{random.randint(0, 1000000000)}.bib").resolve()
+    with open(file_path, "w") as bibfile:
+        bibfile.write(text)
+    return file_path
+
+
+# ======================================================================================
+#
 # basic validation of databases
 #
 # ======================================================================================
@@ -1128,3 +1140,40 @@ def test_bibtex_export_reflects_citation_keywords_for_book(db):
         ""
     )
     assert true_bibtex == test_bibtex
+
+
+# ======================================================================================
+#
+# import system
+#
+# ======================================================================================
+def test_import_malformed_bibtex_fails(db_empty):
+    file_loc = create_bibtex("@ARTICLE{\nsldkfjsldkfj\n}")
+    db_empty.import_bibtex(file_loc)
+    assert db_empty.get_all_bibcodes() == []
+    file_loc.unlink()
+
+
+def test_import_single_good_paper_with_adsurl_adds_to_database(db_empty):
+    file_loc = create_bibtex(u.mine.bibtex)
+    db_empty.import_bibtex(file_loc)
+    assert db_empty.get_all_bibcodes() == [u.mine.bibcode]
+    file_loc.unlink()
+
+
+def test_import_single_good_paper_with_arxivid_adds_to_database(db_empty):
+    bibtex = u.mine.bibtex.replace(
+        "       adsurl = {https://ui.adsabs.harvard.edu/abs/2018ApJ...864...94B},\n", ""
+    )
+    bibtex = bibtex.replace("          doi = {10.3847/1538-4357/aad595},\n", "")
+    file_loc = create_bibtex(bibtex)
+    db_empty.import_bibtex(file_loc)
+    assert db_empty.get_all_bibcodes() == [u.mine.bibcode]
+    file_loc.unlink()
+
+
+def test_import_two_good_papers_with_adsurl_adds_to_database(db_empty):
+    file_loc = create_bibtex(u.mine.bibtex + "\n" + u.tremonti.bibtex)
+    db_empty.import_bibtex(file_loc)
+    assert db_empty.get_all_bibcodes() == [u.tremonti.bibcode, u.mine.bibcode]
+    file_loc.unlink()

@@ -669,3 +669,61 @@ class Database(object):
                 if tag_name == "all" or self.paper_has_tag(bibcode, tag_name):
                     out_file.write(self.get_paper_attribute(bibcode, "bibtex"))
                     out_file.write("\n")
+
+    def import_bibtex(self, file_name):
+        """
+        Import papers from a bibtex file into the database
+
+        :param file_name: The location of the bibtext file to import
+        :type file_name: pathlib.Path
+        :return: None
+        """
+        bibfile = open(file_name, "r")
+
+        current_entry = ""
+        for line in bibfile:
+            # once we get to the beginning of a new entry, add the current entry to
+            # the database. Otherwise, keep track of the current entry
+            if line.startswith("@") and current_entry.strip() != "":
+                self._parse_bibtex_entry(current_entry)
+            else:
+                current_entry += line
+        # handle the final entry
+        if current_entry.strip() != "":
+            self._parse_bibtex_entry(current_entry)
+
+        bibfile.close()
+
+    def _parse_bibtex_entry(self, entry):
+        """
+        Handle a single bibtex entry and add it to the database
+        :param entry:
+        :return: Code denoting what happened:
+                 0 - added successfully
+                 1 - already in the database
+                 2 - Parsing failed
+        :rtype: int
+        """
+        # Start by parsing the entry to get paper data. We'll then use this to find
+        # the paper
+        paper_data = dict()
+        try:
+            for line in entry.split("\n"):
+                if line.startswith("@") or line.startswith("}") or line.strip() == "":
+                    continue
+                key, value = line.split("=")
+                paper_data[key.strip()] = (
+                    value.strip().rstrip(",").replace("{", "").replace("}", "")
+                )
+        except:  # something went wrong
+            return
+
+        # now that we have the info, try to find the paper. Look for the DOI, then the
+        # arXiv ID, then in the last case try to find it based on the journal info
+        if "adsurl" in paper_data:
+            self.add_paper(paper_data["adsurl"])
+        # TODO: implement the search based on DOI
+        # elif "doi" in paper_data:
+        #     pass
+        elif "eprint" in paper_data:
+            self.add_paper(ads_call.get_bibcode(paper_data["eprint"]))
