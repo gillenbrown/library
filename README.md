@@ -15,7 +15,9 @@ This simple Python application is designed to make it easy to keep track of the 
 - Export the bibtex entries for all papers, all papers belonging to a given tag, or just a single paper
 - Space for notes on each paper
 
-![alt text](library/resources/interface_demo.png?raw=true)
+https://user-images.githubusercontent.com/12191474/201559494-a0fcbef5-cccf-4bb1-9cb1-a2d23dee25e5.mp4
+
+
 
 # Installation
 
