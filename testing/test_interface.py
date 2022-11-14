@@ -3804,6 +3804,26 @@ def test_add_tag_error_message_shown_after_whitesapce_tag_attempt(qtbot, db_temp
     assert widget.tagsList.addTagErrorText.text() == "Pure whitespace isn't valid"
 
 
+def test_tag_name_entry_is_not_cleared_after_all_papers_tag_attempt(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cAddTag(widget, "All Papers", qtbot)
+    assert widget.tagsList.addTagBar.text() == "All Papers"
+
+
+def test_add_tag_error_message_shown_after_all_papers_tag_attempt(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cAddTag(widget, "All Papers", qtbot)
+    assert widget.tagsList.addTagErrorText.isHidden() is False
+    assert widget.tagsList.addTagErrorText.text() == "Sorry, can't duplicate this"
+
+
+def test_add_tag_error_message_shown_after_all_papers_lower_tag_attempt(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cAddTag(widget, "all papers", qtbot)
+    assert widget.tagsList.addTagErrorText.isHidden() is False
+    assert widget.tagsList.addTagErrorText.text() == "Sorry, can't duplicate this"
+
+
 def test_tag_name_entry_is_not_cleared_after_backtick_tag_attempt(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
     cAddTag(widget, "`", qtbot)
@@ -4254,6 +4274,15 @@ def test_invalid_tag_delete_entry_shows_error_text(qtbot, db_temp):
     cPressEnter(widget.tagsList.secondDeleteTagEntry, qtbot)
     assert widget.tagsList.secondDeleteTagErrorText.isHidden() is False
     assert widget.tagsList.secondDeleteTagErrorText.text() == "This tag does not exist"
+
+
+def test_cannot_delete_all_papers_tag(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    cEnterText(widget.tagsList.secondDeleteTagEntry, "All Papers", qtbot)
+    cPressEnter(widget.tagsList.secondDeleteTagEntry, qtbot)
+    assert widget.tagsList.secondDeleteTagErrorText.isHidden() is False
+    assert widget.tagsList.secondDeleteTagErrorText.text() == "Sorry, can't delete this"
 
 
 def test_invalid_tag_delete_entry_keeps_third_hidden(qtbot, db_temp):

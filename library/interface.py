@@ -1466,11 +1466,19 @@ class TagsListScrollArea(ScrollArea):
         """
         # check for pure whitespace
         tagName = self.addTagBar.text()
-        if tagName.strip() == "" or "`" in tagName or "[" in tagName or "]" in tagName:
+        if (
+            tagName.strip() == ""
+            or "`" in tagName
+            or "[" in tagName
+            or "]" in tagName
+            or tagName.lower() == "all papers"
+        ):
             if "`" in tagName:
                 self.addTagErrorText.setText("Backticks aren't allowed")
             elif "[" in tagName or "]" in tagName:
                 self.addTagErrorText.setText("Square brackets aren't allowed")
+            elif tagName.lower() == "all papers":
+                self.addTagErrorText.setText("Sorry, can't duplicate this")
             else:
                 self.addTagErrorText.setText("Pure whitespace isn't valid")
             self.addTagErrorText.show()
@@ -1509,7 +1517,14 @@ class TagsListScrollArea(ScrollArea):
         """
         # check that the entered text is valid. If not, show error message
         tag_to_delete = self.secondDeleteTagEntry.text()
-        if tag_to_delete not in self.main.db.get_all_tags():
+        if (
+            tag_to_delete == "All Papers"
+            or tag_to_delete not in self.main.db.get_all_tags()
+        ):
+            if tag_to_delete == "All Papers":
+                self.secondDeleteTagErrorText.setText("Sorry, can't delete this")
+            else:
+                self.secondDeleteTagErrorText.setText("This tag does not exist")
             self.secondDeleteTagErrorText.show()
             return
         # if it is valid, show the next button and put the appropriate text on them
