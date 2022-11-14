@@ -1837,10 +1837,14 @@ class MainWindow(QMainWindow):
             )
             return
 
-        # we only get here if the addition to the database worked. If so we add the
-        # paper object, then clear the search bar
+        # we only get here if the addition to the database worked.
+        # if a tag is selected in the left panel, add that tag to the paper
+        for tag in self.tagsList.tags:
+            if tag.property("is_highlighted") is True:
+                self.db.tag_paper(bibcode, tag.label.text())
+
+        # add the paper object, then clear the search bar so another paper can be added
         self.papersList.addPaper(bibcode)
-        # clear the text so another paper can be added
         self.searchBar.clear()
         # I also need to touch the splitter, to make sure the paper size of the
         # first paper is set appropriately

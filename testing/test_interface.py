@@ -789,6 +789,17 @@ def test_adding_paper_scrolls_to_show_paper(qtbot, db_empty, monkeypatch):
     assert calls == [1]
 
 
+def test_adding_paper_includes_tag_selected_in_left_panel(qtbot, db_empty):
+    db_empty.add_new_tag("test")
+    db_empty.add_paper(u.mine.bibcode)
+    widget = cInitialize(qtbot, db_empty)
+    assert widget.tagsList.tags[0].label.text() == "test"
+    cClick(widget.tagsList.tags[0], qtbot)
+    cAddPaper(widget, u.tremonti.bibcode, qtbot)
+    assert db_empty.get_paper_tags(u.tremonti.bibcode) == ["test"]
+    assert widget.rightPanel.tagText.text() == "Tags: test"
+
+
 def test_adding_bad_paper_shows_error_formatting_of_textedit(qtbot, db_empty):
     widget = cInitialize(qtbot, db_empty)
     cAddPaper(widget, "nonsense", qtbot)

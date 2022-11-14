@@ -73,7 +73,9 @@ Finally, there is a button to open the paper's page in ADS, and a button to dele
 
 ### Tags
 
-The tag system allows you to organize your papers into groups. The left panel shows the list of tags. To show only the papers with a given tag, click on the name of the tag. As discussed above, you can edit the tags a given paper has after clicking it. A paper can have multiple tags. In the left panel you can also add new tags or delete existing ones. When entering the name of the tag to add or delete, you can exit without adding/deleting by pressing Escape or pressing backspace when the text field is empty. 
+The tag system allows you to organize your papers into groups. Each paper can have multiple tags. The left panel shows the list of tags. To show only the papers with a given tag, click on the name of the tag. When you add a new paper when a given tag is selected, the tag will be automatically applied to that paper.
+
+As discussed above, you can edit the tags a given paper has after clicking it.  In the left panel you can also add new tags or delete existing ones. When entering the name of the tag to add or delete, you can exit without adding/deleting by pressing Escape or pressing backspace when the text field is empty. 
 
 Whenever you have a tag selected in the left panel, there is an export button shown. When pressed, this saves a `.bib` file containing all the BibTeX entries for papers with this tag. This file can then be used directly in a LaTeX document.
 
