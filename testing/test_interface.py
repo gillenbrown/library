@@ -374,6 +374,27 @@ def mSaveFileNoResponse(filter="", dir="", caption=""):
 
 # ======================================================================================
 #
+# functions to create bibtex files for import -- copied from test_database.py
+#
+# ======================================================================================
+def create_bibtex_monkeypatch(text):
+    """
+    Write the given text into a random bibtex file, and return the file location
+
+    :param text: bibtex entries to write to the file
+    :type text: str
+    :return: path to the file location and a function to use with monkeypatch
+    :rtype: (pathlib.Path, func)
+    """
+    file_path = Path(f"{random.randint(0, 1000000000)}.bib").resolve()
+    with open(file_path, "w") as bibfile:
+        bibfile.write(text)
+    monkeypatch_func = lambda filter, dir: (file_path, "dummy_filter")
+    return file_path, monkeypatch_func
+
+
+# ======================================================================================
+#
 # test premade databases
 #
 # ======================================================================================
@@ -1096,6 +1117,85 @@ def test_db_update_reflected_in_interface(qtbot, db_update):
     assert "Brown, Gnedin, Li, 2022, arXiv:1804.09819" not in cite_strings
     assert "Brown, Gnedin, 2022, MNRAS, 514, 280" in cite_strings
     assert "Brown, Gnedin, 2022, arXiv:2203.00559" not in cite_strings
+
+
+###############
+# import system
+###############
+def test_clicking_import_button_asks_user(qtbot, db_empty, monkeypatch):
+    get_file_calls = []
+
+    def mock_get_file(filter="", dir=""):
+        get_file_calls.append(1)
+        return __file__, "dummy filter"
+
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
+
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.importButton, qtbot)
+    assert get_file_calls == [1]
+
+
+def test_import_shows_results_text(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    assert widget.importResultText.isHidden() is False
+    assert widget.importResultText.text() == "Import Complete"
+
+
+def test_import_shows_results_dismiss_button(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    assert widget.importResultDismissButton.isHidden() is False
+
+
+def test_import_hides_search_bar_and_buttons(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    assert widget.searchBar.isHidden() is True
+    assert widget.addButton.isHidden() is True
+    assert widget.importButton.isHidden() is True
+
+
+def test_import_dismiss_button_restores_default_state(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    cClick(widget.importResultDismissButton, qtbot)
+    assert widget.searchBar.isHidden() is False
+    assert widget.addButton.isHidden() is False
+    assert widget.importButton.isHidden() is False
+    assert widget.importResultText.isHidden() is True
+    assert widget.importResultDismissButton.isHidden() is True
+
+
+def test_clicking_import_button_adds_paper_to_database(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    assert widget.db.get_all_bibcodes() == [u.mine.bibcode]
+
+
+def test_clicking_import_button_adds_paper_to_interface(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    assert widget.papersList.getPapers()[0].bibcode == u.mine.bibcode
 
 
 # ======================================================================================

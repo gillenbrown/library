@@ -1751,11 +1751,13 @@ class MainWindow(QMainWindow):
         # and a button to import from Bibtex
         self.importButton = QPushButton("Import from BibTeX")
         self.importButton.setObjectName("import_button")
+        self.importButton.clicked.connect(self.importBibtex)
         # and some text to show the result of the import and a button to dismiss that
         # these will be hidden to start
         self.importResultText = QLabel()
-        self.importResultDismissButton = QPushButton("Dismiss")
         self.importResultText.hide()
+        self.importResultDismissButton = QPushButton("Dismiss")
+        self.importResultDismissButton.clicked.connect(self.importResultsDismiss)
         self.importResultDismissButton.hide()
         # Define what to do when these things are activated. The user can either hit
         # enter or hit the add button
@@ -1890,6 +1892,58 @@ class MainWindow(QMainWindow):
         self.searchBarErrorText.hide()
         self.addButton.show()
         self.importButton.show()
+
+    def importBibtex(self):
+        """
+        Handle the import of papers from a bibtex file
+
+        Most of this is handled by the database, here we handle how that manifests
+        itself in the interface
+
+        :return: None
+        """
+        # ask the user for the file to import
+        file_loc = QFileDialog.getOpenFileName(
+            filter="Bibfile(*.bib *.txt)",
+            dir=str(Path.home()),
+        )[0]
+
+        # then import this file
+        self.db.import_bibtex(file_loc)
+
+        # this just adds papers to the database, and doesn't add them to the interface.
+        # We must figure out which papers are new and add them
+        current_bibcodes = set([p.bibcode for p in self.papersList.getPapers()])
+        for bibcode in self.db.get_all_bibcodes():
+            if bibcode not in current_bibcodes:
+                self.papersList.addPaper(bibcode)
+
+        # once we're done, show the results
+        self.importResultText.setText("Import Complete")
+        # set sizes to be reasonable
+        self.importResultText.setFixedWidth(self.importResultText.sizeHint().width())
+        self.importResultDismissButton.setFixedWidth(
+            self.importResultDismissButton.sizeHint().width()
+        )
+        # show and hide the appropriate buttons
+        self.searchBar.hide()
+        self.addButton.hide()
+        self.importButton.hide()
+        self.importResultText.show()
+        self.importResultDismissButton.show()
+
+    def importResultsDismiss(self):
+        """
+        Dismiss the results of the import process once the user is done with it
+
+        :return: None
+        """
+        # rest all the search related buttons to their original state
+        self.searchBar.show()
+        self.addButton.show()
+        self.importButton.show()
+        self.importResultText.hide()
+        self.importResultDismissButton.hide()
 
 
 def get_fonts(directory, current_list):

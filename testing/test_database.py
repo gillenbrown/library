@@ -94,6 +94,14 @@ def temporary_db_with_old_arxiv_paper():
 #
 # ======================================================================================
 def create_bibtex(text):
+    """
+    Write the given text into a random bibtex file, and return the file location
+
+    :param text: bibtex entries to write to the file
+    :type text: str
+    :return: path to the file location
+    :rtype: pathlib.Path
+    """
     file_path = Path(f"{random.randint(0, 1000000000)}.bib").resolve()
     with open(file_path, "w") as bibfile:
         bibfile.write(text)
@@ -1150,15 +1158,15 @@ def test_bibtex_export_reflects_citation_keywords_for_book(db):
 def test_import_malformed_bibtex_fails(db_empty):
     file_loc = create_bibtex("@ARTICLE{\nsldkfjsldkfj\n}")
     db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
     assert db_empty.get_all_bibcodes() == []
-    file_loc.unlink()
 
 
 def test_import_single_good_paper_with_adsurl_adds_to_database(db_empty):
     file_loc = create_bibtex(u.mine.bibtex)
     db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
     assert db_empty.get_all_bibcodes() == [u.mine.bibcode]
-    file_loc.unlink()
 
 
 def test_import_single_good_paper_with_arxivid_adds_to_database(db_empty):
@@ -1168,12 +1176,12 @@ def test_import_single_good_paper_with_arxivid_adds_to_database(db_empty):
     bibtex = bibtex.replace("          doi = {10.3847/1538-4357/aad595},\n", "")
     file_loc = create_bibtex(bibtex)
     db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
     assert db_empty.get_all_bibcodes() == [u.mine.bibcode]
-    file_loc.unlink()
 
 
 def test_import_two_good_papers_with_adsurl_adds_to_database(db_empty):
     file_loc = create_bibtex(u.mine.bibtex + "\n" + u.tremonti.bibtex)
     db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
     assert db_empty.get_all_bibcodes() == [u.tremonti.bibcode, u.mine.bibcode]
-    file_loc.unlink()
