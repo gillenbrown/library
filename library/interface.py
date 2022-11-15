@@ -1923,7 +1923,7 @@ class MainWindow(QMainWindow):
         )[0]
 
         # then import this file
-        self.db.import_bibtex(file_loc)
+        results = self.db.import_bibtex(file_loc)
 
         # this just adds papers to the database, and doesn't add them to the interface.
         # We must figure out which papers are new and add them
@@ -1933,7 +1933,8 @@ class MainWindow(QMainWindow):
                 self.papersList.addPaper(bibcode)
 
         # once we're done, show the results
-        self.importResultText.setText("Import Complete")
+        # first parse the results into the message shown to the user
+        self.importResultText.setText(self.parseImportResults(results))
         # set sizes to be reasonable
         self.importResultText.setFixedWidth(self.importResultText.sizeHint().width())
         self.importResultDismissButton.setFixedWidth(
@@ -1949,6 +1950,49 @@ class MainWindow(QMainWindow):
         # and resize the papers to make sure they take up the correct width. When
         # importing into an empty database, they don't look right without this
         self.resizePapers()
+
+    def parseImportResults(self, results):
+        """
+        Parse the results of the import into a message for the user
+
+        :param results: The results tuple returned by db.import_bibtex()
+        :type results: tuple(int)
+        :return: string showing the message to the user
+        :rtype: str
+        """
+        assert len(results) == 3
+        message = "Import results: "
+        if sum(results) == 0:
+            return message + "No papers found"
+        # otherwise, start creating the message
+        message += self.pluralize("{} paper found", "paper", sum(results))
+        # then add each of the different types, if applicable
+        if results[0] > 0:
+            message += f", {results[0]} added successfully"
+        if results[1] > 0:
+            message += self.pluralize(", {} duplicate skipped", "duplicate", results[1])
+        if results[2] > 0:
+            message += self.pluralize(", {} failure", "failure", results[2])
+
+        return message
+
+    @staticmethod
+    def pluralize(message, word, n):
+        """
+        Make a message have a plural if needed
+
+        :param message: The entire message
+        :type message: str
+        :param word: The specific word to pluralize if n > 1
+        :type word: str
+        :param n: The number of `word`. Word will be pluralized if n > 1
+        :type n: int
+        :return: the message, may be pluralized
+        :rtype: str
+        """
+        if n > 1:
+            message = message.replace(word, word + "s")
+        return message.format(n)
 
     def importResultsDismiss(self):
         """

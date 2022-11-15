@@ -377,15 +377,16 @@ def mSaveFileNoResponse(filter="", dir="", caption=""):
 # functions to create bibtex files for import -- copied from test_database.py
 #
 # ======================================================================================
-def create_bibtex_monkeypatch(text):
+def create_bibtex_monkeypatch(*args):
     """
-    Write the given text into a random bibtex file, and return the file location
+    Write bibtex entries into a random bibtex file, and return the file location
 
-    :param text: bibtex entries to write to the file
-    :type text: str
+    :param args: bibtex entries to write to the file
+    :type args: str
     :return: path to the file location and a function to use with monkeypatch
     :rtype: (pathlib.Path, func)
     """
+    text = "\n\n".join(args)
     file_path = Path(f"{random.randint(0, 1000000000)}.bib").resolve()
     with open(file_path, "w") as bibfile:
         bibfile.write(text)
@@ -1154,7 +1155,6 @@ def test_import_shows_results_text(qtbot, db_empty, monkeypatch):
     cClick(widget.importButton, qtbot)
     file_loc.unlink()  # delete before tests may fail
     assert widget.importResultText.isHidden() is False
-    assert widget.importResultText.text() == "Import Complete"
 
 
 def test_import_shows_results_dismiss_button(qtbot, db_empty, monkeypatch):
@@ -1207,6 +1207,167 @@ def test_clicking_import_button_adds_paper_to_interface(qtbot, db_empty, monkeyp
     cClick(widget.importButton, qtbot)
     file_loc.unlink()  # delete before tests may fail
     assert widget.papersList.getPapers()[0].bibcode == u.mine.bibcode
+
+
+def test_import_results_text_no_papers_found(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch("   ")
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    assert widget.importResultText.text() == "Import results: No papers found"
+
+
+def test_import_results_text_one_success(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    assert (
+        widget.importResultText.text()
+        == "Import results: 1 paper found, 1 added successfully"
+    )
+
+
+def test_import_results_text_one_duplicate(qtbot, db_empty, monkeypatch):
+    db_empty.add_paper(u.mine.bibcode)
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    assert (
+        widget.importResultText.text()
+        == "Import results: 1 paper found, 1 duplicate skipped"
+    )
+
+
+def test_import_results_text_two_duplicates(qtbot, db_temp, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex, u.tremonti.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    assert (
+        widget.importResultText.text()
+        == "Import results: 2 papers found, 2 duplicates skipped"
+    )
+
+
+def test_import_results_text_one_error(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(
+        "@ARTICLE{1957RvMP...29..547B,\n"
+        " author = {{Burbidge}, E. Margaret},\n"
+        '  title = "{Synthesis of the Elements in Stars},"\n'
+        "journal = {Reviews of Modern Physics},\n"
+        "   year = 1957,\n"
+        "}"
+    )
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    assert widget.importResultText.text() == "Import results: 1 paper found, 1 failure"
+
+
+def test_import_results_text_two_errors(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(
+        "@ARTICLE{1957RvMP...29..547B,\n"
+        " author = {{Burbidge}, E. Margaret},\n"
+        '  title = "{Synthesis of the Elements in Stars},"\n'
+        "journal = {Reviews of Modern Physics},\n"
+        "   year = 1957,\n"
+        "}",
+        "@BOOK{2010gfe..book.....M,\n"
+        "   author = {{Mo}, Houjun and {van den Bosch}, Frank C. and {White}, Simon},\n"
+        '    title = "{Galaxy Formation and Evolution}",\n'
+        "     year = 2010,\n"
+        "}\n"
+        "}",
+    )
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    assert (
+        widget.importResultText.text() == "Import results: 2 papers found, 2 failures"
+    )
+
+
+def test_import_results_text_one_success_one_duplicate(qtbot, db_empty, monkeypatch):
+    db_empty.add_paper(u.mine.bibcode)
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex, u.tremonti.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    assert (
+        widget.importResultText.text()
+        == "Import results: 2 papers found, 1 added successfully, 1 duplicate skipped"
+    )
+
+
+def test_import_results_text_one_success_one_failure(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(
+        "@ARTICLE{1957RvMP...29..547B,\n"
+        " author = {{Burbidge}, E. Margaret},\n"
+        '  title = "{Synthesis of the Elements in Stars},"\n'
+        "journal = {Reviews of Modern Physics},\n"
+        "   year = 1957,\n"
+        "}",
+        u.mine.bibtex,
+    )
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    assert (
+        widget.importResultText.text()
+        == "Import results: 2 papers found, 1 added successfully, 1 failure"
+    )
+
+
+def test_import_results_text_one_duplicate_one_failure(qtbot, db_empty, monkeypatch):
+    db_empty.add_paper(u.mine.bibcode)
+    file_loc, test_func = create_bibtex_monkeypatch(
+        "@ARTICLE{1957RvMP...29..547B,\n"
+        " author = {{Burbidge}, E. Margaret},\n"
+        '  title = "{Synthesis of the Elements in Stars},"\n'
+        "journal = {Reviews of Modern Physics},\n"
+        "   year = 1957,\n"
+        "}",
+        u.mine.bibtex,
+    )
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    assert (
+        widget.importResultText.text()
+        == "Import results: 2 papers found, 1 duplicate skipped, 1 failure"
+    )
+
+
+def test_import_results_text_one_success_one_dup_one_fail(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(
+        "@ARTICLE{1957RvMP...29..547B,\n"
+        " author = {{Burbidge}, E. Margaret},\n"
+        '  title = "{Synthesis of the Elements in Stars},"\n'
+        "journal = {Reviews of Modern Physics},\n"
+        "   year = 1957,\n"
+        "}",
+        u.mine.bibtex,
+        u.mine.bibtex,
+    )
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    assert (
+        widget.importResultText.text() == "Import results: "
+        "3 papers found, 1 added successfully, 1 duplicate skipped, 1 failure"
+    )
 
 
 # ======================================================================================
