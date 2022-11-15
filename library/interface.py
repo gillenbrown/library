@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QFrame,
     QComboBox,
+    QApplication,
 )
 
 from library.database import PaperAlreadyInDatabaseError
@@ -1864,9 +1865,22 @@ class MainWindow(QMainWindow):
         # I also need to touch the splitter, to make sure the paper size of the
         # first paper is set appropriately
         if len(self.papersList.getPapers()) == 1:
-            self.papersList.resize_items_in_layout(
-                self.papersList.layout, self.splitter.sizes()[1]
-            )
+            self.resizePapers()
+
+    def resizePapers(self):
+        """
+        Resize all papers to take up the full splitter width.
+
+        This is only needed to be called when we add papers for the first time, so the
+        papersList doesn't know how wide it should be.
+
+        :return: None
+        """
+        # I also need to touch the splitter, to make sure the paper size of the
+        # first paper is set appropriately
+        self.papersList.resize_items_in_layout(
+            self.papersList.layout, self.splitter.sizes()[1]
+        )
 
     def formatSearchBarError(self, error_text):
         """
@@ -1931,6 +1945,10 @@ class MainWindow(QMainWindow):
         self.importButton.hide()
         self.importResultText.show()
         self.importResultDismissButton.show()
+
+        # and resize the papers to make sure they take up the correct width. When
+        # importing into an empty database, they don't look right without this
+        self.resizePapers()
 
     def importResultsDismiss(self):
         """

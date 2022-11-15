@@ -620,6 +620,17 @@ def test_first_paper_takes_up_full_splitter_width(qtbot, db_empty):
     assert paper_width == splitter_width
 
 
+def test_first_import_paper_takes_up_full_splitter_width(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    paper_width = widget.papersList.getPapers()[0].width()
+    splitter_width = widget.splitter.sizes()[1]
+    assert paper_width == splitter_width
+
+
 # ======================================================================================
 #
 # test search bar and adding papers from it
