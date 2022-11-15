@@ -93,15 +93,16 @@ def temporary_db_with_old_arxiv_paper():
 # convenience function for creating import bibtex files
 #
 # ======================================================================================
-def create_bibtex(text):
+def create_bibtex(*args):
     """
     Write the given text into a random bibtex file, and return the file location
 
-    :param text: bibtex entries to write to the file
-    :type text: str
+    :param args: bibtex entries to write to the file
+    :type args: str
     :return: path to the file location
     :rtype: pathlib.Path
     """
+    text = "\n\n".join(args)
     file_path = Path(f"{random.randint(0, 1000000000)}.bib").resolve()
     with open(file_path, "w") as bibfile:
         bibfile.write(text)
@@ -1181,7 +1182,84 @@ def test_import_single_good_paper_with_arxivid_adds_to_database(db_empty):
 
 
 def test_import_two_good_papers_with_adsurl_adds_to_database(db_empty):
-    file_loc = create_bibtex(u.mine.bibtex + "\n" + u.tremonti.bibtex)
+    file_loc = create_bibtex(u.mine.bibtex, u.tremonti.bibtex)
     db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
     assert db_empty.get_all_bibcodes() == [u.tremonti.bibcode, u.mine.bibcode]
+
+
+def test_import_return_tuple_bad_entry(db_empty):
+    file_loc = create_bibtex("@ARTICLE{\nsldkfjsldkfj\n}")
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results == (0, 0, 1)
+
+
+def test_import_return_tuple_one_good_paper(db_empty):
+    file_loc = create_bibtex(u.mine.bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results == (1, 0, 0)
+
+
+def test_import_return_tuple_two_good_papers(db_empty):
+    file_loc = create_bibtex(u.mine.bibtex, u.tremonti.bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results == (2, 0, 0)
+
+
+def test_import_return_tuple_duplicate(db_empty):
+    db_empty.add_paper(u.mine.bibcode)
+    file_loc = create_bibtex(u.mine.bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results == (0, 1, 0)
+
+
+def test_import_return_tuple_internal_duplicate(db_empty):
+    file_loc = create_bibtex(u.mine.bibtex, u.mine.bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results == (1, 1, 0)
+
+
+def test_import_return_tuple_one_good_one_duplicate(db_empty):
+    db_empty.add_paper(u.mine.bibcode)
+    file_loc = create_bibtex(u.mine.bibtex, u.tremonti.bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results == (1, 1, 0)
+
+
+def test_import_return_tuple_two_good_one_failure(db_empty):
+    file_loc = create_bibtex(
+        u.mine.bibtex, "@ARTICLE{\nsldkfjsldkfj\n}", u.tremonti.bibtex
+    )
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results == (2, 0, 1)
+
+
+def test_import_return_tuple_two_good_one_failure_one_duplicate(db_empty):
+    file_loc = create_bibtex(
+        u.mine.bibtex, "@ARTICLE{\nsldkfjsldkfj\n}", u.tremonti.bibtex, u.mine.bibtex
+    )
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results == (2, 1, 1)
+
+
+def test_import_return_tuple_could_not_identify_paper(db_empty):
+    # modify a bibtex file to be unidentifiable
+    file_loc = create_bibtex(
+        "@ARTICLE{1957RvMP...29..547B,\n"
+        " author = {{Burbidge}, E. Margaret},\n"
+        '  title = "{Synthesis of the Elements in Stars},"\n'
+        "journal = {Reviews of Modern Physics},\n"
+        "   year = 1957,\n"
+        "}"
+    )
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results == (0, 0, 1)

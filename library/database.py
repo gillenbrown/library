@@ -679,42 +679,63 @@ class Database(object):
         :return: None
         """
         bibfile = open(file_name, "r")
-
+        results = {"success": 0, "duplicate": 0, "failure": 0}
         current_entry = ""
         for line in bibfile:
             # once we get to the beginning of a new entry, add the current entry to
             # the database. Otherwise, keep track of the current entry
             if line.startswith("@") and current_entry.strip() != "":
-                self._parse_bibtex_entry(current_entry)
+                results[self._parse_bibtex_entry(current_entry)] += 1
+                # once we have parsed the previous entry, start the new one
                 current_entry = line
             else:
                 current_entry += line
         # handle the final entry
         if current_entry.strip() != "":
-            self._parse_bibtex_entry(current_entry)
+            results[self._parse_bibtex_entry(current_entry)] += 1
 
         bibfile.close()
 
+        return results["success"], results["duplicate"], results["failure"]
+
     def _parse_bibtex_entry(self, entry):
+        """
+        Wrapper around the function to parse a single bibtex entry and add it to the db
+
+        This also identifies what happened with success vs failure by returning one of
+        three strings: "success", "failure", or "duplicate"
+
+        :param entry: the bibtex entry to add
+        :type entry: str
+        :return: String indicating what happened
+        :rtype: str
+        """
+        try:
+            self._parse_bibtex_entry_inner(entry)
+            return "success"
+        except PaperAlreadyInDatabaseError:
+            return "duplicate"
+        except:  # any other error
+            return "failure"
+
+    def _parse_bibtex_entry_inner(self, entry):
         """
         Handle a single bibtex entry and add it to the database
 
         :param entry: the bibtex entry to add
         :type entry: str
+        :return: None
         """
         # Start by parsing the entry to get paper data. We'll then use this to find
         # the paper
         paper_data = dict()
-        try:
-            for line in entry.split("\n"):
-                if line.startswith("@") or line.startswith("}") or line.strip() == "":
-                    continue
-                key, value = line.split("=")
-                paper_data[key.strip()] = (
-                    value.strip().rstrip(",").replace("{", "").replace("}", "")
-                )
-        except:  # something went wrong
-            return
+        for line in entry.split("\n"):
+            if line.startswith("@") or line.startswith("}") or line.strip() == "":
+                continue
+            key, value = line.split("=")
+            paper_data[key.strip()] = (
+                value.strip().rstrip(",").replace("{", "").replace("}", "")
+            )
 
         # now that we have the info, try to find the paper. Look for the DOI, then the
         # arXiv ID, then in the last case try to find it based on the journal info
@@ -722,3 +743,5 @@ class Database(object):
             self.add_paper(paper_data["adsurl"])
         elif "eprint" in paper_data:
             self.add_paper(ads_call.get_bibcode(paper_data["eprint"]))
+        else:  # could not identify paper
+            raise ValueError
