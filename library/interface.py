@@ -1748,6 +1748,15 @@ class MainWindow(QMainWindow):
         # We'll also have an add button
         self.addButton = QPushButton("Add")
         self.addButton.setObjectName("add_button")
+        # and a button to import from Bibtex
+        self.importButton = QPushButton("Import from BibTeX")
+        self.importButton.setObjectName("import_button")
+        # and some text to show the result of the import and a button to dismiss that
+        # these will be hidden to start
+        self.importResultText = QLabel()
+        self.importResultDismissButton = QPushButton("Dismiss")
+        self.importResultText.hide()
+        self.importResultDismissButton.hide()
         # Define what to do when these things are activated. The user can either hit
         # enter or hit the add button
         self.searchBar.returnPressed.connect(self.addPaper)
@@ -1760,12 +1769,16 @@ class MainWindow(QMainWindow):
         self.searchBar.setFixedHeight(30)
         self.searchBarErrorText.setFixedHeight(30)
         self.addButton.setFixedHeight(30)
+        self.importButton.setFixedHeight(30)
         # Then add these to the layouts
         hBoxSearchBar = QHBoxLayout()
         hBoxSearchBar.addWidget(self.title)
         hBoxSearchBar.addWidget(self.searchBar)
         hBoxSearchBar.addWidget(self.searchBarErrorText)
         hBoxSearchBar.addWidget(self.addButton)
+        hBoxSearchBar.addWidget(self.importButton)
+        hBoxSearchBar.addWidget(self.importResultText)
+        hBoxSearchBar.addWidget(self.importResultDismissButton)
         vBoxMain.addLayout(hBoxSearchBar)
 
         # Then we have the main body. This is a bit more complex. We'll start by just
@@ -1864,6 +1877,7 @@ class MainWindow(QMainWindow):
         self.searchBarErrorText.setText(error_text)
         self.searchBarErrorText.show()
         self.addButton.hide()
+        self.importButton.hide()
         qss_trigger(self.searchBar, "error", True)
 
     def resetSearchBarError(self):
@@ -1875,6 +1889,7 @@ class MainWindow(QMainWindow):
         qss_trigger(self.searchBar, "error", False)
         self.searchBarErrorText.hide()
         self.addButton.show()
+        self.importButton.show()
 
 
 def get_fonts(directory, current_list):

@@ -617,6 +617,21 @@ def test_add_paper_button_shown_at_beginning(qtbot, db_empty):
     assert widget.addButton.isHidden() is False
 
 
+def test_import_button_shown_at_beginning(qtbot, db_empty):
+    widget = cInitialize(qtbot, db_empty)
+    assert widget.importButton.isHidden() is False
+
+
+def test_import_result_text_not_shown_at_beginning(qtbot, db_empty):
+    widget = cInitialize(qtbot, db_empty)
+    assert widget.importResultText.isHidden() is True
+
+
+def test_import_result_text_dismiss_not_shown_at_beginning(qtbot, db_empty):
+    widget = cInitialize(qtbot, db_empty)
+    assert widget.importResultDismissButton.isHidden() is True
+
+
 def test_textedit_is_not_in_error_state_at_beginning(qtbot, db_empty):
     widget = cInitialize(qtbot, db_empty)
     assert widget.searchBar.property("error") is False
@@ -652,6 +667,11 @@ def test_add_button_and_search_bar_have_almost_same_height(qtbot, db_empty):
     widget = cInitialize(qtbot, db_empty)
     height_ratio = widget.addButton.height() / widget.searchBar.height()
     assert 0.8 < height_ratio < 1.3
+
+
+def test_add_button_and_import_button_have_same_height(qtbot, db_empty):
+    widget = cInitialize(qtbot, db_empty)
+    assert widget.addButton.height() == widget.importButton.height()
 
 
 def test_add_button_and_search_bar_are_much_shorter_than_title(qtbot, db_empty):
@@ -822,6 +842,12 @@ def test_adding_bad_paper_hides_add_button(qtbot, db_empty):
     assert widget.addButton.isHidden() is True
 
 
+def test_adding_bad_paper_hides_import_button(qtbot, db_empty):
+    widget = cInitialize(qtbot, db_empty)
+    cAddPaper(widget, "nonsense", qtbot)
+    assert widget.importButton.isHidden() is True
+
+
 def test_adding_bad_arXiv_paper_shows_error_text(qtbot, db_empty):
     widget = cInitialize(qtbot, db_empty)
     # Use future arXiv paper from 2035
@@ -870,6 +896,13 @@ def test_bad_paper_add_button_reshown_after_any_clicking(qtbot, db_empty):
     assert widget.addButton.isHidden() is False
 
 
+def test_bad_paper_import_button_reshown_after_any_clicking(qtbot, db_empty):
+    widget = cInitialize(qtbot, db_empty)
+    cAddPaper(widget, "nonsense", qtbot)
+    widget.searchBar.setCursorPosition(0)
+    assert widget.importButton.isHidden() is False
+
+
 def test_bad_paper_error_textedit_formatting_reset_after_editing_text(qtbot, db_empty):
     widget = cInitialize(qtbot, db_empty)
     cAddPaper(widget, "nonsense", qtbot)
@@ -884,11 +917,12 @@ def test_bad_paper_error_message_of_textedit_reset_after_editing_text(qtbot, db_
     assert widget.searchBarErrorText.isHidden() is True
 
 
-def test_bad_paper_add_button_reshown_after_editing_text(qtbot, db_empty):
+def test_bad_paper_buttons_reshown_after_editing_text(qtbot, db_empty):
     widget = cInitialize(qtbot, db_empty)
     cAddPaper(widget, "nonsense", qtbot)
     cEnterText(widget.searchBar, "nonsens", qtbot)
     assert widget.addButton.isHidden() is False
+    assert widget.importButton.isHidden() is False
 
 
 def test_adding_paper_does_not_clear_search_bar_if_already_in_library(qtbot, db):
@@ -910,10 +944,11 @@ def test_adding_duplicate_paper_shows_error_text(qtbot, db):
     assert widget.searchBarErrorText.text() == "This paper is already in the library."
 
 
-def test_adding_duplicate_paper_hides_add_button(qtbot, db):
+def test_adding_duplicate_paper_hides_buttons(qtbot, db):
     widget = cInitialize(qtbot, db)
     cAddPaper(widget, u.mine.bibcode, qtbot)
     assert widget.addButton.isHidden() is True
+    assert widget.importButton.isHidden() is True
 
 
 def test_duplicate_error_formatting_of_textedit_reset_after_any_clicking(qtbot, db):
@@ -930,11 +965,12 @@ def test_duplicate_error_message_of_textedit_reset_after_any_clicking(qtbot, db)
     assert widget.searchBarErrorText.isHidden() is True
 
 
-def test_duplicate_add_button_reshown_after_any_clicking(qtbot, db):
+def test_duplicate_buttons_reshown_after_any_clicking(qtbot, db):
     widget = cInitialize(qtbot, db)
     cAddPaper(widget, u.mine.bibcode, qtbot)
     widget.searchBar.setCursorPosition(0)
     assert widget.addButton.isHidden() is False
+    assert widget.importButton.isHidden() is False
 
 
 def test_duplicate_error_formatting_of_textedit_reset_after_editing_text(qtbot, db):
@@ -951,11 +987,12 @@ def test_duplicate_error_message_of_textedit_reset_after_editing_text(qtbot, db)
     assert widget.searchBarErrorText.isHidden() is True
 
 
-def test_duplicate_add_button_reshown_after_editing_text(qtbot, db):
+def test_duplicate_buttons_reshown_after_editing_text(qtbot, db):
     widget = cInitialize(qtbot, db)
     cAddPaper(widget, u.mine.bibcode, qtbot)
     cEnterText(widget.searchBar, "s", qtbot)
     assert widget.addButton.isHidden() is False
+    assert widget.importButton.isHidden() is False
 
 
 def test_adding_paper_does_not_clear_search_bar_if_bad_ads_key(qtbot, db_empty_bad_ads):
@@ -981,10 +1018,11 @@ def test_adding_paper_bad_ads_key_shows_error_text(qtbot, db_empty_bad_ads):
     )
 
 
-def test_adding_paper_no_ads_key_hides_add_button(qtbot, db_empty_bad_ads):
+def test_adding_paper_no_ads_key_hides_buttons(qtbot, db_empty_bad_ads):
     widget = cInitialize(qtbot, db_empty_bad_ads)
     cAddPaper(widget, u.used_for_no_ads_key.url, qtbot)
     assert widget.addButton.isHidden() is True
+    assert widget.importButton.isHidden() is True
 
 
 def test_bad_ads_key_error_reset_after_any_clicking(qtbot, db_empty_bad_ads):
@@ -1001,11 +1039,12 @@ def test_bad_ads_key_error_hidden_after_any_clicking(qtbot, db_empty_bad_ads):
     assert widget.searchBarErrorText.isHidden() is True
 
 
-def test_no_ads_key_add_button_reshown_after_clicking(qtbot, db_empty_bad_ads):
+def test_no_ads_key_buttons_reshown_after_clicking(qtbot, db_empty_bad_ads):
     widget = cInitialize(qtbot, db_empty_bad_ads)
     cAddPaper(widget, u.used_for_no_ads_key.url, qtbot)
     widget.searchBar.setCursorPosition(0)
     assert widget.addButton.isHidden() is False
+    assert widget.importButton.isHidden() is False
 
 
 def test_bad_ads_key_error_formatting_reset_after_editing_text(qtbot, db_empty_bad_ads):
@@ -1027,6 +1066,7 @@ def test_no_ads_key_add_button_reshown_after_editing_text(qtbot, db_empty_bad_ad
     cAddPaper(widget, u.used_for_no_ads_key.url, qtbot)
     cEnterText(widget.searchBar, "s", qtbot)
     assert widget.addButton.isHidden() is False
+    assert widget.importButton.isHidden() is False
 
 
 def test_paper_cannot_be_added_twice(qtbot, db_empty):

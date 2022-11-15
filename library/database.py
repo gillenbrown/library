@@ -674,7 +674,7 @@ class Database(object):
         """
         Import papers from a bibtex file into the database
 
-        :param file_name: The location of the bibtext file to import
+        :param file_name: The location of the bibtex file to import
         :type file_name: pathlib.Path
         :return: None
         """
@@ -686,6 +686,7 @@ class Database(object):
             # the database. Otherwise, keep track of the current entry
             if line.startswith("@") and current_entry.strip() != "":
                 self._parse_bibtex_entry(current_entry)
+                current_entry = line
             else:
                 current_entry += line
         # handle the final entry
@@ -697,12 +698,9 @@ class Database(object):
     def _parse_bibtex_entry(self, entry):
         """
         Handle a single bibtex entry and add it to the database
-        :param entry:
-        :return: Code denoting what happened:
-                 0 - added successfully
-                 1 - already in the database
-                 2 - Parsing failed
-        :rtype: int
+
+        :param entry: the bibtex entry to add
+        :type entry: str
         """
         # Start by parsing the entry to get paper data. We'll then use this to find
         # the paper
@@ -722,8 +720,5 @@ class Database(object):
         # arXiv ID, then in the last case try to find it based on the journal info
         if "adsurl" in paper_data:
             self.add_paper(paper_data["adsurl"])
-        # TODO: implement the search based on DOI
-        # elif "doi" in paper_data:
-        #     pass
         elif "eprint" in paper_data:
             self.add_paper(ads_call.get_bibcode(paper_data["eprint"]))
