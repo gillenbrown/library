@@ -1922,6 +1922,10 @@ class MainWindow(QMainWindow):
             dir=str(Path.home()),
         )[0]
 
+        # if the user cancelled, exit
+        if file_loc == "":
+            return
+
         # then import this file
         results = self.db.import_bibtex(Path(file_loc))
 

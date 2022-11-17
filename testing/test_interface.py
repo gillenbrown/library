@@ -1154,6 +1154,15 @@ def test_clicking_import_button_asks_user(qtbot, db_empty, monkeypatch):
     db_empty._failure_file_loc(Path(__file__)).unlink()  # remove failure files
 
 
+def test_clicking_import_and_cancelling_does_no_import(qtbot, db_empty, monkeypatch):
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", mOpenFileNoResponse)
+    calls = []
+    monkeypatch.setattr(Database, "import_bibtex", lambda s, b: calls.append(b))
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.importButton, qtbot)
+    assert calls == []
+
+
 def test_import_shows_results_text(qtbot, db_empty, monkeypatch):
     file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
     monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
