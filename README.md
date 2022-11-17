@@ -38,6 +38,24 @@ python -m pytest
 ```
 These tests will take a few minutes. The interface may briefly appear in several flashes, but that is temporary and part of the tests. The tests should all pass, but if they don't, reach out and I'll help you figure out what's going wrong. 
 
+## Installation Troubleshooting
+
+### ADS_DEV_KEY
+If most (but not all) tests failed, you may not have set the ADS key correctly. To check, run `echo $ADS_DEV_KEY` in the terminal. If things are set up correctly, that command will output the string of random numbers and letters given to you by ADS. If not, make sure you're setting that as an environment variable.
+
+### Duplicate Qt Libraries
+If you encounter a fatal Python error after a handful of tests from `test_interface.py` run, you may have an issue with a duplicate version of `Qt` in your path (this is the library I use to create the GUI). This is installed by the pip install command above (bundled with the PySide6 library), but Python may be using a different version if you have a duplicate. In particular, this can happen if you use Anaconda to manage your Python environment. To check if this is the issue, run `conda list | grep qt`. If you see `qt` or `qt-main`, those are likely the issue. (Note that seeing `pytest-qt` is fine; that package is used for the tests). The simplest way to fix this is to create a new conda environment. If you're unfamiliar with these, they're basically a way to have self-contained Python installations ([see here](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html) for more info). Here are the terminal commands to set this up:
+```
+conda create -n library python=3
+conda activate library
+```
+The first command will prompt to you to install some libraries, then the second will activate the new Python environment. Then in that fresh environment, we can install and test as normal:
+```
+pip install -e .[test]
+python -m pytest
+```
+Whenever you're done with the library (either just the tests or the actual usage), you'll want to deactivate the environment to get back to your default Python evironment with `conda deactivate`. 
+
 # Launching the Application
 
 To run the application, simply run the `run.py` script: 
