@@ -821,6 +821,14 @@ class Database(object):
             self.tag_paper(bibcode, tag_name)
             raise PaperAlreadyInDatabaseError
 
+        # I attempted to validate that the properties in the bibtex entry matched
+        # what the query returned, but I gave up on this. The journal often has
+        # abbreviations that make it very difficult to compare. And the page entry in
+        # BibTeX is sometimes just the first page, while sometimes its the range. So
+        # I just gave up on this. To add a paper, we need either the ADS link, the DOI,
+        # or the arXiv ID from the bibtex entry. With one of those, we assume that the
+        # paper details are correct.
+
         # if we got here, the paper was added successfully. Remove unread, if present.
         # I'm assuming that if they're importing from a bibtex file, they've already
         # read the paper, while if they're adding from ADS, that may not be the case.
