@@ -25,7 +25,6 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QFrame,
     QComboBox,
-    QApplication,
 )
 
 from library.database import PaperAlreadyInDatabaseError

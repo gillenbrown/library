@@ -1,6 +1,7 @@
 import sqlite3
 import time
 import contextlib
+from pathlib import Path
 
 from library import ads_wrapper
 
@@ -679,26 +680,53 @@ class Database(object):
         :return: None
         """
         bibfile = open(file_name, "r")
+        # We'll create a file holding the bibtex entries that I could not identify.
+        # We'll delete this later if it has nothing in it
+        failure_file_loc = self._failure_file_loc(file_name)
+        failure_file = open(failure_file_loc, "w")
+
         results = {"success": 0, "duplicate": 0, "failure": 0}
         current_entry = ""
         for line in bibfile:
             # once we get to the beginning of a new entry, add the current entry to
             # the database. Otherwise, keep track of the current entry
             if line.startswith("@") and current_entry.strip() != "":
-                results[self._parse_bibtex_entry(current_entry)] += 1
+                results[self._parse_bibtex_entry(current_entry, failure_file)] += 1
+
                 # once we have parsed the previous entry, start the new one
                 current_entry = line
             else:
                 current_entry += line
         # handle the final entry
         if current_entry.strip() != "":
-            results[self._parse_bibtex_entry(current_entry)] += 1
+            results[self._parse_bibtex_entry(current_entry, failure_file)] += 1
 
         bibfile.close()
+        failure_file.close()
+        # if there were no failures, remove the failure file
+        if failure_file_loc.stat().st_size == 0:
+            failure_file_loc.unlink()
 
         return results["success"], results["duplicate"], results["failure"]
 
-    def _parse_bibtex_entry(self, entry):
+    def _failure_file_loc(self, bibtex_file_loc):
+        """
+        Parse the name of the import bibtex file into the file to write the failures
+
+        I considered writing this to the same directory as the import directory, but
+        since users may not want this writing files to what could be shared directories,
+        so I'll write it in this directory
+
+        :param bibtex_file_loc: Path to the original bibtex entry
+        :type: pathlib.Path
+        :return: path to the place to write failures
+        :rtype: pathlib.Path
+        """
+        directory = Path(__file__).parent.parent
+        name = bibtex_file_loc.stem + ".failures" + bibtex_file_loc.suffix
+        return directory / name
+
+    def _parse_bibtex_entry(self, entry, failure_file):
         """
         Wrapper around the function to parse a single bibtex entry and add it to the db
 
@@ -707,6 +735,8 @@ class Database(object):
 
         :param entry: the bibtex entry to add
         :type entry: str
+        :param failure_file: file object to write any failed bibtex entries to
+        :type failure_file: io.TextIO
         :return: String indicating what happened
         :rtype: str
         """
@@ -716,6 +746,8 @@ class Database(object):
         except PaperAlreadyInDatabaseError:
             return "duplicate"
         except:  # any other error
+            # add to failure file
+            failure_file.write(entry + "\n")
             return "failure"
 
     def _parse_bibtex_entry_inner(self, entry):

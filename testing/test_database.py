@@ -1074,7 +1074,6 @@ def test_update_system_does_not_run_soon_after_last_check(db_update, monkeypatch
     # are actually called to update
     updates = []
     monkeypatch.setattr(Database, "update_paper", lambda _, b: updates.append(b))
-    print(db_update.db_file)
     Database(db_update.db_file)
     assert updates == []
 
@@ -1160,6 +1159,7 @@ def test_import_malformed_bibtex_fails(db_empty):
     file_loc = create_bibtex("@ARTICLE{\nsldkfjsldkfj\n}")
     db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
+    db_empty._failure_file_loc(file_loc).unlink()  # remove failure file
     assert db_empty.get_all_bibcodes() == []
 
 
@@ -1192,6 +1192,7 @@ def test_import_return_tuple_bad_entry(db_empty):
     file_loc = create_bibtex("@ARTICLE{\nsldkfjsldkfj\n}")
     results = db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
+    db_empty._failure_file_loc(file_loc).unlink()  # remove failure file
     assert results == (0, 0, 1)
 
 
@@ -1238,6 +1239,7 @@ def test_import_return_tuple_two_good_one_failure(db_empty):
     )
     results = db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
+    db_empty._failure_file_loc(file_loc).unlink()  # remove failure file
     assert results == (2, 0, 1)
 
 
@@ -1247,6 +1249,7 @@ def test_import_return_tuple_two_good_one_failure_one_duplicate(db_empty):
     )
     results = db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
+    db_empty._failure_file_loc(file_loc).unlink()  # remove failure file
     assert results == (2, 1, 1)
 
 
@@ -1262,4 +1265,47 @@ def test_import_return_tuple_could_not_identify_paper(db_empty):
     )
     results = db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
+    db_empty._failure_file_loc(file_loc).unlink()  # remove failure file
     assert results == (0, 0, 1)
+
+
+def test_import_failure_file_created_for_failure_in_correct_location(db_empty):
+    file_loc = create_bibtex("@ARTICLE{\nsldkfjsldkfj\n}")
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    f_path = Path(__file__).parent.parent / (file_loc.stem + ".failures.bib")
+    assert f_path.is_file()
+    f_path.unlink()
+
+
+def test_import_failure_file_not_created_if_no_failures(db_empty):
+    file_loc = create_bibtex(u.mine.bibtex)
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert not db_empty._failure_file_loc(file_loc).is_file()
+
+
+def test_import_failure_file_not_created_for_duplicates(db_empty):
+    file_loc = create_bibtex(u.mine.bibtex)
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert not db_empty._failure_file_loc(file_loc).is_file()
+
+
+def test_import_failure_file_contains_failed_bibtex_entries(db_empty):
+    bad_1 = "@ARTICLE{\nsldkfjsldkfj\n}"
+    bad_2 = (
+        "@ARTICLE{1957RvMP...29..547B,\n"
+        " author = {{Burbidge}, E. Margaret},\n"
+        '  title = "{Synthesis of the Elements in Stars},"\n'
+        "journal = {Reviews of Modern Physics},\n"
+        "   year = 1957,\n"
+        "}"
+    )
+    file_loc = create_bibtex(u.mine.bibtex, bad_1, u.tremonti.bibtex, bad_2)
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(db_empty._failure_file_loc(file_loc), "r") as f_file:
+        f_output = f_file.read()
+    db_empty._failure_file_loc(file_loc).unlink()
+    assert f_output == bad_1 + "\n\n\n" + bad_2 + "\n"
