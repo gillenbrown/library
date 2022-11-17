@@ -1755,6 +1755,7 @@ class MainWindow(QMainWindow):
         # and some text to show the result of the import and a button to dismiss that
         # these will be hidden to start
         self.importResultText = QLabel()
+        self.importResultText.setTextInteractionFlags(Qt.TextSelectableByMouse)
         self.importResultText.hide()
         self.importResultDismissButton = QPushButton("Dismiss")
         self.importResultDismissButton.clicked.connect(self.importResultsDismiss)
@@ -1922,7 +1923,7 @@ class MainWindow(QMainWindow):
         )[0]
 
         # then import this file
-        results = self.db.import_bibtex(file_loc)
+        results = self.db.import_bibtex(Path(file_loc))
 
         # this just adds papers to the database, and doesn't add them to the interface.
         # We must figure out which papers are new and add them
@@ -1955,16 +1956,16 @@ class MainWindow(QMainWindow):
         Parse the results of the import into a message for the user
 
         :param results: The results tuple returned by db.import_bibtex()
-        :type results: tuple(int)
+        :type results: tuple(int, int, int, pathlib.Path)
         :return: string showing the message to the user
         :rtype: str
         """
-        assert len(results) == 3
+        assert len(results) == 4
         message = "Import results: "
-        if sum(results) == 0:
+        if sum(results[:3]) == 0:
             return message + "No papers found"
         # otherwise, start creating the message
-        message += self.pluralize("{} paper found", "paper", sum(results))
+        message += self.pluralize("{} paper found", "paper", sum(results[:3]))
         # then add each of the different types, if applicable
         if results[0] > 0:
             message += f", {results[0]} added successfully"
@@ -1972,6 +1973,7 @@ class MainWindow(QMainWindow):
             message += self.pluralize(", {} duplicate skipped", "duplicate", results[1])
         if results[2] > 0:
             message += self.pluralize(", {} failure", "failure", results[2])
+            message += f"\nFailed entries written to {str(results[3])}"
 
         return message
 

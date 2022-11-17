@@ -390,7 +390,7 @@ def create_bibtex_monkeypatch(*args):
     file_path = Path(f"{random.randint(0, 1000000000)}.bib").resolve()
     with open(file_path, "w") as bibfile:
         bibfile.write(text)
-    monkeypatch_func = lambda filter, dir: (file_path, "dummy_filter")
+    monkeypatch_func = lambda filter, dir: (str(file_path), "dummy_filter")
     return file_path, monkeypatch_func
 
 
@@ -663,6 +663,11 @@ def test_import_result_text_not_shown_at_beginning(qtbot, db_empty):
 def test_import_result_text_dismiss_not_shown_at_beginning(qtbot, db_empty):
     widget = cInitialize(qtbot, db_empty)
     assert widget.importResultDismissButton.isHidden() is True
+
+
+def test_import_result_text_is_copyable(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    assert widget.importResultText.textInteractionFlags() == Qt.TextSelectableByMouse
 
 
 def test_textedit_is_not_in_error_state_at_beginning(qtbot, db_empty):
@@ -1139,7 +1144,7 @@ def test_clicking_import_button_asks_user(qtbot, db_empty, monkeypatch):
 
     def mock_get_file(filter="", dir=""):
         get_file_calls.append(1)
-        return Path(__file__), "dummy filter"
+        return __file__, "dummy filter"
 
     monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
 
@@ -1269,8 +1274,12 @@ def test_import_results_text_one_error(qtbot, db_empty, monkeypatch):
     widget = cInitialize(qtbot, db_empty)
     cClick(widget.importButton, qtbot)
     file_loc.unlink()  # delete before tests may fail
-    db_empty._failure_file_loc(file_loc).unlink()  # remove failure files
-    assert widget.importResultText.text() == "Import results: 1 paper found, 1 failure"
+    fail_file = db_empty._failure_file_loc(file_loc)
+    fail_file.unlink()  # remove failure files
+    assert (
+        widget.importResultText.text() == "Import results: 1 paper found, 1 failure\n"
+        f"Failed entries written to {str(fail_file)}"
+    )
 
 
 def test_import_results_text_two_errors(qtbot, db_empty, monkeypatch):
@@ -1292,9 +1301,11 @@ def test_import_results_text_two_errors(qtbot, db_empty, monkeypatch):
     widget = cInitialize(qtbot, db_empty)
     cClick(widget.importButton, qtbot)
     file_loc.unlink()  # delete before tests may fail
-    db_empty._failure_file_loc(file_loc).unlink()  # remove failure files
+    fail_file = db_empty._failure_file_loc(file_loc)
+    fail_file.unlink()  # remove failure files
     assert (
-        widget.importResultText.text() == "Import results: 2 papers found, 2 failures"
+        widget.importResultText.text() == "Import results: 2 papers found, 2 failures\n"
+        f"Failed entries written to {str(fail_file)}"
     )
 
 
@@ -1325,10 +1336,12 @@ def test_import_results_text_one_success_one_failure(qtbot, db_empty, monkeypatc
     widget = cInitialize(qtbot, db_empty)
     cClick(widget.importButton, qtbot)
     file_loc.unlink()  # delete before tests may fail
-    db_empty._failure_file_loc(file_loc).unlink()  # remove failure files
+    fail_file = db_empty._failure_file_loc(file_loc)
+    fail_file.unlink()  # remove failure files
     assert (
         widget.importResultText.text()
-        == "Import results: 2 papers found, 1 added successfully, 1 failure"
+        == "Import results: 2 papers found, 1 added successfully, 1 failure\n"
+        f"Failed entries written to {str(fail_file)}"
     )
 
 
@@ -1347,10 +1360,12 @@ def test_import_results_text_one_duplicate_one_failure(qtbot, db_empty, monkeypa
     widget = cInitialize(qtbot, db_empty)
     cClick(widget.importButton, qtbot)
     file_loc.unlink()  # delete before tests may fail
-    db_empty._failure_file_loc(file_loc).unlink()  # remove failure files
+    fail_file = db_empty._failure_file_loc(file_loc)
+    fail_file.unlink()  # remove failure files
     assert (
         widget.importResultText.text()
-        == "Import results: 2 papers found, 1 duplicate skipped, 1 failure"
+        == "Import results: 2 papers found, 1 duplicate skipped, 1 failure\n"
+        f"Failed entries written to {str(fail_file)}"
     )
 
 
@@ -1369,10 +1384,12 @@ def test_import_results_text_one_success_one_dup_one_fail(qtbot, db_empty, monke
     widget = cInitialize(qtbot, db_empty)
     cClick(widget.importButton, qtbot)
     file_loc.unlink()  # delete before tests may fail
-    db_empty._failure_file_loc(file_loc).unlink()  # remove failure files
+    fail_file = db_empty._failure_file_loc(file_loc)
+    fail_file.unlink()  # remove failure files
     assert (
         widget.importResultText.text() == "Import results: "
-        "3 papers found, 1 added successfully, 1 duplicate skipped, 1 failure"
+        "3 papers found, 1 added successfully, 1 duplicate skipped, 1 failure\n"
+        f"Failed entries written to {str(fail_file)}"
     )
 
 

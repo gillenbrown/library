@@ -1157,9 +1157,9 @@ def test_bibtex_export_reflects_citation_keywords_for_book(db):
 # ======================================================================================
 def test_import_malformed_bibtex_fails(db_empty):
     file_loc = create_bibtex("@ARTICLE{\nsldkfjsldkfj\n}")
-    db_empty.import_bibtex(file_loc)
+    results = db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
-    db_empty._failure_file_loc(file_loc).unlink()  # remove failure file
+    results[3].unlink()  # remove failure file
     assert db_empty.get_all_bibcodes() == []
 
 
@@ -1188,26 +1188,35 @@ def test_import_two_good_papers_with_adsurl_adds_to_database(db_empty):
     assert db_empty.get_all_bibcodes() == [u.tremonti.bibcode, u.mine.bibcode]
 
 
+def test_import_return_tuple_file_bad_entry(db_empty):
+    file_loc = create_bibtex("@ARTICLE{\nsldkfjsldkfj\n}")
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    f_file = Path(__file__).parent.parent / (file_loc.stem + ".failures.bib")
+    f_file.unlink()  # remove failure file
+    assert results[3] == f_file
+
+
 def test_import_return_tuple_bad_entry(db_empty):
     file_loc = create_bibtex("@ARTICLE{\nsldkfjsldkfj\n}")
     results = db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
-    db_empty._failure_file_loc(file_loc).unlink()  # remove failure file
-    assert results == (0, 0, 1)
+    results[3].unlink()  # remove failure file
+    assert results[:3] == (0, 0, 1)
 
 
 def test_import_return_tuple_one_good_paper(db_empty):
     file_loc = create_bibtex(u.mine.bibtex)
     results = db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
-    assert results == (1, 0, 0)
+    assert results[:3] == (1, 0, 0)
 
 
 def test_import_return_tuple_two_good_papers(db_empty):
     file_loc = create_bibtex(u.mine.bibtex, u.tremonti.bibtex)
     results = db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
-    assert results == (2, 0, 0)
+    assert results[:3] == (2, 0, 0)
 
 
 def test_import_return_tuple_duplicate(db_empty):
@@ -1215,14 +1224,14 @@ def test_import_return_tuple_duplicate(db_empty):
     file_loc = create_bibtex(u.mine.bibtex)
     results = db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
-    assert results == (0, 1, 0)
+    assert results[:3] == (0, 1, 0)
 
 
 def test_import_return_tuple_internal_duplicate(db_empty):
     file_loc = create_bibtex(u.mine.bibtex, u.mine.bibtex)
     results = db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
-    assert results == (1, 1, 0)
+    assert results[:3] == (1, 1, 0)
 
 
 def test_import_return_tuple_one_good_one_duplicate(db_empty):
@@ -1230,7 +1239,15 @@ def test_import_return_tuple_one_good_one_duplicate(db_empty):
     file_loc = create_bibtex(u.mine.bibtex, u.tremonti.bibtex)
     results = db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
-    assert results == (1, 1, 0)
+    assert results[:3] == (1, 1, 0)
+
+
+def test_import_return_tuple_failure_file_one_good_one_duplicate(db_empty):
+    db_empty.add_paper(u.mine.bibcode)
+    file_loc = create_bibtex(u.mine.bibtex, u.tremonti.bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[3] is None
 
 
 def test_import_return_tuple_two_good_one_failure(db_empty):
@@ -1239,8 +1256,8 @@ def test_import_return_tuple_two_good_one_failure(db_empty):
     )
     results = db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
-    db_empty._failure_file_loc(file_loc).unlink()  # remove failure file
-    assert results == (2, 0, 1)
+    results[3].unlink()  # remove failure file
+    assert results[:3] == (2, 0, 1)
 
 
 def test_import_return_tuple_two_good_one_failure_one_duplicate(db_empty):
@@ -1249,8 +1266,8 @@ def test_import_return_tuple_two_good_one_failure_one_duplicate(db_empty):
     )
     results = db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
-    db_empty._failure_file_loc(file_loc).unlink()  # remove failure file
-    assert results == (2, 1, 1)
+    results[3].unlink()  # remove failure file
+    assert results[:3] == (2, 1, 1)
 
 
 def test_import_return_tuple_could_not_identify_paper(db_empty):
@@ -1265,8 +1282,8 @@ def test_import_return_tuple_could_not_identify_paper(db_empty):
     )
     results = db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
-    db_empty._failure_file_loc(file_loc).unlink()  # remove failure file
-    assert results == (0, 0, 1)
+    results[3].unlink()  # remove failure file
+    assert results[:3] == (0, 0, 1)
 
 
 def test_import_failure_file_created_for_failure_in_correct_location(db_empty):
@@ -1303,9 +1320,9 @@ def test_import_failure_file_contains_failed_bibtex_entries(db_empty):
         "}"
     )
     file_loc = create_bibtex(u.mine.bibtex, bad_1, u.tremonti.bibtex, bad_2)
-    db_empty.import_bibtex(file_loc)
+    results = db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
-    with open(db_empty._failure_file_loc(file_loc), "r") as f_file:
+    with open(results[3], "r") as f_file:
         f_output = f_file.read()
-    db_empty._failure_file_loc(file_loc).unlink()
+    results[3].unlink()
     assert f_output == bad_1 + "\n\n\n" + bad_2 + "\n"

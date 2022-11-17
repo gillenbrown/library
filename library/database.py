@@ -677,7 +677,12 @@ class Database(object):
 
         :param file_name: The location of the bibtex file to import
         :type file_name: pathlib.Path
-        :return: None
+        :return: A tuple indicating the results of what happened. First is the number
+                 of papers added successfully, then the number of papers that were
+                 already in the database (this can include duplicate papers within the
+                 bibtex file), then the bibtex entries I could not successfully add to
+                 the database for whatever reason. The final element is the path of a
+                 file where I write the failed bibtex entries for the user to inspect.
         """
         bibfile = open(file_name, "r")
         # We'll create a file holding the bibtex entries that I could not identify.
@@ -706,8 +711,14 @@ class Database(object):
         # if there were no failures, remove the failure file
         if failure_file_loc.stat().st_size == 0:
             failure_file_loc.unlink()
+            failure_file_loc = None
 
-        return results["success"], results["duplicate"], results["failure"]
+        return (
+            results["success"],
+            results["duplicate"],
+            results["failure"],
+            failure_file_loc,
+        )
 
     def _failure_file_loc(self, bibtex_file_loc):
         """
