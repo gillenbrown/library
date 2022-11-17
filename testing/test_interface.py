@@ -1452,6 +1452,17 @@ def test_import_new_tag_is_shown_in_right_panel(qtbot, db_empty, monkeypatch):
     assert widget.rightPanel.tagText.text() == "Tags: Import 1"
 
 
+def test_import_cite_key_is_shown_correctly(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(
+        u.mine.bibtex.replace("@ARTICLE{2018ApJ...864...94B", "@ARTICLE{test")
+    )
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.importButton, qtbot)
+    cClick(widget.papersList.getPapers()[0], qtbot)
+    assert widget.rightPanel.citeKeyText.text() == "Citation Keyword: test"
+
+
 # ======================================================================================
 #
 # test right panel

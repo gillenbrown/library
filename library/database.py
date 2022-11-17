@@ -791,7 +791,13 @@ class Database(object):
         # the paper
         paper_data = dict()
         for line in entry.split("\n"):
-            if line.startswith("@") or line.startswith("}") or line.strip() == "":
+            if line.startswith("@"):
+                # get the citation keyword
+                idx_1 = line.find("{")
+                idx_2 = line.find(",")
+                paper_data["cite_key"] = line[idx_1 + 1 : idx_2]
+                continue
+            elif line.startswith("}") or line.strip() == "":
                 continue
             key, value = line.split("=")
             paper_data[key.strip()] = (
@@ -825,3 +831,14 @@ class Database(object):
             if c_tag.lower() == "unread":
                 self.untag_paper(bibcode, c_tag)
         self.tag_paper(bibcode, tag_name)
+
+        # Also add the citation keyword for new papers. Again, if the paper is already
+        # in the library, we don't mess with its cite key
+        # don't bother changing it if there would be no change
+        if paper_data["cite_key"] != bibcode:
+            try:
+                self.set_paper_attribute(
+                    bibcode, "citation_keyword", paper_data["cite_key"]
+                )
+            except RuntimeError:  # duplicate citation key
+                pass  # just leave as the bibcode

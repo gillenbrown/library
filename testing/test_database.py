@@ -1407,3 +1407,47 @@ def test_import_failure_file_contains_failed_bibtex_entries(db_empty):
         f_output = f_file.read()
     results[3].unlink()
     assert f_output == bad_1 + "\n\n\n" + bad_2 + "\n"
+
+
+def test_import_citation_keyword_is_kept_if_present(db_empty):
+    file_loc = create_bibtex(
+        u.mine.bibtex.replace("@ARTICLE{2018ApJ...864...94B", "@ARTICLE{test")
+    )
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert db_empty.get_paper_attribute(u.mine.bibcode, "citation_keyword") == "test"
+
+
+def test_import_citation_keyword_is_kept_if_present_in_book(db_empty):
+    file_loc = create_bibtex(
+        u.mvdbw_book.bibtex.replace("@BOOK{2010gfe..book.....M", "@BOOK{test")
+    )
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert (
+        db_empty.get_paper_attribute(u.mvdbw_book.bibcode, "citation_keyword") == "test"
+    )
+
+
+def test_import_citation_keyword_is_the_bibcode_if_not_present(db_empty):
+    file_loc = create_bibtex(u.mine.bibtex)
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert (
+        db_empty.get_paper_attribute(u.mine.bibcode, "citation_keyword")
+        == u.mine.bibcode
+    )
+
+
+def test_import_citation_keyword_is_bibcode_if_user_gives_duplicate_key(db_empty):
+    db_empty.add_paper(u.tremonti.bibcode)
+    db_empty.set_paper_attribute(u.tremonti.bibcode, "citation_keyword", "test")
+    file_loc = create_bibtex(
+        u.mine.bibtex.replace("@ARTICLE{2018ApJ...864...94B", "@ARTICLE{test")
+    )
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert (
+        db_empty.get_paper_attribute(u.mine.bibcode, "citation_keyword")
+        == u.mine.bibcode
+    )
