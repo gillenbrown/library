@@ -1188,6 +1188,87 @@ def test_import_two_good_papers_with_adsurl_adds_to_database(db_empty):
     assert db_empty.get_all_bibcodes() == [u.tremonti.bibcode, u.mine.bibcode]
 
 
+def test_import_papers_are_not_unread(db_empty):
+    db_empty.add_new_tag("uNrEad")  # use weird capitalization to check that part
+    papers = [u.mine, u.tremonti]
+    file_loc = create_bibtex(*[p.bibtex for p in papers])
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    for p in papers:
+        assert not db_empty.paper_has_tag(p.bibcode, "uNrEad")
+
+
+def test_import_papers_duplicates_that_were_unread_stay_unread(db_empty):
+    db_empty.add_new_tag("Unread")
+    db_empty.add_paper(u.mine.bibcode)
+    db_empty.tag_paper(u.mine.bibcode, "Unread")
+    file_loc = create_bibtex(u.mine.bibtex, u.tremonti.bibtex)
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert db_empty.paper_has_tag(u.mine.bibcode, "Unread")
+    assert not db_empty.paper_has_tag(u.tremonti.bibcode, "Unread")
+
+
+def test_import_papers_have_a_new_tag(db_empty):
+    file_loc = create_bibtex(u.mine.bibtex, u.tremonti.bibtex)
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert db_empty.paper_has_tag(u.mine.bibcode, "Import 1")
+    assert db_empty.paper_has_tag(u.tremonti.bibcode, "Import 1")
+
+
+def test_import_original_papers_dont_have_new_tag(db_empty):
+    db_empty.add_paper(u.juan.bibcode)
+    file_loc = create_bibtex(u.mine.bibtex, u.tremonti.bibtex)
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert not db_empty.paper_has_tag(u.juan.bibcode, "Import 1")
+
+
+def test_import_new_tag_added_to_duplicates(db_empty):
+    db_empty.add_paper(u.mine.bibcode)
+    file_loc = create_bibtex(u.mine.bibtex, u.tremonti.bibtex)
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert db_empty.paper_has_tag(u.mine.bibcode, "Import 1")
+    assert db_empty.paper_has_tag(u.tremonti.bibcode, "Import 1")
+
+
+def test_import_created_tags_are_incremented(db_empty):
+    file_loc1 = create_bibtex(u.mine.bibtex)
+    file_loc2 = create_bibtex(u.tremonti.bibtex)
+    db_empty.import_bibtex(file_loc1)
+    db_empty.import_bibtex(file_loc2)
+    file_loc1.unlink()  # delete before tests may fail
+    file_loc2.unlink()  # delete before tests may fail
+    assert db_empty.get_paper_tags(u.mine.bibcode) == ["Import 1"]
+    assert db_empty.get_paper_tags(u.tremonti.bibcode) == ["Import 2"]
+
+
+def test_import_created_tags_are_incremented_where_available(db_empty):
+    file_loc1 = create_bibtex(u.mine.bibtex)
+    file_loc2 = create_bibtex(u.tremonti.bibtex)
+    file_loc3 = create_bibtex(u.mine_recent.bibtex)
+    db_empty.import_bibtex(file_loc1)
+    db_empty.import_bibtex(file_loc2)
+    # delete tag 1, so it should be available
+    db_empty.delete_tag("Import 1")
+    db_empty.import_bibtex(file_loc3)
+    file_loc1.unlink()  # delete before tests may fail
+    file_loc2.unlink()  # delete before tests may fail
+    file_loc3.unlink()  # delete before tests may fail
+    assert db_empty.get_paper_tags(u.mine.bibcode) == []
+    assert db_empty.get_paper_tags(u.tremonti.bibcode) == ["Import 2"]
+    assert db_empty.get_paper_tags(u.mine_recent.bibcode) == ["Import 3"]
+
+
+def test_import_return_tuple_tag_name(db_empty):
+    file_loc = create_bibtex(u.mine.bibtex, u.tremonti.bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[4] == "Import 1"
+
+
 def test_import_return_tuple_file_bad_entry(db_empty):
     file_loc = create_bibtex("@ARTICLE{\nsldkfjsldkfj\n}")
     results = db_empty.import_bibtex(file_loc)

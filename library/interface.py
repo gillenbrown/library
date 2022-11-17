@@ -1934,7 +1934,7 @@ class MainWindow(QMainWindow):
 
         # once we're done, show the results
         # first parse the results into the message shown to the user
-        self.importResultText.setText(self.parseImportResults(results))
+        self.importResultText.setText(self.parseImportResults(results[:4]))
         # set sizes to be reasonable
         self.importResultText.setFixedWidth(self.importResultText.sizeHint().width())
         self.importResultDismissButton.setFixedWidth(
@@ -1946,10 +1946,20 @@ class MainWindow(QMainWindow):
         self.importButton.hide()
         self.importResultText.show()
         self.importResultDismissButton.show()
-
         # and resize the papers to make sure they take up the correct width. When
         # importing into an empty database, they don't look right without this
         self.resizePapers()
+
+        # We also need to handle the tags, since we just added a new one
+        self.tagsList.addTagInternal(results[4])
+        # add this checkbox to the right panel
+        self.rightPanel.populate_tags()
+        if not self.rightPanel.abstractText.text().startswith("Click on a paper"):
+            self.rightPanel.update_tag_text()
+        # then click this tag
+        for tag in self.tagsList.tags:
+            if tag.label.text() == results[4]:
+                tag.mousePressEvent("")
 
     def parseImportResults(self, results):
         """

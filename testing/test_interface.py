@@ -1393,6 +1393,56 @@ def test_import_results_text_one_success_one_dup_one_fail(qtbot, db_empty, monke
     )
 
 
+def test_import_after_finished_adds_new_tag_to_interface(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex, u.tremonti.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    tag_names = [t.label.text() for t in widget.tagsList.tags]
+    assert "Import 1" in tag_names
+
+
+def test_import_after_finished_clicks_new_tag(qtbot, db_empty, monkeypatch):
+    db_empty.add_new_tag("test")
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex, u.tremonti.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    assert widget.tagsList.showAllButton.property("is_highlighted") is False
+    for tag in widget.tagsList.tags:
+        if tag.label.text() == "Import 1":
+            assert tag.property("is_highlighted") is True
+        else:
+            assert tag.property("is_highlighted") is False
+
+
+def test_import_imported_papers_are_shown_in_center(qtbot, db_empty, monkeypatch):
+    db_empty.add_paper(u.juan.bibcode)
+    db_empty.add_paper(u.mine.bibcode)
+    db_empty.add_paper(u.forbes.bibcode)
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex, u.tremonti.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    seen_papers = [p.bibcode for p in widget.papersList.getPapers() if not p.isHidden()]
+    assert seen_papers == [u.tremonti.bibcode, u.mine.bibcode]
+
+
+def test_import_new_tag_is_shown_in_right_panel(qtbot, db_empty, monkeypatch):
+    db_empty.add_paper(u.mine.bibcode)
+    db_empty.add_new_tag("Unread")
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex, u.tremonti.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.papersList.getPapers()[0], qtbot)
+    cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    assert widget.rightPanel.tagText.text() == "Tags: Import 1"
+
+
 # ======================================================================================
 #
 # test right panel

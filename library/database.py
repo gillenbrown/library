@@ -681,8 +681,9 @@ class Database(object):
                  of papers added successfully, then the number of papers that were
                  already in the database (this can include duplicate papers within the
                  bibtex file), then the bibtex entries I could not successfully add to
-                 the database for whatever reason. The final element is the path of a
+                 the database for whatever reason. The next element is the path of a
                  file where I write the failed bibtex entries for the user to inspect.
+                 Finally, there is the name of the tag applied to the added papers.
         """
         bibfile = open(file_name, "r")
         # We'll create a file holding the bibtex entries that I could not identify.
@@ -690,13 +691,25 @@ class Database(object):
         failure_file_loc = self._failure_file_loc(file_name)
         failure_file = open(failure_file_loc, "w")
 
+        # figure out what tag to give this paper. It will be of the format "Import X",
+        # where X is one more than the maximum Import tag present.
+        import_tags = [t for t in self.get_all_tags() if t.startswith("Import ")]
+        if len(import_tags) == 0:
+            new_tag = "Import 1"
+        else:
+            new_tag = f"Import {int(max(import_tags).split()[-1]) + 1}"
+        self.add_new_tag(new_tag)
+
         results = {"success": 0, "duplicate": 0, "failure": 0}
         current_entry = ""
         for line in bibfile:
             # once we get to the beginning of a new entry, add the current entry to
             # the database. Otherwise, keep track of the current entry
             if line.startswith("@") and current_entry.strip() != "":
-                results[self._parse_bibtex_entry(current_entry, failure_file)] += 1
+                this_result = self._parse_bibtex_entry(
+                    current_entry, new_tag, failure_file
+                )
+                results[this_result] += 1
 
                 # once we have parsed the previous entry, start the new one
                 current_entry = line
@@ -704,7 +717,7 @@ class Database(object):
                 current_entry += line
         # handle the final entry
         if current_entry.strip() != "":
-            results[self._parse_bibtex_entry(current_entry, failure_file)] += 1
+            results[self._parse_bibtex_entry(current_entry, new_tag, failure_file)] += 1
 
         bibfile.close()
         failure_file.close()
@@ -718,6 +731,7 @@ class Database(object):
             results["duplicate"],
             results["failure"],
             failure_file_loc,
+            new_tag,
         )
 
     def _failure_file_loc(self, bibtex_file_loc):
@@ -737,7 +751,7 @@ class Database(object):
         name = bibtex_file_loc.stem + ".failures" + bibtex_file_loc.suffix
         return directory / name
 
-    def _parse_bibtex_entry(self, entry, failure_file):
+    def _parse_bibtex_entry(self, entry, tag_name, failure_file):
         """
         Wrapper around the function to parse a single bibtex entry and add it to the db
 
@@ -746,13 +760,15 @@ class Database(object):
 
         :param entry: the bibtex entry to add
         :type entry: str
+        :param tag_name: tag to apply to the paper if added successfully
+        :type tag_name: str
         :param failure_file: file object to write any failed bibtex entries to
         :type failure_file: io.TextIO
         :return: String indicating what happened
         :rtype: str
         """
         try:
-            self._parse_bibtex_entry_inner(entry)
+            self._parse_bibtex_entry_inner(entry, tag_name)
             return "success"
         except PaperAlreadyInDatabaseError:
             return "duplicate"
@@ -761,12 +777,14 @@ class Database(object):
             failure_file.write(entry + "\n")
             return "failure"
 
-    def _parse_bibtex_entry_inner(self, entry):
+    def _parse_bibtex_entry_inner(self, entry, tag_name):
         """
         Handle a single bibtex entry and add it to the database
 
         :param entry: the bibtex entry to add
         :type entry: str
+        :param tag_name: tag to apply to the paper if added successfully
+        :type tag_name: str
         :return: None
         """
         # Start by parsing the entry to get paper data. We'll then use this to find
@@ -783,8 +801,27 @@ class Database(object):
         # now that we have the info, try to find the paper. Look for the DOI, then the
         # arXiv ID, then in the last case try to find it based on the journal info
         if "adsurl" in paper_data:
-            self.add_paper(paper_data["adsurl"])
+            bibcode = ads_call.get_bibcode(paper_data["adsurl"])
         elif "eprint" in paper_data:
-            self.add_paper(ads_call.get_bibcode(paper_data["eprint"]))
+            bibcode = ads_call.get_bibcode(paper_data["eprint"])
         else:  # could not identify paper
             raise ValueError
+        # then add the paper to the database
+        try:
+            self.add_paper(bibcode)
+        except PaperAlreadyInDatabaseError:
+            # catch this just to add the tag, then raise it again so the parent function
+            # can catch this esception
+            self.tag_paper(bibcode, tag_name)
+            raise PaperAlreadyInDatabaseError
+
+        # if we got here, the paper was added successfully. Remove unread, if present.
+        # I'm assuming that if they're importing from a bibtex file, they've already
+        # read the paper, while if they're adding from ADS, that may not be the case.
+        # Not that duplicates already exited, so if they were unread that stays.
+        # Also add the special tag
+        current_tags = self.get_paper_tags(bibcode)
+        for c_tag in current_tags:
+            if c_tag.lower() == "unread":
+                self.untag_paper(bibcode, c_tag)
+        self.tag_paper(bibcode, tag_name)
