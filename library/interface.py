@@ -34,6 +34,7 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QFrame,
     QComboBox,
+    QProgressBar,
 )
 
 from library.database import PaperAlreadyInDatabaseError
@@ -1807,6 +1808,9 @@ class MainWindow(QMainWindow):
         # set up the worker that will be used to put the import into a new thread
         self.importWorker = Worker(self.db.import_bibtex)
         self.importWorker.signals.finished.connect(self.finishImportBibtex)
+        # also the progressbar
+        self.importProgressBar = QProgressBar()
+        self.importProgressBar.hide()
         # and some text to show the result of the import and a button to dismiss that
         # these will be hidden to start
         self.importResultText = QLabel()
@@ -1828,6 +1832,7 @@ class MainWindow(QMainWindow):
         self.searchBarErrorText.setFixedHeight(30)
         self.addButton.setFixedHeight(30)
         self.importButton.setFixedHeight(30)
+        self.importResultText.setFixedHeight(40)
         # Then add these to the layouts
         hBoxSearchBar = QHBoxLayout()
         hBoxSearchBar.addWidget(self.title)
@@ -1837,6 +1842,7 @@ class MainWindow(QMainWindow):
         hBoxSearchBar.addWidget(self.importButton)
         hBoxSearchBar.addWidget(self.importResultText)
         hBoxSearchBar.addWidget(self.importResultDismissButton)
+        hBoxSearchBar.addWidget(self.importProgressBar)
         vBoxMain.addLayout(hBoxSearchBar)
 
         # Then we have the main body. This is a bit more complex. We'll start by just
@@ -1981,6 +1987,16 @@ class MainWindow(QMainWindow):
         if file_loc == "":
             return
 
+        # show/hide the appropriate buttons before we start the import
+        self.searchBar.hide()
+        self.addButton.hide()
+        self.importButton.hide()
+        self.importResultText.setText("Please wait until the import finishes")
+        self.importResultText.show()
+        self.importProgressBar.show()
+        # disable the main parts of the interface so the user just waits
+        self.splitter.setEnabled(False)
+
         # then import this file
         # Need to use a worker for this to put it in the background. When it finishes,
         # it will pass the result to the finishImportBibtex function (as defined in the
@@ -2014,12 +2030,11 @@ class MainWindow(QMainWindow):
         self.importResultDismissButton.setFixedWidth(
             self.importResultDismissButton.sizeHint().width()
         )
-        # show and hide the appropriate buttons
-        self.searchBar.hide()
-        self.addButton.hide()
-        self.importButton.hide()
-        self.importResultText.show()
+        # show and hide the appropriate buttons (some already shown/hidden before
+        # import started)
+        self.splitter.setEnabled(True)
         self.importResultDismissButton.show()
+        self.importProgressBar.hide()
         # and resize the papers to make sure they take up the correct width. When
         # importing into an empty database, they don't look right without this
         self.resizePapers()

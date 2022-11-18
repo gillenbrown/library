@@ -656,6 +656,11 @@ def test_import_button_shown_at_beginning(qtbot, db_empty):
     assert widget.importButton.isHidden() is False
 
 
+def test_import_progress_bar_not_shown_at_beginning(qtbot, db_empty):
+    widget = cInitialize(qtbot, db_empty)
+    assert widget.importProgressBar.isHidden() is True
+
+
 def test_import_result_text_not_shown_at_beginning(qtbot, db_empty):
     widget = cInitialize(qtbot, db_empty)
     assert widget.importResultText.isHidden() is True
@@ -914,6 +919,17 @@ def test_search_bar_and_error_text_are_much_shorter_than_title(qtbot, db_empty):
     assert widget.searchBarErrorText.height() < 0.6 * widget.title.height()
 
 
+def test_import_button_height_during(qtbot, db_empty, monkeypatch):
+    # when I first tested this it took up the whole screen for some reason
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+        assert widget.importResultText.height() < 50
+    file_loc.unlink()
+
+
 def test_bad_paper_error_formatting_of_textedit_reset_after_clicking(qtbot, db_empty):
     widget = cInitialize(qtbot, db_empty)
     cAddPaper(widget, "nonsense", qtbot)
@@ -1165,7 +1181,52 @@ def test_clicking_import_and_cancelling_does_no_import(qtbot, db_empty, monkeypa
     assert calls == []
 
 
-def test_import_shows_results_text(qtbot, db_empty, monkeypatch):
+def test_import_disables_main_window_during(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+        assert widget.splitter.isEnabled() is False
+    file_loc.unlink()  # delete before tests may fail
+    assert widget.splitter.isEnabled() is True
+
+
+def test_import_shows_progress_bar_during(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+        assert widget.importProgressBar.isHidden() is False
+    file_loc.unlink()  # delete before tests may fail
+    assert widget.importProgressBar.isHidden() is True
+
+
+def test_import_shows_explanatory_text_during(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+        assert widget.importResultText.isHidden() is False
+        assert widget.importResultText.text() == "Please wait until the import finishes"
+    file_loc.unlink()
+
+
+def test_import_hides_search_bar_buttons_during(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+        assert widget.searchBar.isHidden() is True
+        assert widget.addButton.isHidden() is True
+        assert widget.importButton.isHidden() is True
+    file_loc.unlink()  # delete before tests may fail
+
+
+def test_import_shows_results_text_after(qtbot, db_empty, monkeypatch):
     file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
     monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
     widget = cInitialize(qtbot, db_empty)
@@ -1175,7 +1236,7 @@ def test_import_shows_results_text(qtbot, db_empty, monkeypatch):
     assert widget.importResultText.isHidden() is False
 
 
-def test_import_shows_results_dismiss_button(qtbot, db_empty, monkeypatch):
+def test_import_shows_results_dismiss_button_after(qtbot, db_empty, monkeypatch):
     file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
     monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
     widget = cInitialize(qtbot, db_empty)
@@ -1185,7 +1246,7 @@ def test_import_shows_results_dismiss_button(qtbot, db_empty, monkeypatch):
     assert widget.importResultDismissButton.isHidden() is False
 
 
-def test_import_hides_search_bar_and_buttons(qtbot, db_empty, monkeypatch):
+def test_import_hides_search_bar_and_buttons_after(qtbot, db_empty, monkeypatch):
     file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
     monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
     widget = cInitialize(qtbot, db_empty)
@@ -1222,7 +1283,7 @@ def test_clicking_import_button_adds_paper_to_database(qtbot, db_empty, monkeypa
     assert widget.db.get_all_bibcodes() == [u.mine.bibcode]
 
 
-def test_clicking_import_button_adds_paper_to_interface(qtbot, db_empty, monkeypatch):
+def test_import_finish_adds_paper_to_interface(qtbot, db_empty, monkeypatch):
     file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
     monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
     widget = cInitialize(qtbot, db_empty)
