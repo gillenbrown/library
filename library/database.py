@@ -690,6 +690,15 @@ class Database(object):
         # We'll delete this later if it has nothing in it
         failure_file_loc = self._failure_file_loc(file_name)
         failure_file = open(failure_file_loc, "w")
+        # write the header to this file
+        header = (
+            "% This file contains BibTeX entries that the library could not add.\n"
+            '% When importing a given entry, the code looks for the "doi", "ads_url",\n'
+            '% or "eprint" attributes. If none of these are present, the code cannot\n'
+            "% add the paper. In addition, there may be something wrong with the\n"
+            "% format of the entry that breaks my code parser."
+        )
+        failure_file.write(header + "\n\n")
 
         # figure out what tag to give this paper. It will be of the format "Import X",
         # where X is one more than the maximum Import tag present.
@@ -721,8 +730,9 @@ class Database(object):
 
         bibfile.close()
         failure_file.close()
-        # if there were no failures, remove the failure file
-        if failure_file_loc.stat().st_size == 0:
+        # if there were no failures, remove the failure file. I got the exact size of
+        # just the header, which is what we compare to here
+        if failure_file_loc.stat().st_size == 332:
             failure_file_loc.unlink()
             failure_file_loc = None
 
@@ -797,7 +807,12 @@ class Database(object):
                 idx_2 = line.find(",")
                 paper_data["cite_key"] = line[idx_1 + 1 : idx_2]
                 continue
-            elif line.startswith("}") or line.strip() == "":
+            # have lines to skip: closing braces, blank lines, and comments
+            elif (
+                line.startswith("}")
+                or line.strip() == ""
+                or line.strip().startswith("%")
+            ):
                 continue
             key, value = line.split("=")
             paper_data[key.strip()] = (

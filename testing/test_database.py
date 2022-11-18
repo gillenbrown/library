@@ -1429,7 +1429,14 @@ def test_import_failure_file_contains_failed_bibtex_entries(db_empty):
     with open(results[3], "r") as f_file:
         f_output = f_file.read()
     results[3].unlink()
-    assert f_output == bad_1 + "\n\n\n" + bad_2 + "\n"
+    header = (
+        "% This file contains BibTeX entries that the library could not add.\n"
+        '% When importing a given entry, the code looks for the "doi", "ads_url",\n'
+        '% or "eprint" attributes. If none of these are present, the code cannot\n'
+        "% add the paper. In addition, there may be something wrong with the\n"
+        "% format of the entry that breaks my code parser.\n\n"
+    )
+    assert f_output == header + bad_1 + "\n\n\n" + bad_2 + "\n"
 
 
 def test_import_citation_keyword_is_kept_if_present(db_empty):
