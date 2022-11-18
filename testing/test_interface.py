@@ -625,7 +625,8 @@ def test_first_import_paper_takes_up_full_splitter_width(qtbot, db_empty, monkey
     file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
     monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
     widget = cInitialize(qtbot, db_empty)
-    cClick(widget.importButton, qtbot)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
     file_loc.unlink()  # delete before tests may fail
     paper_width = widget.papersList.getPapers()[0].width()
     splitter_width = widget.splitter.sizes()[1]
@@ -1149,7 +1150,8 @@ def test_clicking_import_button_asks_user(qtbot, db_empty, monkeypatch):
     monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
 
     widget = cInitialize(qtbot, db_empty)
-    cClick(widget.importButton, qtbot)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
     assert get_file_calls == [1]
     db_empty._failure_file_loc(Path(__file__)).unlink()  # remove failure files
 
@@ -1167,7 +1169,8 @@ def test_import_shows_results_text(qtbot, db_empty, monkeypatch):
     file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
     monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
     widget = cInitialize(qtbot, db_empty)
-    cClick(widget.importButton, qtbot)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
     file_loc.unlink()  # delete before tests may fail
     assert widget.importResultText.isHidden() is False
 
@@ -1176,7 +1179,8 @@ def test_import_shows_results_dismiss_button(qtbot, db_empty, monkeypatch):
     file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
     monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
     widget = cInitialize(qtbot, db_empty)
-    cClick(widget.importButton, qtbot)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
     file_loc.unlink()  # delete before tests may fail
     assert widget.importResultDismissButton.isHidden() is False
 
@@ -1185,7 +1189,8 @@ def test_import_hides_search_bar_and_buttons(qtbot, db_empty, monkeypatch):
     file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
     monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
     widget = cInitialize(qtbot, db_empty)
-    cClick(widget.importButton, qtbot)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
     file_loc.unlink()  # delete before tests may fail
     assert widget.searchBar.isHidden() is True
     assert widget.addButton.isHidden() is True
@@ -1196,7 +1201,8 @@ def test_import_dismiss_button_restores_default_state(qtbot, db_empty, monkeypat
     file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
     monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
     widget = cInitialize(qtbot, db_empty)
-    cClick(widget.importButton, qtbot)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
     file_loc.unlink()  # delete before tests may fail
     cClick(widget.importResultDismissButton, qtbot)
     assert widget.searchBar.isHidden() is False
@@ -1210,7 +1216,8 @@ def test_clicking_import_button_adds_paper_to_database(qtbot, db_empty, monkeypa
     file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
     monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
     widget = cInitialize(qtbot, db_empty)
-    cClick(widget.importButton, qtbot)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
     file_loc.unlink()  # delete before tests may fail
     assert widget.db.get_all_bibcodes() == [u.mine.bibcode]
 
@@ -1219,7 +1226,8 @@ def test_clicking_import_button_adds_paper_to_interface(qtbot, db_empty, monkeyp
     file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
     monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
     widget = cInitialize(qtbot, db_empty)
-    cClick(widget.importButton, qtbot)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
     file_loc.unlink()  # delete before tests may fail
     assert widget.papersList.getPapers()[0].bibcode == u.mine.bibcode
 
@@ -1228,7 +1236,8 @@ def test_import_results_text_no_papers_found(qtbot, db_empty, monkeypatch):
     file_loc, test_func = create_bibtex_monkeypatch("   ")
     monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
     widget = cInitialize(qtbot, db_empty)
-    cClick(widget.importButton, qtbot)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
     file_loc.unlink()  # delete before tests may fail
     assert widget.importResultText.text() == "Import results: No papers found"
 
@@ -1237,7 +1246,8 @@ def test_import_results_text_one_success(qtbot, db_empty, monkeypatch):
     file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
     monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
     widget = cInitialize(qtbot, db_empty)
-    cClick(widget.importButton, qtbot)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
     file_loc.unlink()  # delete before tests may fail
     assert (
         widget.importResultText.text()
@@ -1250,7 +1260,8 @@ def test_import_results_text_one_duplicate(qtbot, db_empty, monkeypatch):
     file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
     monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
     widget = cInitialize(qtbot, db_empty)
-    cClick(widget.importButton, qtbot)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
     file_loc.unlink()  # delete before tests may fail
     assert (
         widget.importResultText.text()
@@ -1262,7 +1273,8 @@ def test_import_results_text_two_duplicates(qtbot, db_temp, monkeypatch):
     file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex, u.tremonti.bibtex)
     monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
     widget = cInitialize(qtbot, db_temp)
-    cClick(widget.importButton, qtbot)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
     file_loc.unlink()  # delete before tests may fail
     assert (
         widget.importResultText.text()
@@ -1281,7 +1293,8 @@ def test_import_results_text_one_error(qtbot, db_empty, monkeypatch):
     )
     monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
     widget = cInitialize(qtbot, db_empty)
-    cClick(widget.importButton, qtbot)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
     file_loc.unlink()  # delete before tests may fail
     fail_file = db_empty._failure_file_loc(file_loc)
     fail_file.unlink()  # remove failure files
@@ -1308,7 +1321,8 @@ def test_import_results_text_two_errors(qtbot, db_empty, monkeypatch):
     )
     monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
     widget = cInitialize(qtbot, db_empty)
-    cClick(widget.importButton, qtbot)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
     file_loc.unlink()  # delete before tests may fail
     fail_file = db_empty._failure_file_loc(file_loc)
     fail_file.unlink()  # remove failure files
@@ -1323,7 +1337,8 @@ def test_import_results_text_one_success_one_duplicate(qtbot, db_empty, monkeypa
     file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex, u.tremonti.bibtex)
     monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
     widget = cInitialize(qtbot, db_empty)
-    cClick(widget.importButton, qtbot)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
     file_loc.unlink()  # delete before tests may fail
     assert (
         widget.importResultText.text()
@@ -1343,7 +1358,8 @@ def test_import_results_text_one_success_one_failure(qtbot, db_empty, monkeypatc
     )
     monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
     widget = cInitialize(qtbot, db_empty)
-    cClick(widget.importButton, qtbot)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
     file_loc.unlink()  # delete before tests may fail
     fail_file = db_empty._failure_file_loc(file_loc)
     fail_file.unlink()  # remove failure files
@@ -1367,7 +1383,8 @@ def test_import_results_text_one_duplicate_one_failure(qtbot, db_empty, monkeypa
     )
     monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
     widget = cInitialize(qtbot, db_empty)
-    cClick(widget.importButton, qtbot)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
     file_loc.unlink()  # delete before tests may fail
     fail_file = db_empty._failure_file_loc(file_loc)
     fail_file.unlink()  # remove failure files
@@ -1391,7 +1408,8 @@ def test_import_results_text_one_success_one_dup_one_fail(qtbot, db_empty, monke
     )
     monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
     widget = cInitialize(qtbot, db_empty)
-    cClick(widget.importButton, qtbot)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
     file_loc.unlink()  # delete before tests may fail
     fail_file = db_empty._failure_file_loc(file_loc)
     fail_file.unlink()  # remove failure files
@@ -1406,7 +1424,8 @@ def test_import_after_finished_adds_new_tag_to_interface(qtbot, db_empty, monkey
     file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex, u.tremonti.bibtex)
     monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
     widget = cInitialize(qtbot, db_empty)
-    cClick(widget.importButton, qtbot)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
     file_loc.unlink()  # delete before tests may fail
     tag_names = [t.label.text() for t in widget.tagsList.tags]
     assert "Import 1" in tag_names
@@ -1417,7 +1436,8 @@ def test_import_after_finished_clicks_new_tag(qtbot, db_empty, monkeypatch):
     file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex, u.tremonti.bibtex)
     monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
     widget = cInitialize(qtbot, db_empty)
-    cClick(widget.importButton, qtbot)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
     file_loc.unlink()  # delete before tests may fail
     assert widget.tagsList.showAllButton.property("is_highlighted") is False
     for tag in widget.tagsList.tags:
@@ -1434,7 +1454,8 @@ def test_import_imported_papers_are_shown_in_center(qtbot, db_empty, monkeypatch
     file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex, u.tremonti.bibtex)
     monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
     widget = cInitialize(qtbot, db_empty)
-    cClick(widget.importButton, qtbot)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
     file_loc.unlink()  # delete before tests may fail
     seen_papers = [p.bibcode for p in widget.papersList.getPapers() if not p.isHidden()]
     assert seen_papers == [u.tremonti.bibcode, u.mine.bibcode]
@@ -1447,7 +1468,8 @@ def test_import_new_tag_is_shown_in_right_panel(qtbot, db_empty, monkeypatch):
     monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
     widget = cInitialize(qtbot, db_empty)
     cClick(widget.papersList.getPapers()[0], qtbot)
-    cClick(widget.importButton, qtbot)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
     file_loc.unlink()  # delete before tests may fail
     assert widget.rightPanel.tagText.text() == "Tags: Import 1"
 
@@ -1458,7 +1480,8 @@ def test_import_cite_key_is_shown_correctly(qtbot, db_empty, monkeypatch):
     )
     monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
     widget = cInitialize(qtbot, db_empty)
-    cClick(widget.importButton, qtbot)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
     file_loc.unlink()
     cClick(widget.papersList.getPapers()[0], qtbot)
     assert widget.rightPanel.citeKeyText.text() == "Citation Keyword: test"

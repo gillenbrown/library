@@ -2,7 +2,16 @@ from pathlib import Path
 import requests
 
 import ads.exceptions
-from PySide6.QtCore import Qt, QEvent, QPoint, QTimer
+from PySide6.QtCore import (
+    Qt,
+    QEvent,
+    QRunnable,
+    QThreadPool,
+    QTimer,
+    QObject,
+    Slot,
+    Signal,
+)
 from PySide6.QtGui import (
     QFontDatabase,
     QDesktopServices,
@@ -49,6 +58,46 @@ def qss_trigger(object, property, value):
         object.setProperty(property, value)
         object.style().unpolish(object)
         object.style().polish(object)
+
+
+# Make classes to use threading, inspired by:
+# https://www.pythonguis.com/tutorials/multithreading-pyside6-applications-qthreadpool/
+# I tried to make the signals be just in the Worker object, but due to the way Qt is
+# implemented that doesn't work. So they need a separate class
+class WorkerSignals(QObject):
+    finished = Signal(tuple)
+
+
+class Worker(QRunnable):
+    """
+    Class to run a function in a separate thread
+    """
+
+    def __init__(self, func, *args, **kwargs):
+        """
+        Set up the function to be called and its arguments
+
+        :param func: The function
+        :type func: func
+        :param args: arguments
+        :param kwargs: keyword arguments
+        """
+        super().__init__()
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
+        self.signals = WorkerSignals()
+
+    @Slot()  # QtCore.Slot
+    def run(self):  # pragma: no cover
+        """
+        run the function
+
+        This is excluded from coverage because the coverage module does not detect that
+        this is covered, when in reality it is. I think this is because it's a thread
+        """
+        result = self.func(*self.args, **self.kwargs)
+        self.signals.finished.emit(result)
 
 
 class LeftPanelTag(QWidget):
@@ -1717,6 +1766,9 @@ class MainWindow(QMainWindow):
         """
         super().__init__()
 
+        # set up threading
+        self.threadpool = QThreadPool()
+
         # Set up default stylesheets
         with open(Path(__file__).parent / "style.qss", "r") as style_file:
             self.setStyleSheet(style_file.read())
@@ -1752,6 +1804,9 @@ class MainWindow(QMainWindow):
         self.importButton = QPushButton("Import from BibTeX")
         self.importButton.setObjectName("import_button")
         self.importButton.clicked.connect(self.importBibtex)
+        # set up the worker that will be used to put the import into a new thread
+        self.importWorker = Worker(self.db.import_bibtex)
+        self.importWorker.signals.finished.connect(self.finishImportBibtex)
         # and some text to show the result of the import and a button to dismiss that
         # these will be hidden to start
         self.importResultText = QLabel()
@@ -1927,8 +1982,23 @@ class MainWindow(QMainWindow):
             return
 
         # then import this file
-        results = self.db.import_bibtex(Path(file_loc))
+        # Need to use a worker for this to put it in the background. When it finishes,
+        # it will pass the result to the finishImportBibtex function (as defined in the
+        # mainWindow __init__)
+        self.importWorker.args = [Path(file_loc)]
+        self.threadpool.start(self.importWorker)
 
+    def finishImportBibtex(self, results):
+        """
+        One the database import is done, handle the interface processes that result
+
+        This is a separate function so I can connect it to happen once the database
+        finishes rather than locking up the interface
+
+        :param results: Output of db.import_bibtex
+        :type results: tuple
+        :return: None
+        """
         # this just adds papers to the database, and doesn't add them to the interface.
         # We must figure out which papers are new and add them
         current_bibcodes = set([p.bibcode for p in self.papersList.getPapers()])
