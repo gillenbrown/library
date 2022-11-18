@@ -806,7 +806,9 @@ class Database(object):
 
         # now that we have the info, try to find the paper. Look for the DOI, then the
         # arXiv ID, then in the last case try to find it based on the journal info
-        if "adsurl" in paper_data:
+        if "doi" in paper_data:
+            bibcode = ads_call.get_bibcode(paper_data["doi"])
+        elif "adsurl" in paper_data:
             bibcode = ads_call.get_bibcode(paper_data["adsurl"])
         elif "eprint" in paper_data:
             bibcode = ads_call.get_bibcode(paper_data["eprint"])

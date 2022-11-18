@@ -25,6 +25,7 @@ mine = PaperDict(
     journal="The Astrophysical Journal",
     volume=864,
     page=94,
+    doi="10.3847/1538-4357/aad595",
     abstract=(
         "We investigate the possible connection between the most massive globular "
         "clusters, such as ω Cen and M54, and nuclear star clusters (NSCs) of "

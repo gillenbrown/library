@@ -1459,6 +1459,7 @@ def test_import_cite_key_is_shown_correctly(qtbot, db_empty, monkeypatch):
     monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
     widget = cInitialize(qtbot, db_empty)
     cClick(widget.importButton, qtbot)
+    file_loc.unlink()
     cClick(widget.papersList.getPapers()[0], qtbot)
     assert widget.rightPanel.citeKeyText.text() == "Citation Keyword: test"
 

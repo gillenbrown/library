@@ -22,6 +22,17 @@ def test_cache_no_extra_queries_with_same_arxiv_to_bibcode_query():
     assert queries_new == queries_start
 
 
+def test_cache_no_extra_queries_with_same_doi():
+    # here I'll query the same pre-existing paper with multiple URLs to ensure that
+    # the caching is working as expected. I first have to make sure everything is in
+    # the cache, so I need to do all needed searches, then I can duplicate them
+    _ = ads_call.get_bibcode(u.mine.doi)
+    queries_start = ads_call.num_queries
+    _ = ads_call.get_bibcode(u.mine.doi)
+
+    assert ads_call.num_queries == queries_start
+
+
 def test_cache_no_extra_queries_for_same_full_info_from_bibcode_query():
     # here I'll query the same pre-existing paper twoce to make sure that the caching
     # is working as expected. I first have to make sure everything is in the cache,
@@ -40,48 +51,49 @@ def test_cache_no_extra_queries_for_same_full_info_from_bibcode_query():
 #
 # ======================================================================================
 def test_get_correct_bibcode_from_ads_url():
-    bibcode = ads_call.get_bibcode(u.mine.ads_url)
-    assert bibcode == u.mine.bibcode
+    assert ads_call.get_bibcode(u.mine.ads_url) == u.mine.bibcode
 
 
 def test_get_correct_bibcode_from_ads_url_with_and_symbol():
-    bibcode = ads_call.get_bibcode(u.krumholz.url)
-    assert bibcode == u.krumholz.bibcode
+    assert ads_call.get_bibcode(u.krumholz.url) == u.krumholz.bibcode
 
 
 def test_get_correct_bibcode_from_ads_bibcode():
-    bibcode = ads_call.get_bibcode(u.mine.bibcode)
-    assert bibcode == u.mine.bibcode
+    assert ads_call.get_bibcode(u.mine.bibcode) == u.mine.bibcode
 
 
 def test_get_correct_bibcode_from_arxiv_id():
-    bibcode = ads_call.get_bibcode(u.mine.arxiv_id)
-    assert bibcode == u.mine.bibcode
+    assert ads_call.get_bibcode(u.mine.arxiv_id) == u.mine.bibcode
 
 
 def test_get_correct_bibcode_from_arxiv_url():
-    bibcode = ads_call.get_bibcode(u.mine.arxiv_url)
-    assert bibcode == u.mine.bibcode
+    assert ads_call.get_bibcode(u.mine.arxiv_url) == u.mine.bibcode
 
 
 def test_get_correct_bibcode_from_arxiv_url_v2():
-    bibcode = ads_call.get_bibcode(u.mine.arxiv_url_v2)
-    assert bibcode == u.mine.bibcode
+    assert ads_call.get_bibcode(u.mine.arxiv_url_v2) == u.mine.bibcode
 
 
 def test_get_correct_bibcode_from_arxiv_pdf_url():
-    bibcode = ads_call.get_bibcode(u.mine.arxiv_pdf_url)
-    assert bibcode == u.mine.bibcode
+    assert ads_call.get_bibcode(u.mine.arxiv_pdf_url) == u.mine.bibcode
 
 
 def test_get_correct_bibcode_from_arxiv_pdf_url_v2():
-    bibcode = ads_call.get_bibcode(u.mine.arxiv_pdf_url_v2)
-    assert bibcode == u.mine.bibcode
+    assert ads_call.get_bibcode(u.mine.arxiv_pdf_url_v2) == u.mine.bibcode
+
+
+def test_get_correct_bibcode_from_doi():
+    assert ads_call.get_bibcode(u.mine.doi) == u.mine.bibcode
 
 
 def test_raises_error_for_unrecognized_identifier():
     with pytest.raises(ValueError):
         ads_call.get_bibcode("www.wrong.com")
+
+
+def test_raises_error_for_doi_that_doesnt_exist_on_ads():
+    with pytest.raises(ValueError):
+        ads_call.get_bibcode("10.1000/182")
 
 
 def test_raises_error_for_arxiv_paper_not_on_ads():

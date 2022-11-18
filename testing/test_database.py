@@ -1164,17 +1164,39 @@ def test_import_malformed_bibtex_fails(db_empty):
 
 
 def test_import_single_good_paper_with_adsurl_adds_to_database(db_empty):
-    file_loc = create_bibtex(u.mine.bibtex)
+    bibtex = u.mine.bibtex
+    for to_replace in [
+        "          doi = {10.3847/1538-4357/aad595},\n",
+        "       eprint = {1804.09819},\n",
+    ]:
+        bibtex = bibtex.replace(to_replace, "")
+
+    file_loc = create_bibtex(bibtex)
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert db_empty.get_all_bibcodes() == [u.mine.bibcode]
+
+
+def test_import_single_good_paper_with_doi_adds_to_database(db_empty):
+    bibtex = u.mine.bibtex
+    for to_replace in [
+        "       adsurl = {https://ui.adsabs.harvard.edu/abs/2018ApJ...864...94B},\n",
+        "       eprint = {1804.09819},\n",
+    ]:
+        bibtex = bibtex.replace(to_replace, "")
+    file_loc = create_bibtex(bibtex)
     db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
     assert db_empty.get_all_bibcodes() == [u.mine.bibcode]
 
 
 def test_import_single_good_paper_with_arxivid_adds_to_database(db_empty):
-    bibtex = u.mine.bibtex.replace(
-        "       adsurl = {https://ui.adsabs.harvard.edu/abs/2018ApJ...864...94B},\n", ""
-    )
-    bibtex = bibtex.replace("          doi = {10.3847/1538-4357/aad595},\n", "")
+    bibtex = u.mine.bibtex
+    for to_replace in [
+        "          doi = {10.3847/1538-4357/aad595},\n",
+        "       adsurl = {https://ui.adsabs.harvard.edu/abs/2018ApJ...864...94B},\n",
+    ]:
+        bibtex = bibtex.replace(to_replace, "")
     file_loc = create_bibtex(bibtex)
     db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
@@ -1353,18 +1375,19 @@ def test_import_return_tuple_two_good_one_failure_one_duplicate(db_empty):
 
 def test_import_return_tuple_could_not_identify_paper(db_empty):
     # modify a bibtex file to be unidentifiable
-    file_loc = create_bibtex(
-        "@ARTICLE{1957RvMP...29..547B,\n"
-        " author = {{Burbidge}, E. Margaret},\n"
-        '  title = "{Synthesis of the Elements in Stars},"\n'
-        "journal = {Reviews of Modern Physics},\n"
-        "   year = 1957,\n"
-        "}"
-    )
+    bibtex = u.mine.bibtex
+    for to_replace in [
+        "          doi = {10.3847/1538-4357/aad595},\n",
+        "       eprint = {1804.09819},\n",
+        "       adsurl = {https://ui.adsabs.harvard.edu/abs/2018ApJ...864...94B},\n",
+    ]:
+        bibtex = bibtex.replace(to_replace, "")
+    file_loc = create_bibtex(bibtex)
     results = db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
     results[3].unlink()  # remove failure file
     assert results[:3] == (0, 0, 1)
+    assert db_empty.get_all_bibcodes() == []
 
 
 def test_import_failure_file_created_for_failure_in_correct_location(db_empty):

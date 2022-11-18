@@ -20,6 +20,7 @@ class ADSWrapper(object):
         # we access the same paper many times.
         self._info_from_bibcode = dict()
         self._bibcode_from_arxiv_id = dict()
+        self._bibcode_from_doi = dict()
         self.num_queries = 0  # track this for debugging/testing purposes
 
     def get_info(self, bibcode):
@@ -136,6 +137,33 @@ class ADSWrapper(object):
 
             return bibcode
 
+    def _get_bibcode_from_doi(self, doi):
+        """
+        Get the ADS bibcode of a paper based on the DOI.
+
+        :param doi: DOIof the paper.
+        :type doi: str
+        :return: ADS bibcode of the paper.
+        :rtype: str
+        """
+        # try to get it from the cache first
+        try:
+            return self._bibcode_from_doi[doi]
+        except KeyError:
+            self.num_queries += 1
+
+            # we'll need to double check that the DOI exists
+            try:
+                query = ads.SearchQuery(q="doi:{}".format(doi), fl=["bibcode"])
+                bibcode = list(query)[0].bibcode
+            except IndexError:  # not found on ADS
+                raise ValueError(f"DOI {doi} not on ADS!")
+
+            # store it in the cache
+            self._bibcode_from_doi[doi] = bibcode
+
+            return bibcode
+
     def get_bibcode(self, identifier):
         """
         Get the bibcode of a paper based on one of many ways to access a paper.
@@ -166,6 +194,9 @@ class ADSWrapper(object):
             arxiv_id = re.search(arxiv_id_re, identifier).group()
             # then run the query
             return self._get_bibcode_from_arxiv(arxiv_id)
+        # see if it looks like a DOI
+        elif identifier.startswith("10.") and "/" in identifier:
+            return self._get_bibcode_from_doi(identifier)
         # check if it looks like an ADS URL
         elif "ui.adsabs.harvard.edu/abs/" in identifier:
             # first get the bibcode from the URL. This is always the thing after "abs"
