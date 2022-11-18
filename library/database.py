@@ -671,12 +671,18 @@ class Database(object):
                     out_file.write(self.get_paper_attribute(bibcode, "bibtex"))
                     out_file.write("\n")
 
-    def import_bibtex(self, file_name):
+    def import_bibtex(self, file_name, update_progress_bar=None):
         """
         Import papers from a bibtex file into the database
 
         :param file_name: The location of the bibtex file to import
         :type file_name: pathlib.Path
+        :param update_progress_bar: A function that can be called to update a progress
+                                    bar. This must be previously initialized to be the
+                                    number of lines in the file. In this function, we
+                                    will call the function passed in here with the line
+                                    number of the current line to update the progressbar
+        :type update_progress_bar: func
         :return: A tuple indicating the results of what happened. First is the number
                  of papers added successfully, then the number of papers that were
                  already in the database (this can include duplicate papers within the
@@ -711,6 +717,7 @@ class Database(object):
 
         results = {"success": 0, "duplicate": 0, "failure": 0}
         current_entry = ""
+        line_number = 0
         for line in bibfile:
             # once we get to the beginning of a new entry, add the current entry to
             # the database. Otherwise, keep track of the current entry
@@ -724,6 +731,11 @@ class Database(object):
                 current_entry = line
             else:
                 current_entry += line
+
+            if update_progress_bar is not None:
+                line_number += 1
+                update_progress_bar(line_number)
+
         # handle the final entry
         if current_entry.strip() != "":
             results[self._parse_bibtex_entry(current_entry, new_tag, failure_file)] += 1

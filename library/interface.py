@@ -67,6 +67,7 @@ def qss_trigger(object, property, value):
 # implemented that doesn't work. So they need a separate class
 class WorkerSignals(QObject):
     finished = Signal(tuple)
+    progress = Signal(int)
 
 
 class Worker(QRunnable):
@@ -1805,12 +1806,13 @@ class MainWindow(QMainWindow):
         self.importButton = QPushButton("Import from BibTeX")
         self.importButton.setObjectName("import_button")
         self.importButton.clicked.connect(self.importBibtex)
-        # set up the worker that will be used to put the import into a new thread
-        self.importWorker = Worker(self.db.import_bibtex)
-        self.importWorker.signals.finished.connect(self.finishImportBibtex)
         # also the progressbar
         self.importProgressBar = QProgressBar()
         self.importProgressBar.hide()
+        # set up the worker that will be used to put the import into a new thread
+        self.importWorker = Worker(self.db.import_bibtex)
+        self.importWorker.signals.finished.connect(self.finishImportBibtex)
+        self.importWorker.signals.progress.connect(self.importProgressBar.setValue)
         # and some text to show the result of the import and a button to dismiss that
         # these will be hidden to start
         self.importResultText = QLabel()
@@ -1993,15 +1995,28 @@ class MainWindow(QMainWindow):
         self.importButton.hide()
         self.importResultText.setText("Please wait until the import finishes")
         self.importResultText.show()
-        self.importProgressBar.show()
         # disable the main parts of the interface so the user just waits
         self.splitter.setEnabled(False)
+
+        # handle the initial state of the progressbar, including setting the maximum val
+        self.importProgressBar.setValue(0)
+        n_lines = 0
+        with open(file_loc, "r") as in_file:
+            for line in in_file:
+                n_lines += 1
+        self.importProgressBar.setMaximum(n_lines)
+        self.importProgressBar.show()
 
         # then import this file
         # Need to use a worker for this to put it in the background. When it finishes,
         # it will pass the result to the finishImportBibtex function (as defined in the
         # mainWindow __init__)
-        self.importWorker.args = [Path(file_loc)]
+        self.importWorker.args = [  # set the arguments for the db.import_bibtex
+            Path(file_loc),  # file to read
+            self.importWorker.signals.progress.emit,  # progress bar update
+            # this signal was connected to the progress bar setValue in the mainWindow
+            # init where the importWorker was created
+        ]
         self.threadpool.start(self.importWorker)
 
     def finishImportBibtex(self, results):

@@ -1226,6 +1226,40 @@ def test_import_hides_search_bar_buttons_during(qtbot, db_empty, monkeypatch):
     file_loc.unlink()  # delete before tests may fail
 
 
+def test_import_progressbar_starts_at_zero(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+        assert widget.importProgressBar.value() == 0
+    file_loc.unlink()  # delete before tests may fail
+
+
+def test_import_progressbar_has_correct_max_value(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    n_lines = len(open(file_loc, "r").readlines())
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+        assert widget.importProgressBar.value() == 0
+        assert widget.importProgressBar.maximum() == n_lines
+    file_loc.unlink()  # delete before tests may fail
+
+
+def test_import_progressbar_ends_at_number_of_lines(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    # I don't want to end at the maximum since after this finishes we still need to
+    # add papers to the interface and such.
+    assert widget.importProgressBar.value() == widget.importProgressBar.maximum()
+
+
 def test_import_shows_results_text_after(qtbot, db_empty, monkeypatch):
     file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
     monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)

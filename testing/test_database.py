@@ -1481,3 +1481,11 @@ def test_import_citation_keyword_is_bibcode_if_user_gives_duplicate_key(db_empty
         db_empty.get_paper_attribute(u.mine.bibcode, "citation_keyword")
         == u.mine.bibcode
     )
+
+
+def test_import_progress_bar_is_updated(db_empty):
+    file_loc = create_bibtex(u.mine.bibtex)
+    update_calls = []
+    db_empty.import_bibtex(file_loc, lambda x: update_calls.append(x))
+    file_loc.unlink()  # delete before tests may fail
+    assert update_calls == list(range(1, 20))
