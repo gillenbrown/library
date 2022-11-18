@@ -1582,6 +1582,22 @@ def test_import_cite_key_is_shown_correctly(qtbot, db_empty, monkeypatch):
     assert widget.rightPanel.citeKeyText.text() == "Citation Keyword: test"
 
 
+def test_import_twice_is_possible(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+    cClick(widget.importResultDismissButton, qtbot)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+    file_loc.unlink()
+    assert (
+        widget.importResultText.text()
+        == "Import results: 1 paper found, 1 duplicate skipped"
+    )
+
+
 # ======================================================================================
 #
 # test right panel

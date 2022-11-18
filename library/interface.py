@@ -89,6 +89,7 @@ class Worker(QRunnable):
         self.args = args
         self.kwargs = kwargs
         self.signals = WorkerSignals()
+        self.setAutoDelete(False)  # allows us to reuse a worker
 
     @Slot()  # QtCore.Slot
     def run(self):  # pragma: no cover
@@ -2011,12 +2012,12 @@ class MainWindow(QMainWindow):
         # Need to use a worker for this to put it in the background. When it finishes,
         # it will pass the result to the finishImportBibtex function (as defined in the
         # mainWindow __init__)
-        self.importWorker.args = [  # set the arguments for the db.import_bibtex
-            Path(file_loc),  # file to read
-            self.importWorker.signals.progress.emit,  # progress bar update
+        self.importWorker.kwargs = {  # set the arguments for the db.import_bibtex
+            "file_name": Path(file_loc),
+            "update_progress_bar": self.importWorker.signals.progress.emit,
             # this signal was connected to the progress bar setValue in the mainWindow
             # init where the importWorker was created
-        ]
+        }
         self.threadpool.start(self.importWorker)
 
     def finishImportBibtex(self, results):
