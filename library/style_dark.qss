@@ -1,32 +1,37 @@
 /*be explicit about default background color*/
 QWidget{
-    background-color: #ECECEC;
+    background-color: #333333;
     font-family: Cabin;
     font-size: 14pt;
-    color: black;
+    color: #DDDDDD;
+}
+
+QScrollArea{
+    border: 1px solid #555555;
 }
 
 /* tweak appearance of some widgets */
 QLineEdit{
-    background-color: #F7F7F7;
+    background-color: #555555;
     border-radius: 0.5em;
     padding-left: 0.5em;
+    border: 1px solid #888888;
 }
 QTextEdit{
-    background-color: #F7F7F7;
+    background-color: #555555;
     border-radius: 0.5em;
     padding-left: 0.5em;
-    border: 1px solid #BBBBBB;
+    border: 1px solid #888888;
 }
 QPushButton{
-    background-color: #F7F7F7;
+    background-color: #555555;
     padding-left: 0.5em;
     padding-right: 0.5em;
-    border: 1px solid #BBBBBB;
+    border: 1px solid #888888;
     border-radius: 0.5em;
 }
 QPushButton:hover {
-  border: 1px solid black;
+  border: 1px solid #DDDDDD;
 }
 
 /* make the add button even more obvious */
@@ -36,7 +41,7 @@ QPushButton#add_button{
     padding-right: 1em;
 }
 QPushButton#add_button:hover {
-    border: 2px solid black;
+    border: 2px solid #DDDDDD;
 }
 
 /* Make the title really big, and some other text larger too */
@@ -75,40 +80,40 @@ QLabel#right_panel_tagText{
 /* since it inherite the default grey background */
 Paper[is_highlighted=true]{
     padding-left: 1pt;
-    border-left: 3px solid black;
-    background-color: #F7F7F7;
+    border-left: 3px solid #DDDDDD;
+    background-color: #555555;
 }
 
 Paper[is_highlighted=false]{
     padding-left: 1pt;
-    border-left: 3px solid #ECECEC;
-    background-color: #ECECEC;
+    border-left: 3px solid #333333;
+    background-color: #333333;
 }
 
 QLabel#center_panel_paper_title[is_highlighted=true]{
-    background-color: #F7F7F7;
+    background-color: #555555;
 }
 
 QLabel#center_panel_paper_title[is_highlighted=false]{
-    background-color: #ECECEC;
+    background-color: #333333;
 }
 
 QLabel#center_panel_cite_string[is_highlighted=true]{
-    background-color: #F7F7F7;
+    background-color: #555555;
 }
 
 QLabel#center_panel_cite_string[is_highlighted=false]{
-    background-color: #ECECEC;
+    background-color: #333333;
 }
 
 /* Have some formatting when the user enters an invalid paper */
 QLabel[error_text=true]{
-    color: #FF0000;
+    color: #FF5555;
 }
 
 QLineEdit[error=true]{
-    background-color: #FFCCCC;
-    border-color: #FF0000;
+    background-color: #553333;
+    border-color: #FF5555;
     border-radius: 0.5em;
     padding-left: 0.5em;
 }
@@ -116,21 +121,21 @@ QLineEdit[error=true]{
 /* Make the tags change color when selected */
 LeftPanelTag[is_highlighted=true]{
     padding-left: 1pt;
-    border-left: 3px solid black;
-    background-color: #F7F7F7;
+    border-left: 3px solid #DDDDDD;
+    background-color: #555555;
 }
 LeftPanelTag[is_highlighted=false]{
     padding-left: 1pt;
-    border-left: 3px solid #ECECEC;
-    background-color: #ECECEC;
+    border-left: 3px solid #333333;
+    background-color: #333333;
 }
 
 QLabel[is_tag=true][is_highlighted=true]{
-    background-color: #F7F7F7;
+    background-color: #555555;
 }
 
 QLabel[is_tag=true][is_highlighted=false]{
-    background-color: #ECECEC;
+    background-color: #333333;
 }
 
 /* Adjust the buttons in the left panel, since their spacing needs to be different */
@@ -141,14 +146,14 @@ QWidget[is_left_panel_item=true]{
 
 /* Make some buttons that delete papers or tags red, to warn the user */
 QPushButton[delete_button=true]{
-    background-color: #FFCCCC;
+    background-color: #553333;
 }
 QPushButton[delete_button=true]:hover{
-    border: 3px dashed red;
+    border: 3px dashed #FF5555;
 }
 
 QPushButton[delete_cancel_button=true]{
-    background-color: #F3FFF3;
+    background-color: #334033;
 }
 
 /* Adjust the sizing of the tag checkbox holder, so that it doesn't take up space */
@@ -164,27 +169,27 @@ TagCheckBox{
 
 /* Format the spacers */
 HorizontalLine{
-    color: #BBBBBB;
+    color: #888888;
 }
 
 /* Style the ComboBox used to choose the sort order */
 QComboBox{
-    border: 1px solid #BBBBBB;
-    border-radius: 10px;
+    border: 1px solid #888888;
+    border-radius: 0.5em;
     margin-right: 16px;
     margin-top: 0.5em;
     padding-left: 0.5em;
-    background-color: #F7F7F7;
+    background-color: #555555;
 }
 
 QComboBox::drop-down{ /* the area hosting the arrow */
-    border: 0px solid black;
+    border: 0px solid #DDDDDD;
     border-radius: 0.5em;
-    background-color: #F7F7F7;
+    background-color: #555555;
 }
 
 QComboBox::down-arrow { /* The arrow itself */
-    image: url(library/resources/drop-down-arrow.png);
+    image: url(library/resources/drop-down-arrow-light.png);
     border-radius: 0.5em;
     margin-right: 11px;
     margin-top: 2px;
@@ -193,28 +198,28 @@ QComboBox::down-arrow { /* The arrow itself */
 }
 
 QComboBox::hover{
-    border: 1px solid black;
+    border: 1px solid #DDDDDD;
 }
 
 QComboBox QAbstractItemView {  /* the popup */
     padding-left: 0.5em;
     padding-right: 0.5em;
-    border: 1px solid black;
-    border-radius: 0.5em;
-    background-color: #F7F7F7;
-    color: #555555;
-    selection-color: black;
+    border: 1px solid #DDDDDD;
+    border-radius: 0.35em;  /* can't be too big or we get weird border effects */
+    background-color: #333333;
+    color: #AAAAAA;
+    selection-color: #DDDDDD;
 }
 
 /* The PDF section highlighting */
 QLabel[pdf_highlight=true]{
-    color: darkred;
+    color: #FF5555;
 }
 QPushButton[pdf_highlight=true]{
-    border: 2px solid darkred;
+    border: 2px solid #FF5555;
 }
 QPushButton[pdf_highlight=true]:hover {
-    border: 2px solid black;
+    border: 2px solid #DDDDDD;
 }
 
 /* Format scrollbar. This actually turned out to be tricky
@@ -230,7 +235,7 @@ QScrollBar:vertical {
     width: 6px;
 }
 QScrollBar::handle:vertical {
-    background-color: #BBBBBB;
+    background-color: #888888;
     min-height: 20px;
     border-radius: 3px;
 }
@@ -238,8 +243,8 @@ QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical{
     border: 0;
     width: 0px;
     height: 0px;
-    color: #ECECEC;
-    background-color: #ECECEC;
+    color: #333333;
+    background-color: #333333;
 }
 /* I shouldn't ever show horizontal scrollbars, but format them nicely if
    they do show up */
@@ -247,7 +252,7 @@ QScrollBar:horizontal {
     height: 6px;
 }
 QScrollBar::handle:horizontal {
-    background-color: #BBBBBB;
+    background-color: #888888;
     min-width: 20px;
     border-radius: 3px;
 }
@@ -255,6 +260,6 @@ QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal{
     border: 0;
     width: 0px;
     height: 0px;
-    color: #ECECEC;
-    background-color: #ECECEC;
+    color: #333333;
+    background-color: #333333;
 }
