@@ -97,6 +97,10 @@ As discussed above, you can edit the tags a given paper has after clicking it.  
 
 Whenever you have a tag selected in the left panel, there is an export button shown. When pressed, this saves a `.bib` file containing all the BibTeX entries for papers with this tag. This file can then be used directly in a LaTeX document.
 
+### Dark Mode
+
+On startup, the code will detect whether your OS is using dark or light mode, and match the interface theme accordingly. You can switch the theme by clicking the Library logo in the top left. 
+
 ### One final note...
 
 All the data used in this application (including the list of papers, your user notes, the locations of the PDFs, and the tags assigned to each paper) are stored in a database in the code directory called `USER_DATA_DO_NOT_DELETE.db`. As the name suggests, you'll lose everything if you delete this file. You may want to keep it backed up. 
