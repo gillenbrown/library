@@ -2,13 +2,13 @@ from pathlib import Path
 import requests
 
 import ads.exceptions
-from PySide6.QtCore import Qt, QEvent, QPoint, QTimer
+import darkdetect
+from PySide6.QtCore import Qt, QEvent, QTimer
 from PySide6.QtGui import (
     QFontDatabase,
     QDesktopServices,
     QGuiApplication,
     QTextCursor,
-    QPalette,
 )
 from PySide6.QtWidgets import (
     QWidget,
@@ -1727,10 +1727,18 @@ class ThemeSwitcherText(QLabel):
 
     def __init__(self, text, main):
         super().__init__(text)
-        # initialize to dark, then click to switch to light
-        self.theme = "dark"
         self.main = main
-        self.mousePressEvent(None)
+        self.theme = darkdetect.theme().lower()
+        self.applyTheme()
+
+    def applyTheme(self):
+        """
+        Call the qss file to apply the theme to the interface
+
+        :return: None
+        """
+        with open(Path(__file__).parent / f"style_{self.theme}.qss", "r") as style_file:
+            self.main.setStyleSheet(style_file.read())
 
     def mousePressEvent(self, event):
         """
@@ -1743,9 +1751,7 @@ class ThemeSwitcherText(QLabel):
             self.theme = "light"
         else:
             self.theme = "dark"
-
-        with open(Path(__file__).parent / f"style_{self.theme}.qss", "r") as style_file:
-            self.main.setStyleSheet(style_file.read())
+        self.applyTheme()
 
 
 class MainWindow(QMainWindow):
