@@ -6,11 +6,16 @@ QWidget{
     color: black;
 }
 
+QScrollArea{
+    border: 1px solid #BBBBBB;
+}
+
 /* tweak appearance of some widgets */
 QLineEdit{
     background-color: #F7F7F7;
     border-radius: 0.5em;
     padding-left: 0.5em;
+    border: 1px solid #BBBBBB;
 }
 QTextEdit{
     background-color: #F7F7F7;
@@ -184,7 +189,7 @@ QComboBox::drop-down{ /* the area hosting the arrow */
 }
 
 QComboBox::down-arrow { /* The arrow itself */
-    image: url(library/resources/drop-down-arrow.png);
+    image: url(library/resources/drop-down-arrow-dark.png);
     border-radius: 0.5em;
     margin-right: 11px;
     margin-top: 2px;
@@ -200,8 +205,8 @@ QComboBox QAbstractItemView {  /* the popup */
     padding-left: 0.5em;
     padding-right: 0.5em;
     border: 1px solid black;
-    border-radius: 0.5em;
-    background-color: #F7F7F7;
+    border-radius: 0.35em;  /* can't be too big or we get weird border effects */
+    background-color: #ECECEC;
     color: #555555;
     selection-color: black;
 }

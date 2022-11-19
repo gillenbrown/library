@@ -1161,6 +1161,8 @@ class PapersListScrollArea(ScrollArea):
         self.sortChooser.addItems(["Sort by Date", "Sort by First Author"])
         self.sortChooser.setFixedWidth(200)
         self.sortChooser.currentTextChanged.connect(self.changeSort)
+        # make the popup window transparent, so the round border works
+        self.sortChooser.view().window().setWindowFlag(Qt.FramelessWindowHint)
         # Don't add the sortChooser to the layout. Instead, just set it as a child of
         # the papersList. That will allow it to float on top
         self.sortChooser.setParent(self)
