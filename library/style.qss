@@ -3,6 +3,7 @@ QWidget{
     background-color: #ECECEC;
     font-family: Cabin;
     font-size: 14pt;
+    color: black;
 }
 
 /* tweak appearance of some widgets */
