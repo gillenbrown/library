@@ -1,5 +1,5 @@
-[![Tests](https://github.com/gillenbrown/library/actions/workflows/tests.yaml/badge.svg)](https://github.com/gillenbrown/library/actions/workflows/tests.yaml)
-[![Coverage Status](https://coveralls.io/repos/github/gillenbrown/library/badge.svg)](https://coveralls.io/github/gillenbrown/library)
+[![Tests](https://github.com/gillenbrown/library/actions/workflows/tests.yaml/badge.svg?branch=master)](https://github.com/gillenbrown/library/actions/workflows/tests.yaml)
+[![Coverage Status](https://coveralls.io/repos/github/gillenbrown/library/badge.svg?branch=master)](https://coveralls.io/github/gillenbrown/library?branch=master)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 
@@ -40,10 +40,12 @@ These tests will take a few minutes. The interface may briefly appear in several
 
 ## Installation Troubleshooting
 
-### ADS_DEV_KEY
-If most (but not all) tests failed, you may not have set the ADS key correctly. To check, run `echo $ADS_DEV_KEY` in the terminal. If things are set up correctly, that command will output the string of random numbers and letters given to you by ADS. If not, make sure you're setting that as an environment variable.
+Here are some issues some users have encountered, along with their solutions. 
 
-### Duplicate Qt Libraries
+### Lots of tests failing
+If most (but not all) tests failed, you may not have set the ADS key correctly. To check, run `echo $ADS_DEV_KEY` in the terminal. If things are set up correctly, that command will output the string of random numbers and letters given to you by ADS. If not, make sure you're setting that as an environment variable. In your `.bashrc` file (or equivalent, if you use a different shell), add `export ADS_DEV_KEY=long_ads_key_here`. Then re-source the rc file: `source .bashrc`. The `echo` command above then should work. 
+
+### Fatal Python error
 If you encounter a fatal Python error after a handful of tests from `test_interface.py` run, you may have an issue with a duplicate version of `Qt` in your path (this is the library I use to create the GUI). This is installed by the pip install command above (bundled with the PySide6 library), but Python may be using a different version if you have a duplicate. In particular, this can happen if you use Anaconda to manage your Python environment. To check if this is the issue, run `conda list | grep qt`. If you see `qt` or `qt-main`, those are likely the issue. (Note that seeing `pytest-qt` is fine; that package is used for the tests). The simplest way to fix this is to create a new conda environment. If you're unfamiliar with these, they're basically a way to have self-contained Python installations ([see here](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html) for more info). Here are the terminal commands to set this up:
 ```
 conda create -n library python=3
