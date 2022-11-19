@@ -1732,7 +1732,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         # Set up default stylesheets
-        with open(Path(__file__).parent / "style.qss", "r") as style_file:
+        with open(Path(__file__).parent / "style_light.qss", "r") as style_file:
             self.setStyleSheet(style_file.read())
 
         self.db = db
