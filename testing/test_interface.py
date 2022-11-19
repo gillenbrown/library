@@ -16,8 +16,9 @@ import pytestqt
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFontDatabase, QDesktopServices, QGuiApplication, QPalette
 from PySide6.QtWidgets import QFileDialog, QLineEdit, QTextEdit, QScrollArea
+import darkdetect
 
-from library.interface import MainWindow, get_fonts, set_up_fonts, Paper, LeftPanelTag
+from library.interface import MainWindow, get_fonts, set_up_fonts, Paper
 from library.database import Database
 import test_utils as u
 
@@ -602,10 +603,18 @@ def test_first_paper_takes_up_full_splitter_width(qtbot, db_empty):
 # ====================
 # light and dark theme
 # ====================
-def test_light_theme_selected_at_start(qtbot, db):
+def test_initial_theme_matches_os_theme_light(qtbot, db, monkeypatch):
+    monkeypatch.setattr(darkdetect, "theme", lambda: "Light")
     widget = cInitialize(qtbot, db)
     color = widget.title.palette().color(QPalette.WindowText).toRgb().toTuple()
     assert color == (0, 0, 0, 255)
+
+
+def test_initial_theme_matches_os_theme_dark(qtbot, db, monkeypatch):
+    monkeypatch.setattr(darkdetect, "theme", lambda: "Dark")
+    widget = cInitialize(qtbot, db)
+    color = widget.title.palette().color(QPalette.WindowText).toRgb().toTuple()
+    assert color == (221, 221, 221, 255)
 
 
 def test_dark_theme_activated_when_title_clicked(qtbot, db):
