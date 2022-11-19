@@ -14,7 +14,7 @@ os.environ["QT_QPA_PLATFORM"] = "offscreen"
 import pytest
 import pytestqt
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QFontDatabase, QDesktopServices, QGuiApplication
+from PySide6.QtGui import QFontDatabase, QDesktopServices, QGuiApplication, QPalette
 from PySide6.QtWidgets import QFileDialog, QLineEdit, QTextEdit, QScrollArea
 
 from library.interface import MainWindow, get_fonts, set_up_fonts, Paper, LeftPanelTag
@@ -597,6 +597,30 @@ def test_first_paper_takes_up_full_splitter_width(qtbot, db_empty):
     paper_width = widget.papersList.getPapers()[0].width()
     splitter_width = widget.splitter.sizes()[1]
     assert paper_width == splitter_width
+
+
+# ====================
+# light and dark theme
+# ====================
+def test_light_theme_selected_at_start(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    color = widget.title.palette().color(QPalette.WindowText).toRgb().toTuple()
+    assert color == (0, 0, 0, 255)
+
+
+def test_dark_theme_activated_when_title_clicked(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    cClick(widget.title, qtbot)
+    color = widget.title.palette().color(QPalette.WindowText).toRgb().toTuple()
+    assert color == (221, 221, 221, 255)
+
+
+def test_theme_switches_each_click(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    cClick(widget.title, qtbot)
+    cClick(widget.title, qtbot)
+    color = widget.title.palette().color(QPalette.WindowText).toRgb().toTuple()
+    assert color == (0, 0, 0, 255)
 
 
 # ======================================================================================
