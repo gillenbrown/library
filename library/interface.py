@@ -1626,7 +1626,52 @@ class TagsListScrollArea(ScrollArea):
         self.main.splitter.setSizes(new_sizes)
 
 
-class EasyExitLineEdit(QLineEdit):
+class PlaceHolderColorLineEdit(QLineEdit):
+    """
+    A QLineEdit, but one that enforces transparent text for placeholder text
+
+    With a regular QLineEdit using stylesheets, the placeholder text is the same color
+    as regular text, which is not useful
+    """
+
+    def __init__(self):
+        super().__init__()
+        qss_trigger(self, "transparent", True)
+
+    def _setTransparency(self):
+        """
+        If there is no text, set it to be transparent.
+
+        :return: None
+        """
+        if self.text() == "":
+            qss_trigger(self, "transparent", True)
+        else:
+            qss_trigger(self, "transparent", False)
+
+    def keyPressEvent(self, keyPressEvent):
+        """
+        Handle a keyPressEvent, and make the placeholder transparent if needed
+
+        :param keyPressEvent: The key press event
+        :type keyPressEvent: PySide6.QtGui.QKeyEvent
+        :return: None
+        """
+        super().keyPressEvent(keyPressEvent)
+        self._setTransparency()
+
+    def setText(self, text):
+        """
+        Set the text in the field, and set transparency appropriately
+        :param text: Text to put in this field
+        :type text: str
+        :return: None
+        """
+        super().setText(text)
+        self._setTransparency()
+
+
+class EasyExitLineEdit(PlaceHolderColorLineEdit):
     """
     Just like a lineEdit, but they can call a function (which should exit) with escape
     or backspace when all text is empty
@@ -1771,7 +1816,7 @@ class MainWindow(QMainWindow):
         self.title = ThemeSwitcherText("Library", self)
         self.title.setObjectName("big_title")
         # then the search bar
-        self.searchBar = QLineEdit()
+        self.searchBar = PlaceHolderColorLineEdit()
         self.searchBar.setPlaceholderText("Enter your paper URL or ADS bibcode here")
         self.searchBar.setProperty("error", False)
         # and have some text if there's an error
