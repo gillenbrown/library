@@ -8,6 +8,7 @@ from PySide6.QtGui import (
     QDesktopServices,
     QGuiApplication,
     QTextCursor,
+    QPalette,
 )
 from PySide6.QtWidgets import (
     QWidget,
@@ -1719,6 +1720,34 @@ class EasyExitTextEdit(QTextEdit):
             super().keyPressEvent(keyPressEvent)
 
 
+class ThemeSwitcherText(QLabel):
+    """
+    Normal QLabel, but it will change the theme when clicked
+    """
+
+    def __init__(self, text, main):
+        super().__init__(text)
+        # initialize to dark, then click to switch to light
+        self.theme = "dark"
+        self.main = main
+        self.mousePressEvent(None)
+
+    def mousePressEvent(self, event):
+        """
+        Handle the theme switching
+
+        :param event: the mouse click event, which I ignore
+        :return: None
+        """
+        if self.theme == "dark":
+            self.theme = "light"
+        else:
+            self.theme = "dark"
+
+        with open(Path(__file__).parent / f"style_{self.theme}.qss", "r") as style_file:
+            self.main.setStyleSheet(style_file.read())
+
+
 class MainWindow(QMainWindow):
     """
     Main window object holding everything needed in the interface.
@@ -1732,10 +1761,6 @@ class MainWindow(QMainWindow):
         :type db: library.database.Database
         """
         super().__init__()
-
-        # Set up default stylesheets
-        with open(Path(__file__).parent / "style_light.qss", "r") as style_file:
-            self.setStyleSheet(style_file.read())
 
         self.db = db
 
@@ -1751,7 +1776,7 @@ class MainWindow(QMainWindow):
         vBoxMain.setSpacing(5)
 
         # The title is first
-        self.title = QLabel("Library")
+        self.title = ThemeSwitcherText("Library", self)
         self.title.setObjectName("big_title")
         # then the search bar
         self.searchBar = QLineEdit()
