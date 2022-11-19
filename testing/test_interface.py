@@ -626,14 +626,14 @@ def test_initial_theme_matches_os_theme_dark(qtbot, db, monkeypatch):
     monkeypatch.setattr(darkdetect, "theme", lambda: "Dark")
     widget = cInitialize(qtbot, db)
     color = widget.title.palette().color(QPalette.WindowText).toRgb().toTuple()
-    assert color == (221, 221, 221, 255)
+    assert color == (238, 238, 238, 255)
 
 
 def test_dark_theme_activated_when_title_clicked(qtbot, db):
     widget = cInitialize(qtbot, db)
     cClick(widget.title, qtbot)
     color = widget.title.palette().color(QPalette.WindowText).toRgb().toTuple()
-    assert color == (221, 221, 221, 255)
+    assert color == (238, 238, 238, 255)
 
 
 def test_theme_switches_each_click(qtbot, db):
