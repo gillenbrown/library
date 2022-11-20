@@ -1795,6 +1795,25 @@ def test_download_pdf_button_asks_user(qtbot, db_temp, monkeypatch):
     ]
 
 
+def test_download_pdf_button_suggests_filename(qtbot, db_empty, monkeypatch):
+    # record the files that were attempted to be used to save a file
+    dir_suggestions = []
+
+    def mock_get_file(filter="", caption="", dir=""):
+        dir_suggestions.append(dir)
+        return "", "dummy filter"
+
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", mock_get_file)
+
+    db_empty.add_paper(u.mine.bibcode)
+    widget = cInitialize(qtbot, db_empty)
+
+    # record files where we attempted to download something
+    cClick(widget.papersList.getPapers()[0], qtbot)
+    cClick(widget.rightPanel.pdfDownloadButton, qtbot)
+    assert dir_suggestions == [str(Path.home() / "brown_gnedin_li_2018_apj_864_94.pdf")]
+
+
 def test_download_pdf_button_actually_downloads_paper(qtbot, db_temp, monkeypatch):
     monkeypatch.setattr(QFileDialog, "getSaveFileName", mSaveFileValidPDF)
     widget = cInitialize(qtbot, db_temp)

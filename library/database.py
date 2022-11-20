@@ -359,6 +359,28 @@ class Database(object):
             f"{self.get_paper_attribute(bibcode, 'page')}"
         )
 
+    def get_machine_cite_string(self, bibcode):
+        """
+        The citation string for a paper, but formatted to be better suited for filenames
+
+        This takes the form {authors}_{year}_{journal}_{volume}_{page}
+
+        If there are 3 or fewer authors all are shown (just their last names), while
+        if there are 4 or more the text reads {first author last name}, et al.
+
+        :param bibcode: Bibcode to get the citation string for.
+        :type bibcode: str
+        :return: cite string for this paper
+        :rtype: str
+        """
+        cite_string = self.get_cite_string(bibcode)
+        for c in [",", ".", "&"]:
+            cite_string = cite_string.replace(c, "")
+        for c in [" ", ":"]:
+            cite_string = cite_string.replace(c, "_")
+        cite_string = cite_string.replace("et_al", "etal")
+        return cite_string.lower()
+
     @staticmethod
     def _to_internal_tag_name(tag_name):
         """

@@ -1053,7 +1053,9 @@ class RightPanel(ScrollArea):
 
         # we found the right URL, now ask the user where to download
         local_file = QFileDialog.getSaveFileName(
-            caption="Select where to save this pdf", dir=str(Path.home())
+            caption="Select where to save this pdf",
+            dir=str(Path.home() / self.main.db.get_machine_cite_string(self.bibcode))
+            + ".pdf",
         )[0]
 
         # the user may cancel
