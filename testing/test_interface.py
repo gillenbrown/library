@@ -1393,10 +1393,11 @@ def test_import_results_text_one_error(qtbot, db_empty, monkeypatch):
     file_loc.unlink()  # delete before tests may fail
     fail_file = db_empty._failure_file_loc(file_loc)
     fail_file.unlink()  # remove failure files
-    assert (
-        widget.importResultText.text() == "Import results: 1 paper found, 1 failure\n"
-        f"Failed entries written to {str(fail_file)}"
+    shown_text = widget.importResultText.text()
+    assert shown_text.startswith(
+        "Import results: 1 paper found, 1 failure\nFailed entries written to ~/"
     )
+    assert Path(shown_text.split()[-1]).expanduser() == fail_file
 
 
 def test_import_results_text_two_errors(qtbot, db_empty, monkeypatch):
@@ -1421,10 +1422,11 @@ def test_import_results_text_two_errors(qtbot, db_empty, monkeypatch):
     file_loc.unlink()  # delete before tests may fail
     fail_file = db_empty._failure_file_loc(file_loc)
     fail_file.unlink()  # remove failure files
-    assert (
-        widget.importResultText.text() == "Import results: 2 papers found, 2 failures\n"
-        f"Failed entries written to {str(fail_file)}"
+    shown_text = widget.importResultText.text()
+    assert shown_text.startswith(
+        "Import results: 2 papers found, 2 failures\n" f"Failed entries written to ~/"
     )
+    assert Path(shown_text.split()[-1]).expanduser() == fail_file
 
 
 def test_import_results_text_one_success_one_duplicate(qtbot, db_empty, monkeypatch):
@@ -1458,11 +1460,12 @@ def test_import_results_text_one_success_one_failure(qtbot, db_empty, monkeypatc
     file_loc.unlink()  # delete before tests may fail
     fail_file = db_empty._failure_file_loc(file_loc)
     fail_file.unlink()  # remove failure files
-    assert (
-        widget.importResultText.text()
-        == "Import results: 2 papers found, 1 added successfully, 1 failure\n"
-        f"Failed entries written to {str(fail_file)}"
+    shown_text = widget.importResultText.text()
+    assert shown_text.startswith(
+        "Import results: 2 papers found, 1 added successfully, 1 failure\n"
+        f"Failed entries written to ~/"
     )
+    assert Path(shown_text.split()[-1]).expanduser() == fail_file
 
 
 def test_import_results_text_one_duplicate_one_failure(qtbot, db_empty, monkeypatch):
@@ -1483,11 +1486,12 @@ def test_import_results_text_one_duplicate_one_failure(qtbot, db_empty, monkeypa
     file_loc.unlink()  # delete before tests may fail
     fail_file = db_empty._failure_file_loc(file_loc)
     fail_file.unlink()  # remove failure files
-    assert (
-        widget.importResultText.text()
-        == "Import results: 2 papers found, 1 duplicate skipped, 1 failure\n"
-        f"Failed entries written to {str(fail_file)}"
+    shown_text = widget.importResultText.text()
+    assert shown_text.startswith(
+        "Import results: 2 papers found, 1 duplicate skipped, 1 failure\n"
+        f"Failed entries written to ~/"
     )
+    assert Path(shown_text.split()[-1]).expanduser() == fail_file
 
 
 def test_import_results_text_one_success_one_dup_one_fail(qtbot, db_empty, monkeypatch):
@@ -1508,11 +1512,13 @@ def test_import_results_text_one_success_one_dup_one_fail(qtbot, db_empty, monke
     file_loc.unlink()  # delete before tests may fail
     fail_file = db_empty._failure_file_loc(file_loc)
     fail_file.unlink()  # remove failure files
-    assert (
-        widget.importResultText.text() == "Import results: "
+    shown_text = widget.importResultText.text()
+    assert shown_text.startswith(
+        "Import results: "
         "3 papers found, 1 added successfully, 1 duplicate skipped, 1 failure\n"
-        f"Failed entries written to {str(fail_file)}"
+        f"Failed entries written to ~/"
     )
+    assert Path(shown_text.split()[-1]).expanduser() == fail_file
 
 
 def test_import_after_finished_adds_new_tag_to_interface(qtbot, db_empty, monkeypatch):

@@ -2088,7 +2088,8 @@ class MainWindow(QMainWindow):
             message += self.pluralize(", {} duplicate skipped", "duplicate", results[1])
         if results[2] > 0:
             message += self.pluralize(", {} failure", "failure", results[2])
-            message += f"\nFailed entries written to {str(results[3])}"
+            shown_path = str(results[3]).replace(str(Path.home()), "~")
+            message += f"\nFailed entries written to {shown_path}"
 
         return message
 
