@@ -114,6 +114,7 @@ This application is a work in progress, and so far has only been tested by me, s
 - In the interface, I abbreviate some journal (e.g. MNRAS, ApJ). I got all the journals commonly used in the papers I've cited in my work, but of course that's not a representative sample. Let me know if there are any abbreviations I'm missing.
 - I've written a system that updates arXiv papers with the full publication details once those are available. But my testing for this has been mostly contrived examples that may or may not be totally realistic, so keep an eye on your arXiv-only papers to see if the publication details are correctly updated.
 - Downloading the paper PDFs works okay, but not great. It first tries to download the PDF from the publisher, but in my testing the publisher often blocks the download since it thinks it's a bot (which it really is, to be fair). The application uses the arXiv PDF as a fallback. But the publishers may block me in particular since I sent a lot of requests when testing. So I'd be interested in seeing how many publisher PDFs regular users are able to download.
+- The code should identify whether your OS is using dark mode, and adjust the interface theme appropriately. I've only been able to truly test this on my laptop running macOS. Let me know if this doesn't work on your machine. 
 - On a lighter note, I need a better name for this! "Library" has been a placeholder, so if you have any ideas for a name let me know.
 
 # Acknowledgements
