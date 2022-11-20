@@ -3749,6 +3749,13 @@ def test_clicking_add_tag_button_shows_text_entry(qtbot, db_empty):
     assert widget.tagsList.addTagBar.isHidden() is False
 
 
+def test_add_tag_button_and_entry_have_same_height(qtbot, db_empty):
+    widget = cInitialize(qtbot, db_empty)
+    button_height = widget.tagsList.addTagButton.height()
+    cClick(widget.tagsList.addTagButton, qtbot)
+    assert widget.tagsList.addTagBar.height() == button_height
+
+
 def test_clicking_add_tag_button_puts_focus_on_text_entry(qtbot, db_empty, monkeypatch):
     # I tried to test this directly, but was having trouble getting the tests to work
     # properly. Specifically, widget.hasFocus() was not working propertly in tests for
@@ -4096,6 +4103,13 @@ def test_clicking_first_tag_delete_button_hides_first_button(qtbot, db_temp):
     assert widget.tagsList.firstDeleteTagButton.isHidden() is True
 
 
+def test_delete_tag_button_and_entry_have_same_height(qtbot, db_empty):
+    widget = cInitialize(qtbot, db_empty)
+    button_height = widget.tagsList.firstDeleteTagButton.height()
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    assert widget.tagsList.secondDeleteTagEntry.height() == button_height
+
+
 def test_second_delete_tag_entry_is_hidden_when_entry_done(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
     cClick(widget.tagsList.firstDeleteTagButton, qtbot)
@@ -4110,6 +4124,21 @@ def test_third_delete_tag_button_appears_when_first_entry_done(qtbot, db_temp):
     cEnterText(widget.tagsList.secondDeleteTagEntry, "Read", qtbot)
     cPressEnter(widget.tagsList.secondDeleteTagEntry, qtbot)
     assert widget.tagsList.thirdDeleteTagButton.isHidden() is False
+
+
+def test_third_delete_tag_button_and_entry_have_same_height(qtbot, db_empty):
+    db_empty.add_new_tag("Read")
+    widget = cInitialize(qtbot, db_empty)
+    button_1_height = widget.tagsList.firstDeleteTagButton.height()
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    entry_height = widget.tagsList.secondDeleteTagEntry.height()
+    cEnterText(widget.tagsList.secondDeleteTagEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.secondDeleteTagEntry, qtbot)
+    button_2_height = widget.tagsList.thirdDeleteTagButton.height()
+    button_3_height = widget.tagsList.thirdDeleteTagCancelButton.height()
+    assert button_1_height == entry_height  # already checked, included for clarity
+    assert entry_height == button_2_height
+    assert button_2_height == button_3_height
 
 
 def test_third_delete_tag_cancel_button_appears_when_first_entry_done(qtbot, db_temp):

@@ -1371,6 +1371,15 @@ class TagsListScrollArea(ScrollArea):
         self.thirdDeleteTagCancelButton.setProperty("delete_cancel_button", True)
         self.thirdDeleteTagCancelButton.hide()
 
+        # make all these have the same height
+        tag_button_height = 28
+        self.addTagButton.setFixedHeight(tag_button_height)
+        self.addTagBar.setFixedHeight(tag_button_height)
+        self.firstDeleteTagButton.setFixedHeight(tag_button_height)
+        self.secondDeleteTagEntry.setFixedHeight(tag_button_height)
+        self.thirdDeleteTagButton.setFixedHeight(tag_button_height)
+        self.thirdDeleteTagCancelButton.setFixedHeight(tag_button_height)
+
         # Make the button to show all the papers in the list
         self.showAllButton = LeftPanelTagShowAll(self.main)
 
