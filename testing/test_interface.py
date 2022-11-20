@@ -1555,7 +1555,10 @@ def test_paper_pdf_text_has_correct_text_with_local_file(qtbot, db_empty):
     db_empty.set_paper_attribute(u.mine.bibcode, "local_file", __file__)
     widget = cInitialize(qtbot, db_empty)
     cClick(widget.papersList.getPapers()[0], qtbot)
-    assert widget.rightPanel.pdfText.text() == f"PDF Location: {__file__}"
+    # check that the shown path uses ~ and resolves to the correct location
+    shown_path = widget.rightPanel.pdfText.text().replace("PDF Location: ", "")
+    assert shown_path.startswith("~/")
+    assert Path(shown_path).expanduser() == Path(__file__).resolve()
 
 
 def test_paper_pdf_text_has_correct_text_without_local_file(qtbot, db_temp):
@@ -1632,7 +1635,10 @@ def test_paper_pdf_add_local_file_updates_text(qtbot, db_temp, monkeypatch):
     widget = cInitialize(qtbot, db_temp)
     cClick(widget.papersList.getPapers()[0], qtbot)
     cClick(widget.rightPanel.pdfChooseLocalFileButton, qtbot)
-    assert widget.rightPanel.pdfText.text() == f"PDF Location: {__file__}"
+    # check that the shown path uses ~ and resolves to the correct location
+    shown_path = widget.rightPanel.pdfText.text().replace("PDF Location: ", "")
+    assert shown_path.startswith("~/")
+    assert Path(shown_path).expanduser() == Path(__file__).resolve()
 
 
 def test_paper_pdf_add_local_file_cancel_no_text_diff(qtbot, db_temp, monkeypatch):
@@ -1933,7 +1939,10 @@ def test_download_pdf_button_updates_text(qtbot, db_temp, monkeypatch):
     # when setting the buttons
     cClick(widget.papersList.getPapers()[0], qtbot)
     cClick(widget.rightPanel.pdfDownloadButton, qtbot)
-    assert widget.rightPanel.pdfText.text() == f"PDF Location: {str(mSaveLocPDF)}"
+    # check that the shown path uses ~ and resolves to the correct location
+    shown_path = widget.rightPanel.pdfText.text().replace("PDF Location: ", "")
+    assert shown_path.startswith("~/")
+    assert Path(shown_path).expanduser() == mSaveLocPDF
     mSaveLocPDF.unlink()
 
 

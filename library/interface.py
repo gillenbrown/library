@@ -976,7 +976,9 @@ class RightPanel(ScrollArea):
             self.pdfChooseLocalFileButton.show()
             self.pdfDownloadButton.show()
         else:  # valid file
-            self.pdfText.setText(f"PDF Location: {local_file}")
+            # if applicable, use ~ for the home directory
+            shown_file = local_file.replace(str(Path.home()), "~")
+            self.pdfText.setText(f"PDF Location: {shown_file}")
             self.pdfOpenButton.show()
             self.pdfClearButton.show()
             self.pdfChooseLocalFileButton.hide()
