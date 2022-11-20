@@ -712,7 +712,8 @@ class Database(object):
         if len(import_tags) == 0:
             new_tag = "Import 1"
         else:
-            new_tag = f"Import {int(max(import_tags).split()[-1]) + 1}"
+            tag_nums = [int(t.split()[-1]) for t in import_tags]
+            new_tag = f"Import {max(tag_nums) + 1}"
         self.add_new_tag(new_tag)
 
         results = {"success": 0, "duplicate": 0, "failure": 0}

@@ -1284,6 +1284,17 @@ def test_import_created_tags_are_incremented_where_available(db_empty):
     assert db_empty.get_paper_tags(u.mine_recent.bibcode) == ["Import 3"]
 
 
+def test_import_created_tags_work_correctly_beyond_10(db_empty):
+    # found this bug by accident
+    file_loc = create_bibtex(u.mine.bibtex)
+    for _ in range(11):
+        db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert sorted(db_empty.get_paper_tags(u.mine.bibcode)) == sorted(
+        [f"Import {n}" for n in range(1, 12)]
+    )
+
+
 def test_import_return_tuple_tag_name(db_empty):
     file_loc = create_bibtex(u.mine.bibtex, u.tremonti.bibtex)
     results = db_empty.import_bibtex(file_loc)
