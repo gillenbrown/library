@@ -702,6 +702,7 @@ class RightPanel(ScrollArea):
         cite_key = self.main.db.get_paper_attribute(self.bibcode, "citation_keyword")
         self.citeKeyText.setText(f"Citation Keyword: {cite_key}")
         self.editCiteKeyButton.show()
+        self.editCiteKeyEntry.hide()
         self.copyBibtexButton.show()
         # and spacers
         for spacer in self.spacers:

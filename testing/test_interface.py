@@ -2908,6 +2908,14 @@ def test_edit_citation_keywored_entry_backspace_exit_doesnt_change_db(qtbot, db_
     assert db_temp.get_paper_attribute(bibcode, "citation_keyword") == bibcode
 
 
+def test_edit_citation_keyword_entry_disappears_when_new_paper_clicked(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    cClick(widget.papersList.getPapers()[0], qtbot)
+    cClick(widget.rightPanel.editCiteKeyButton, qtbot)
+    cClick(widget.papersList.getPapers()[1], qtbot)
+    assert widget.rightPanel.editCiteKeyEntry.isHidden() is True
+
+
 # ===============
 # deleting papers
 # ===============
