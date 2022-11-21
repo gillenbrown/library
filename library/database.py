@@ -795,8 +795,9 @@ class Database(object):
             return "success"
         except PaperAlreadyInDatabaseError:
             return "duplicate"
-        except:  # any other error
-            # add to failure file
+        except Exception as e:  # any other error
+            # add to failure file, with the error
+            failure_file.write(f"% {e}\n")
             failure_file.write(entry + "\n")
             return "failure"
 
@@ -827,7 +828,10 @@ class Database(object):
                 or line.strip().startswith("%")
             ):
                 continue
-            key, value = line.split("=")
+            try:
+                key, value = line.split("=")
+            except:
+                raise ValueError(f"Failed to parse this line of this entry: {line}")
             paper_data[key.strip()] = (
                 value.strip().rstrip(",").replace("{", "").replace("}", "")
             )
@@ -841,7 +845,7 @@ class Database(object):
         elif "eprint" in paper_data:
             bibcode = ads_call.get_bibcode(paper_data["eprint"])
         else:  # could not identify paper
-            raise ValueError
+            raise ValueError("Entry does not have doi, adsurl, or eprint attributes")
         # then add the paper to the database
         try:
             self.add_paper(bibcode)

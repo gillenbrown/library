@@ -1424,7 +1424,76 @@ def test_import_failure_file_not_created_for_duplicates(db_empty):
     assert not db_empty._failure_file_loc(file_loc).is_file()
 
 
+def test_import_failure_file_contains_header(db_empty):
+    file_loc = create_bibtex("@ARTICLE{\nsldkfjsldkfj\n}")
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    header = (
+        "% This file contains BibTeX entries that the library could not add.\n"
+        '% When importing a given entry, the code looks for the "doi", "ads_url",\n'
+        '% or "eprint" attributes. If none of these are present, the code cannot\n'
+        "% add the paper. In addition, there may be something wrong with the\n"
+        "% format of the entry that breaks my code parser.\n\n"
+    )
+    assert header in f_output
+
+
 def test_import_failure_file_contains_failed_bibtex_entries(db_empty):
+    bad_1 = "@ARTICLE{\nsldkfjsldkfj\n}"
+    bad_2 = (
+        "@ARTICLE{1957RvMP...29..547B,\n"
+        " author = {{Burbidge}, E. Margaret},\n"
+        '  title = "{Synthesis of the Elements in Stars},"\n'
+        "journal = {Reviews of Modern Physics},\n"
+        "   year = 1957,\n"
+        "}"
+    )
+    file_loc = create_bibtex(u.mine.bibtex, bad_1, u.tremonti.bibtex, bad_2)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    assert bad_1 in f_output
+    assert bad_2 in f_output
+
+
+def test_import_failure_file_contains_reason_malformed(db_empty):
+    entry = "@ARTICLE{\nsldkfjsldkfj\n}"
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    assert (
+        "% Failed to parse this line of this entry: sldkfjsldkfj\n" + entry in f_output
+    )
+
+
+def test_import_failure_file_contains_reason_no_id(db_empty):
+    entry = (
+        "@ARTICLE{1957RvMP...29..547B,\n"
+        " author = {{Burbidge}, E. Margaret},\n"
+        '  title = "{Synthesis of the Elements in Stars},"\n'
+        "journal = {Reviews of Modern Physics},\n"
+        "   year = 1957,\n"
+        "}"
+    )
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    comment = "Entry does not have doi, adsurl, or eprint attributes"
+    assert f"% {comment}\n{entry}" in f_output
+
+
+def test_import_failure_file_full_format(db_empty):
     bad_1 = "@ARTICLE{\nsldkfjsldkfj\n}"
     bad_2 = (
         "@ARTICLE{1957RvMP...29..547B,\n"
@@ -1447,7 +1516,9 @@ def test_import_failure_file_contains_failed_bibtex_entries(db_empty):
         "% add the paper. In addition, there may be something wrong with the\n"
         "% format of the entry that breaks my code parser.\n\n"
     )
-    assert f_output == header + bad_1 + "\n\n\n" + bad_2 + "\n"
+    reason_1 = "% Failed to parse this line of this entry: sldkfjsldkfj\n"
+    reason_2 = "% Entry does not have doi, adsurl, or eprint attributes\n"
+    assert f_output == header + reason_1 + bad_1 + "\n\n\n" + reason_2 + bad_2 + "\n"
 
 
 def test_import_citation_keyword_is_kept_if_present(db_empty):
