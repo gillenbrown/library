@@ -187,16 +187,19 @@ class ADSWrapper(object):
         # http://adsabs.github.io/help/actions/bibcode
         year_at_front = re.compile(r"^[0-9]{4}")
 
+        # see if it looks like a DOI.
+        # We check DOI first since it's a simple check, and sometimes DOIs can have
+        # segments that look like an arXiv ID, fooling my simple regex
+        if identifier.startswith("10.") and "/" in identifier:
+            # include doi within quotes to not mess up special characters in query
+            return self._get_bibcode_from_doi(f'"{identifier}"')
         # see if it has an arXiv ID
         # re.search looks anywhere in the string
-        if re.search(arxiv_id_re, identifier) is not None:
+        elif re.search(arxiv_id_re, identifier) is not None:
             # get the part of the string that is the arXiv ID
             arxiv_id = re.search(arxiv_id_re, identifier).group()
             # then run the query
             return self._get_bibcode_from_arxiv(arxiv_id)
-        # see if it looks like a DOI
-        elif identifier.startswith("10.") and "/" in identifier:
-            return self._get_bibcode_from_doi(identifier)
         # check if it looks like an ADS URL
         elif "ui.adsabs.harvard.edu/abs/" in identifier:
             # first get the bibcode from the URL. This is always the thing after "abs"

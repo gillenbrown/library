@@ -330,3 +330,12 @@ mvdbw_book = PaperDict(
         ""
     ),
 )
+larsen = PaperDict(
+    doi="10.1051/aas:1999509",
+    bibcode="1999A&AS..139..393L",
+)
+
+sellwood_binney = PaperDict(
+    doi="10.1046/j.1365-8711.2002.05806.x",
+    bibcode="2002MNRAS.336..785S",
+)

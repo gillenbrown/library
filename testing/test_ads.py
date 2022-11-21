@@ -86,6 +86,14 @@ def test_get_correct_bibcode_from_doi():
     assert ads_call.get_bibcode(u.mine.doi) == u.mine.bibcode
 
 
+def test_get_correct_bibcode_from_doi_with_special_characters():
+    assert ads_call.get_bibcode(u.larsen.doi) == u.larsen.bibcode
+
+
+def test_get_correct_bibcode_from_doi_arxivlike():
+    assert ads_call.get_bibcode(u.sellwood_binney.doi) == u.sellwood_binney.bibcode
+
+
 def test_raises_error_for_unrecognized_identifier():
     with pytest.raises(ValueError):
         ads_call.get_bibcode("www.wrong.com")
