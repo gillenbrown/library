@@ -821,20 +821,15 @@ class Database(object):
                 idx_2 = line.find(",")
                 paper_data["cite_key"] = line[idx_1 + 1 : idx_2]
                 continue
-            # have lines to skip: closing braces, blank lines, and comments
-            elif (
-                line.startswith("}")
-                or line.strip() == ""
-                or line.strip().startswith("%")
-            ):
-                continue
-            try:
-                key, value = line.split("=")
-            except:
-                raise ValueError(f"Failed to parse this line of this entry: {line}")
-            paper_data[key.strip()] = (
-                value.strip().rstrip(",").replace("{", "").replace("}", "")
-            )
+            # only look at lines that are interesting to us
+            elif "doi = " in line or "adsurl = " in line or "eprint" in line:
+                try:
+                    key, value = line.split("=")
+                    paper_data[key.strip()] = (
+                        value.strip().rstrip(",").replace("{", "").replace("}", "")
+                    )
+                except:
+                    raise ValueError(f"Failed to parse this line of this entry: {line}")
 
         # now that we have the info, try to find the paper. Look for the DOI, then the
         # arXiv ID, then in the last case try to find it based on the journal info

@@ -1203,6 +1203,30 @@ def test_import_single_good_paper_with_arxivid_adds_to_database(db_empty):
     assert db_empty.get_all_bibcodes() == [u.mine.bibcode]
 
 
+def test_import_with_multiline_authors_adds_to_db(db_empty):
+    bibtex = (
+        "@ARTICLE{abadi_etal03,\n"
+        "   author = {{Abadi}, M.~G. and {Navarro}, J.~F. and {Steinmetz}, M. and\n"
+        "	{Eke}, V.~R.},\n"
+        '    title = "{Simulations of Galaxy Formation in a {$\Lambda$} Cold Dark Matter Universe. I. Dynamical and Photometric Properties of a Simulated Disk Galaxy}",\n'
+        "  journal = {\apj},\n"
+        "   eprint = {arXiv:astro-ph/0211331},\n"
+        " keywords = {Cosmology: Theory, Cosmology: Dark Matter, Galaxies: Formation, Galaxies: Structure, Methods: Numerical},\n"
+        "     year = 2003,\n"
+        "    month = jul,\n"
+        "   volume = 591,\n"
+        "    pages = {499-514},\n"
+        "      doi = {10.1086/375512},\n"
+        "   adsurl = {http://adsabs.harvard.edu/abs/2003ApJ...591..499A}\n"
+        "}"
+    )
+    file_loc = create_bibtex(bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[:3] == (1, 0, 0)
+    assert db_empty.get_all_bibcodes() == ["2003ApJ...591..499A"]
+
+
 def test_import_two_good_papers_with_adsurl_adds_to_database(db_empty):
     file_loc = create_bibtex(u.mine.bibtex, u.tremonti.bibtex)
     db_empty.import_bibtex(file_loc)
@@ -1462,7 +1486,7 @@ def test_import_failure_file_contains_failed_bibtex_entries(db_empty):
 
 
 def test_import_failure_file_contains_reason_malformed(db_empty):
-    entry = "@ARTICLE{\nsldkfjsldkfj\n}"
+    entry = "@ARTICLE{\nadsurl = sdf = \n}"
     file_loc = create_bibtex(entry)
     results = db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
@@ -1470,7 +1494,8 @@ def test_import_failure_file_contains_reason_malformed(db_empty):
         f_output = f_file.read()
     results[3].unlink()
     assert (
-        "% Failed to parse this line of this entry: sldkfjsldkfj\n" + entry in f_output
+        "% Failed to parse this line of this entry: adsurl = sdf = \n" + entry
+        in f_output
     )
 
 
@@ -1494,7 +1519,7 @@ def test_import_failure_file_contains_reason_no_id(db_empty):
 
 
 def test_import_failure_file_full_format(db_empty):
-    bad_1 = "@ARTICLE{\nsldkfjsldkfj\n}"
+    bad_1 = "@ARTICLE{\nadsurl = sdf = \n}"
     bad_2 = (
         "@ARTICLE{1957RvMP...29..547B,\n"
         " author = {{Burbidge}, E. Margaret},\n"
@@ -1516,7 +1541,7 @@ def test_import_failure_file_full_format(db_empty):
         "% add the paper. In addition, there may be something wrong with the\n"
         "% format of the entry that breaks my code parser.\n\n"
     )
-    reason_1 = "% Failed to parse this line of this entry: sldkfjsldkfj\n"
+    reason_1 = "% Failed to parse this line of this entry: adsurl = sdf = \n"
     reason_2 = "% Entry does not have doi, adsurl, or eprint attributes\n"
     assert f_output == header + reason_1 + bad_1 + "\n\n\n" + reason_2 + bad_2 + "\n"
 
