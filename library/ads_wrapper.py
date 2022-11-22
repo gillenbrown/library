@@ -201,7 +201,7 @@ class ADSWrapper(object):
             # then run the query
             return self._get_bibcode_from_arxiv(arxiv_id)
         # check if it looks like an ADS URL
-        elif "ui.adsabs.harvard.edu/abs/" in identifier:
+        elif "adsabs.harvard.edu/abs/" in identifier:
             # first get the bibcode from the URL. This is always the thing after "abs"
             # in the abstract
             split_url = identifier.split("/")

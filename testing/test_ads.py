@@ -58,6 +58,11 @@ def test_get_correct_bibcode_from_ads_url_with_and_symbol():
     assert ads_call.get_bibcode(u.krumholz.url) == u.krumholz.bibcode
 
 
+def test_get_correct_bibcode_from_oldstyle_ads_url():
+    url = f"http://adsabs.harvard.edu/abs/{u.mine.bibcode}"
+    assert ads_call.get_bibcode(url) == u.mine.bibcode
+
+
 def test_get_correct_bibcode_from_ads_bibcode():
     assert ads_call.get_bibcode(u.mine.bibcode) == u.mine.bibcode
 
