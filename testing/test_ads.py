@@ -71,12 +71,24 @@ def test_get_correct_bibcode_from_arxiv_id():
     assert ads_call.get_bibcode(u.mine.arxiv_id) == u.mine.bibcode
 
 
+def test_get_correct_bibcode_from_old_arxiv_id():
+    assert ads_call.get_bibcode(u.tremonti.arxiv_id) == u.tremonti.bibcode
+
+
+def test_get_correct_bibcode_from_old_arxiv_id_style_2():
+    assert ads_call.get_bibcode("arXiv:" + u.tremonti.arxiv_id) == u.tremonti.bibcode
+
+
 def test_get_correct_bibcode_from_arxiv_url():
     assert ads_call.get_bibcode(u.mine.arxiv_url) == u.mine.bibcode
 
 
 def test_get_correct_bibcode_from_arxiv_url_v2():
     assert ads_call.get_bibcode(u.mine.arxiv_url_v2) == u.mine.bibcode
+
+
+def test_get_correct_bibcode_from_old_arxiv_url():
+    assert ads_call.get_bibcode(u.tremonti.arxiv_url) == u.tremonti.bibcode
 
 
 def test_get_correct_bibcode_from_arxiv_pdf_url():

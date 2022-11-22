@@ -1227,6 +1227,20 @@ def test_import_with_multiline_authors_adds_to_db(db_empty):
     assert db_empty.get_all_bibcodes() == ["2003ApJ...591..499A"]
 
 
+def test_import_paper_old_arxiv_id_correctly_added(db_empty):
+    # remove other stuff from tremonti
+    bibtex = u.tremonti.bibtex.replace(
+        "          doi = {10.1086/423264},\n", ""
+    ).replace(
+        "       adsurl = {https://ui.adsabs.harvard.edu/abs/2004ApJ...613..898T},\n", ""
+    )
+    file_loc = create_bibtex(bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[:3] == (1, 0, 0)
+    assert db_empty.get_all_bibcodes() == [u.tremonti.bibcode]
+
+
 def test_import_two_good_papers_with_adsurl_adds_to_database(db_empty):
     file_loc = create_bibtex(u.mine.bibtex, u.tremonti.bibtex)
     db_empty.import_bibtex(file_loc)

@@ -183,7 +183,7 @@ class ADSWrapper(object):
         # the year at the front, which is used when checking for bibcodes directly
         # https://arxiv.org/help/arxiv_identifier
         arxiv_id_re = re.compile(r"[0-9]{4}\.[0-9]{4,5}")
-
+        arxiv_id_old_re = re.compile(r"[a-z.-]*/[0-9]{7}$")
         # http://adsabs.github.io/help/actions/bibcode
         year_at_front = re.compile(r"^[0-9]{4}")
 
@@ -193,11 +193,20 @@ class ADSWrapper(object):
         if identifier.startswith("10.") and "/" in identifier:
             # include doi within quotes to not mess up special characters in query
             return self._get_bibcode_from_doi(f'"{identifier}"')
-        # see if it has an arXiv ID
+        # see if it's obviously an arXiv ID
+        elif identifier.lower().startswith("arxiv:"):
+            return self._get_bibcode_from_arxiv(identifier.split(":")[1])
+        # see if it has a new-style arXiv ID
         # re.search looks anywhere in the string
         elif re.search(arxiv_id_re, identifier) is not None:
             # get the part of the string that is the arXiv ID
             arxiv_id = re.search(arxiv_id_re, identifier).group()
+            # then run the query
+            return self._get_bibcode_from_arxiv(arxiv_id)
+        # see if it looks like an old style arXiv id
+        elif re.search(arxiv_id_old_re, identifier) is not None:
+            # get the part of the string that is the arXiv ID
+            arxiv_id = re.search(arxiv_id_old_re, identifier).group()
             # then run the query
             return self._get_bibcode_from_arxiv(arxiv_id)
         # check if it looks like an ADS URL

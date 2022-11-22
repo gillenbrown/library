@@ -76,6 +76,8 @@ mine = PaperDict(
 # Also use Tremonti et al. 2004 as a test paper
 tremonti = PaperDict(
     bibcode="2004ApJ...613..898T",
+    arxiv_url="https://arxiv.org/abs/astro-ph/0405537",
+    arxiv_id="astro-ph/0405537",
     title=(
         "The Origin of the Mass-Metallicity Relation: Insights from 53,000 "
         "Star-forming Galaxies in the Sloan Digital Sky Survey"
