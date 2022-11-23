@@ -29,10 +29,10 @@ jobs:
 
       # upload to coveralls (but only one version)
       - name: make lcov file for Coveralls upload
-        if: matrix.python-version == 3.10 && matrix.os == "ubuntu-22.04"
+        if: (matrix.python-version == 3.10) && (matrix.os == "ubuntu-22.04")
         run: coverage lcov -i
       - name: upload to Coveralls
-        if: matrix.python-version == 3.10 && matrix.os == "ubuntu-22.04"
+        if: (matrix.python-version == 3.10) && (matrix.os == "ubuntu-22.04")
         uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
