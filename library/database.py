@@ -836,7 +836,14 @@ class Database(object):
         if "doi" in paper_data:
             bibcode = ads_call.get_bibcode(paper_data["doi"])
         elif "adsurl" in paper_data:
-            bibcode = ads_call.get_bibcode(paper_data["adsurl"])
+            # ADS urls contain the bibcode. But that bibcode is updated if an arXiv
+            # paper is updated with publication details. So the bibcode contained
+            # in this url may be outdated. So we check that if arXiv is in the
+            # bibcode, use the eprint attribute instead, since it does not change
+            if "arxiv" in paper_data["adsurl"].lower() and "eprint" in paper_data:
+                bibcode = ads_call.get_bibcode(paper_data["eprint"])
+            else:
+                bibcode = ads_call.get_bibcode(paper_data["adsurl"])
         elif "eprint" in paper_data:
             bibcode = ads_call.get_bibcode(paper_data["eprint"])
         else:  # could not identify paper

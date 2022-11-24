@@ -1227,6 +1227,31 @@ def test_import_with_multiline_authors_adds_to_db(db_empty):
     assert db_empty.get_all_bibcodes() == ["2003ApJ...591..499A"]
 
 
+def test_import_old_ads_url_added_to_db(db_empty):
+    bibtex = (
+        "@ARTICLE{meng_gnedin21,\n"
+        "       author = {{Meng}, Xi and {Gnedin}, Oleg Y.},\n"
+        '        title = "{Evolution of Disc Thickness in High-Redshift Galaxies}",\n'
+        "      journal = {\mnras, submitted},\n"
+        "     keywords = {Astrophysics - Astrophysics of Galaxies},\n"
+        "         year = 2021,\n"
+        "        month = jun,\n"
+        "          eid = {arXiv:2006.10642},\n"
+        "        pages = {arXiv:2006.10642},\n"
+        "archivePrefix = {arXiv},\n"
+        "       eprint = {2006.10642},\n"
+        " primaryClass = {astro-ph.GA},\n"
+        "       adsurl = {https://ui.adsabs.harvard.edu/abs/2020arXiv200610642M},\n"
+        "      adsnote = {Provided by the SAO/NASA Astrophysics Data System}\n"
+        "}"
+    )
+    file_loc = create_bibtex(bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[:3] == (1, 0, 0)
+    assert db_empty.get_all_bibcodes() == ["2021MNRAS.502.1433M"]
+
+
 def test_import_paper_old_arxiv_id_correctly_added(db_empty):
     # remove other stuff from tremonti
     bibtex = u.tremonti.bibtex.replace(
