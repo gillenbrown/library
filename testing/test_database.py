@@ -1208,10 +1208,13 @@ def test_import_with_multiline_authors_adds_to_db(db_empty):
         "@ARTICLE{abadi_etal03,\n"
         "   author = {{Abadi}, M.~G. and {Navarro}, J.~F. and {Steinmetz}, M. and\n"
         "	{Eke}, V.~R.},\n"
-        '    title = "{Simulations of Galaxy Formation in a {$\Lambda$} Cold Dark Matter Universe. I. Dynamical and Photometric Properties of a Simulated Disk Galaxy}",\n'
+        '    title = "{Simulations of Galaxy Formation in a {$\\Lambda$} '
+        "Cold Dark Matter Universe. I. Dynamical and Photometric "
+        'Properties of a Simulated Disk Galaxy}",\n'
         "  journal = {\apj},\n"
         "   eprint = {arXiv:astro-ph/0211331},\n"
-        " keywords = {Cosmology: Theory, Cosmology: Dark Matter, Galaxies: Formation, Galaxies: Structure, Methods: Numerical},\n"
+        " keywords = {Cosmology: Theory, Cosmology: Dark Matter, "
+        "Galaxies: Formation, Galaxies: Structure, Methods: Numerical},\n"
         "     year = 2003,\n"
         "    month = jul,\n"
         "   volume = 591,\n"
@@ -1232,7 +1235,7 @@ def test_import_old_ads_url_added_to_db(db_empty):
         "@ARTICLE{meng_gnedin21,\n"
         "       author = {{Meng}, Xi and {Gnedin}, Oleg Y.},\n"
         '        title = "{Evolution of Disc Thickness in High-Redshift Galaxies}",\n'
-        "      journal = {\mnras, submitted},\n"
+        "      journal = {\\mnras, submitted},\n"
         "     keywords = {Astrophysics - Astrophysics of Galaxies},\n"
         "         year = 2021,\n"
         "        month = jun,\n"

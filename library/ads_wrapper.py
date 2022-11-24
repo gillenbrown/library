@@ -187,10 +187,19 @@ class ADSWrapper(object):
         # http://adsabs.github.io/help/actions/bibcode
         year_at_front = re.compile(r"^[0-9]{4}")
 
+        # check if it looks like an ADS URL. This is the easiest and most reliable case
+        if "adsabs.harvard.edu/abs/" in identifier:
+            # first get the bibcode from the URL. This is always the thing after "abs"
+            # in the abstract
+            split_url = identifier.split("/")
+            bibcode_idx = split_url.index("abs") + 1
+            bibcode = split_url[bibcode_idx]
+            # sometimes there's the placeholder for the and sign in the URL
+            return bibcode.replace("%26", "&")
         # see if it looks like a DOI.
-        # We check DOI first since it's a simple check, and sometimes DOIs can have
+        # We check DOI next since it's a simple check, and sometimes DOIs can have
         # segments that look like an arXiv ID, fooling my simple regex
-        if identifier.startswith("10.") and "/" in identifier:
+        elif identifier.startswith("10.") and "/" in identifier:
             # include doi within quotes to not mess up special characters in query
             return self._get_bibcode_from_doi(f'"{identifier}"')
         # see if it's obviously an arXiv ID
@@ -209,15 +218,6 @@ class ADSWrapper(object):
             arxiv_id = re.search(arxiv_id_old_re, identifier).group()
             # then run the query
             return self._get_bibcode_from_arxiv(arxiv_id)
-        # check if it looks like an ADS URL
-        elif "adsabs.harvard.edu/abs/" in identifier:
-            # first get the bibcode from the URL. This is always the thing after "abs"
-            # in the abstract
-            split_url = identifier.split("/")
-            bibcode_idx = split_url.index("abs") + 1
-            bibcode = split_url[bibcode_idx]
-            # sometimes there's the placeholder for the and sign in the URL
-            return bibcode.replace("%26", "&")
         # next check if it looks like a plain bibcode
         # # http://adsabs.github.io/help/actions/bibcode
         # re.match only looks at the beginning of the string, where the year will be
