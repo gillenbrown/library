@@ -720,6 +720,9 @@ class Database(object):
         current_entry = ""
         line_number = 0
         for line in bibfile:
+            # skip comments
+            if line.startswith("%"):
+                continue
             # once we get to the beginning of a new entry, add the current entry to
             # the database. Otherwise, keep track of the current entry
             if line.startswith("@") and current_entry.strip() != "":

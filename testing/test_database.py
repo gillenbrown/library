@@ -1270,6 +1270,20 @@ def test_import_paper_old_arxiv_id_correctly_added(db_empty):
     assert db_empty.get_all_bibcodes() == [u.tremonti.bibcode]
 
 
+def test_import_ignores_comments(db_empty):
+    bibtex = (
+        "% this is a comment\n"
+        "@ARTICLE{test,\n"
+        "% comment inside the entry\n"
+        f"       adsurl = {u.mine.ads_url},\n"
+        "}"
+    )
+    file_loc = create_bibtex(bibtex)
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert db_empty.get_all_bibcodes() == [u.mine.bibcode]
+
+
 def test_import_two_good_papers_with_adsurl_adds_to_database(db_empty):
     file_loc = create_bibtex(u.mine.bibtex, u.tremonti.bibtex)
     db_empty.import_bibtex(file_loc)
