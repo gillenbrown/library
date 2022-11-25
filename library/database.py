@@ -797,6 +797,9 @@ class Database(object):
             return "duplicate"
         except Exception as e:  # any other error
             # add to failure file, with the error
+            # make a non useful error more useful
+            if str(e) == "list index out of range":
+                e = "Paper not found on ADS, something may be wrong with this entry"
             failure_file.write(f"% {e}\n")
             failure_file.write(entry + "\n")
             return "failure"

@@ -1560,6 +1560,44 @@ def test_import_failure_file_contains_reason_no_id(db_empty):
     assert f"% {comment}\n{entry}" in f_output
 
 
+def test_import_failure_file_contains_reason_not_on_ads_doi(db_empty):
+    entry = "@ARTICLE{\ndoi = {10.1000/182}\n}"
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    assert "% DOI 10.1000/182 not on ADS!\n" + entry in f_output
+
+
+def test_import_failure_file_contains_reason_not_on_ads_eprint(db_empty):
+    entry = "@ARTICLE{\neprint = {3501.00001}\n}"
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    assert "% arXiv ID 3501.00001 not on ADS yet!\n" + entry in f_output
+
+
+def test_import_failure_file_contains_reason_not_on_ads_adsurl(db_empty):
+    entry = (
+        "@ARTICLE{\nadsurl = {https://ui.adsabs.harvard.edu/abs/2018ApJ...864...94X}\n}"
+    )
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    assert (
+        "% Paper not found on ADS, something may be wrong with this entry\n" + entry
+        in f_output
+    )
+
+
 def test_import_failure_file_full_format(db_empty):
     bad_1 = "@ARTICLE{\nadsurl = sdf = \n}"
     bad_2 = (

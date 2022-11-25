@@ -157,6 +157,8 @@ class ADSWrapper(object):
                 query = ads.SearchQuery(q="doi:{}".format(doi), fl=["bibcode"])
                 bibcode = list(query)[0].bibcode
             except IndexError:  # not found on ADS
+                # get rid of quotes in error message
+                doi = doi.replace('"', "")
                 raise ValueError(f"DOI {doi} not on ADS!")
 
             # store it in the cache
