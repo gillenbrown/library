@@ -1514,6 +1514,7 @@ def test_import_failure_file_contains_header(db_empty):
     results[3].unlink()
     header = (
         "% This file contains BibTeX entries that the library could not add.\n"
+        "% The reason for the failure is given above each entry.\n"
         '% When importing a given entry, the code looks for the "doi", "ads_url",\n'
         '% or "eprint" attributes. If none of these are present, the code cannot\n'
         "% add the paper. In addition, there may be something wrong with the\n"
@@ -1665,6 +1666,7 @@ def test_import_failure_file_full_format(db_empty):
     results[3].unlink()
     header = (
         "% This file contains BibTeX entries that the library could not add.\n"
+        "% The reason for the failure is given above each entry.\n"
         '% When importing a given entry, the code looks for the "doi", "ads_url",\n'
         '% or "eprint" attributes. If none of these are present, the code cannot\n'
         "% add the paper. In addition, there may be something wrong with the\n"

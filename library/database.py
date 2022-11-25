@@ -699,6 +699,7 @@ class Database(object):
         # write the header to this file
         header = (
             "% This file contains BibTeX entries that the library could not add.\n"
+            "% The reason for the failure is given above each entry.\n"
             '% When importing a given entry, the code looks for the "doi", "ads_url",\n'
             '% or "eprint" attributes. If none of these are present, the code cannot\n'
             "% add the paper. In addition, there may be something wrong with the\n"
@@ -748,7 +749,7 @@ class Database(object):
         failure_file.close()
         # if there were no failures, remove the failure file. I got the exact size of
         # just the header, which is what we compare to here
-        if failure_file_loc.stat().st_size == 332:
+        if failure_file_loc.stat().st_size == 388:
             failure_file_loc.unlink()
             failure_file_loc = None
 
