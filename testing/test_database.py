@@ -8,6 +8,7 @@ import contextlib
 import pytest
 
 from library.database import Database, PaperAlreadyInDatabaseError
+from library import ads_wrapper
 import test_utils as u
 
 # define some tags that include punctuation, which can mess up SQL. I'll use these
@@ -1595,6 +1596,40 @@ def test_import_failure_file_contains_reason_not_on_ads_adsurl(db_empty):
     assert (
         "% Paper not found on ADS, something may be wrong with this entry\n" + entry
         in f_output
+    )
+
+
+def test_import_failure_file_contains_reason_bad_gateway(db_empty, monkeypatch):
+    def func(x, y):
+        raise ValueError("<html stuff>502 Bad Gateway<\html stuff>")
+
+    monkeypatch.setattr(ads_wrapper.ADSWrapper, "get_bibcode", func)
+    file_loc = create_bibtex(u.mine.bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    assert (
+        "% Connection lost when querying ADS for this paper. "
+        "This may work if you try again" in f_output
+    )
+
+
+def test_import_failure_file_contains_reason_out_of_queries(db_empty, monkeypatch):
+    def func(x, y):
+        raise ValueError("Too many requests")
+
+    monkeypatch.setattr(ads_wrapper.ADSWrapper, "get_bibcode", func)
+    file_loc = create_bibtex(u.mine.bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    assert (
+        "% ADS has cut you off, you have sent too many requests today. "
+        "Try again in ~24 hours" in f_output
     )
 
 

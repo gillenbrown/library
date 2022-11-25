@@ -797,9 +797,20 @@ class Database(object):
             return "duplicate"
         except Exception as e:  # any other error
             # add to failure file, with the error
-            # make a non useful error more useful
-            if str(e) == "list index out of range":
+            # make non useful errors more useful
+            e = str(e)
+            if e == "list index out of range":
                 e = "Paper not found on ADS, something may be wrong with this entry"
+            elif "Bad Gateway" in e:
+                e = (
+                    "Connection lost when querying ADS for this paper. "
+                    "This may work if you try again"
+                )
+            elif "Too many requests" in e:
+                e = (
+                    "ADS has cut you off, you have sent too many requests today. "
+                    "Try again in ~24 hours"
+                )
             failure_file.write(f"% {e}\n")
             failure_file.write(entry + "\n")
             return "failure"
