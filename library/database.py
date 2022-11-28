@@ -137,39 +137,43 @@ class Database(object):
         """
         # call ADS to get the details
         bibcode = ads_call.get_bibcode(identifier)
+        # before we get all the info, see if the paper is already in the database. This
+        # saves us from needing slow queries to ADS
+        result = self._execute("SELECT 1 FROM papers WHERE bibcode = ?", [bibcode])
+        # if this paper is already in the database, exit
+        if len(result) > 0:
+            raise PaperAlreadyInDatabaseError("Already in Library.")
+        # otherwise, get the data and add the paper
         paper_data = ads_call.get_info(bibcode)
 
         # handle the authors - this should be passed in as a list, but we can't store it
         # as a list. Just join it all together with the unique value held above.
         authors_write = self._author_sep.join(paper_data["authors"])
-        try:  # will catch papers that are already in the library
-            # the formatting of this is kinda ugly
-            # put these into the comma separated column names
-            joined_colnames = ",".join(self.colnames_set_on_paper_add)
-            # also make the appropriate amount of question marks based on the number of
-            # column names. This is needed for safe parameter entry
-            question_marks = ",".join(["?"] * len(self.colnames_set_on_paper_add))
-            # combine this together into the SQL query
-            sql = f"INSERT INTO papers({joined_colnames}) VALUES({question_marks})"
-            # then put the values as a tuple before passing it in, for formatting nicely
-            parameters = (
-                bibcode,
-                paper_data["title"],
-                authors_write,
-                paper_data["pubdate"],
-                paper_data["journal"],
-                paper_data["volume"],
-                paper_data["page"],
-                paper_data["abstract"],
-                paper_data["bibtex"],
-                paper_data["arxiv_id"],
-                bibcode,  # citation keyword
-                time.time(),  # update time
-            )
-            # then run this SQL
-            self._execute(sql, parameters)
-        except sqlite3.IntegrityError:
-            raise PaperAlreadyInDatabaseError("Already in Library.")
+        # the formatting of this is kinda ugly
+        # put these into the comma separated column names
+        joined_colnames = ",".join(self.colnames_set_on_paper_add)
+        # also make the appropriate amount of question marks based on the number of
+        # column names. This is needed for safe parameter entry
+        question_marks = ",".join(["?"] * len(self.colnames_set_on_paper_add))
+        # combine this together into the SQL query
+        sql = f"INSERT INTO papers({joined_colnames}) VALUES({question_marks})"
+        # then put the values as a tuple before passing it in, for formatting nicely
+        parameters = (
+            bibcode,
+            paper_data["title"],
+            authors_write,
+            paper_data["pubdate"],
+            paper_data["journal"],
+            paper_data["volume"],
+            paper_data["page"],
+            paper_data["abstract"],
+            paper_data["bibtex"],
+            paper_data["arxiv_id"],
+            bibcode,  # citation keyword
+            time.time(),  # update time
+        )
+        # then run this SQL
+        self._execute(sql, parameters)
 
         # Add the unread tag if it's in the database
         for t in self.get_all_tags():

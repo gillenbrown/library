@@ -7,7 +7,7 @@ import contextlib
 
 import pytest
 
-from library.database import Database, PaperAlreadyInDatabaseError
+from library.database import Database, PaperAlreadyInDatabaseError, ads_call
 from library import ads_wrapper
 import test_utils as u
 
@@ -372,6 +372,18 @@ def test_raise_custom_error_if_paper_is_already_in_database(db_empty):
     with pytest.raises(PaperAlreadyInDatabaseError):
         db_empty.add_paper(u.mine.bibcode)
     assert db_empty.num_papers() == 1
+
+
+def test_no_extra_queries_if_paper_already_in_database(db_empty, monkeypatch):
+    # add one paper before we nerf the code to add papers
+    db_empty.add_paper(u.mine.bibcode)
+    # monkeypatch the ads_call, so we can see if we are ever quering ADS
+    calls = []
+    monkeypatch.setattr(ads_call, "get_info", lambda x: calls.append(x))
+
+    with pytest.raises(PaperAlreadyInDatabaseError):
+        db_empty.add_paper(u.mine.bibcode)
+    assert calls == []
 
 
 def test_raises_errror_if_attribute_does_not_exist(db):
