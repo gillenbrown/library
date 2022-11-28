@@ -14,10 +14,11 @@ os.environ["QT_QPA_PLATFORM"] = "offscreen"
 import pytest
 import pytestqt
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QFontDatabase, QDesktopServices, QGuiApplication
+from PySide6.QtGui import QFontDatabase, QDesktopServices, QGuiApplication, QPalette
 from PySide6.QtWidgets import QFileDialog, QLineEdit, QTextEdit, QScrollArea
+import darkdetect
 
-from library.interface import MainWindow, get_fonts, set_up_fonts, Paper, LeftPanelTag
+from library.interface import MainWindow, get_fonts, set_up_fonts, Paper
 from library.database import Database
 import test_utils as u
 
@@ -307,6 +308,18 @@ def cEditCiteKey(mainWidget, citeKey, qtbot):
     mainWidget.rightPanel.editCiteKeyEntry.clear()
     cEnterText(mainWidget.rightPanel.editCiteKeyEntry, citeKey, qtbot)
     cPressEnter(mainWidget.rightPanel.editCiteKeyEntry, qtbot)
+
+
+def cGetTextAlpha(widget):
+    """
+    Get the alpha value of the text in a widget (0=clear, 255=opaque)
+
+    :param widget: The widget to check
+    :type widget: QWidget
+    :return: the alpha value
+    :rtype: int
+    """
+    return widget.palette().color(QPalette.Text).toRgb().toTuple()[-1]
 
 
 # ======================================================================================
@@ -633,6 +646,38 @@ def test_first_import_paper_takes_up_full_splitter_width(qtbot, db_empty, monkey
     assert paper_width == splitter_width
 
 
+# ====================
+# light and dark theme
+# ====================
+def test_initial_theme_matches_os_theme_light(qtbot, db, monkeypatch):
+    monkeypatch.setattr(darkdetect, "theme", lambda: "Light")
+    widget = cInitialize(qtbot, db)
+    color = widget.title.palette().color(QPalette.WindowText).toRgb().toTuple()
+    assert color == (0, 0, 0, 255)
+
+
+def test_initial_theme_matches_os_theme_dark(qtbot, db, monkeypatch):
+    monkeypatch.setattr(darkdetect, "theme", lambda: "Dark")
+    widget = cInitialize(qtbot, db)
+    color = widget.title.palette().color(QPalette.WindowText).toRgb().toTuple()
+    assert color == (238, 238, 238, 255)
+
+
+def test_dark_theme_activated_when_title_clicked(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    cClick(widget.title, qtbot)
+    color = widget.title.palette().color(QPalette.WindowText).toRgb().toTuple()
+    assert color == (238, 238, 238, 255)
+
+
+def test_theme_switches_each_click(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    cClick(widget.title, qtbot)
+    cClick(widget.title, qtbot)
+    color = widget.title.palette().color(QPalette.WindowText).toRgb().toTuple()
+    assert color == (0, 0, 0, 255)
+
+
 # ======================================================================================
 #
 # test search bar and adding papers from it
@@ -722,6 +767,150 @@ def test_add_button_and_search_bar_are_much_shorter_than_title(qtbot, db_empty):
     widget = cInitialize(qtbot, db_empty)
     assert widget.addButton.height() < 0.6 * widget.title.height()
     assert widget.searchBar.height() < 0.6 * widget.title.height()
+
+
+# ==========================
+# colors of placeholder text
+# ==========================
+def test_searchbar_placeholder_text_starts_transparent(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    assert cGetTextAlpha(widget.searchBar) == 100
+
+
+def test_searchbar_text_is_not_transparent_once_modified(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    cEnterText(widget.searchBar, "g", qtbot)
+    assert cGetTextAlpha(widget.searchBar) == 255
+
+
+def test_searchbar_text_is_transparent_once_cleared(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    cEnterText(widget.searchBar, "g", qtbot)
+    cPressBackspace(widget.searchBar, qtbot)
+    assert cGetTextAlpha(widget.searchBar) == 100
+
+
+def test_add_tag_placeholder_text_starts_transparent(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    cClick(widget.tagsList.addTagButton, qtbot)
+    assert cGetTextAlpha(widget.tagsList.addTagBar) == 100
+
+
+def test_add_tag_text_is_not_transparent_once_modified(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    cClick(widget.tagsList.addTagButton, qtbot)
+    cEnterText(widget.tagsList.addTagBar, "g", qtbot)
+    assert cGetTextAlpha(widget.tagsList.addTagBar) == 255
+
+
+def test_add_tag_text_is_transparent_once_cleared(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    cClick(widget.tagsList.addTagButton, qtbot)
+    cEnterText(widget.tagsList.addTagBar, "g", qtbot)
+    cPressBackspace(widget.tagsList.addTagBar, qtbot)
+    assert cGetTextAlpha(widget.tagsList.addTagBar) == 100
+
+
+def test_delete_tag_placeholder_text_starts_transparent(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    assert cGetTextAlpha(widget.tagsList.secondDeleteTagEntry) == 100
+
+
+def test_delete_tag_text_is_not_transparent_once_modified(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    cEnterText(widget.tagsList.secondDeleteTagEntry, "g", qtbot)
+    assert cGetTextAlpha(widget.tagsList.secondDeleteTagEntry) == 255
+
+
+def test_delete_tag_text_is_transparent_once_cleared(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    cEnterText(widget.tagsList.secondDeleteTagEntry, "g", qtbot)
+    cPressBackspace(widget.tagsList.secondDeleteTagEntry, qtbot)
+    assert cGetTextAlpha(widget.tagsList.secondDeleteTagEntry) == 100
+
+
+def test_cite_key_placeholder_text_is_transparent(qtbot, db_temp):
+    # click on a paper with no cite key set
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.papersList.getPapers()[0], qtbot)
+    cClick(widget.rightPanel.editCiteKeyButton, qtbot)
+    assert cGetTextAlpha(widget.rightPanel.editCiteKeyEntry) == 100
+
+
+def test_cite_key_placeholder_text_is_not_transparent_when_modified(qtbot, db_temp):
+    # click on a paper with no cite key set
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.papersList.getPapers()[0], qtbot)
+    cClick(widget.rightPanel.editCiteKeyButton, qtbot)
+    cEnterText(widget.rightPanel.editCiteKeyEntry, "g", qtbot)
+    assert cGetTextAlpha(widget.rightPanel.editCiteKeyEntry) == 255
+
+
+def test_cite_key_placeholder_text_is_transparent_when_cleared(qtbot, db_temp):
+    # click on a paper with no cite key set
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.papersList.getPapers()[0], qtbot)
+    cClick(widget.rightPanel.editCiteKeyButton, qtbot)
+    cEnterText(widget.rightPanel.editCiteKeyEntry, "g", qtbot)
+    cPressBackspace(widget.rightPanel.editCiteKeyEntry, qtbot)
+    assert cGetTextAlpha(widget.rightPanel.editCiteKeyEntry) == 100
+
+
+def test_cite_key_not_transparent_if_set(qtbot, db_empty):
+    # click on a paper with a cite key set
+    db_empty.add_paper(u.mine.bibcode)
+    db_empty.set_paper_attribute(u.mine.bibcode, "citation_keyword", "test")
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.papersList.getPapers()[0], qtbot)
+    cClick(widget.rightPanel.editCiteKeyButton, qtbot)
+    assert cGetTextAlpha(widget.rightPanel.editCiteKeyEntry) == 255
+
+
+def test_cite_key_transparent_correct_new_paper_clear_to_clear(qtbot, db_temp):
+    # test when transitioning from one paper without a key to another without a key
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.papersList.getPapers()[0], qtbot)
+    cClick(widget.rightPanel.editCiteKeyButton, qtbot)
+    cClick(widget.papersList.getPapers()[1], qtbot)
+    cClick(widget.rightPanel.editCiteKeyButton, qtbot)
+    assert cGetTextAlpha(widget.rightPanel.editCiteKeyEntry) == 100
+
+
+def test_cite_key_transparent_correct_new_paper_clear_to_full(qtbot, db_temp):
+    # test when transitioning from one paper without a key to another with a key
+    db_temp.set_paper_attribute(u.tremonti.bibcode, "citation_keyword", "test")
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.papersList.getPapers()[1], qtbot)  # mine
+    cClick(widget.rightPanel.editCiteKeyButton, qtbot)
+    cClick(widget.papersList.getPapers()[0], qtbot)  # tremonti
+    cClick(widget.rightPanel.editCiteKeyButton, qtbot)
+    assert cGetTextAlpha(widget.rightPanel.editCiteKeyEntry) == 255
+
+
+def test_cite_key_transparent_correct_new_paper_full_to_clear(qtbot, db_temp):
+    # test when transitioning from one paper with a key to another without a key
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.papersList.getPapers()[0], qtbot)
+    cClick(widget.rightPanel.editCiteKeyButton, qtbot)
+    cEnterText(widget.rightPanel.editCiteKeyEntry, "sdf", qtbot)
+    cClick(widget.papersList.getPapers()[1], qtbot)
+    cClick(widget.rightPanel.editCiteKeyButton, qtbot)
+    assert cGetTextAlpha(widget.rightPanel.editCiteKeyEntry) == 100
+
+
+def test_cite_key_transparent_correct_new_paper_full_to_full(qtbot, db_temp):
+    # test when transitioning from one paper with a key to another with a key
+    db_temp.set_paper_attribute(u.tremonti.bibcode, "citation_keyword", "test")
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.papersList.getPapers()[1], qtbot)  # mine
+    cClick(widget.rightPanel.editCiteKeyButton, qtbot)
+    cEnterText(widget.rightPanel.editCiteKeyEntry, "sdf", qtbot)
+    cClick(widget.papersList.getPapers()[0], qtbot)  # tremonti
+    cClick(widget.rightPanel.editCiteKeyButton, qtbot)
+    assert cGetTextAlpha(widget.rightPanel.editCiteKeyEntry) == 255
 
 
 # =============
@@ -2101,7 +2290,10 @@ def test_paper_pdf_text_has_correct_text_with_local_file(qtbot, db_empty):
     db_empty.set_paper_attribute(u.mine.bibcode, "local_file", __file__)
     widget = cInitialize(qtbot, db_empty)
     cClick(widget.papersList.getPapers()[0], qtbot)
-    assert widget.rightPanel.pdfText.text() == f"PDF Location: {__file__}"
+    # check that the shown path uses ~ and resolves to the correct location
+    shown_path = widget.rightPanel.pdfText.text().replace("PDF Location: ", "")
+    assert shown_path.startswith("~/")
+    assert Path(shown_path).expanduser() == Path(__file__).resolve()
 
 
 def test_paper_pdf_text_has_correct_text_without_local_file(qtbot, db_temp):
@@ -2178,7 +2370,10 @@ def test_paper_pdf_add_local_file_updates_text(qtbot, db_temp, monkeypatch):
     widget = cInitialize(qtbot, db_temp)
     cClick(widget.papersList.getPapers()[0], qtbot)
     cClick(widget.rightPanel.pdfChooseLocalFileButton, qtbot)
-    assert widget.rightPanel.pdfText.text() == f"PDF Location: {__file__}"
+    # check that the shown path uses ~ and resolves to the correct location
+    shown_path = widget.rightPanel.pdfText.text().replace("PDF Location: ", "")
+    assert shown_path.startswith("~/")
+    assert Path(shown_path).expanduser() == Path(__file__).resolve()
 
 
 def test_paper_pdf_add_local_file_cancel_no_text_diff(qtbot, db_temp, monkeypatch):
@@ -2341,6 +2536,25 @@ def test_download_pdf_button_asks_user(qtbot, db_temp, monkeypatch):
     ]
 
 
+def test_download_pdf_button_suggests_filename(qtbot, db_empty, monkeypatch):
+    # record the files that were attempted to be used to save a file
+    dir_suggestions = []
+
+    def mock_get_file(filter="", caption="", dir=""):
+        dir_suggestions.append(dir)
+        return "", "dummy filter"
+
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", mock_get_file)
+
+    db_empty.add_paper(u.mine.bibcode)
+    widget = cInitialize(qtbot, db_empty)
+
+    # record files where we attempted to download something
+    cClick(widget.papersList.getPapers()[0], qtbot)
+    cClick(widget.rightPanel.pdfDownloadButton, qtbot)
+    assert dir_suggestions == [str(Path.home() / "brown_gnedin_li_2018_apj_864_94.pdf")]
+
+
 def test_download_pdf_button_actually_downloads_paper(qtbot, db_temp, monkeypatch):
     monkeypatch.setattr(QFileDialog, "getSaveFileName", mSaveFileValidPDF)
     widget = cInitialize(qtbot, db_temp)
@@ -2460,7 +2674,10 @@ def test_download_pdf_button_updates_text(qtbot, db_temp, monkeypatch):
     # when setting the buttons
     cClick(widget.papersList.getPapers()[0], qtbot)
     cClick(widget.rightPanel.pdfDownloadButton, qtbot)
-    assert widget.rightPanel.pdfText.text() == f"PDF Location: {str(mSaveLocPDF)}"
+    # check that the shown path uses ~ and resolves to the correct location
+    shown_path = widget.rightPanel.pdfText.text().replace("PDF Location: ", "")
+    assert shown_path.startswith("~/")
+    assert Path(shown_path).expanduser() == mSaveLocPDF
     mSaveLocPDF.unlink()
 
 
@@ -3435,6 +3652,14 @@ def test_edit_citation_keywored_entry_backspace_exit_doesnt_change_db(qtbot, db_
     assert db_temp.get_paper_attribute(bibcode, "citation_keyword") == bibcode
 
 
+def test_edit_citation_keyword_entry_disappears_when_new_paper_clicked(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    cClick(widget.papersList.getPapers()[0], qtbot)
+    cClick(widget.rightPanel.editCiteKeyButton, qtbot)
+    cClick(widget.papersList.getPapers()[1], qtbot)
+    assert widget.rightPanel.editCiteKeyEntry.isHidden() is True
+
+
 # ===============
 # deleting papers
 # ===============
@@ -4268,6 +4493,13 @@ def test_clicking_add_tag_button_shows_text_entry(qtbot, db_empty):
     assert widget.tagsList.addTagBar.isHidden() is False
 
 
+def test_add_tag_button_and_entry_have_same_height(qtbot, db_empty):
+    widget = cInitialize(qtbot, db_empty)
+    button_height = widget.tagsList.addTagButton.height()
+    cClick(widget.tagsList.addTagButton, qtbot)
+    assert widget.tagsList.addTagBar.height() == button_height
+
+
 def test_clicking_add_tag_button_puts_focus_on_text_entry(qtbot, db_empty, monkeypatch):
     # I tried to test this directly, but was having trouble getting the tests to work
     # properly. Specifically, widget.hasFocus() was not working propertly in tests for
@@ -4615,6 +4847,13 @@ def test_clicking_first_tag_delete_button_hides_first_button(qtbot, db_temp):
     assert widget.tagsList.firstDeleteTagButton.isHidden() is True
 
 
+def test_delete_tag_button_and_entry_have_same_height(qtbot, db_empty):
+    widget = cInitialize(qtbot, db_empty)
+    button_height = widget.tagsList.firstDeleteTagButton.height()
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    assert widget.tagsList.secondDeleteTagEntry.height() == button_height
+
+
 def test_second_delete_tag_entry_is_hidden_when_entry_done(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
     cClick(widget.tagsList.firstDeleteTagButton, qtbot)
@@ -4629,6 +4868,21 @@ def test_third_delete_tag_button_appears_when_first_entry_done(qtbot, db_temp):
     cEnterText(widget.tagsList.secondDeleteTagEntry, "Read", qtbot)
     cPressEnter(widget.tagsList.secondDeleteTagEntry, qtbot)
     assert widget.tagsList.thirdDeleteTagButton.isHidden() is False
+
+
+def test_third_delete_tag_button_and_entry_have_same_height(qtbot, db_empty):
+    db_empty.add_new_tag("Read")
+    widget = cInitialize(qtbot, db_empty)
+    button_1_height = widget.tagsList.firstDeleteTagButton.height()
+    cClick(widget.tagsList.firstDeleteTagButton, qtbot)
+    entry_height = widget.tagsList.secondDeleteTagEntry.height()
+    cEnterText(widget.tagsList.secondDeleteTagEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.secondDeleteTagEntry, qtbot)
+    button_2_height = widget.tagsList.thirdDeleteTagButton.height()
+    button_3_height = widget.tagsList.thirdDeleteTagCancelButton.height()
+    assert button_1_height == entry_height  # already checked, included for clarity
+    assert entry_height == button_2_height
+    assert button_2_height == button_3_height
 
 
 def test_third_delete_tag_cancel_button_appears_when_first_entry_done(qtbot, db_temp):

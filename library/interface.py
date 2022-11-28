@@ -2,6 +2,7 @@ from pathlib import Path
 import requests
 
 import ads.exceptions
+import darkdetect
 from PySide6.QtCore import (
     Qt,
     QEvent,
@@ -754,6 +755,7 @@ class RightPanel(ScrollArea):
         cite_key = self.main.db.get_paper_attribute(self.bibcode, "citation_keyword")
         self.citeKeyText.setText(f"Citation Keyword: {cite_key}")
         self.editCiteKeyButton.show()
+        self.editCiteKeyEntry.hide()
         self.copyBibtexButton.show()
         # and spacers
         for spacer in self.spacers:
@@ -1027,7 +1029,9 @@ class RightPanel(ScrollArea):
             self.pdfChooseLocalFileButton.show()
             self.pdfDownloadButton.show()
         else:  # valid file
-            self.pdfText.setText(f"PDF Location: {local_file}")
+            # if applicable, use ~ for the home directory
+            shown_file = local_file.replace(str(Path.home()), "~")
+            self.pdfText.setText(f"PDF Location: {shown_file}")
             self.pdfOpenButton.show()
             self.pdfClearButton.show()
             self.pdfChooseLocalFileButton.hide()
@@ -1105,7 +1109,9 @@ class RightPanel(ScrollArea):
 
         # we found the right URL, now ask the user where to download
         local_file = QFileDialog.getSaveFileName(
-            caption="Select where to save this pdf", dir=str(Path.home())
+            caption="Select where to save this pdf",
+            dir=str(Path.home() / self.main.db.get_machine_cite_string(self.bibcode))
+            + ".pdf",
         )[0]
 
         # the user may cancel
@@ -1208,6 +1214,8 @@ class PapersListScrollArea(ScrollArea):
         self.sortChooser.addItems(["Sort by Date", "Sort by First Author"])
         self.sortChooser.setFixedWidth(200)
         self.sortChooser.currentTextChanged.connect(self.changeSort)
+        # make the popup window transparent, so the round border works
+        self.sortChooser.view().window().setWindowFlag(Qt.FramelessWindowHint)
         # Don't add the sortChooser to the layout. Instead, just set it as a child of
         # the papersList. That will allow it to float on top
         self.sortChooser.setParent(self)
@@ -1419,6 +1427,15 @@ class TagsListScrollArea(ScrollArea):
         self.thirdDeleteTagCancelButton.clicked.connect(self.cancelTagDeletion)
         self.thirdDeleteTagCancelButton.setProperty("delete_cancel_button", True)
         self.thirdDeleteTagCancelButton.hide()
+
+        # make all these have the same height
+        tag_button_height = 28
+        self.addTagButton.setFixedHeight(tag_button_height)
+        self.addTagBar.setFixedHeight(tag_button_height)
+        self.firstDeleteTagButton.setFixedHeight(tag_button_height)
+        self.secondDeleteTagEntry.setFixedHeight(tag_button_height)
+        self.thirdDeleteTagButton.setFixedHeight(tag_button_height)
+        self.thirdDeleteTagCancelButton.setFixedHeight(tag_button_height)
 
         # Make the button to show all the papers in the list
         self.showAllButton = LeftPanelTagShowAll(self.main)
@@ -1675,7 +1692,52 @@ class TagsListScrollArea(ScrollArea):
         self.main.splitter.setSizes(new_sizes)
 
 
-class EasyExitLineEdit(QLineEdit):
+class PlaceHolderColorLineEdit(QLineEdit):
+    """
+    A QLineEdit, but one that enforces transparent text for placeholder text
+
+    With a regular QLineEdit using stylesheets, the placeholder text is the same color
+    as regular text, which is not useful
+    """
+
+    def __init__(self):
+        super().__init__()
+        qss_trigger(self, "transparent", True)
+
+    def _setTransparency(self):
+        """
+        If there is no text, set it to be transparent.
+
+        :return: None
+        """
+        if self.text() == "":
+            qss_trigger(self, "transparent", True)
+        else:
+            qss_trigger(self, "transparent", False)
+
+    def keyPressEvent(self, keyPressEvent):
+        """
+        Handle a keyPressEvent, and make the placeholder transparent if needed
+
+        :param keyPressEvent: The key press event
+        :type keyPressEvent: PySide6.QtGui.QKeyEvent
+        :return: None
+        """
+        super().keyPressEvent(keyPressEvent)
+        self._setTransparency()
+
+    def setText(self, text):
+        """
+        Set the text in the field, and set transparency appropriately
+        :param text: Text to put in this field
+        :type text: str
+        :return: None
+        """
+        super().setText(text)
+        self._setTransparency()
+
+
+class EasyExitLineEdit(PlaceHolderColorLineEdit):
     """
     Just like a lineEdit, but they can call a function (which should exit) with escape
     or backspace when all text is empty
@@ -1755,6 +1817,40 @@ class EasyExitTextEdit(QTextEdit):
             super().keyPressEvent(keyPressEvent)
 
 
+class ThemeSwitcherText(QLabel):
+    """
+    Normal QLabel, but it will change the theme when clicked
+    """
+
+    def __init__(self, text, main):
+        super().__init__(text)
+        self.main = main
+        self.theme = darkdetect.theme().lower()
+        self.applyTheme()
+
+    def applyTheme(self):
+        """
+        Call the qss file to apply the theme to the interface
+
+        :return: None
+        """
+        with open(Path(__file__).parent / f"style_{self.theme}.qss", "r") as style_file:
+            self.main.setStyleSheet(style_file.read())
+
+    def mousePressEvent(self, event):
+        """
+        Handle the theme switching
+
+        :param event: the mouse click event, which I ignore
+        :return: None
+        """
+        if self.theme == "dark":
+            self.theme = "light"
+        else:
+            self.theme = "dark"
+        self.applyTheme()
+
+
 class MainWindow(QMainWindow):
     """
     Main window object holding everything needed in the interface.
@@ -1772,10 +1868,6 @@ class MainWindow(QMainWindow):
         # set up threading
         self.threadpool = QThreadPool()
 
-        # Set up default stylesheets
-        with open(Path(__file__).parent / "style.qss", "r") as style_file:
-            self.setStyleSheet(style_file.read())
-
         self.db = db
 
         # add read and unread tags if there is nothing in the database
@@ -1790,10 +1882,10 @@ class MainWindow(QMainWindow):
         vBoxMain.setSpacing(5)
 
         # The title is first
-        self.title = QLabel("Library")
+        self.title = ThemeSwitcherText("Library", self)
         self.title.setObjectName("big_title")
         # then the search bar
-        self.searchBar = QLineEdit()
+        self.searchBar = PlaceHolderColorLineEdit()
         self.searchBar.setPlaceholderText("Enter your paper URL or ADS bibcode here")
         self.searchBar.setProperty("error", False)
         # and have some text if there's an error

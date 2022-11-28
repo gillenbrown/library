@@ -589,6 +589,108 @@ def test_cite_string_no_page_no_arxiv(db):
     assert db.get_cite_string(u.grasha_thesis.bibcode) == true_cite_string
 
 
+# =====================================================
+# modifying cite string to save paper pdfs in interface
+# =====================================================
+# this duplicates all the tests above
+def test_machine_cite_string_one_author(db):
+    db.set_paper_attribute(u.mine.bibcode, "authors", ["Brown, Gillen"])
+    true_cite_string = f"brown_2018_apj_{u.mine.volume}_{u.mine.page}"
+    assert db.get_machine_cite_string(u.mine.bibcode) == true_cite_string
+
+
+def test_machine_cite_string_two_authors(db):
+    new_authors = ["Brown, Gillen", "Gnedin, Oleg Y."]
+    db.set_paper_attribute(u.mine.bibcode, "authors", new_authors)
+    true_cite_string = f"brown_gnedin_2018_apj_{u.mine.volume}_{u.mine.page}"
+    assert db.get_machine_cite_string(u.mine.bibcode) == true_cite_string
+
+
+def test_machine_cite_string_three_authors(db):
+    # my paper already has three authors
+    true_cite_string = f"brown_gnedin_li_2018_apj_{u.mine.volume}_{u.mine.page}"
+    assert db.get_machine_cite_string(u.mine.bibcode) == true_cite_string
+
+
+def test_machine_cite_string_four_authors_uses_et_al(db):
+    new_authors = ["Brown, Gillen", "Gnedin, Oleg Y.", "Li, Hui", "Author, Test"]
+    db.set_paper_attribute(u.mine.bibcode, "authors", new_authors)
+    true_cite_string = f"brown_etal_2018_apj_{u.mine.volume}_{u.mine.page}"
+    assert db.get_machine_cite_string(u.mine.bibcode) == true_cite_string
+
+
+def test_machine_cite_string_many_authors_uses_et_al(db):
+    true_cite_string = f"tremonti_etal_2004_apj_{u.tremonti.volume}_{u.tremonti.page}"
+    assert db.get_machine_cite_string(u.tremonti.bibcode) == true_cite_string
+
+
+def test_machine_cite_string_apj_is_shortened(db):
+    true_cite_string = f"brown_gnedin_li_2018_apj_{u.mine.volume}_{u.mine.page}"
+    assert db.get_machine_cite_string(u.mine.bibcode) == true_cite_string
+
+
+def test_machine_cite_string_apjs_is_shortened(db):
+    bibcode = "2011ApJS..197...30Z"
+    db.add_paper(bibcode)
+    assert db.get_machine_cite_string(bibcode) == "zemp_etal_2011_apjs_197_30"
+
+
+def test_machine_cite_string_mnras_is_shortened_test_paper(db):
+    db.set_paper_attribute(
+        u.mine.bibcode, "journal", "Monthly Notices of the Royal Astronomical Society"
+    )
+    true_cite_string = f"brown_gnedin_li_2018_mnras_{u.mine.volume}_{u.mine.page}"
+    assert db.get_machine_cite_string(u.mine.bibcode) == true_cite_string
+
+
+def test_machine_cite_string_aj_is_shortened(db):
+    bibcode = "1999AJ....118..752Z"
+    db.add_paper(bibcode)
+    assert db.get_machine_cite_string(bibcode) == "zepf_etal_1999_aj_118_752"
+
+
+def test_machine_cite_string_araa_is_shortened(db):
+    bibcode = "2018ARA&A..56...83B"
+    db.add_paper(bibcode)
+    assert db.get_machine_cite_string(bibcode) == "bastian_lardo_2018_araa_56_83"
+
+
+def test_machine_cite_string_pasp_is_shortened(db):
+    bibcode = "2000PASP..112.1360A"
+    db.add_paper(bibcode)
+    assert db.get_machine_cite_string(bibcode) == "anderson_king_2000_pasp_112_1360"
+
+
+def test_machine_cite_string_pasj_is_shortened(db):
+    bibcode = "2021PASJ...73.1074F"
+    db.add_paper(bibcode)
+    assert db.get_machine_cite_string(bibcode) == "fujii_etal_2021_pasj_73_1074"
+
+
+def test_machine_cite_string_nonnumeric_page_and_a_and_a_journal_shortened(db):
+    db.add_paper(u.marks.bibcode)
+    true_cite_string = "marks_kroupa_2012_aa_543_a8"
+    assert db.get_machine_cite_string(u.marks.bibcode) == true_cite_string
+
+
+def test_machine_cite_string_a_and_a_supplment_shortened(db):
+    bibcode = "1999A&AS..139..393L"
+    db.add_paper(bibcode)
+    assert db.get_machine_cite_string(bibcode) == "larsen_1999_aas_139_393"
+
+
+def test_machine_cite_string_unpublished(db):
+    db.add_paper(u.forbes.bibcode)
+    true_cite_string = "forbes_2020_arxiv_200314327"
+    assert db.get_machine_cite_string(u.forbes.bibcode) == true_cite_string
+
+
+def test_machine_cite_string_no_page_no_arxiv(db):
+    db.add_paper(u.grasha_thesis.bibcode)
+    true_cite_string = "grasha_2018"
+    assert db.get_machine_cite_string(u.grasha_thesis.bibcode) == true_cite_string
+
+
 # ======================================================================================
 #
 # tags

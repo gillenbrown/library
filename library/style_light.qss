@@ -1,0 +1,276 @@
+/*be explicit about default background color*/
+QWidget{
+    background-color: #ECECEC;
+    font-family: Cabin;
+    font-size: 14pt;
+    color: black;
+}
+
+QScrollArea{
+    border: 1px solid #BBBBBB;
+}
+
+/* tweak appearance of some widgets */
+QLineEdit{
+    background-color: #F7F7F7;
+    border-radius: 0.5em;
+    padding-left: 0.5em;
+    border: 1px solid #BBBBBB;
+}
+QLineEdit[transparent=true]{
+    color: rgba(0, 0, 0, 100);
+}
+QTextEdit{
+    background-color: #F7F7F7;
+    border-radius: 0.5em;
+    padding-left: 0.5em;
+    border: 1px solid #BBBBBB;
+}
+QPushButton{
+    background-color: #F7F7F7;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+    border: 1px solid #BBBBBB;
+    border-radius: 0.5em;
+}
+QPushButton:hover {
+  border: 1px solid black;
+}
+
+/* make the add and import buttons even more obvious */
+QPushButton#add_button{
+    border: 2px solid #777777;
+    padding-left: 1em;
+    padding-right: 1em;
+}
+QPushButton#add_button:hover {
+    border: 2px solid black;
+}
+QPushButton#import_button{
+    border: 2px solid #777777;
+    padding-left: 0.2em;
+    padding-right: 0.2em;
+}
+QPushButton#import_button:hover {
+    border: 2px solid black;
+}
+
+/* Make the title really big, and some other text larger too */
+QLabel#big_title {
+    font-family: Lobster;
+    font-size: 40pt;
+    margin-right: 10px;
+    padding-bottom: 10px;
+}
+
+QLabel#center_panel_paper_title{
+    font-size: 18pt;
+}
+
+QLabel#center_panel_cite_string{
+    font-size: 12pt;
+}
+
+QLabel#right_panel_paper_title{
+    font-size: 20pt;
+}
+
+QLabel#right_panel_cite_text{
+    font-size: 16pt;
+}
+
+QLabel#right_panel_abstract_text{
+    font-size: 14pt;
+}
+
+QLabel#right_panel_tagText{
+    font-size: 14pt;
+}
+
+/* Make the selected paper change color. The text needs to be adjusted too */
+/* since it inherite the default grey background */
+Paper[is_highlighted=true]{
+    padding-left: 1pt;
+    border-left: 3px solid black;
+    background-color: #F7F7F7;
+}
+
+Paper[is_highlighted=false]{
+    padding-left: 1pt;
+    border-left: 3px solid #ECECEC;
+    background-color: #ECECEC;
+}
+
+QLabel#center_panel_paper_title[is_highlighted=true]{
+    background-color: #F7F7F7;
+}
+
+QLabel#center_panel_paper_title[is_highlighted=false]{
+    background-color: #ECECEC;
+}
+
+QLabel#center_panel_cite_string[is_highlighted=true]{
+    background-color: #F7F7F7;
+}
+
+QLabel#center_panel_cite_string[is_highlighted=false]{
+    background-color: #ECECEC;
+}
+
+/* Have some formatting when the user enters an invalid paper */
+QLabel[error_text=true]{
+    color: #FF0000;
+}
+
+QLineEdit[error=true]{
+    background-color: #FFCCCC;
+    border-color: #FF0000;
+    border-radius: 0.5em;
+    padding-left: 0.5em;
+}
+
+/* Make the tags change color when selected */
+LeftPanelTag[is_highlighted=true]{
+    padding-left: 1pt;
+    border-left: 3px solid black;
+    background-color: #F7F7F7;
+}
+LeftPanelTag[is_highlighted=false]{
+    padding-left: 1pt;
+    border-left: 3px solid #ECECEC;
+    background-color: #ECECEC;
+}
+
+QLabel[is_tag=true][is_highlighted=true]{
+    background-color: #F7F7F7;
+}
+
+QLabel[is_tag=true][is_highlighted=false]{
+    background-color: #ECECEC;
+}
+
+/* Adjust the buttons in the left panel, since their spacing needs to be different */
+/* from the tags in that panel */
+QWidget[is_left_panel_item=true]{
+    margin-bottom: 0.5em;
+}
+
+/* Make some buttons that delete papers or tags red, to warn the user */
+QPushButton[delete_button=true]{
+    background-color: #FFCCCC;
+}
+QPushButton[delete_button=true]:hover{
+    border: 3px dashed red;
+}
+
+QPushButton[delete_cancel_button=true]{
+    background-color: #F3FFF3;
+}
+
+/* Adjust the sizing of the tag checkbox holder, so that it doesn't take up space */
+/* when hidden */
+TagCheckBox{
+    padding-top: 0;
+    padding-bottom: 0;
+    border-top: 0;
+    border-bottom: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+/* Format the spacers */
+HorizontalLine{
+    color: #BBBBBB;
+}
+
+/* Style the ComboBox used to choose the sort order */
+QComboBox{
+    border: 1px solid #BBBBBB;
+    border-radius: 10px;
+    margin-right: 16px;
+    margin-top: 0.5em;
+    padding-left: 0.5em;
+    background-color: #F7F7F7;
+}
+
+QComboBox::drop-down{ /* the area hosting the arrow */
+    border: 0px solid black;
+    border-radius: 0.5em;
+    background-color: #F7F7F7;
+}
+
+QComboBox::down-arrow { /* The arrow itself */
+    image: url(library/resources/drop-down-arrow-dark.png);
+    border-radius: 0.5em;
+    margin-right: 11px;
+    margin-top: 2px;
+    width: 12px;
+    height: 12px;
+}
+
+QComboBox::hover{
+    border: 1px solid black;
+}
+
+QComboBox QAbstractItemView {  /* the popup */
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+    border: 1px solid black;
+    border-radius: 0.35em;  /* can't be too big or we get weird border effects */
+    background-color: #ECECEC;
+    color: #555555;
+    selection-color: black;
+}
+
+/* The PDF section highlighting */
+QLabel[pdf_highlight=true]{
+    color: darkred;
+}
+QPushButton[pdf_highlight=true]{
+    border: 2px solid darkred;
+}
+QPushButton[pdf_highlight=true]:hover {
+    border: 2px solid black;
+}
+
+/* Format scrollbar. This actually turned out to be tricky
+   What I wanted to do is just use the default scrollbars. To do this, you need to
+   not set any QSS at all (setting them to {} does not work). This would require
+   big changes to this QSS file, since at the top I have one selector that applies
+   to all widgets. I'd need to get rid of that and apply those rules to all the
+   individual widgets. That's a pain, so I'll not do it. Right now, this is pretty
+   close to the default MacOs behavior. The only substantive difference is that the
+   scrollbars don't disappear once scrolling is done. They're always there.
+*/
+QScrollBar:vertical {
+    width: 6px;
+}
+QScrollBar::handle:vertical {
+    background-color: #BBBBBB;
+    min-height: 20px;
+    border-radius: 3px;
+}
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical{
+    border: 0;
+    width: 0px;
+    height: 0px;
+    color: #ECECEC;
+    background-color: #ECECEC;
+}
+/* I shouldn't ever show horizontal scrollbars, but format them nicely if
+   they do show up */
+QScrollBar:horizontal {
+    height: 6px;
+}
+QScrollBar::handle:horizontal {
+    background-color: #BBBBBB;
+    min-width: 20px;
+    border-radius: 3px;
+}
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal{
+    border: 0;
+    width: 0px;
+    height: 0px;
+    color: #ECECEC;
+    background-color: #ECECEC;
+}
