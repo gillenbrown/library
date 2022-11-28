@@ -425,13 +425,12 @@ class ScrollArea(QScrollArea):
 
         # Have a central widget with a vertical box layout
         self.container = QWidget()
-        self.layout = QVBoxLayout()
+        # Then add these layouts and widgets
+        self.container.setLayout(QVBoxLayout())
         # the widgets should have their fixed size, no modification. This is also
         # needed to get them to show up, I believe to stop this from having zero size?
-        self.layout.setSizeConstraint(QLayout.SetFixedSize)
+        self.layout().setSizeConstraint(QLayout.SetFixedSize)
 
-        # Then add these layouts and widgets
-        self.container.setLayout(self.layout)
         self.setWidget(self.container)
 
         # have a minimum allowed width. This makes the splitter know to not decrease
@@ -440,6 +439,15 @@ class ScrollArea(QScrollArea):
         # store the difference between the splitter size and what we want to set the
         # widget widths 10
         self.offset = offset
+
+    def layout(self):
+        """
+        Get the layout of the underlying container
+
+        :return: the layout of the underlying container
+        :rtype: QLayout
+        """
+        return self.container.layout()
 
     def addWidget(self, widget):
         """
@@ -450,7 +458,17 @@ class ScrollArea(QScrollArea):
         :return: None
         """
         # add the widget to the layout
-        self.layout.addWidget(widget)
+        self.layout().addWidget(widget)
+
+    def addLayout(self, layout):
+        """
+        Add a layout to the list of vertical objects
+
+        :param layout: The layout to be added
+        :type layout: QLayout
+        :return: None
+        """
+        self.layout().addLayout(layout)
 
     def resizeEvent(self, resize_event):
         """
@@ -463,7 +481,7 @@ class ScrollArea(QScrollArea):
         # get the new size, and apply it to all widgets in the layout. Have some
         # padding on either size to avoid horizontal scroll bars
         new_width = resize_event.size().width() - self.offset
-        self.resize_items_in_layout(self.layout, new_width)
+        self.resize_items_in_layout(self.layout(), new_width)
 
         # Then do the normal resizing
         super().resizeEvent(resize_event)
@@ -612,7 +630,7 @@ class RightPanel(ScrollArea):
         self.addWidget(self.tagText)
         self.addWidget(self.editTagsButton)
         self.addWidget(self.doneEditingTagsButton)
-        self.layout.addLayout(self.vBoxTags)
+        self.addLayout(self.vBoxTags)
         self.addWidget(self.spacers[3])
         self.addWidget(self.citeKeyText)
         self.addWidget(self.editCiteKeyButton)
@@ -1205,7 +1223,7 @@ class PapersListScrollArea(ScrollArea):
         super().__init__(min_width=300, offset=6)  # match offset to scrollbar width
         # add space for top sortChooser, then matching space at the bottom so the
         # last paper doesn't get cut off.
-        self.layout.setContentsMargins(0, 35, 0, 35)
+        self.layout().setContentsMargins(0, 35, 0, 35)
 
         self.main = main
 
@@ -1237,7 +1255,7 @@ class PapersListScrollArea(ScrollArea):
         :return: List of paper widgets
         :rtype: list[Paper]
         """
-        return [self.layout.itemAt(i).widget() for i in range(self.layout.count())]
+        return [self.layout().itemAt(i).widget() for i in range(self.layout().count())]
 
     def addPaper(self, bibcode, click=True):
         """
@@ -1291,7 +1309,7 @@ class PapersListScrollArea(ScrollArea):
         for paper in self.getPapers():
             if paper.bibcode == bibcode:
                 paper.hide()  # just to be safe
-                self.layout.removeWidget(paper)
+                self.layout().removeWidget(paper)
                 del paper
 
     def sortPapers(self):
@@ -1305,11 +1323,11 @@ class PapersListScrollArea(ScrollArea):
         # add them back
         papers = self.getPapers()
         for paper in papers:
-            self.layout.removeWidget(paper)
+            self.layout().removeWidget(paper)
         # sort by publication date
         papers = sorted(papers, key=self.sortKey)
         for paper in papers:
-            self.layout.addWidget(paper)
+            self.layout().addWidget(paper)
 
     def changeSort(self):
         """
@@ -1458,7 +1476,7 @@ class TagsListScrollArea(ScrollArea):
         # adjust the spacing between elements (i.e. tags). To compensate, increase the
         # margins around the buttons at the top, so they're not right on top of each
         # other. I do this with QSS
-        self.layout.setSpacing(0)
+        self.layout().setSpacing(0)
         self.addTagErrorText.setProperty("is_left_panel_item", True)
         self.addTagButton.setProperty("is_left_panel_item", True)
         self.addTagBar.setProperty("is_left_panel_item", True)
@@ -1511,7 +1529,7 @@ class TagsListScrollArea(ScrollArea):
         # we do is remove all tags from the layout, figure out the sort order, then add
         # everything back
         for tag in self.tags:
-            self.layout.removeWidget(tag)
+            self.layout().removeWidget(tag)
         # then add the new tag to this list. (we don't do this first because we don't
         # need to remove it
         self.tags.append(new_tag)
@@ -1519,7 +1537,7 @@ class TagsListScrollArea(ScrollArea):
         self.tags = sorted(self.tags, key=lambda tag: tag.name.lower())
         # then add them to the layout in this order
         for tag in self.tags:
-            self.layout.addWidget(tag)
+            self.layout().addWidget(tag)
 
         # resize
         self.triggerResize()
@@ -2035,7 +2053,7 @@ class MainWindow(QMainWindow):
         # I also need to touch the splitter, to make sure the paper size of the
         # first paper is set appropriately
         self.papersList.resize_items_in_layout(
-            self.papersList.layout, self.splitter.sizes()[1]
+            self.papersList.layout(), self.splitter.sizes()[1]
         )
 
     def formatSearchBarError(self, error_text):
