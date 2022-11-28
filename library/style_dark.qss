@@ -5,6 +5,9 @@ QWidget{
     font-size: 14pt;
     color: #EEEEEE;
 }
+QWidget[faded=true]{
+    color: rgba(238, 238, 238, 50);  /* #EEEEEE into RGB */
+}
 
 QScrollArea{
     border: 1px solid #555555;
@@ -18,7 +21,7 @@ QLineEdit{
     border: 1px solid #888888;
 }
 QLineEdit[transparent=true]{
-    color: rgba(238, 238, 238, 100);  /* #DDDDDD into RGB */
+    color: rgba(238, 238, 238, 100);  /* #EEEEEE into RGB */
 }
 QTextEdit{
     background-color: #555555;

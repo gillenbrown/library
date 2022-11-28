@@ -5,6 +5,9 @@ QWidget{
     font-size: 14pt;
     color: black;
 }
+QWidget[faded=true]{
+    color: rgba(0, 0, 0, 50);  /* #EEEEEE into RGB */
+}
 
 QScrollArea{
     border: 1px solid #BBBBBB;

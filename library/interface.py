@@ -41,12 +41,40 @@ from PySide6.QtWidgets import (
 from library.database import PaperAlreadyInDatabaseError
 
 
-def qss_trigger(object, property, value):
+def qss_trigger_recursive(widget, property, value):
     """
-    Trigger a change in QSS by setting a property and redrawing the object.
+    Trigger a change in QSS for a widget and all the widgets in its layout
 
-    :param object: Qt object to change the properties of
-    :type object: QWidget
+    :param widget: Qt widget to change the properties of
+    :type widget: QWidget
+    :param property: The name of the property to set. This needs to match what is
+                     set in the QSS file (e.g. Paper[is_highlighted=false]{...}
+                     would use `is_highlighted` here and False for `value`
+    :type property: str
+    :param value: The value to set for the given property
+    :return: None
+    """
+    # can only apply to widget
+    if not issubclass(type(widget), QWidget):
+        return
+    # apply to widget itself
+    qss_trigger(widget, property, value)
+    # apply to all widgets in the layout.
+    if widget.layout() is not None:
+        for i in range(widget.layout().count()):
+            item = widget.layout().itemAt(i).widget()
+            qss_trigger_recursive(item, property, value)
+    # also go through and change the child widgets
+    for w in widget.children():
+        qss_trigger_recursive(w, property, value)
+
+
+def qss_trigger(widget, property, value):
+    """
+    Trigger a change in QSS by setting a property and redrawing the widget.
+
+    :param widget: Qt widget to change the properties of
+    :type widget: QWidget
     :param property: The name of the property to set. This needs to match what is
                      set in the QSS file (e.g. Paper[is_highlighted=false]{...}
                      would use `is_highlighted` here and False for `value`
@@ -56,10 +84,10 @@ def qss_trigger(object, property, value):
     """
     # first check whether or not the property is already set. If it is, we won't do
     # any changes, to avoid unnecessary polish and unpolish calls, which are slow.
-    if object.property(property) != value:
-        object.setProperty(property, value)
-        object.style().unpolish(object)
-        object.style().polish(object)
+    if widget.property(property) != value:
+        widget.setProperty(property, value)
+        widget.style().unpolish(widget)
+        widget.style().polish(widget)
 
 
 # Make classes to use threading, inspired by:
@@ -402,7 +430,7 @@ class TagCheckBox(QCheckBox):
 
 class HorizontalLine(QFrame):
     def __init__(self):
-        super(HorizontalLine, self).__init__()
+        super().__init__()
         self.setFrameShape(QFrame.HLine)
 
 
@@ -2108,6 +2136,8 @@ class MainWindow(QMainWindow):
         self.importResultText.show()
         # disable the main parts of the interface so the user just waits
         self.splitter.setEnabled(False)
+        self.title.setEnabled(False)
+        qss_trigger_recursive(self.splitter, "faded", True)
 
         # handle the initial state of the progressbar, including setting the maximum val
         self.importProgressBar.setValue(0)
@@ -2159,6 +2189,7 @@ class MainWindow(QMainWindow):
         # show and hide the appropriate buttons (some already shown/hidden before
         # import started)
         self.splitter.setEnabled(True)
+        self.title.setEnabled(True)
         self.importResultDismissButton.show()
         self.importProgressBar.hide()
         # and resize the papers to make sure they take up the correct width. When
@@ -2175,6 +2206,8 @@ class MainWindow(QMainWindow):
         for tag in self.tagsList.tags:
             if tag.label.text() == results[4]:
                 tag.mousePressEvent("")
+        # finally, unfade everything
+        qss_trigger_recursive(self.splitter, "faded", False)
 
     def parseImportResults(self, results):
         """

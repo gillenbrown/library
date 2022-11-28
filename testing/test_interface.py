@@ -1381,6 +1381,40 @@ def test_import_disables_main_window_during(qtbot, db_empty, monkeypatch):
     assert widget.splitter.isEnabled() is True
 
 
+def test_import_disables_theme_switcher(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+        assert widget.title.isEnabled() is False
+    file_loc.unlink()  # delete before tests may fail
+    assert widget.title.isEnabled() is True
+
+
+def test_import_changes_qss_main_window_during(qtbot, db_empty, monkeypatch):
+    # add some papers and tags to check that they're faded
+    db_empty.add_new_tag("test")
+    db_empty.add_paper(u.juan.bibcode)
+    db_empty.add_paper(u.tremonti.bibcode)
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+        assert widget.splitter.property("faded") is True
+        for t in widget.tagsList.tags:
+            assert t.property("faded") is True
+        for p in widget.papersList.getPapers():
+            assert p.property("faded") is True
+    file_loc.unlink()  # delete before tests may fail
+    assert widget.splitter.property("faded") is False
+    for t in widget.tagsList.tags:
+        assert t.property("faded") is False
+    for p in widget.papersList.getPapers():
+        assert p.property("faded") is False
+
+
 def test_import_shows_progress_bar_during(qtbot, db_empty, monkeypatch):
     file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
     monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
