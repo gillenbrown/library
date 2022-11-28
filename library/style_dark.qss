@@ -46,6 +46,14 @@ QPushButton#add_button{
 QPushButton#add_button:hover {
     border: 2px solid #DDDDDD;
 }
+QPushButton#import_button{
+    border: 2px solid #777777;
+    padding-left: 0.2em;
+    padding-right: 0.2em;
+}
+QPushButton#import_button:hover {
+    border: 2px solid #DDDDDD;
+}
 
 /* Make the title really big, and some other text larger too */
 QLabel#big_title {
