@@ -1956,10 +1956,12 @@ class MainWindow(QMainWindow):
         # these will be hidden to start
         self.importResultText = QLabel()
         self.importResultText.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.importResultText.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.importResultText.hide()
         self.importResultDismissButton = QPushButton("Dismiss")
         self.importResultDismissButton.clicked.connect(self.importResultsDismiss)
         self.importResultDismissButton.hide()
+        self.importResultDismissButton.setFixedWidth(100)
         # Define what to do when these things are activated. The user can either hit
         # enter or hit the add button
         self.searchBar.returnPressed.connect(self.addPaper)
@@ -2181,11 +2183,7 @@ class MainWindow(QMainWindow):
         # once we're done, show the results
         # first parse the results into the message shown to the user
         self.importResultText.setText(self.parseImportResults(results[:4]))
-        # set sizes to be reasonable
-        self.importResultText.setFixedWidth(self.importResultText.sizeHint().width())
-        self.importResultDismissButton.setFixedWidth(
-            self.importResultDismissButton.sizeHint().width()
-        )
+
         # show and hide the appropriate buttons (some already shown/hidden before
         # import started)
         self.splitter.setEnabled(True)
