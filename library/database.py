@@ -534,6 +534,26 @@ class Database(object):
         self._execute("DROP TABLE papers")
         self._execute("ALTER TABLE new_papers RENAME TO papers")
 
+    def rename_tag(self, old_tag_name, new_tag_name):
+        """
+        Rename a tag, while keeping it applied to the appropriate papers
+
+        :param old_tag_name: The current name of the tag to rename. Must be a tag
+                             present in the database
+        :type old_tag_name: str
+        :param new_tag_name: The new name of the tag
+        :type new_tag_name: str
+        :return: None
+        """
+        # first add the new tag
+        self.add_new_tag(new_tag_name)
+        # transfer tags
+        for bibcode in self.get_all_bibcodes():
+            if self.paper_has_tag(bibcode, old_tag_name):
+                self.tag_paper(bibcode, new_tag_name)
+        # then delete the old paper
+        self.delete_tag(old_tag_name)
+
     def paper_has_tag(self, bibcode, tag_name):
         """
         See if a paper has a given tag.

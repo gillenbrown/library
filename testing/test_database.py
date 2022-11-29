@@ -931,6 +931,66 @@ def test_delete_tag_doesnt_mess_up_citation_keyword(db):
     assert db.get_paper_attribute(u.mine.bibcode, "citation_keyword") == "brown_etal_18"
 
 
+# =============
+# renaming tags
+# =============
+def test_renamed_tag_gone_from_database(db_empty):
+    db_empty.add_new_tag("old")
+    db_empty.rename_tag("old", "new")
+    assert "old" not in db_empty.get_all_tags()
+
+
+def test_renamed_tag_new_name_is_in_database(db_empty):
+    db_empty.add_new_tag("old")
+    db_empty.rename_tag("old", "new")
+    assert "new" in db_empty.get_all_tags()
+
+
+def test_rename_tag_transfers_tagged_papers(db_empty):
+    db_empty.add_paper(u.mine.bibcode)
+    db_empty.add_paper(u.tremonti.bibcode)
+    db_empty.add_paper(u.juan.bibcode)
+    db_empty.add_paper(u.bbfh.bibcode)
+    db_empty.add_new_tag("old")
+    db_empty.tag_paper(u.mine.bibcode, "old")
+    db_empty.tag_paper(u.tremonti.bibcode, "old")
+    db_empty.rename_tag("old", "new")
+    assert db_empty.paper_has_tag(u.mine.bibcode, "new")
+    assert db_empty.paper_has_tag(u.tremonti.bibcode, "new")
+    assert not db_empty.paper_has_tag(u.juan.bibcode, "new")
+    assert not db_empty.paper_has_tag(u.bbfh.bibcode, "new")
+
+
+def test_rename_tag_raises_error_if_old_tag_not_in_db(db_empty):
+    with pytest.raises(ValueError):
+        db_empty.rename_tag("does not exist", "new")
+
+
+def test_rename_tag_raises_error_if_new_tag_not_valid_duplicate(db_empty):
+    db_empty.add_new_tag("old")
+    db_empty.add_new_tag("new")
+    with pytest.raises(ValueError):
+        db_empty.rename_tag("old", "new")
+
+
+def test_rename_tag_raises_error_if_new_tag_not_valid_backticks(db_empty):
+    db_empty.add_new_tag("old")
+    with pytest.raises(ValueError):
+        db_empty.rename_tag("old", "`new`")
+
+
+def test_rename_tag_raises_error_if_new_tag_not_valid_square_brackets(db_empty):
+    db_empty.add_new_tag("old")
+    with pytest.raises(ValueError):
+        db_empty.rename_tag("old", "[new]")
+
+
+def test_rename_tag_raises_error_if_new_tag_not_valid_empty(db_empty):
+    db_empty.add_new_tag("old")
+    with pytest.raises(ValueError):
+        db_empty.rename_tag("old", "   ")
+
+
 # ======================================================================================
 #
 # deleting papers
