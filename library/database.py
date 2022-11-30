@@ -545,7 +545,15 @@ class Database(object):
         :type new_tag_name: str
         :return: None
         """
-        # first add the new tag
+        # first check if the new tag name is just the old tag name but different in
+        # capitalization. This causes issues, as sqlite is case-insensitive. So we'll
+        # need to first rename it to something unique, then rename that
+        if old_tag_name.lower() == new_tag_name.lower():
+            temp_colname = "abczyx" * 10
+            self.rename_tag(old_tag_name, temp_colname)
+            old_tag_name = temp_colname
+
+        # add the new tag
         self.add_new_tag(new_tag_name)
         # transfer tags
         for bibcode in self.get_all_bibcodes():

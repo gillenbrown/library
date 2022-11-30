@@ -946,6 +946,13 @@ def test_renamed_tag_new_name_is_in_database(db_empty):
     assert "new" in db_empty.get_all_tags()
 
 
+def test_can_rename_to_different_capitalization(db_empty):
+    db_empty.add_new_tag("old")
+    db_empty.rename_tag("old", "OLD")
+    assert "OLD" in db_empty.get_all_tags()
+    assert "old" not in db_empty.get_all_tags()
+
+
 def test_rename_tag_transfers_tagged_papers(db_empty):
     db_empty.add_paper(u.mine.bibcode)
     db_empty.add_paper(u.tremonti.bibcode)

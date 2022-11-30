@@ -1442,6 +1442,32 @@ class TagsListScrollArea(ScrollArea):
         self.addTagBar.cursorPositionChanged.connect(self.addTagErrorText.hide)
         self.addTagBar.textChanged.connect(self.addTagErrorText.hide)
 
+        # set up buttons to rename tags
+        self.renameTagButton = QPushButton("Rename a tag")
+        self.renameTagButton.clicked.connect(self.revealRenameTagOldEntry)
+        self.renameTagOldEntry = EasyExitLineEdit(
+            self.cancelRenameTag, self.revealRenameTagNewEntry
+        )
+        self.renameTagOldEntry.hide()
+        self.renameTagOldEntry.setPlaceholderText("Tag to rename")
+        self.renameTagNewEntry = EasyExitLineEdit(
+            self.cancelRenameTag, self.finishRenameTag
+        )
+        self.renameTagNewEntry.hide()
+        self.renameTagNewEntry.setPlaceholderText("New tag name")
+        self.renameTagErrorText = QLabel("")
+        self.renameTagErrorText.setProperty("error_text", True)
+        self.renameTagErrorText.hide()
+        # also allow the reset after an error
+        self.renameTagOldEntry.cursorPositionChanged.connect(
+            self.renameTagErrorText.hide
+        )
+        self.renameTagOldEntry.textChanged.connect(self.renameTagErrorText.hide)
+        self.renameTagNewEntry.cursorPositionChanged.connect(
+            self.renameTagErrorText.hide
+        )
+        self.renameTagNewEntry.textChanged.connect(self.renameTagErrorText.hide)
+
         # Then set up the buttons to remove tags. We'll have four buttons. The first
         # will be a button to click to start the process of deleting a tag. Next
         # will be a text entry box for the user to specify which tag to delete, then
@@ -1478,6 +1504,9 @@ class TagsListScrollArea(ScrollArea):
         tag_button_height = 28
         self.addTagButton.setFixedHeight(tag_button_height)
         self.addTagBar.setFixedHeight(tag_button_height)
+        self.renameTagButton.setFixedHeight(tag_button_height)
+        self.renameTagOldEntry.setFixedHeight(tag_button_height)
+        self.renameTagNewEntry.setFixedHeight(tag_button_height)
         self.firstDeleteTagButton.setFixedHeight(tag_button_height)
         self.secondDeleteTagEntry.setFixedHeight(tag_button_height)
         self.thirdDeleteTagButton.setFixedHeight(tag_button_height)
@@ -1490,6 +1519,10 @@ class TagsListScrollArea(ScrollArea):
         self.addWidget(self.addTagButton)  # calls ScrollArea addWidget
         self.addWidget(self.addTagBar)
         self.addWidget(self.addTagErrorText)
+        self.addWidget(self.renameTagButton)
+        self.addWidget(self.renameTagOldEntry)
+        self.addWidget(self.renameTagNewEntry)
+        self.addWidget(self.renameTagErrorText)
         self.addWidget(self.firstDeleteTagButton)
         self.addWidget(self.secondDeleteTagEntry)
         self.addWidget(self.secondDeleteTagErrorText)
@@ -1508,6 +1541,10 @@ class TagsListScrollArea(ScrollArea):
         self.addTagErrorText.setProperty("is_left_panel_item", True)
         self.addTagButton.setProperty("is_left_panel_item", True)
         self.addTagBar.setProperty("is_left_panel_item", True)
+        self.renameTagButton.setProperty("is_left_panel_item", True)
+        self.renameTagOldEntry.setProperty("is_left_panel_item", True)
+        self.renameTagNewEntry.setProperty("is_left_panel_item", True)
+        self.renameTagErrorText.setProperty("is_left_panel_item", True)
         self.firstDeleteTagButton.setProperty("is_left_panel_item", True)
         self.secondDeleteTagEntry.setProperty("is_left_panel_item", True)
         self.secondDeleteTagErrorText.setProperty("is_left_panel_item", True)
@@ -1536,6 +1573,34 @@ class TagsListScrollArea(ScrollArea):
         self.addTagBar.hide()
         self.addTagButton.show()
         self.triggerResize()
+
+    def _validateNewTag(self, tagName):
+        """
+        Validate that a user-generated tag name is valid.
+
+        Will return an empty string if this tag is valid, otherwise will return a
+        message explaining what's wrong
+
+        :param tagName: The proposed tag name
+        :type tagName: str
+        :return: Error message describing what is wrong with the given tag, or an empty
+                 string if the tag is valid
+        :rtype: str
+        """
+
+        if "`" in tagName:
+            return "Backticks aren't allowed"
+        elif "[" in tagName or "]" in tagName:
+            return "Square brackets aren't allowed"
+        elif tagName.lower() == "all papers":
+            return "Sorry, can't duplicate this"
+        elif tagName.strip() == "":
+            return "Pure whitespace isn't valid"
+        elif tagName.lower() in [t.lower() for t in self.main.db.get_all_tags()]:
+            return "This tag already exists"
+        else:
+            # no issues
+            return ""
 
     def addTagInternal(self, tagName):
         """
@@ -1579,39 +1644,135 @@ class TagsListScrollArea(ScrollArea):
 
         :return: None
         """
-        # check for pure whitespace
         tagName = self.addTagBar.text()
-        if (
-            tagName.strip() == ""
-            or "`" in tagName
-            or "[" in tagName
-            or "]" in tagName
-            or tagName.lower() == "all papers"
-        ):
-            if "`" in tagName:
-                self.addTagErrorText.setText("Backticks aren't allowed")
-            elif "[" in tagName or "]" in tagName:
-                self.addTagErrorText.setText("Square brackets aren't allowed")
-            elif tagName.lower() == "all papers":
-                self.addTagErrorText.setText("Sorry, can't duplicate this")
-            else:
-                self.addTagErrorText.setText("Pure whitespace isn't valid")
+        error_message = self._validateNewTag(tagName)
+        if error_message != "":
+            self.addTagErrorText.setText(error_message)
             self.addTagErrorText.show()
             return
-        # otherwise, try to add it to the database
-        try:
-            self.main.db.add_new_tag(tagName)
-            self.addTagInternal(tagName)
-            # add this checkbox to the right panel
-            self.main.rightPanel.populate_tags()
-        except ValueError:  # this tag is already in the database
-            self.addTagErrorText.setText("This tag already exists")
-            self.addTagErrorText.show()
-            return
-
+        # otherwise, it should work
+        self.main.db.add_new_tag(tagName)
+        self.addTagInternal(tagName)
+        # add this checkbox to the right panel
+        self.main.rightPanel.populate_tags()
         # if we got here we had no error, so it was successfully added and we should
         # clear the text box and reset the buttons
         self.resetAddTag()
+
+    def _validateDeleteTag(self, tagName):
+        """
+        Validate whether a tag can be deleted.
+
+        Will return an empty string if this is valid, or an error message if this
+        doesn't work
+
+        :param tagName: the proposed tag to be deleted
+        :type tagName: str
+        :return: An error message describing why this cannot be deleted, or an empty
+                 string if this can be deleted
+        :rtype: str
+        """
+        if tagName.lower() == "all papers":
+            return "Sorry, can't delete this"
+        elif tagName not in self.main.db.get_all_tags():
+            return "This tag does not exist"
+        else:
+            # can be deleted
+            return ""
+
+    def revealRenameTagOldEntry(self):
+        """
+        Reveal the text entry for the user to enter their tag to rename
+
+        :return: None
+        """
+        self.renameTagButton.hide()
+        self.renameTagOldEntry.show()
+        self.renameTagOldEntry.setFocus()
+
+    def revealRenameTagNewEntry(self):
+        """
+        Validate the user's entered tag name to rename, then reveal the entry for new
+
+        :return: None
+        """
+        tag_to_rename = self.renameTagOldEntry.text()
+        error_message = self._validateDeleteTag(tag_to_rename)
+        if error_message != "":
+            self.renameTagErrorText.setText(error_message.replace("delete", "rename"))
+            self.renameTagErrorText.show()
+            return
+
+        # if we got here, things are fine
+        self.renameTagOldEntry.hide()
+        self.renameTagNewEntry.show()
+        self.renameTagNewEntry.setFocus()
+
+    def finishRenameTag(self):
+        """
+        Once the user has entered both the old and new names, complete the tag renaming
+
+        :return: None
+        """
+        # The old tag name should still be in the entry
+        old_tag_name = self.renameTagOldEntry.text()
+        new_tag_name = self.renameTagNewEntry.text()
+        error_message = self._validateNewTag(new_tag_name)
+        # that function does check if this already exists, but does so in a case
+        # insensitive way. I want to allow changing the case, so do some more
+        # checking here
+        if (
+            (error_message == "This tag already exists")
+            and (new_tag_name.lower() == old_tag_name.lower())
+            and (new_tag_name != old_tag_name)
+        ):
+            error_message = ""
+        if error_message != "":
+            self.renameTagErrorText.setText(error_message)
+            self.renameTagErrorText.show()
+            return
+
+        # do the actual tag renaming. The old tag name should still be in the entry
+        self.main.db.rename_tag(old_tag_name, new_tag_name)
+        # then handle the interface. first add the new tag name
+        self.addTagInternal(new_tag_name)
+        # find the tag to remove it from the interface
+        for tag in self.tags:
+            if tag.label.text() == old_tag_name:
+                # if this tag was highlighted, show all papers
+                if tag.property("is_highlighted"):
+                    # send a dummy mouse click. The argument here would normally be a
+                    # mouse click event, but since I don't use that in the function,
+                    # I can send a dummy parameter.
+                    for tag_2 in self.tags:
+                        if tag_2.label.text() == new_tag_name:
+                            tag_2.mousePressEvent(None)
+                # then handle deletion
+                tag.hide()  # just to be safe
+                self.tags.remove(tag)
+                del tag
+
+        # add this checkbox to the right panel
+        self.main.rightPanel.populate_tags()
+        # if there is a paper visible, update the tags
+        if not self.main.rightPanel.abstractText.text().startswith("Click on a paper"):
+            self.main.rightPanel.update_tag_text()
+
+        # cleanup
+        self.cancelRenameTag()
+
+    def cancelRenameTag(self):
+        """
+        Cancel tag renaming and return to default state
+
+        :return: None
+        """
+        self.renameTagButton.show()
+        self.renameTagNewEntry.hide()
+        self.renameTagOldEntry.hide()
+        self.renameTagErrorText.hide()
+        self.renameTagOldEntry.setText("")
+        self.renameTagNewEntry.setText("")
 
     def revealSecondTagDeleteEntry(self):
         """
@@ -1632,14 +1793,9 @@ class TagsListScrollArea(ScrollArea):
         """
         # check that the entered text is valid. If not, show error message
         tag_to_delete = self.secondDeleteTagEntry.text()
-        if (
-            tag_to_delete == "All Papers"
-            or tag_to_delete not in self.main.db.get_all_tags()
-        ):
-            if tag_to_delete == "All Papers":
-                self.secondDeleteTagErrorText.setText("Sorry, can't delete this")
-            else:
-                self.secondDeleteTagErrorText.setText("This tag does not exist")
+        error_message = self._validateDeleteTag(tag_to_delete)
+        if error_message != "":
+            self.secondDeleteTagErrorText.setText(error_message)
             self.secondDeleteTagErrorText.show()
             return
         # if it is valid, show the next button and put the appropriate text on them

@@ -274,6 +274,26 @@ def cDeleteTag(mainWidget, tagName, qtbot):
     cClick(mainWidget.tagsList.thirdDeleteTagButton, qtbot)
 
 
+def cRenameTag(mainWidget, oldTagName, newTagName, qtbot):
+    """
+    Rename a tag through the interface
+
+    :param mainWidget: The main window widget
+    :type mainWidget: MainWindow
+    :param oldTagName: The name of the tag to rename
+    :type oldTagName: str
+    :param newTagName: The new name of the tag
+    :type newTagName: str
+    :param qtbot: the qtbot instance used in a given test
+    :return: None
+    """
+    cClick(mainWidget.tagsList.renameTagButton, qtbot)
+    cEnterText(mainWidget.tagsList.renameTagOldEntry, oldTagName, qtbot)
+    cPressEnter(mainWidget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(mainWidget.tagsList.renameTagNewEntry, newTagName, qtbot)
+    cPressEnter(mainWidget.tagsList.renameTagNewEntry, qtbot)
+
+
 def cDeleteFirstPaper(mainWidget, qtbot):
     """
     Delete the first paper in the interface
@@ -832,6 +852,57 @@ def test_delete_tag_text_is_transparent_once_cleared(qtbot, db):
     assert cGetTextAlpha(widget.tagsList.secondDeleteTagEntry) == 100
 
 
+def test_rename_tag_first_placeholder_text_starts_transparent(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    assert cGetTextAlpha(widget.tagsList.renameTagOldEntry) == 100
+
+
+def test_rename_tag_first_text_is_not_transparent_once_modified(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "g", qtbot)
+    assert cGetTextAlpha(widget.tagsList.renameTagOldEntry) == 255
+
+
+def test_rename_tag_first_text_is_transparent_once_cleared(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "g", qtbot)
+    cPressBackspace(widget.tagsList.renameTagOldEntry, qtbot)
+    assert cGetTextAlpha(widget.tagsList.renameTagOldEntry) == 100
+
+
+def test_rename_tag_second_placeholder_text_starts_transparent(qtbot, db_empty):
+    db_empty.add_new_tag("old")
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "old", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    assert cGetTextAlpha(widget.tagsList.renameTagNewEntry) == 100
+
+
+def test_rename_tag_second_text_is_not_transparent_once_modified(qtbot, db_empty):
+    db_empty.add_new_tag("old")
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "old", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "g", qtbot)
+    assert cGetTextAlpha(widget.tagsList.renameTagNewEntry) == 255
+
+
+def test_rename_tag_second_text_is_transparent_once_cleared(qtbot, db_empty):
+    db_empty.add_new_tag("old")
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "old", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "g", qtbot)
+    cPressBackspace(widget.tagsList.renameTagNewEntry, qtbot)
+    assert cGetTextAlpha(widget.tagsList.renameTagNewEntry) == 100
+
+
 def test_cite_key_placeholder_text_is_transparent(qtbot, db_temp):
     # click on a paper with no cite key set
     widget = cInitialize(qtbot, db_temp)
@@ -1015,10 +1086,7 @@ def test_adding_paper_after_delete_puts_details_in_right_panel(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
     bibcode = widget.papersList.getPapers()[0].bibcode
     title = widget.papersList.getPapers()[0].titleText.text()
-    print(db_temp.get_all_bibcodes())
     cDeleteFirstPaper(widget, qtbot)
-    print(db_temp.get_all_bibcodes())
-    print(bibcode)
     cAddPaper(widget, bibcode, qtbot)
     assert widget.rightPanel.titleText.text() == title
 
@@ -1342,9 +1410,9 @@ def test_db_update_reflected_in_interface(qtbot, db_update):
     assert "Brown, Gnedin, 2022, arXiv:2203.00559" not in cite_strings
 
 
-###############
+# =============
 # import system
-###############
+# =============
 def test_clicking_import_button_asks_user(qtbot, db_empty, monkeypatch):
     get_file_calls = []
 
@@ -4387,6 +4455,41 @@ def test_show_all_button_has_correct_text(qtbot, db_empty):
     assert widget.tagsList.showAllButton.label.text() == "All Papers"
 
 
+def test_rename_tag_button_shown_at_beginning(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    assert widget.tagsList.renameTagButton.isHidden() is False
+
+
+def test_rename_tag_button_has_correct_text(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    assert widget.tagsList.renameTagButton.text() == "Rename a tag"
+
+
+def test_rename_tag_old_entry_hidden_at_beginning(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    assert widget.tagsList.renameTagOldEntry.isHidden() is True
+
+
+def test_rename_tag_new_entry_hidden_at_beginning(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    assert widget.tagsList.renameTagNewEntry.isHidden() is True
+
+
+def test_rename_tag_error_text_hidden_at_beginning(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    assert widget.tagsList.renameTagErrorText.isHidden() is True
+
+
+def test_rename_tag_old_entry_has_placeholder_text(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    assert widget.tagsList.renameTagOldEntry.placeholderText() == "Tag to rename"
+
+
+def test_rename_tag_new_entry_has_placeholder_text(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    assert widget.tagsList.renameTagNewEntry.placeholderText() == "New tag name"
+
+
 def test_first_delete_tag_button_shown_at_beginning(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
     assert widget.tagsList.firstDeleteTagButton.isHidden() is False
@@ -4850,6 +4953,499 @@ def test_left_panel_tags_are_sorted_alphabetically_after_adding(qtbot, db_empty)
     # in comparison, include unread, since it was included on widget
     # initialization too
     assert tag_names == sorted(tags + ["Unread"], key=lambda w: w.lower())
+
+
+# =============
+# renaming tags
+# =============
+def test_clicking_first_rename_tag_button_shows_old_entry(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    assert widget.tagsList.renameTagOldEntry.isHidden() is False
+
+
+def test_clicking_rename_tag_button_focus_on_entry(qtbot, db_temp, monkeypatch):
+    # I tried to test this directly, but was having trouble getting the tests to work
+    # properly. Specifically, widget.hasFocus() was not working propertly in tests for
+    # whatever reasonSo instead, I'll monkeypatch the setFocus method. I have tested
+    # that this works in the actual interface
+    setFocus_calls = []
+    monkeypatch.setattr(QLineEdit, "setFocus", lambda x: setFocus_calls.append(True))
+
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    # assert widget.renameTagOldEntry.hasFocus() is True  # would be the best test
+    assert setFocus_calls == [True]
+
+
+def test_clicking_rename_tag_button_hides_button(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    assert widget.tagsList.renameTagButton.isHidden() is True
+
+
+def test_rename_tag_button_and_old_entry_have_same_height(qtbot, db_empty):
+    widget = cInitialize(qtbot, db_empty)
+    button_height = widget.tagsList.renameTagButton.height()
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    assert widget.tagsList.renameTagOldEntry.height() == button_height
+
+
+def test_rename_tag_old_entry_is_hidden_when_entry_done(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)  # tag must exist
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    assert widget.tagsList.renameTagOldEntry.isHidden() is True
+
+
+def test_rename_tag_new_entry_appears_when_old_entry_done(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    assert widget.tagsList.renameTagNewEntry.isHidden() is False
+
+
+def test_clicking_rename_tag_button_focus_on_new_entry(qtbot, db_temp, monkeypatch):
+    # I tried to test this directly, but was having trouble getting the tests to work
+    # properly. Specifically, widget.hasFocus() was not working propertly in tests for
+    # whatever reasonSo instead, I'll monkeypatch the setFocus method. I have tested
+    # that this works in the actual interface
+    setFocus_calls = []
+    monkeypatch.setattr(QLineEdit, "setFocus", lambda x: setFocus_calls.append(True))
+
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    # assert widget.renameTagNewEntry.hasFocus() is True  # would be the best test
+    assert setFocus_calls == [True, True]
+
+
+def test_rename_tag_old_and_new_entry_have_same_height(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    button_height = widget.tagsList.renameTagButton.height()
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    entry_old_height = widget.tagsList.renameTagOldEntry.height()
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    entry_new_height = widget.tagsList.renameTagNewEntry.height()
+    assert button_height == entry_old_height  # already checked, included for clarity
+    assert entry_old_height == entry_new_height
+
+
+def test_rename_tag_error_text_hidden_when_old_entry_done(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    assert widget.tagsList.renameTagErrorText.isHidden() is True
+
+
+def test_rename_tag_old_entry_can_exit_with_escape_press_at_any_time(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "sdfsdf", qtbot)
+    cPressEscape(widget.tagsList.renameTagOldEntry, qtbot)
+    assert widget.tagsList.renameTagButton.isHidden() is False
+    assert widget.tagsList.renameTagOldEntry.isHidden() is True
+    assert widget.tagsList.renameTagNewEntry.isHidden() is True
+
+
+def test_rename_tag_new_entry_can_exit_with_escape_press_at_any_time(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "Read", qtbot)
+    cPressEscape(widget.tagsList.renameTagNewEntry, qtbot)
+    assert widget.tagsList.renameTagButton.isHidden() is False
+    assert widget.tagsList.renameTagOldEntry.isHidden() is True
+    assert widget.tagsList.renameTagNewEntry.isHidden() is True
+
+
+def test_rename_tag_old_entry_exit_with_escape_press_at_any_time_clears_text(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "sdfsdf", qtbot)
+    cPressEscape(widget.tagsList.renameTagOldEntry, qtbot)
+    assert widget.tagsList.renameTagOldEntry.text() == ""
+
+
+def test_rename_tag_new_entry_exit_with_escape_press_at_any_time_clears_text(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "Read", qtbot)
+    cPressEscape(widget.tagsList.renameTagNewEntry, qtbot)
+    assert widget.tagsList.renameTagNewEntry.text() == ""
+
+
+def test_rename_tag_old_entry_can_exit_with_backspace_when_empty(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "abc", qtbot)
+    # back out those three letters
+    for _ in range(3):
+        cPressBackspace(widget.tagsList.renameTagOldEntry, qtbot)
+    # entry should still be visible
+    assert widget.tagsList.renameTagButton.isHidden() is True
+    assert widget.tagsList.renameTagOldEntry.isHidden() is False
+    assert widget.tagsList.renameTagNewEntry.isHidden() is True
+    # with one more backspace, we exit
+    cPressBackspace(widget.tagsList.renameTagOldEntry, qtbot)
+    assert widget.tagsList.renameTagButton.isHidden() is False
+    assert widget.tagsList.renameTagOldEntry.isHidden() is True
+    assert widget.tagsList.renameTagNewEntry.isHidden() is True
+
+
+def test_rename_tag_new_entry_can_exit_with_backspace_when_empty(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "abc", qtbot)
+    # back out those three letters
+    for _ in range(3):
+        cPressBackspace(widget.tagsList.renameTagNewEntry, qtbot)
+    # entry should still be visible
+    assert widget.tagsList.renameTagButton.isHidden() is True
+    assert widget.tagsList.renameTagNewEntry.isHidden() is False
+    assert widget.tagsList.renameTagOldEntry.isHidden() is True
+    # with one more backspace, we exit
+    cPressBackspace(widget.tagsList.renameTagNewEntry, qtbot)
+    assert widget.tagsList.renameTagButton.isHidden() is False
+    assert widget.tagsList.renameTagNewEntry.isHidden() is True
+    assert widget.tagsList.renameTagOldEntry.isHidden() is True
+
+
+def test_rename_tag_does_that_in_database(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    original_tags = db_temp.get_all_tags()
+    # don't use convenience function, for clarity
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "New", qtbot)
+    cPressEnter(widget.tagsList.renameTagNewEntry, qtbot)
+    # check that it's not in the database anymore
+    new_tags = db_temp.get_all_tags()
+    assert "Read" not in new_tags
+    assert "New" in new_tags
+    assert len(new_tags) == len(original_tags)
+
+
+def test_rename_tag_different_caps_does_that_in_database(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    original_tags = db_temp.get_all_tags()
+    # don't use convenience function, for clarity
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "READ", qtbot)
+    cPressEnter(widget.tagsList.renameTagNewEntry, qtbot)
+    # check that it's not in the database anymore
+    new_tags = db_temp.get_all_tags()
+    assert "Read" not in new_tags
+    assert "READ" in new_tags
+    assert len(new_tags) == len(original_tags)
+
+
+def test_rename_tag_does_that_in_interface(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    # first get the original number of tags
+    num_original_tags = len([t.name for t in widget.tagsList.tags])
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "New", qtbot)
+    cPressEnter(widget.tagsList.renameTagNewEntry, qtbot)
+    # Then see what tags are in the list now
+    new_tags = [t.name for t in widget.tagsList.tags]
+    assert len(new_tags) == num_original_tags
+    assert not "Read" in new_tags
+    assert "New" in new_tags
+
+
+def test_rename_tag_does_that_in_interface_sorted(qtbot, db_empty):
+    db_empty.add_new_tag("G")
+    db_empty.add_new_tag("H")
+    db_empty.add_new_tag("O")
+    db_empty.add_new_tag("S")
+    db_empty.add_new_tag("T")
+    widget = cInitialize(qtbot, db_empty)
+    cRenameTag(widget, "O", "Z", qtbot)
+    # Then see what tags are in the list now
+    new_tags = [t.name for t in widget.tagsList.tags]
+    assert new_tags == ["G", "H", "S", "T", "Z"]
+
+
+def test_rename_tag_does_that_in_right_panel_text(qtbot, db_empty):
+    db_empty.add_paper(u.mine.bibcode)
+    db_empty.add_new_tag("old")
+    db_empty.tag_paper(u.mine.bibcode, "old")
+
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.papersList.getPapers()[0], qtbot)
+    assert widget.rightPanel.tagText.text() == "Tags: old"
+    cRenameTag(widget, "old", "new", qtbot)
+    assert widget.rightPanel.tagText.text() == "Tags: new"
+
+
+def test_rename_tag_does_that_in_right_panel_checkboxes(qtbot, db_empty):
+    db_empty.add_paper(u.mine.bibcode)
+    db_empty.add_new_tag("old")
+    db_empty.tag_paper(u.mine.bibcode, "old")
+
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.papersList.getPapers()[0], qtbot)
+    cClick(widget.rightPanel.editTagsButton, qtbot)
+    assert [t.text() for t in widget.rightPanel.getTagCheckboxes()] == ["old"]
+    cRenameTag(widget, "old", "new", qtbot)
+    assert [t.text() for t in widget.rightPanel.getTagCheckboxes()] == ["new"]
+
+
+def test_rename_tag_button_comes_back_once_done(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cRenameTag(widget, "Read", "New", qtbot)
+    assert widget.tagsList.renameTagButton.isHidden() is False
+
+
+def test_rename_tag_old_entry_hidden_once_tag_renamed(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cRenameTag(widget, "Read", "New", qtbot)
+    assert widget.tagsList.renameTagOldEntry.isHidden() is True
+
+
+def test_rename_tag_new_entry_hidden_once_tag_renamed(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cRenameTag(widget, "Read", "New", qtbot)
+    assert widget.tagsList.renameTagNewEntry.isHidden() is True
+
+
+def test_rename_tag_button_comes_back_once_cancelled_at_old(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "sdfsdf", qtbot)
+    cPressEscape(widget.tagsList.renameTagOldEntry, qtbot)
+    assert widget.tagsList.renameTagButton.isHidden() is False
+
+
+def test_rename_tag_button_comes_back_once_cancelled_at_new(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "Read", qtbot)
+    cPressEscape(widget.tagsList.renameTagNewEntry, qtbot)
+    assert widget.tagsList.renameTagButton.isHidden() is False
+
+
+def test_rename_tag_old_entry_hidden_once_cancelled(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "sdfsdf", qtbot)
+    cPressEscape(widget.tagsList.renameTagOldEntry, qtbot)
+    assert widget.tagsList.renameTagOldEntry.isHidden() is True
+
+
+def test_rename_tag_new_entry_hidden_once_cancelled(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "Read", qtbot)
+    cPressEscape(widget.tagsList.renameTagNewEntry, qtbot)
+    assert widget.tagsList.renameTagNewEntry.isHidden() is True
+
+
+def test_cancel_renanme_tags_doesnt_rename_db(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    # first get the original tags
+    original_tags = db_temp.get_all_tags()
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "Read", qtbot)
+    cPressEscape(widget.tagsList.renameTagNewEntry, qtbot)
+    new_tags = db_temp.get_all_tags()
+    assert len(original_tags) == len(new_tags)
+    assert original_tags == new_tags
+
+
+def test_cancel_rename_tags_doesnt_rename_interface(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    # first get the original tags
+    original_tags = [t.name for t in widget.tagsList.tags]
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "Read", qtbot)
+    cPressEscape(widget.tagsList.renameTagNewEntry, qtbot)
+    new_tags = [t.name for t in widget.tagsList.tags]
+    assert len(original_tags) == len(new_tags)
+    assert original_tags == new_tags
+
+
+def test_rename_invalid_old_tag_entry_keeps_entry(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "sdfsdfsdf", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    assert widget.tagsList.renameTagOldEntry.isHidden() is False
+    assert widget.tagsList.renameTagOldEntry.text() == "sdfsdfsdf"
+
+
+def test_rename_invalid_old_tag_entry_shows_error_text(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "sdfsdfsdf", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    assert widget.tagsList.renameTagErrorText.isHidden() is False
+    assert widget.tagsList.renameTagErrorText.text() == "This tag does not exist"
+
+
+def test_rename_invalid_old_tag_entry_keeps_new_hidden(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "sdfsdfsdf", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    assert widget.tagsList.renameTagNewEntry.isHidden() is True
+
+
+def test_rename_invalid_old_tag_error_text_hidden_when_clicked(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "sdfsdfsdf", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    assert widget.tagsList.renameTagErrorText.isHidden() is False
+    widget.tagsList.renameTagOldEntry.setCursorPosition(0)
+    assert widget.tagsList.renameTagErrorText.isHidden() is True
+
+
+def test_rename_invalid_old_tag_error_text_hidden_when_text_modified(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "sdfsdfsdf", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    assert widget.tagsList.renameTagErrorText.isHidden() is False
+    cPressBackspace(widget.tagsList.renameTagOldEntry, qtbot)
+    assert widget.tagsList.renameTagErrorText.isHidden() is True
+
+
+def test_rename_invalid_new_tag_entry_keeps_entry(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "   ", qtbot)
+    cPressEnter(widget.tagsList.renameTagNewEntry, qtbot)
+    assert widget.tagsList.renameTagNewEntry.isHidden() is False
+    assert widget.tagsList.renameTagNewEntry.text() == "   "
+
+
+def test_rename_invalid_new_tag_entry_shows_error_text_duplicate(qtbot, db_temp):
+    db_temp.add_new_tag("New")
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "New", qtbot)
+    cPressEnter(widget.tagsList.renameTagNewEntry, qtbot)
+    assert widget.tagsList.renameTagErrorText.isHidden() is False
+    assert widget.tagsList.renameTagErrorText.text() == "This tag already exists"
+
+
+def test_rename_invalid_new_tag_entry_shows_error_text_backticks(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "`New`", qtbot)
+    cPressEnter(widget.tagsList.renameTagNewEntry, qtbot)
+    assert widget.tagsList.renameTagErrorText.isHidden() is False
+    assert widget.tagsList.renameTagErrorText.text() == "Backticks aren't allowed"
+
+
+def test_rename_invalid_new_tag_entry_shows_error_text_square_brackets(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "[New]", qtbot)
+    cPressEnter(widget.tagsList.renameTagNewEntry, qtbot)
+    assert widget.tagsList.renameTagErrorText.isHidden() is False
+    assert widget.tagsList.renameTagErrorText.text() == "Square brackets aren't allowed"
+
+
+def test_rename_invalid_new_tag_entry_shows_error_text_whitespace(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "   ", qtbot)
+    cPressEnter(widget.tagsList.renameTagNewEntry, qtbot)
+    assert widget.tagsList.renameTagErrorText.isHidden() is False
+    assert widget.tagsList.renameTagErrorText.text() == "Pure whitespace isn't valid"
+
+
+def test_rename_invalid_new_tag_entry_shows_error_text_show_all(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "all papers", qtbot)
+    cPressEnter(widget.tagsList.renameTagNewEntry, qtbot)
+    assert widget.tagsList.renameTagErrorText.isHidden() is False
+    assert widget.tagsList.renameTagErrorText.text() == "Sorry, can't duplicate this"
+
+
+def test_rename_invalid_new_tag_error_text_hidden_when_clicked(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "   ", qtbot)
+    cPressEnter(widget.tagsList.renameTagNewEntry, qtbot)
+    assert widget.tagsList.renameTagErrorText.isHidden() is False
+    widget.tagsList.renameTagNewEntry.setCursorPosition(0)
+    assert widget.tagsList.renameTagErrorText.isHidden() is True
+
+
+def test_rename_invalid_new_tag_error_text_hidden_when_text_modified(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "   ", qtbot)
+    cPressEnter(widget.tagsList.renameTagNewEntry, qtbot)
+    assert widget.tagsList.renameTagErrorText.isHidden() is False
+    cPressBackspace(widget.tagsList.renameTagNewEntry, qtbot)
+    assert widget.tagsList.renameTagErrorText.isHidden() is True
+
+
+def test_renaming_currently_selected_tag_shows_new_tag(qtbot, db_temp):
+    assert len(db_temp.get_all_tags()) > 1
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.tags[0], qtbot)
+    cRenameTag(widget, widget.tagsList.tags[0].name, "New", qtbot)
+    for t in widget.tagsList.tags:
+        if t.name == "New":
+            assert t.property("is_highlighted") is True
+        else:
+            assert t.property("is_highlighted") is False
+    assert widget.tagsList.showAllButton.property("is_highlighted") is False
+
+
+def test_cannot_rename_all_papers_tag(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "all papers", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    assert widget.tagsList.renameTagErrorText.isHidden() is False
+    assert widget.tagsList.renameTagErrorText.text() == "Sorry, can't rename this"
 
 
 # =============
