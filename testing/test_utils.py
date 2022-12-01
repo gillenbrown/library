@@ -13,7 +13,9 @@ class PaperDict(dict):
 # Use my paper as the main testing paper.
 mine = PaperDict(
     bibcode="2018ApJ...864...94B",
+    bibcode_old="2018arXiv180409819B",
     ads_url="https://ui.adsabs.harvard.edu/abs/2018ApJ...864...94B/abstract",
+    ads_url_old="https://ui.adsabs.harvard.edu/abs/2018arXiv180409819B",
     arxiv_id="1804.09819",
     arxiv_url=f"https://arxiv.org/abs/1804.09819",
     arxiv_url_v2=f"https://arxiv.org/abs/1804.09819v2",

@@ -63,8 +63,16 @@ def test_get_correct_bibcode_from_oldstyle_ads_url():
     assert ads_call.get_bibcode(url) == u.mine.bibcode
 
 
+def test_get_correct_bibcode_from_ads_url_with_outdated_bibcode():
+    assert ads_call.get_bibcode(u.mine.ads_url_old) == u.mine.bibcode
+
+
 def test_get_correct_bibcode_from_ads_bibcode():
     assert ads_call.get_bibcode(u.mine.bibcode) == u.mine.bibcode
+
+
+def test_get_correct_bibcode_from_ads_bibcode_old():
+    assert ads_call.get_bibcode(u.mine.bibcode_old) == u.mine.bibcode
 
 
 def test_get_correct_bibcode_from_arxiv_id():

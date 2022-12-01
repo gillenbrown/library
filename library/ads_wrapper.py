@@ -166,6 +166,29 @@ class ADSWrapper(object):
 
             return bibcode
 
+    def _update_bibcode(self, bibcode):
+        """
+        Return the newest version of a given bibcode.
+
+        This is needed because the initial bibcode of a paper uses the arXiv ID, but
+        the bibcode is updated once paper details become available. If the bibcode
+        contains an arXiv ID, we'll see if we can update it. If it already has journal
+        information, we just return the unmodified bibcode
+
+        :param bibcode: The bibcode to potentially update
+        :type bibcode: str
+        :return: an updated bibcode
+        :rtype: str
+        """
+        # don't update ones that already have journal info
+        if "arxiv" not in bibcode.lower():
+            return bibcode
+        # parse the bibcode to get the arXiv ID and then call ADS to see what it is.
+        # bibcodes are formatted like "2018arXiv180409819B", where the arXiv ID there
+        # would be "1804.09819", so we can just grab from the appropriate indices
+        arxiv_id = bibcode[-10:-6] + "." + bibcode[-6:-1]
+        return self._get_bibcode_from_arxiv(arxiv_id)
+
     def get_bibcode(self, identifier):
         """
         Get the bibcode of a paper based on one of many ways to access a paper.
@@ -175,6 +198,7 @@ class ADSWrapper(object):
         - ADS URL that links to the paper
         - arXiv URL that links to the paper (either the abstract page or the pdf)
         - arXiv ID
+        - DOI
 
         :param identifier: One of the following methods above for identifying a paper.
         :type identifier: str
@@ -189,6 +213,11 @@ class ADSWrapper(object):
         # http://adsabs.github.io/help/actions/bibcode
         year_at_front = re.compile(r"^[0-9]{4}")
 
+        # When we get the bibcode, we may need to update it. If we get the bibcode by
+        # querying ADS (either for the arXiv ID or DOI), it will return the updated
+        # bibcode. However, if we do so by parsing the identifier, we'll call the
+        # function to see if this bibcode is outdated.
+
         # check if it looks like an ADS URL. This is the easiest and most reliable case
         if "adsabs.harvard.edu/abs/" in identifier:
             # first get the bibcode from the URL. This is always the thing after "abs"
@@ -197,7 +226,8 @@ class ADSWrapper(object):
             bibcode_idx = split_url.index("abs") + 1
             bibcode = split_url[bibcode_idx]
             # sometimes there's the placeholder for the and sign in the URL
-            return bibcode.replace("%26", "&")
+            bibcode = bibcode.replace("%26", "&")
+            return self._update_bibcode(bibcode)
         # see if it looks like a DOI.
         # We check DOI next since it's a simple check, and sometimes DOIs can have
         # segments that look like an arXiv ID, fooling my simple regex
@@ -207,8 +237,14 @@ class ADSWrapper(object):
         # see if it's obviously an arXiv ID
         elif identifier.lower().startswith("arxiv:"):
             return self._get_bibcode_from_arxiv(identifier.split(":")[1])
+        # next check if it looks like a plain bibcode
+        # # http://adsabs.github.io/help/actions/bibcode
+        # re.match only looks at the beginning of the string, where the year will be
+        elif len(identifier) == 19 and re.match(year_at_front, identifier):
+            return self._update_bibcode(identifier)  # they passed in the bibcode
         # see if it has a new-style arXiv ID
-        # re.search looks anywhere in the string
+        # re.search looks anywhere in the string, so we check this only after we have
+        # tried other methods that may be more clear
         elif re.search(arxiv_id_re, identifier) is not None:
             # get the part of the string that is the arXiv ID
             arxiv_id = re.search(arxiv_id_re, identifier).group()
@@ -220,11 +256,6 @@ class ADSWrapper(object):
             arxiv_id = re.search(arxiv_id_old_re, identifier).group()
             # then run the query
             return self._get_bibcode_from_arxiv(arxiv_id)
-        # next check if it looks like a plain bibcode
-        # # http://adsabs.github.io/help/actions/bibcode
-        # re.match only looks at the beginning of the string, where the year will be
-        elif len(identifier) == 19 and re.match(year_at_front, identifier):
-            return identifier  # they passed in the bibcode
         # otherwise we don't know what to do
         else:
             raise ValueError(f"Identifier {identifier} not recognized")
