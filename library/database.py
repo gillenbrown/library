@@ -761,14 +761,20 @@ class Database(object):
         )
         failure_file.write(header + "\n\n")
 
-        # figure out what tag to give this paper. It will be of the format "Import X",
-        # where X is one more than the maximum Import tag present.
-        import_tags = [t for t in self.get_all_tags() if t.startswith("Import ")]
+        # figure out what tag to give this paper. It will be of the format
+        # "Import [import_filename] X", where X is an optional integer that will be
+        # present if this file is imported more than once, and will
+        base_tag = f"Import {file_name.name}"
+        import_tags = [t for t in self.get_all_tags() if t.startswith(base_tag)]
         if len(import_tags) == 0:
-            new_tag = "Import 1"
+            new_tag = base_tag
+        # check the case that there's just one tag
+        elif import_tags == [base_tag]:
+            new_tag = base_tag + " 2"
+        # there are multiple of these tags already present, so we need to increment
         else:
-            tag_nums = [int(t.split()[-1]) for t in import_tags]
-            new_tag = f"Import {max(tag_nums) + 1}"
+            tag_nums = [int(t.split()[-1]) for t in import_tags if t != base_tag]
+            new_tag = base_tag + f" {max(tag_nums) + 1}"
         self.add_new_tag(new_tag)
 
         results = {"success": 0, "duplicate": 0, "failure": 0}

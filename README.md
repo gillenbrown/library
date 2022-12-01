@@ -81,7 +81,7 @@ No matter which of the three links you use, the full paper details will be obtai
 
 One final note here is that sometimes ADS takes a bit of time to get the daily arXiv papers into its system. Since my code relies on ADS, sometimes the most recent arXiv papers will fail when you try to add them. You may need to try to add them later that day or tomorrow. 
 
-Importing papers from a BibTeX file is relatively straightforward. You'll be prompted to select a BibTeX file, then the code will parse the file. Currently, the code will successfully identify papers that have either the `adsurl`, `doi`, or `eprint` attributes in the BibTeX entries. Entries that were not successfully imported are written to a file with the reason that the import failed for each paper. During the import, a new tag will be created and all papers from this BibTeX file will be added to the new tag.
+Importing papers from a BibTeX file is relatively straightforward. You'll be prompted to select a BibTeX file, then the code will parse the file. Currently, the code will successfully identify papers that have either the `adsurl`, `doi`, or `eprint` attributes in the BibTeX entries. Entries that were not successfully imported are written to a file with the reason that the import failed for each paper. During the import, a new tag will be created and all papers from this BibTeX file will be added to the new tag. This tag can be renamed like any other.
 
 ### Paper Details
 
