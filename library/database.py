@@ -900,31 +900,28 @@ class Database(object):
                 paper_data["cite_key"] = line[idx_1 + 1 : idx_2]
                 continue
             # only look at lines that are interesting to us
-            elif "doi = " in line or "adsurl = " in line or "eprint" in line:
+            elif "doi = " in line or "adsurl = " in line or "eprint = " in line:
                 try:
-                    key, value = line.split("=")
+                    key, value = line.split(" = ")
                     paper_data[key.strip()] = (
                         value.strip().rstrip(",").replace("{", "").replace("}", "")
                     )
                 except:
                     raise ValueError(f"Failed to parse this line of this entry: {line}")
 
-        # now that we have the info, try to find the paper. Look for the adsurl first,
-        # since we can use that to get the bibcode without any queries. Then use the
-        # doi or the arXiv ID.
-        if "adsurl" in paper_data:
-            # ADS urls contain the bibcode. But that bibcode is updated if an arXiv
-            # paper is updated with publication details. So the bibcode contained
-            # in this url may be outdated. So we check that if arXiv is in the
-            # bibcode, use the eprint attribute instead, since it does not change
-            if "arxiv" in paper_data["adsurl"].lower() and "eprint" in paper_data:
-                bibcode = ads_call.get_bibcode(paper_data["eprint"])
-            else:
-                bibcode = ads_call.get_bibcode(paper_data["adsurl"])
-        elif "doi" in paper_data:
+        # now that we have the info, try to find the paper. I would like to use the ADS
+        # URL first, since it would reduce the number of queries, but I found that in
+        # practice this was unreliable. ADS URLs can come from different versions of
+        # ADS, have extra search stuff in them, or have other issues. So instead we
+        # look for the DOI or other data first, which has a much lower failure rate.
+        # Besides, in practice the user is unlikely to run our of queries (although
+        # it makes my local testing more of a hassle, since I definitely can run out!)
+        if "doi" in paper_data:
             bibcode = ads_call.get_bibcode(paper_data["doi"])
         elif "eprint" in paper_data:
             bibcode = ads_call.get_bibcode(paper_data["eprint"])
+        elif "adsurl" in paper_data:
+            bibcode = ads_call.get_bibcode(paper_data["adsurl"])
         else:  # could not identify paper
             raise ValueError("Entry does not have doi, adsurl, or eprint attributes")
         # then add the paper to the database
