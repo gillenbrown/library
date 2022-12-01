@@ -68,7 +68,11 @@ You'll probably want to run this in a screen session or just move the process to
 
 # User Guide
 
-To add papers to the database, you'll need copy a link to the paper from either ADS or the arXiv into the search bar at the top of the interface. For example, the following three links will all add the same paper: 
+### Adding Papers
+
+There are two ways to add papers. You can import many papers from a BibTeX file, or add them one at a time. 
+
+To add a single paper to the database, you'll need copy a link to the paper from either ADS or the arXiv into the search bar at the top of the interface. For example, the following three links will all add the same paper: 
 - https://ui.adsabs.harvard.edu/abs/2021MNRAS.508.5935B/abstract
 - https://arxiv.org/abs/2106.12420
 - https://arxiv.org/pdf/2106.12420.pdf
@@ -76,6 +80,8 @@ To add papers to the database, you'll need copy a link to the paper from either 
 No matter which of the three links you use, the full paper details will be obtained from ADS. The one exception is papers on the arXiv that are not yet published. In this case, the code will keep an eye out for the full paper details on ADS. This means you can add a paper you find in the daily arXiv email, and the code will pull the full paper details once those are available without any input from you. Note that this check happens at launch no more than once every 24 hours. This check can take a slight bit of time (in my testing about 0.5 seconds per paper), so if there's a delay in opening the interface this may be the reason. 
 
 One final note here is that sometimes ADS takes a bit of time to get the daily arXiv papers into its system. Since my code relies on ADS, sometimes the most recent arXiv papers will fail when you try to add them. You may need to try to add them later that day or tomorrow. 
+
+Importing papers from a BibTeX file is relatively straightforward. You'll be prompted to select a BibTeX file, then the code will parse the file. Currently, the code will successfully identify papers that have either the `adsurl`, `doi`, or `eprint` attributes in the BibTeX entries. Entries that were not successfully imported are written to a file with the reason that the import failed for each paper. During the import, a new tag will be created and all papers from this BibTeX file will be added to the new tag.
 
 ### Paper Details
 
@@ -95,7 +101,7 @@ Finally, there is a button to open the paper's page in ADS, and a button to dele
 
 The tag system allows you to organize your papers into groups. Each paper can have multiple tags. The left panel shows the list of tags. To show only the papers with a given tag, click on the name of the tag. When you add a new paper when a given tag is selected, the tag will be automatically applied to that paper.
 
-As discussed above, you can edit the tags a given paper has after clicking it.  In the left panel you can also add new tags or delete existing ones. When entering the name of the tag to add or delete, you can exit without adding/deleting by pressing Escape or pressing backspace when the text field is empty. 
+As discussed above, you can edit the tags a given paper has after clicking it.  In the left panel you can also add new tags, rename them, and delete existing ones. When entering the name of the tag to add, rename, or delete, you can exit without adding/deleting by pressing Escape or pressing backspace when the text field is empty. 
 
 Whenever you have a tag selected in the left panel, there is an export button shown. When pressed, this saves a `.bib` file containing all the BibTeX entries for papers with this tag. This file can then be used directly in a LaTeX document.
 
