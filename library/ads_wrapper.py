@@ -184,10 +184,19 @@ class ADSWrapper(object):
         if "arxiv" not in bibcode.lower():
             return bibcode
         # parse the bibcode to get the arXiv ID and then call ADS to see what it is.
+        # For now I'll assume that these use the post 2007 arXiv system (see here:
+        # https://arxiv.org/help/arxiv_identifier). But there was a change in length
+        # in 2014, so I need to be a bit careful.
         # bibcodes are formatted like "2018arXiv180409819B", where the arXiv ID there
-        # would be "1804.09819", so we can just grab from the appropriate indices
-        arxiv_id = bibcode[-10:-6] + "." + bibcode[-6:-1]
-        return self._get_bibcode_from_arxiv(arxiv_id)
+        # would be "1804.09819", so we can just grab from the appropriate indices.
+        # I currently haven't tested this for pre-2007 arXiv IDs, since I can't find
+        # anything about how those are formatted into ADS bibcodes
+        arxiv_id = bibcode[-10:-1]
+        if "." in arxiv_id:  # pre-2014, 4 characters on each side. No fix needed
+            return self._get_bibcode_from_arxiv(arxiv_id)
+        else:  # Uses the post-2014 5 digit ending, I need to add the "."
+            arxiv_id = arxiv_id[:4] + "." + arxiv_id[4:]
+            return self._get_bibcode_from_arxiv(arxiv_id)
 
     def get_bibcode(self, identifier):
         """

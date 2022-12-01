@@ -238,7 +238,9 @@ krumholz = PaperDict(
 # Marks Kroupa 2012 is one paper that has has a non-numeric page number
 marks = PaperDict(
     url="https://ui.adsabs.harvard.edu/abs/2012A%26A...543A...8M/abstract",
+    url_old="https://ui.adsabs.harvard.edu/abs/2012arXiv1205.1508M/abstract",
     bibcode="2012A&A...543A...8M",
+    bibcode_old="2012arXiv1205.1508M",
     page="A8",
 )
 
