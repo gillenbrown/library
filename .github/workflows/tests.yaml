@@ -1,7 +1,15 @@
 name: Tests
 on: [push, pull_request]
 jobs:
+  black:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: check black
+        uses: psf/black@stable
   tests:
+    needs: black
     strategy:
       matrix:
         # I would like to use ubuntu-latest, but it uses 20.04, which has an older
