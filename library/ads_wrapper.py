@@ -236,6 +236,9 @@ class ADSWrapper(object):
             bibcode = split_url[bibcode_idx]
             # sometimes there's the placeholder for the and sign in the URL
             bibcode = bibcode.replace("%26", "&")
+            # make sure it's the appropriate length for a bibcode
+            if len(bibcode) != 19:
+                raise ValueError(f"Identifier {identifier} not recognized")
             return self._update_bibcode(bibcode)
         # see if it looks like a DOI.
         # We check DOI next since it's a simple check, and sometimes DOIs can have

@@ -992,7 +992,10 @@ class Database(object):
             ads_call.get_info(bibcode)
             return bibcode
         except Exception as e:  # anything else
-            if str(e) == "list index out of range":  # paper not on ADS
+            e = str(e)
+            if e == "list index out of range" or (
+                e.startswith("Identifier") and e.endswith("not recognized")
+            ):
                 e = "adsurl not recognized"
             raise ValueError(str(e))
 

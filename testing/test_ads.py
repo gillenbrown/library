@@ -143,6 +143,11 @@ def test_raises_error_for_arxiv_paper_not_on_ads():
         ads_call.get_bibcode("https://arxiv.org/abs/3501.00001")
 
 
+def test_raises_error_for_adsurl_with_bad_bibcode():
+    with pytest.raises(ValueError):
+        ads_call.get_bibcode("http://adsabs.harvard.edu/abs/2007ARA\%26A..45..565M")
+
+
 # ======================================================================================
 #
 # Test getting various paper attributes from bibcodes

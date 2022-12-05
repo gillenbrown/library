@@ -1896,6 +1896,7 @@ def test_import_progress_bar_is_updated(db_empty):
 doi_bad = "doi = {10.1000/182}\n"
 doi_good = "doi = {" + u.mine.doi + "}\n"
 adsurl_bad = "adsurl = {https://ui.adsabs.harvard.edu/abs/2018ApJ...864...94X}\n"
+adsurl_bad_2 = "adsurl = {https://ui.adsabs.harvard.edu/abs/2007ARA\&A..45..565M}\n"
 adsurl_good = "adsurl = {" + u.mine.ads_url + "}\n"
 eprint_bad = "eprint = {3501.00001}\n"
 eprint_good = "eprint = {" + u.mine.arxiv_id + "}\n"
@@ -2007,6 +2008,18 @@ def test_import_bad_eprint(db_empty):
 
 def test_import_bad_adsurl(db_empty):
     entry = "@ARTICLE{key\n" + adsurl_bad + "}"
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    assert results[:3] == (0, 0, 1)
+    assert "% adsurl not recognized\n" + entry in f_output
+
+
+def test_import_bad_adsurl_2(db_empty):
+    entry = "@ARTICLE{key\n" + adsurl_bad_2 + "}"
     file_loc = create_bibtex(entry)
     results = db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
