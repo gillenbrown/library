@@ -150,6 +150,71 @@ def test_raises_error_for_adsurl_with_bad_bibcode():
 
 # ======================================================================================
 #
+# Test getting bibcodes from various journal details
+#
+# ======================================================================================
+def test_get_paper_from_journal_details():
+    assert (
+        ads_call.get_bibcode_from_journal(
+            u.mine.year, u.mine.journal, u.mine.volume, u.mine.page, u.mine.title
+        )
+        == u.mine.bibcode
+    )
+
+
+def test_get_paper_from_journal_details_short_journal():
+    assert (
+        ads_call.get_bibcode_from_journal(
+            u.mine.year,
+            "\\apj",
+            u.mine.volume,
+            u.mine.page,
+            u.mine.title,
+        )
+        == u.mine.bibcode
+    )
+
+
+def test_get_paper_from_journal_details_validates_title_correct():
+    assert (
+        ads_call.get_bibcode_from_journal(
+            u.mine.year, u.mine.journal, u.mine.volume, u.mine.page, u.mine.title
+        )
+        == u.mine.bibcode
+    )
+
+
+def test_get_paper_from_journal_details_not_found_raises_error():
+    with pytest.raises(ValueError):
+        ads_call.get_bibcode_from_journal(
+            u.mine.year, u.mine.journal, u.mine.volume, u.mine.page, "nonsense"
+        )
+
+
+def test_get_paper_from_journal_details_not_found_raises_error_2():
+    with pytest.raises(ValueError):
+        ads_call.get_bibcode_from_journal(
+            "2035", u.mine.journal, u.mine.volume, u.mine.page, u.mine.title
+        )
+
+
+def test_get_paper_from_journal_details_not_found_raises_error_3():
+    with pytest.raises(ValueError):
+        ads_call.get_bibcode_from_journal(
+            u.mine.year, u.mine.journal, u.mine.volume, -100, u.mine.title
+        )
+
+
+def test_get_paper_from_journal_could_not_recognize_error():
+    with pytest.raises(ValueError) as e:
+        ads_call.get_bibcode_from_journal(
+            u.mine.year, "nonsense", u.mine.volume, u.mine.page, u.mine.title
+        )
+    assert str(e.value) == "Journal not recognized"
+
+
+# ======================================================================================
+#
 # Test getting various paper attributes from bibcodes
 #
 # ======================================================================================

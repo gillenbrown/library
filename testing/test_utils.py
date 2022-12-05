@@ -24,6 +24,7 @@ mine = PaperDict(
     title="Nuclear Star Clusters in Cosmological Simulations",
     authors=["Brown, Gillen", "Gnedin, Oleg Y.", "Li, Hui"],
     pubdate="2018-09-00",
+    year=2018,
     journal="The Astrophysical Journal",
     volume=864,
     page=94,

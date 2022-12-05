@@ -1,4 +1,5 @@
 import re
+from pathlib import Path
 
 import ads
 
@@ -22,6 +23,34 @@ class ADSWrapper(object):
         self._bibcode_from_arxiv_id = dict()
         self._bibcode_from_doi = dict()
         self.num_queries = 0  # track this for debugging/testing purposes
+
+        # read in the file of bibcodes
+        self.bibstems = dict()
+
+    def _build_bibstems(self):
+        resources_dir = Path(__file__).parent / "resources"
+        with open(resources_dir / "ads_bibstems.txt", "r") as f:
+            for line in f:
+                if line.strip() == "" or line.startswith("#"):
+                    continue
+                # if we're here, we have an entry to parse
+                # the first word is the bibstem, the rest is the journal name.
+                split_line = line.split()
+                bibstem = split_line[0]
+                journal_name = " ".join(split_line[1:])
+                self.bibstems[journal_name] = bibstem
+        # then get the AAS macros
+        with open(resources_dir / "aastex_macros.txt", "r") as f:
+            for line in f:
+                if line.strip() == "" or line.startswith("#"):
+                    continue
+                # if we're here, we have an entry to parse
+                # the first word is the abbreviation, the rest is the journal name.
+                # we have to match the journal name to the bibstem as given by ADS
+                split_line = line.split()
+                abbreviation = "\\" + split_line[0]  # need to add back backslash
+                journal_name = " ".join(split_line[1:])
+                self.bibstems[abbreviation] = self.bibstems[journal_name]
 
     def get_info(self, bibcode):
         """
@@ -271,3 +300,52 @@ class ADSWrapper(object):
         # otherwise we don't know what to do
         else:
             raise ValueError(f"Identifier {identifier} not recognized")
+
+    def get_bibcode_from_journal(self, year, journal, volume, page, title):
+        """
+        Get the paper details from the full journal info
+
+        :param year: year the paper was published
+        :type year: int, str
+        :param journal: journal the paper was published in. This can be the full
+                        journal name or one of the ADS accepted abbreviations.
+        :type journal: str
+        :param volume: volume the paper was published in
+        :type volume: int, str
+        :param page: Page where the paper was published
+        :type page: int, str
+        :param title: title of the paper
+        :type title: str
+        :return:
+        """
+        error_message = "couldn't find paper matching journal info on ADS"
+
+        # see if we need to build the bibstems
+        if len(self.bibstems) == 0:
+            self._build_bibstems()
+        # then use those to get the bibstem of this journal
+        try:
+            bibstem = self.bibstems[journal]
+        except KeyError:
+            raise ValueError("Journal not recognized")
+
+        try:
+            query = ads.SearchQuery(
+                q=f'year:"{year}" title:"{title}" bibstem:"{bibstem}"', fl=["bibcode"]
+            )
+            bibcode = list(query)[0].bibcode
+        except IndexError:  # not found on ADS
+            raise ValueError(error_message)
+
+        # then get the full paper details to validate
+        details = self.get_info(bibcode)
+        try:
+            assert str(details["pubdate"].split("-")[0]) == str(year)
+            assert details["title"] == title
+            assert str(details["volume"]) == str(volume)
+            assert str(details["page"]) == str(page)
+        except AssertionError:
+            raise ValueError(error_message)
+
+        # if we got here, everything looks good
+        return bibcode
