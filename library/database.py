@@ -863,9 +863,7 @@ class Database(object):
             # add to failure file, with the error
             # make non useful errors more useful
             e = str(e)
-            if e == "list index out of range":
-                e = "Paper not found on ADS, something may be wrong with this entry"
-            elif "Bad Gateway" in e:
+            if "Bad Gateway" in e:
                 e = (
                     "Connection lost when querying ADS for this paper. "
                     "This may work if you try again"
@@ -909,22 +907,29 @@ class Database(object):
                 except:
                     raise ValueError(f"Failed to parse this line of this entry: {line}")
 
-        # now that we have the info, try to find the paper. I would like to use the ADS
-        # URL first, since it would reduce the number of queries, but I found that in
-        # practice this was unreliable. ADS URLs can come from different versions of
-        # ADS, have extra search stuff in them, or have other issues. So instead we
-        # look for the DOI or other data first, which has a much lower failure rate.
-        # Besides, in practice the user is unlikely to run our of queries (although
-        # it makes my local testing more of a hassle, since I definitely can run out!)
-        if "doi" in paper_data:
-            bibcode = ads_call.get_bibcode(paper_data["doi"])
-        elif "eprint" in paper_data:
-            bibcode = ads_call.get_bibcode(paper_data["eprint"])
-        elif "adsurl" in paper_data:
-            bibcode = ads_call.get_bibcode(paper_data["adsurl"])
-        else:  # could not identify paper
-            raise ValueError("Entry does not have doi, adsurl, or eprint attributes")
-        # then add the paper to the database
+        # now that we have the info, try to find the paper. I'll keep track of what was
+        # tried, then use that to construct an error message if needed. I try the ADS
+        # url first, since that results in less queries to ADS, speeding up this
+        # process
+        error_message = ""
+        for bibcode_func in [
+            self._get_bibcode_from_adsurl,
+            self._get_bibcode_from_doi,
+            self._get_bibcode_from_eprint,
+        ]:
+            try:
+                bibcode = bibcode_func(paper_data)
+                break
+            except Exception as e:
+                # add this to the error message
+                if error_message != "" and str(e) != "":
+                    error_message += ", "
+                error_message += str(e)
+        else:  # no break, so the bibcode was not found
+            if error_message == "":
+                error_message = "Entry does not have doi, adsurl, or eprint attributes"
+            raise ValueError(error_message)
+
         try:
             self.add_paper(bibcode)
         except PaperAlreadyInDatabaseError:
@@ -962,3 +967,73 @@ class Database(object):
                 )
             except RuntimeError:  # duplicate citation key
                 pass  # just leave as the bibcode
+
+    def _get_bibcode_from_adsurl(self, paper_data):
+        """
+        Query ADS to get a bibcode from the adsurl, or tell if it didn't work
+
+        This will return the bibcode, or raise an error. If the attribute is not in
+        the dictionary, this will raise an error with an empty message string, since
+        the user doesn't need to know that we checked this. Otherwise, the error will
+        be appropriate to send to the user
+
+        :param paper_data: the dictionary with attributes of the bibtex entry
+        :type paper_data: dict
+        :return: the bibcode
+        :rtype: str
+        """
+        if "adsurl" not in paper_data:
+            raise KeyError()
+        try:
+            bibcode = ads_call.get_bibcode(paper_data["adsurl"])
+            # validate that this bibcode is valid by querying ADS for the paper
+            # details. We'd do this later, but the results are cached, so we're not
+            # wasting a query
+            ads_call.get_info(bibcode)
+            return bibcode
+        except Exception as e:  # anything else
+            if str(e) == "list index out of range":  # paper not on ADS
+                e = "adsurl not recognized"
+            raise ValueError(str(e))
+
+    def _get_bibcode_from_doi(self, paper_data):
+        """
+        Query ADS to get a bibcode from the doi, or tell if it didn't work
+
+        This will return the bibcode, or raise an error. If the attribute is not in
+        the dictionary, this will raise an error with an empty message string, since
+        the user doesn't need to know that we checked this. Otherwise, the error will
+        be appropriate to send to the user
+
+        :param paper_data: the dictionary with attributes of the bibtex entry
+        :type paper_data: dict
+        :return: the bibcode
+        :rtype: str
+        """
+        if "doi" not in paper_data:
+            raise KeyError()
+        try:
+            return ads_call.get_bibcode(paper_data["doi"])
+        except Exception as e:  # anything else
+            raise ValueError(str(e))
+
+    def _get_bibcode_from_eprint(self, paper_data):
+        """
+        Query ADS to get a bibcode from the eprint, or tell if it didn't work
+
+        This will return the bibcode, or raise an error. If the attribute is not in
+        the dictionary, this will raise an error with an empty message string, since
+        the user doesn't need to know that we checked this. Otherwise, the error will
+        be appropriate to send to the user
+
+        :param paper_data: the dictionary with attributes of the bibtex entry
+        :type paper_data: dict
+        :return: the bibcode
+        :rtype: str
+        """
+        if "eprint" not in paper_data:
+            raise KeyError()
+        try:
+            return ads_call.get_bibcode(paper_data["eprint"])
+        except Exception as e:  # anything else
+            raise ValueError(str(e))

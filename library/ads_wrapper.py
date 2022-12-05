@@ -130,7 +130,7 @@ class ADSWrapper(object):
                 query = ads.SearchQuery(q="arXiv:{}".format(arxiv_id), fl=["bibcode"])
                 bibcode = list(query)[0].bibcode
             except IndexError:  # no papers found
-                raise ValueError(f"arXiv ID {arxiv_id} not on ADS yet!")
+                raise ValueError(f"arXiv ID {arxiv_id} not on ADS")
 
             # store it in the cache
             self._bibcode_from_arxiv_id[arxiv_id] = bibcode
@@ -159,7 +159,7 @@ class ADSWrapper(object):
             except IndexError:  # not found on ADS
                 # get rid of quotes in error message
                 doi = doi.replace('"', "")
-                raise ValueError(f"DOI {doi} not on ADS!")
+                raise ValueError(f"DOI {doi} not on ADS")
 
             # store it in the cache
             self._bibcode_from_doi[doi] = bibcode

@@ -1773,44 +1773,6 @@ def test_import_failure_file_contains_reason_no_id(db_empty):
     assert f"% {comment}\n{entry}" in f_output
 
 
-def test_import_failure_file_contains_reason_not_on_ads_doi(db_empty):
-    entry = "@ARTICLE{\ndoi = {10.1000/182}\n}"
-    file_loc = create_bibtex(entry)
-    results = db_empty.import_bibtex(file_loc)
-    file_loc.unlink()  # delete before tests may fail
-    with open(results[3], "r") as f_file:
-        f_output = f_file.read()
-    results[3].unlink()
-    assert "% DOI 10.1000/182 not on ADS!\n" + entry in f_output
-
-
-def test_import_failure_file_contains_reason_not_on_ads_eprint(db_empty):
-    entry = "@ARTICLE{\neprint = {3501.00001}\n}"
-    file_loc = create_bibtex(entry)
-    results = db_empty.import_bibtex(file_loc)
-    file_loc.unlink()  # delete before tests may fail
-    with open(results[3], "r") as f_file:
-        f_output = f_file.read()
-    results[3].unlink()
-    assert "% arXiv ID 3501.00001 not on ADS yet!\n" + entry in f_output
-
-
-def test_import_failure_file_contains_reason_not_on_ads_adsurl(db_empty):
-    entry = (
-        "@ARTICLE{\nadsurl = {https://ui.adsabs.harvard.edu/abs/2018ApJ...864...94X}\n}"
-    )
-    file_loc = create_bibtex(entry)
-    results = db_empty.import_bibtex(file_loc)
-    file_loc.unlink()  # delete before tests may fail
-    with open(results[3], "r") as f_file:
-        f_output = f_file.read()
-    results[3].unlink()
-    assert (
-        "% Paper not found on ADS, something may be wrong with this entry\n" + entry
-        in f_output
-    )
-
-
 def test_import_failure_file_contains_reason_bad_gateway(db_empty, monkeypatch):
     def func(x, y):
         raise ValueError("<html stuff>502 Bad Gateway<\html stuff>")
@@ -1924,3 +1886,132 @@ def test_import_progress_bar_is_updated(db_empty):
     db_empty.import_bibtex(file_loc, lambda x: update_calls.append(x))
     file_loc.unlink()  # delete before tests may fail
     assert update_calls == list(range(1, 20))
+
+
+# =======================================================
+# test robustness of import system and its error messages
+# =======================================================
+# this sort of duplicates what is above, but in a more systematic way that checks
+# what happens when there are errors in a bibtex entry. Set up some bad entries
+doi_bad = "doi = {10.1000/182}\n"
+doi_good = "doi = {" + u.mine.doi + "}\n"
+adsurl_bad = "adsurl = {https://ui.adsabs.harvard.edu/abs/2018ApJ...864...94X}\n"
+adsurl_good = "adsurl = {" + u.mine.ads_url + "}\n"
+eprint_bad = "eprint = {3501.00001}\n"
+eprint_good = "eprint = {" + u.mine.arxiv_id + "}\n"
+
+
+def test_import_good_doi_bad_eprint_bad_adsurl(db_empty):
+    entry = "@ARTICLE{key,\n" + doi_good + eprint_bad + adsurl_bad + "}"
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[:3] == (1, 0, 0)
+
+
+def test_import_bad_doi_good_eprint_bad_adsurl(db_empty):
+    entry = "@ARTICLE{key,\n" + doi_bad + eprint_good + adsurl_bad + "}"
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[:3] == (1, 0, 0)
+
+
+def test_import_bad_doi_bad_eprint_good_adsurl(db_empty):
+    entry = "@ARTICLE{key,\n" + doi_bad + eprint_bad + adsurl_good + "}"
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[:3] == (1, 0, 0)
+
+
+def test_import_bad_doi_bad_eprint_bad_adsurl(db_empty):
+    entry = "@ARTICLE{key,\n" + doi_bad + eprint_bad + adsurl_bad + "}"
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    assert results[:3] == (0, 0, 1)
+    assert (
+        "% adsurl not recognized, DOI 10.1000/182 not on ADS, "
+        "arXiv ID 3501.00001 not on ADS\n" + entry in f_output
+    )
+
+
+def test_import_bad_doi_bad_eprint(db_empty):
+    entry = "@ARTICLE{key,\n" + doi_bad + eprint_bad + "}"
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    assert results[:3] == (0, 0, 1)
+    assert (
+        "% DOI 10.1000/182 not on ADS, arXiv ID 3501.00001 not on ADS\n" + entry
+        in f_output
+    )
+
+
+def test_import_bad_doi_bad_adsurl(db_empty):
+    entry = "@ARTICLE{key,\n" + doi_bad + adsurl_bad + "}"
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    assert results[:3] == (0, 0, 1)
+    assert "% adsurl not recognized, DOI 10.1000/182 not on ADS\n" + entry in f_output
+
+
+def test_import_bad_eprint_bad_adsurl(db_empty):
+    entry = "@ARTICLE{key,\n" + eprint_bad + adsurl_bad + "}"
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    assert results[:3] == (0, 0, 1)
+    assert (
+        "% adsurl not recognized, arXiv ID 3501.00001 not on ADS\n" + entry in f_output
+    )
+
+
+def test_import_bad_doi(db_empty):
+    entry = "@ARTICLE{key,\n" + doi_bad + "}"
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    assert results[:3] == (0, 0, 1)
+    assert "% DOI 10.1000/182 not on ADS\n" + entry in f_output
+
+
+def test_import_bad_eprint(db_empty):
+    entry = "@ARTICLE{key\n" + eprint_bad + "}"
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    assert results[:3] == (0, 0, 1)
+    assert "% arXiv ID 3501.00001 not on ADS\n" + entry in f_output
+
+
+def test_import_bad_adsurl(db_empty):
+    entry = "@ARTICLE{key\n" + adsurl_bad + "}"
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    assert results[:3] == (0, 0, 1)
+    assert "% adsurl not recognized\n" + entry in f_output
