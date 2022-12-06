@@ -898,11 +898,15 @@ class Database(object):
                 paper_data["cite_key"] = line[idx_1 + 1 : idx_2]
                 continue
             # only look at lines that are interesting to us
-            elif "doi = " in line or "adsurl = " in line or "eprint = " in line:
+            elif " = " in line:
                 try:
                     key, value = line.split(" = ")
                     paper_data[key.strip()] = (
-                        value.strip().rstrip(",").replace("{", "").replace("}", "")
+                        value.strip()
+                        .rstrip(",")
+                        .replace("{", "")
+                        .replace("}", "")
+                        .replace('"', "")
                     )
                 except:
                     raise ValueError(f"Failed to parse this line of this entry: {line}")
@@ -916,6 +920,7 @@ class Database(object):
             self._get_bibcode_from_adsurl,
             self._get_bibcode_from_doi,
             self._get_bibcode_from_eprint,
+            self._get_bibcode_from_journal,
         ]:
             try:
                 bibcode = bibcode_func(paper_data)
@@ -927,7 +932,10 @@ class Database(object):
                 error_message += str(e)
         else:  # no break, so the bibcode was not found
             if error_message == "":
-                error_message = "Entry does not have doi, adsurl, or eprint attributes"
+                error_message = (
+                    "Entry does not have doi, adsurl, eprint, "
+                    "or full journal attributes"
+                )
             raise ValueError(error_message)
 
         try:
@@ -972,7 +980,7 @@ class Database(object):
         """
         Query ADS to get a bibcode from the adsurl, or tell if it didn't work
 
-        This will return the bibcode, or raise an error. If the attribute is not in
+        This will return the bibcode, or raise an error. If the adsurl is not in
         the dictionary, this will raise an error with an empty message string, since
         the user doesn't need to know that we checked this. Otherwise, the error will
         be appropriate to send to the user
@@ -1003,7 +1011,7 @@ class Database(object):
         """
         Query ADS to get a bibcode from the doi, or tell if it didn't work
 
-        This will return the bibcode, or raise an error. If the attribute is not in
+        This will return the bibcode, or raise an error. If the doi is not in
         the dictionary, this will raise an error with an empty message string, since
         the user doesn't need to know that we checked this. Otherwise, the error will
         be appropriate to send to the user
@@ -1024,7 +1032,7 @@ class Database(object):
         """
         Query ADS to get a bibcode from the eprint, or tell if it didn't work
 
-        This will return the bibcode, or raise an error. If the attribute is not in
+        This will return the bibcode, or raise an error. If the eprint is not in
         the dictionary, this will raise an error with an empty message string, since
         the user doesn't need to know that we checked this. Otherwise, the error will
         be appropriate to send to the user
@@ -1040,3 +1048,38 @@ class Database(object):
             return ads_call.get_bibcode(paper_data["eprint"])
         except Exception as e:  # anything else
             raise ValueError(str(e))
+
+    def _get_bibcode_from_journal(self, paper_data):
+        """
+        Query ADS to get a bibcode from the full paper info, or tell if it didn't work
+
+        This will return the bibcode, or raise an error. If the required details are
+        not in the dictionary, this will raise an error with an empty message string,
+        since the user doesn't need to know that we checked this. Otherwise, the
+        error will be appropriate to send to the user
+
+        :param paper_data: the dictionary with attributes of the bibtex entry
+        :type paper_data: dict
+        :return: the bibcode
+        :rtype: str
+        """
+        if (
+            "journal" not in paper_data
+            or "volume" not in paper_data
+            or "year" not in paper_data
+            or "pages" not in paper_data
+            or "title" not in paper_data
+        ):
+            raise KeyError()
+        # otherwise, we have the info we need. First, parse the pages attribute so that
+        # it's just the first page, not the range. That makes checks easier
+        paper_data["pages"] = paper_data["pages"].split("-")[0]
+        # This function may raise errors, but those
+        # are good for the user to see
+        return ads_call.get_bibcode_from_journal(
+            paper_data["year"],
+            paper_data["journal"],
+            paper_data["volume"],
+            paper_data["pages"],
+            paper_data["title"],
+        )
