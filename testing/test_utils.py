@@ -346,3 +346,27 @@ sellwood_binney = PaperDict(
     doi="10.1046/j.1365-8711.2002.05806.x",
     bibcode="2002MNRAS.336..785S",
 )
+
+behroozi = PaperDict(
+    bibcode="2013ApJ...770...57B",
+    bibtex=(
+        "@ARTICLE{behroozi_etal13,\n"
+        "   author = {{Behroozi}, P.~S. and {Wechsler}, R.~H. and {Conroy}, C.},\n"
+        '    title = "{The Average Star Formation Histories of Galaxies in '
+        'Dark Matter Halos from z = 0-8}",\n'
+        "  journal = {\apj},\n"
+        'archivePrefix = "arXiv",\n'
+        "   eprint = {1207.6105},\n"
+        ' primaryClass = "astro-ph.CO",\n'
+        " keywords = {dark matter, galaxies: abundances, galaxies: evolution, "
+        "methods: numerical },\n"
+        "     year = 2013,\n"
+        "    month = jun,\n"
+        "   volume = 770,\n"
+        "      eid = {57},\n"
+        "    pages = {57},\n"
+        "      doi = {10.1088/0004-637X/770/1/57},\n"
+        "   adsurl = {http://adsabs.harvard.edu/abs/2013ApJ...770...57B}\n"
+        "}"
+    ),
+)

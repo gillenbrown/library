@@ -210,7 +210,7 @@ def test_get_paper_from_journal_could_not_recognize_error():
         ads_call.get_bibcode_from_journal(
             u.mine.year, "nonsense", u.mine.volume, u.mine.page, u.mine.title
         )
-    assert str(e.value) == "Journal not recognized"
+    assert str(e.value) == "could not match journal to an ADS bibstem"
 
 
 # ======================================================================================

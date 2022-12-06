@@ -899,17 +899,19 @@ class Database(object):
                 continue
             # only look at lines that are interesting to us
             elif " = " in line:
-                try:
-                    key, value = line.split(" = ")
-                    paper_data[key.strip()] = (
-                        value.strip()
-                        .rstrip(",")
-                        .replace("{", "")
-                        .replace("}", "")
-                        .replace('"', "")
-                    )
-                except:
-                    raise ValueError(f"Failed to parse this line of this entry: {line}")
+                # the key and value are separated by an equals sign surrounded by
+                # spaces. But we need to be careful, since sometimes titles can
+                # have the same pattern
+                split_line = line.split(" = ")
+                key = split_line[0]
+                value = " = ".join(split_line[1:])
+                paper_data[key.strip()] = (
+                    value.strip()
+                    .rstrip(",")
+                    .replace("{", "")
+                    .replace("}", "")
+                    .replace('"', "")
+                )
 
         # now that we have the info, try to find the paper. I'll keep track of what was
         # tried, then use that to construct an error message if needed. I try the ADS
@@ -932,10 +934,7 @@ class Database(object):
                 error_message += str(e)
         else:  # no break, so the bibcode was not found
             if error_message == "":
-                error_message = (
-                    "Entry does not have doi, adsurl, eprint, "
-                    "or full journal attributes"
-                )
+                error_message = "Not enough information to uniquely identify paper"
             raise ValueError(error_message)
 
         try:

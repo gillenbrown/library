@@ -1412,6 +1412,14 @@ def test_import_with_multiline_authors_adds_to_db(db_empty):
     assert db_empty.get_all_bibcodes() == ["2003ApJ...591..499A"]
 
 
+def test_import_with_equals_sign_in_title_adds_to_db(db_empty):
+    file_loc = create_bibtex(u.behroozi.bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[:3] == (1, 0, 0)
+    assert db_empty.get_all_bibcodes() == [u.behroozi.bibcode]
+
+
 def test_import_old_ads_url_added_to_db(db_empty):
     bibtex = (
         "@ARTICLE{meng_gnedin21,\n"
@@ -1741,20 +1749,6 @@ def test_import_failure_file_contains_failed_bibtex_entries(db_empty):
     assert bad_2 in f_output
 
 
-def test_import_failure_file_contains_reason_malformed(db_empty):
-    entry = "@ARTICLE{\nadsurl = sdf = \n}"
-    file_loc = create_bibtex(entry)
-    results = db_empty.import_bibtex(file_loc)
-    file_loc.unlink()  # delete before tests may fail
-    with open(results[3], "r") as f_file:
-        f_output = f_file.read()
-    results[3].unlink()
-    assert (
-        "% Failed to parse this line of this entry: adsurl = sdf = \n" + entry
-        in f_output
-    )
-
-
 def test_import_failure_file_contains_reason_no_id(db_empty):
     entry = (
         "@ARTICLE{1957RvMP...29..547B,\n"
@@ -1770,7 +1764,7 @@ def test_import_failure_file_contains_reason_no_id(db_empty):
     with open(results[3], "r") as f_file:
         f_output = f_file.read()
     results[3].unlink()
-    comment = "Entry does not have doi, adsurl, eprint, or full journal attributes"
+    comment = "Not enough information to uniquely identify paper"
     assert f"% {comment}\n{entry}" in f_output
 
 
@@ -1809,8 +1803,7 @@ def test_import_failure_file_contains_reason_out_of_queries(db_empty, monkeypatc
 
 
 def test_import_failure_file_full_format(db_empty):
-    bad_1 = "@ARTICLE{\nadsurl = sdf = \n}"
-    bad_2 = (
+    bad = (
         "@ARTICLE{1957RvMP...29..547B,\n"
         " author = {{Burbidge}, E. Margaret},\n"
         '  title = "{Synthesis of the Elements in Stars},"\n'
@@ -1818,7 +1811,7 @@ def test_import_failure_file_full_format(db_empty):
         "   year = 1957,\n"
         "}"
     )
-    file_loc = create_bibtex(u.mine.bibtex, bad_1, u.tremonti.bibtex, bad_2)
+    file_loc = create_bibtex(u.mine.bibtex, bad, u.tremonti.bibtex)
     results = db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
     with open(results[3], "r") as f_file:
@@ -1832,9 +1825,8 @@ def test_import_failure_file_full_format(db_empty):
         "% add the paper. In addition, there may be something wrong with the\n"
         "% format of the entry that breaks my code parser.\n\n"
     )
-    reason_1 = "% Failed to parse this line of this entry: adsurl = sdf = \n"
-    reason_2 = "% Entry does not have doi, adsurl, eprint, or full journal attributes\n"
-    assert f_output == header + reason_1 + bad_1 + "\n\n\n" + reason_2 + bad_2 + "\n"
+    reason = "% Not enough information to uniquely identify paper\n"
+    assert f_output == header + reason + bad + "\n\n\n"
 
 
 def test_import_citation_keyword_is_kept_if_present(db_empty):
@@ -2184,11 +2176,7 @@ def test_import_bad_journal_not_enough(db_empty):
         f_output = f_file.read()
     results[3].unlink()
     assert results[:3] == (0, 0, 1)
-    assert (
-        "% Entry does not have doi, adsurl, eprint, or full journal attributes\n"
-        + entry
-        in f_output
-    )
+    assert "% Not enough information to uniquely identify paper\n" + entry in f_output
 
 
 def test_import_bad_journal_not_found(db_empty):
@@ -2224,4 +2212,4 @@ def test_import_bad_journal_bad_journal(db_empty):
         f_output = f_file.read()
     results[3].unlink()
     assert results[:3] == (0, 0, 1)
-    assert "% Journal not recognized\n" + entry in f_output
+    assert "% could not match journal to an ADS bibstem\n" + entry in f_output

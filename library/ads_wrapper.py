@@ -327,7 +327,7 @@ class ADSWrapper(object):
         try:
             bibstem = self.bibstems[journal]
         except KeyError:
-            raise ValueError("Journal not recognized")
+            raise ValueError("could not match journal to an ADS bibstem")
 
         try:
             query = ads.SearchQuery(
