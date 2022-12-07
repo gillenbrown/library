@@ -184,6 +184,19 @@ def test_get_paper_from_journal_details_validates_title_correct():
     )
 
 
+def test_get_paper_from_journal_details_validates_title_lowercase_correct():
+    assert (
+        ads_call.get_bibcode_from_journal(
+            u.mine.year,
+            u.mine.journal,
+            u.mine.volume,
+            u.mine.page,
+            u.mine.title.lower(),
+        )
+        == u.mine.bibcode
+    )
+
+
 def test_get_paper_from_journal_details_not_found_raises_error():
     with pytest.raises(ValueError):
         ads_call.get_bibcode_from_journal(

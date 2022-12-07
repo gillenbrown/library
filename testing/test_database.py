@@ -1911,6 +1911,14 @@ def test_import_single_good_paper_with_journal_details_adds_to_database(db_empty
     assert db_empty.get_all_bibcodes() == [u.mine.bibcode]
 
 
+def test_import_single_good_paper_title_diff_case_with_journal_details_adds(db_empty):
+    entry = "@ARTICLE{key,\n" + journal_good.lower() + "}"
+    file_loc = create_bibtex(entry)
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert db_empty.get_all_bibcodes() == [u.mine.bibcode]
+
+
 def test_import_journal_details_failure_not_enough_info(db_empty):
     entry = "@ARTICLE{key,\n" + journal_bad_not_enough + "}"
     file_loc = create_bibtex(entry)

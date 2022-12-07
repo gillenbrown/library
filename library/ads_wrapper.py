@@ -341,7 +341,7 @@ class ADSWrapper(object):
         details = self.get_info(bibcode)
         try:
             assert str(details["pubdate"].split("-")[0]) == str(year)
-            assert details["title"] == title
+            assert details["title"].lower() == title.lower()
             assert str(details["volume"]) == str(volume)
             assert str(details["page"]) == str(page)
         except AssertionError:
