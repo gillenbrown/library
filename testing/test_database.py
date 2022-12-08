@@ -1671,7 +1671,7 @@ def test_import_return_tuple_two_good_one_failure_one_duplicate(db_empty):
 
 
 def test_import_return_tuple_could_not_identify_paper(db_empty):
-    bibtex = "@ARTICLE{2004ApJ...613..898T,\n" "        pages = {898-913},\n" "}"
+    bibtex = "@ARTICLE{2004ApJ...613..898T,\n        pages = {898-913},\n" "}"
     file_loc = create_bibtex(bibtex)
     results = db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
@@ -1867,9 +1867,7 @@ journal_bad_not_found = (
     "year = 2016,\nvolume = {864},\npages = {94},\njournal = {\\apj},\n"
     'title = "{' + u.mine.title + '}",\n'
 )
-journal_bad_doesnt_match = (
-    'year = 2018,\nvolume = {864},\npages = {94},\njournal = {\\apj},\ntitle = "{s}",\n'
-)
+journal_bad_multiple = "year = 2018"
 journal_bad_journal = (
     "year = 2018,\nvolume = {864},\npages = {94},\njournal = {lsdflskdjf},\n"
     'title = "{' + u.mine.title + '}",\n'
@@ -1910,8 +1908,8 @@ def test_import_journal_details_failure_paper_not_found(db_empty):
     assert results[:3] == (0, 0, 1)
 
 
-def test_import_journal_details_failure_paper_doesnt_match_other_details(db_empty):
-    entry = "@ARTICLE{key,\n" + journal_bad_doesnt_match + "}"
+def test_import_journal_details_failure_paper_nonspecific(db_empty):
+    entry = "@ARTICLE{key,\n" + journal_bad_multiple + "}"
     file_loc = create_bibtex(entry)
     results = db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
@@ -2094,7 +2092,7 @@ def test_import_bad_eprint_bad_adsurl(db_empty):
 
 
 def test_import_bad_doi_bad_journal(db_empty):
-    entry = "@ARTICLE{key,\n" + doi_bad + journal_bad_doesnt_match + "}"
+    entry = "@ARTICLE{key,\n" + doi_bad + journal_bad_not_found + "}"
     file_loc = create_bibtex(entry)
     results = db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
@@ -2203,8 +2201,8 @@ def test_import_bad_journal_not_found(db_empty):
     )
 
 
-def test_import_bad_journal_doesnt_match(db_empty):
-    entry = "@ARTICLE{key\n" + journal_bad_doesnt_match + "}"
+def test_import_bad_journal_duplicate(db_empty):
+    entry = "@ARTICLE{key\n" + journal_bad_multiple + "}"
     file_loc = create_bibtex(entry)
     results = db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
@@ -2212,10 +2210,7 @@ def test_import_bad_journal_doesnt_match(db_empty):
         f_output = f_file.read()
     results[3].unlink()
     assert results[:3] == (0, 0, 1)
-    assert (
-        "% couldn't find paper with an exact match to this info on ADS\n" + entry
-        in f_output
-    )
+    assert "% multiple papers found that match this info\n" + entry in f_output
 
 
 def test_import_bad_journal_bad_journal(db_empty):
