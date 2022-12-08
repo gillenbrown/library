@@ -197,6 +197,31 @@ def test_get_paper_from_journal_details_validates_title_lowercase_correct():
     assert bibcode == u.mine.bibcode
 
 
+def test_get_paper_from_journal_details_works_for_slightly_different_titles():
+    # this test inspired by some old papers that have a period at the end, which
+    # was not in some bibtex files I tested with
+    bibcode = ads_call.get_bibcode_from_journal(
+        year=u.mine.year,
+        journal=u.mine.journal,
+        volume=u.mine.volume,
+        page=u.mine.page,
+        title=u.mine.title.lower() + ".",
+    )
+    assert bibcode == u.mine.bibcode
+
+
+def test_get_paper_from_journal_details_doesnt_work_for_different_titles():
+    # make sure fuzzy string matching isn't too fuzzy
+    with pytest.raises(ValueError):
+        ads_call.get_bibcode_from_journal(
+            year=u.mine.year,
+            journal=u.mine.journal,
+            volume=u.mine.volume,
+            page=u.mine.page,
+            title="Test " + u.mine.title.lower() + ".",
+        )
+
+
 def test_get_paper_from_journal_details_sparse_works():
     bibcode = ads_call.get_bibcode_from_journal(
         title="High-resolution simulations of structure formation in the universe",

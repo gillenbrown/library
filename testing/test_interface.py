@@ -1675,9 +1675,9 @@ def test_import_results_text_one_error(qtbot, db_empty, monkeypatch):
     file_loc, test_func = create_bibtex_monkeypatch(
         "@ARTICLE{1957RvMP...29..547B,\n"
         " author = {{Burbidge}, E. Margaret},\n"
-        '  title = "{Synthesis of the Elements in Stars},"\n'
+        '  title = "{Synthesis of the Elements in Stars}",\n'
         "journal = {Reviews of Modern Physics},\n"
-        "   year = 1957,\n"
+        "   year = 1959,\n"  # edited to be incorrect
         "}"
     )
     monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
@@ -1697,10 +1697,10 @@ def test_import_results_text_one_error(qtbot, db_empty, monkeypatch):
 def test_import_results_text_two_errors(qtbot, db_empty, monkeypatch):
     file_loc, test_func = create_bibtex_monkeypatch(
         "@ARTICLE{1957RvMP...29..547B,\n"
-        " author = {{Burbidge}, E. Margaret},\n"  # changed to be an error
-        '  title = "{Synthesis of the Elements in Stars},"\n'
+        " author = {{Burbidge}, E. Margaret},\n"
+        '  title = "{Synthesis of the Elements in Stars}",\n'
         "journal = {Reviews of Modern Physics},\n"
-        "   year = 1957,\n"
+        "   year = 1959,\n"  # changed to be an error
         "}",
         "@BOOK{2010gfe..book.....M,\n"
         "   author = {{Mo}, Houjun and {van den Bosch}, Frank C. and {White}, Simon},\n"
@@ -1741,9 +1741,9 @@ def test_import_results_text_one_success_one_failure(qtbot, db_empty, monkeypatc
     file_loc, test_func = create_bibtex_monkeypatch(
         "@ARTICLE{1957RvMP...29..547B,\n"
         " author = {{Burbidge}, E. Margaret},\n"
-        '  title = "{Synthesis of the Elements in Stars},"\n'
+        '  title = "{Synthesis of the Elements in Stars}",\n'
         "journal = {Reviews of Modern Physics},\n"
-        "   year = 1957,\n"
+        "   year = 1959,\n"  # edited to be incorrect
         "}",
         u.mine.bibtex,
     )
@@ -1767,9 +1767,9 @@ def test_import_results_text_one_duplicate_one_failure(qtbot, db_empty, monkeypa
     file_loc, test_func = create_bibtex_monkeypatch(
         "@ARTICLE{1957RvMP...29..547B,\n"
         " author = {{Burbidge}, E. Margaret},\n"
-        '  title = "{Synthesis of the Elements in Stars},"\n'
+        '  title = "{Synthesis of the Elements in Stars}",\n'
         "journal = {Reviews of Modern Physics},\n"
-        "   year = 1957,\n"
+        "   year = 1959,\n"  # edited to be incorrect
         "}",
         u.mine.bibtex,
     )
@@ -1792,9 +1792,9 @@ def test_import_results_text_one_success_one_dup_one_fail(qtbot, db_empty, monke
     file_loc, test_func = create_bibtex_monkeypatch(
         "@ARTICLE{1957RvMP...29..547B,\n"
         " author = {{Burbidge}, E. Margaret},\n"
-        '  title = "{Synthesis of the Elements in Stars},"\n'
+        '  title = "{Synthesis of the Elements in Stars}",\n'
         "journal = {Reviews of Modern Physics},\n"
-        "   year = 1957,\n"
+        "   year = 1959,\n"  # edited to be incorrect
         "}",
         u.mine.bibtex,
         u.mine.bibtex,

@@ -1728,7 +1728,7 @@ def test_import_failure_file_contains_failed_bibtex_entries(db_empty):
         " author = {{Burbidge}, E. Margaret},\n"
         '  title = "{Synthesis of the Elements in Stars},"\n'
         "journal = {Reviews of Modern Physics},\n"
-        "   year = 1957,\n"
+        "   year = 1959,\n"  # editied to be incorrect
         "}"
     )
     file_loc = create_bibtex(u.mine.bibtex, bad_1, u.tremonti.bibtex, bad_2)
@@ -1779,9 +1779,9 @@ def test_import_failure_file_full_format(db_empty):
     bad = (
         "@ARTICLE{1957RvMP...29..547B,\n"
         " author = {{Burbidge}, E. Margaret},\n"
-        '  title = "{Synthesis of the Elements in Stars},"\n'
+        '  title = "{Synthesis of the Elements in Stars}",\n'
         "journal = {Reviews of Modern Physics},\n"
-        "   year = 1957,\n"
+        "   year = 1959,\n"  # edited to be incorrect
         "}"
     )
     file_loc = create_bibtex(u.mine.bibtex, bad, u.tremonti.bibtex)

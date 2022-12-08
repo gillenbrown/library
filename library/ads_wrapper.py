@@ -350,44 +350,16 @@ class ADSWrapper(object):
                 "not enough publication details to uniquely identify paper"
             )
 
-        # then we can do this query
+        # then we can do this query. Since we included all the available information
+        # in the query, there's no extra checking we need to do on the results.
         query_results = list(ads.SearchQuery(q=query, fl=["bibcode"]))
 
-        # then go through the results to see if they are an appropriate match.
-        # We'll exit if we find multiple papers that are a match
-        bibcode = None
-        for potential_match in query_results:
-            this_bibcode = potential_match.bibcode
-            if self._validate_paper(kwargs, this_bibcode):
-                # validate that we haven't already found a paper that matches
-                if bibcode is None:
-                    bibcode = this_bibcode
-                else:  # we already found a paper
-                    raise ValueError("multiple papers found that match this info")
-        # check we have a match
-        if bibcode is None:
+        # then see what kind of results we got
+        if len(query_results) == 0:
             raise ValueError(
                 "couldn't find paper with an exact match to this info on ADS"
             )
-
-        # if we got here, everything looks good
-        return bibcode
-
-    def _validate_paper(self, paper_data, bibcode):
-        details = self.get_info(bibcode)
-        try:
-            # check each attribute we have, and see if it matches
-            if "year" in paper_data:
-                # year isn't directly present, but we can parse it
-                assert str(details["pubdate"].split("-")[0]) == str(paper_data["year"])
-            if "title" in paper_data:
-                # make title lower case, as capitalization of the title doesn't matter
-                assert details["title"].lower() == paper_data["title"].lower()
-            if "volume" in paper_data:
-                assert str(details["volume"]) == str(paper_data["volume"])
-            if "page" in paper_data:
-                assert str(details["page"]) == str(paper_data["page"])
-            # if we got here, all the details checked out
-            return True
-        except AssertionError:
-            return False
+        elif len(query_results) == 1:
+            return query_results[0].bibcode
+        else:
+            raise ValueError("multiple papers found that match this info")
