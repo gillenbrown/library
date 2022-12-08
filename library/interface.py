@@ -1773,6 +1773,7 @@ class TagsListScrollArea(ScrollArea):
         self.renameTagErrorText.hide()
         self.renameTagOldEntry.setText("")
         self.renameTagNewEntry.setText("")
+        self.triggerResize()
 
     def revealSecondTagDeleteEntry(self):
         """
