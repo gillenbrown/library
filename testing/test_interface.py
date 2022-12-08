@@ -1697,7 +1697,7 @@ def test_import_results_text_one_error(qtbot, db_empty, monkeypatch):
 def test_import_results_text_two_errors(qtbot, db_empty, monkeypatch):
     file_loc, test_func = create_bibtex_monkeypatch(
         "@ARTICLE{1957RvMP...29..547B,\n"
-        " author = {{Burbidge}, E. Margaret},\n"
+        " author = {{Burbidge}, E. Margaret},\n"  # changed to be an error
         '  title = "{Synthesis of the Elements in Stars},"\n'
         "journal = {Reviews of Modern Physics},\n"
         "   year = 1957,\n"
@@ -1705,7 +1705,7 @@ def test_import_results_text_two_errors(qtbot, db_empty, monkeypatch):
         "@BOOK{2010gfe..book.....M,\n"
         "   author = {{Mo}, Houjun and {van den Bosch}, Frank C. and {White}, Simon},\n"
         '    title = "{Galaxy Formation and Evolution}",\n'
-        "     year = 2010,\n"
+        "     year = 2014,\n"  # changed to be an error
         "}\n"
         "}",
     )

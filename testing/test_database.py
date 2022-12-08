@@ -1671,15 +1671,7 @@ def test_import_return_tuple_two_good_one_failure_one_duplicate(db_empty):
 
 
 def test_import_return_tuple_could_not_identify_paper(db_empty):
-    # modify a bibtex file to be unidentifiable
-    bibtex = u.mine.bibtex
-    for to_replace in [
-        "          doi = {10.3847/1538-4357/aad595},\n",
-        "       eprint = {1804.09819},\n",
-        "       adsurl = {https://ui.adsabs.harvard.edu/abs/2018ApJ...864...94B},\n",
-        "      journal = {\\apj},\n",
-    ]:
-        bibtex = bibtex.replace(to_replace, "")
+    bibtex = "@ARTICLE{2004ApJ...613..898T,\n" "        pages = {898-913},\n" "}"
     file_loc = create_bibtex(bibtex)
     results = db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
@@ -1749,25 +1741,6 @@ def test_import_failure_file_contains_failed_bibtex_entries(db_empty):
     assert bad_2 in f_output
 
 
-def test_import_failure_file_contains_reason_no_id(db_empty):
-    entry = (
-        "@ARTICLE{1957RvMP...29..547B,\n"
-        " author = {{Burbidge}, E. Margaret},\n"
-        '  title = "{Synthesis of the Elements in Stars},"\n'
-        "journal = {Reviews of Modern Physics},\n"
-        "   year = 1957,\n"
-        "}"
-    )
-    file_loc = create_bibtex(entry)
-    results = db_empty.import_bibtex(file_loc)
-    file_loc.unlink()  # delete before tests may fail
-    with open(results[3], "r") as f_file:
-        f_output = f_file.read()
-    results[3].unlink()
-    comment = "Not enough information to uniquely identify paper"
-    assert f"% {comment}\n{entry}" in f_output
-
-
 def test_import_failure_file_contains_reason_bad_gateway(db_empty, monkeypatch):
     def func(x, y):
         raise ValueError("<html stuff>502 Bad Gateway<\\html stuff>")
@@ -1825,7 +1798,7 @@ def test_import_failure_file_full_format(db_empty):
         "% add the paper. In addition, there may be something wrong with the\n"
         "% format of the entry that breaks my code parser.\n\n"
     )
-    reason = "% Not enough information to uniquely identify paper\n"
+    reason = "% couldn't find paper with an exact match to this info on ADS\n"
     assert f_output == header + reason + bad + "\n\n\n"
 
 
@@ -1889,7 +1862,7 @@ journal_good = (
     "year = 2018,\nvolume = {864},\npages = {94},\njournal = {\\apj},\n"
     'title = "{' + u.mine.title + '}",\n'
 )
-journal_bad_not_enough = "volume = {864},\npages = {94},\n"
+journal_bad_not_enough = ""
 journal_bad_not_found = (
     "year = 2016,\nvolume = {864},\npages = {94},\njournal = {\\apj},\n"
     'title = "{' + u.mine.title + '}",\n'
@@ -2067,7 +2040,8 @@ def test_import_bad_doi_bad_eprint_bad_adsurl_bad_journal(db_empty):
     assert (
         "% adsurl not recognized, DOI 10.1000/182 not on ADS, "
         "arXiv ID 3501.00001 not on ADS, "
-        "couldn't find paper matching journal info on ADS\n" + entry in f_output
+        "couldn't find paper with an exact match to this info on ADS\n" + entry
+        in f_output
     )
 
 
@@ -2081,7 +2055,8 @@ def test_import_bad_doi_bad_eprint(db_empty):
     results[3].unlink()
     assert results[:3] == (0, 0, 1)
     assert (
-        "% DOI 10.1000/182 not on ADS, arXiv ID 3501.00001 not on ADS\n" + entry
+        "% DOI 10.1000/182 not on ADS, arXiv ID 3501.00001 not on ADS, "
+        "not enough publication details to uniquely identify paper\n" + entry
         in f_output
     )
 
@@ -2095,7 +2070,11 @@ def test_import_bad_doi_bad_adsurl(db_empty):
         f_output = f_file.read()
     results[3].unlink()
     assert results[:3] == (0, 0, 1)
-    assert "% adsurl not recognized, DOI 10.1000/182 not on ADS\n" + entry in f_output
+    assert (
+        "% adsurl not recognized, DOI 10.1000/182 not on ADS, "
+        "not enough publication details to uniquely identify paper\n" + entry
+        in f_output
+    )
 
 
 def test_import_bad_eprint_bad_adsurl(db_empty):
@@ -2108,7 +2087,9 @@ def test_import_bad_eprint_bad_adsurl(db_empty):
     results[3].unlink()
     assert results[:3] == (0, 0, 1)
     assert (
-        "% adsurl not recognized, arXiv ID 3501.00001 not on ADS\n" + entry in f_output
+        "% adsurl not recognized, arXiv ID 3501.00001 not on ADS, "
+        "not enough publication details to uniquely identify paper\n" + entry
+        in f_output
     )
 
 
@@ -2123,7 +2104,8 @@ def test_import_bad_doi_bad_journal(db_empty):
     assert results[:3] == (0, 0, 1)
     assert (
         "% DOI 10.1000/182 not on ADS, "
-        "couldn't find paper matching journal info on ADS\n" + entry in f_output
+        "couldn't find paper with an exact match to this info on ADS\n" + entry
+        in f_output
     )
 
 
@@ -2136,7 +2118,11 @@ def test_import_bad_doi(db_empty):
         f_output = f_file.read()
     results[3].unlink()
     assert results[:3] == (0, 0, 1)
-    assert "% DOI 10.1000/182 not on ADS\n" + entry in f_output
+    assert (
+        "% DOI 10.1000/182 not on ADS, "
+        "not enough publication details to uniquely identify paper\n" + entry
+        in f_output
+    )
 
 
 def test_import_bad_eprint(db_empty):
@@ -2148,7 +2134,11 @@ def test_import_bad_eprint(db_empty):
         f_output = f_file.read()
     results[3].unlink()
     assert results[:3] == (0, 0, 1)
-    assert "% arXiv ID 3501.00001 not on ADS\n" + entry in f_output
+    assert (
+        "% arXiv ID 3501.00001 not on ADS, "
+        "not enough publication details to uniquely identify paper\n" + entry
+        in f_output
+    )
 
 
 def test_import_bad_adsurl(db_empty):
@@ -2160,7 +2150,11 @@ def test_import_bad_adsurl(db_empty):
         f_output = f_file.read()
     results[3].unlink()
     assert results[:3] == (0, 0, 1)
-    assert "% adsurl not recognized\n" + entry in f_output
+    assert (
+        "% adsurl not recognized, "
+        "not enough publication details to uniquely identify paper\n" + entry
+        in f_output
+    )
 
 
 def test_import_bad_adsurl_2(db_empty):
@@ -2172,7 +2166,11 @@ def test_import_bad_adsurl_2(db_empty):
         f_output = f_file.read()
     results[3].unlink()
     assert results[:3] == (0, 0, 1)
-    assert "% adsurl not recognized\n" + entry in f_output
+    assert (
+        "% adsurl not recognized, "
+        "not enough publication details to uniquely identify paper\n" + entry
+        in f_output
+    )
 
 
 def test_import_bad_journal_not_enough(db_empty):
@@ -2184,7 +2182,10 @@ def test_import_bad_journal_not_enough(db_empty):
         f_output = f_file.read()
     results[3].unlink()
     assert results[:3] == (0, 0, 1)
-    assert "% Not enough information to uniquely identify paper\n" + entry in f_output
+    assert (
+        "% not enough publication details to uniquely identify paper\n" + entry
+        in f_output
+    )
 
 
 def test_import_bad_journal_not_found(db_empty):
@@ -2196,7 +2197,10 @@ def test_import_bad_journal_not_found(db_empty):
         f_output = f_file.read()
     results[3].unlink()
     assert results[:3] == (0, 0, 1)
-    assert "% couldn't find paper matching journal info on ADS\n" + entry in f_output
+    assert (
+        "% couldn't find paper with an exact match to this info on ADS\n" + entry
+        in f_output
+    )
 
 
 def test_import_bad_journal_doesnt_match(db_empty):
@@ -2208,7 +2212,10 @@ def test_import_bad_journal_doesnt_match(db_empty):
         f_output = f_file.read()
     results[3].unlink()
     assert results[:3] == (0, 0, 1)
-    assert "% couldn't find paper matching journal info on ADS\n" + entry in f_output
+    assert (
+        "% couldn't find paper with an exact match to this info on ADS\n" + entry
+        in f_output
+    )
 
 
 def test_import_bad_journal_bad_journal(db_empty):

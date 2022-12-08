@@ -301,51 +301,93 @@ class ADSWrapper(object):
         else:
             raise ValueError(f"Identifier {identifier} not recognized")
 
-    def get_bibcode_from_journal(self, year, journal, volume, page, title):
+    def get_bibcode_from_journal(self, **kwargs):
         """
         Get the paper details from the full journal info
 
-        :param year: year the paper was published
-        :type year: int, str
-        :param journal: journal the paper was published in. This can be the full
-                        journal name or one of the ADS accepted abbreviations.
-        :type journal: str
-        :param volume: volume the paper was published in
-        :type volume: int, str
-        :param page: Page where the paper was published
-        :type page: int, str
-        :param title: title of the paper
-        :type title: str
+
         :return:
         """
-        error_message = "couldn't find paper matching journal info on ADS"
-
         # see if we need to build the bibstems
         if len(self.bibstems) == 0:
             self._build_bibstems()
-        # then use those to get the bibstem of this journal
-        try:
-            bibstem = self.bibstems[journal]
-        except KeyError:
-            raise ValueError("could not match journal to an ADS bibstem")
 
-        try:
-            query = ads.SearchQuery(
-                q=f'year:"{year}" title:"{title}" bibstem:"{bibstem}"', fl=["bibcode"]
+        # sometimes both page and pages can be used. I'll use page as my default
+        if "pages" in kwargs:
+            kwargs["page"] = kwargs["pages"]
+
+        # then create the query. We'll use the information that's available
+        query = ""
+        for attribute in ["year", "title", "volume", "page"]:
+            if attribute in kwargs:
+                query += f'{attribute}:"{kwargs[attribute]}" '
+        # handle bibstem separately
+        if "journal" in kwargs:
+            # then use those to get the bibstem of this journal
+            try:
+                bibstem = self.bibstems[kwargs["journal"]]
+                query += f'bibstem:"{bibstem}" '
+            except KeyError:
+                raise ValueError("could not match journal to an ADS bibstem")
+        # authors are a bit trickier, those need to be parsed separately
+        # We'll assume the author list is in BibTeX format. The list of authors is
+        # separated with "and"
+        if "authors" in kwargs:
+            authors_list = kwargs["authors"].split("and")
+            for idx, a in enumerate(authors_list):
+                a = a.strip().replace("{", "").replace("}", "")
+                last_name = a.split(",")[0]
+
+                # Then add to the query. Treat the first author differently.
+                if idx == 0:
+                    query += f'author:"^{last_name}" '
+                else:
+                    query += f'author:"{last_name}" '
+
+        # make sure there is something to query
+        if query == "":
+            raise ValueError(
+                "not enough publication details to uniquely identify paper"
             )
-            bibcode = list(query)[0].bibcode
-        except IndexError:  # not found on ADS
-            raise ValueError(error_message)
 
-        # then get the full paper details to validate
-        details = self.get_info(bibcode)
-        try:
-            assert str(details["pubdate"].split("-")[0]) == str(year)
-            assert details["title"].lower() == title.lower()
-            assert str(details["volume"]) == str(volume)
-            assert str(details["page"]) == str(page)
-        except AssertionError:
-            raise ValueError(error_message)
+        # then we can do this query
+        query_results = list(ads.SearchQuery(q=query, fl=["bibcode"]))
+
+        # then go through the results to see if they are an appropriate match.
+        # We'll exit if we find multiple papers that are a match
+        bibcode = None
+        for potential_match in query_results:
+            this_bibcode = potential_match.bibcode
+            if self._validate_paper(kwargs, this_bibcode):
+                # validate that we haven't already found a paper that matches
+                if bibcode is None:
+                    bibcode = this_bibcode
+                else:  # we already found a paper
+                    raise ValueError("multiple papers found that match this info")
+        # check we have a match
+        if bibcode is None:
+            raise ValueError(
+                "couldn't find paper with an exact match to this info on ADS"
+            )
 
         # if we got here, everything looks good
         return bibcode
+
+    def _validate_paper(self, paper_data, bibcode):
+        details = self.get_info(bibcode)
+        try:
+            # check each attribute we have, and see if it matches
+            if "year" in paper_data:
+                # year isn't directly present, but we can parse it
+                assert str(details["pubdate"].split("-")[0]) == str(paper_data["year"])
+            if "title" in paper_data:
+                # make title lower case, as capitalization of the title doesn't matter
+                assert details["title"].lower() == paper_data["title"].lower()
+            if "volume" in paper_data:
+                assert str(details["volume"]) == str(paper_data["volume"])
+            if "page" in paper_data:
+                assert str(details["page"]) == str(paper_data["page"])
+            # if we got here, all the details checked out
+            return True
+        except AssertionError:
+            return False

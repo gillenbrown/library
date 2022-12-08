@@ -370,3 +370,20 @@ behroozi = PaperDict(
         "}"
     ),
 )
+
+kravtsov = PaperDict(
+    bibcode="1999PhDT........25K",
+    bibtex=(
+        "@PHDTHESIS{1999PhDT........25K,\n"
+        "       author = {{Kravtsov}, Andrey V.},\n"
+        '        title = "{High-resolution simulations of structure '
+        'formation in the universe}",\n'
+        "     keywords = {Physics: Astronomy and Astrophysics},\n"
+        "       school = {New Mexico State University},\n"
+        "         year = 1999,\n"
+        "        month = jan,\n"
+        "       adsurl = {https://ui.adsabs.harvard.edu/abs/1999PhDT........25K},\n"
+        "      adsnote = {Provided by the SAO/NASA Astrophysics Data System}\n"
+        "}"
+    ),
+)

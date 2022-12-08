@@ -933,8 +933,8 @@ class Database(object):
                     error_message += ", "
                 error_message += str(e)
         else:  # no break, so the bibcode was not found
-            if error_message == "":
-                error_message = "Not enough information to uniquely identify paper"
+            # the bibcode_from_journal function always gives an error message, so we
+            # so not need a default error message
             raise ValueError(error_message)
 
         try:
@@ -1062,23 +1062,10 @@ class Database(object):
         :return: the bibcode
         :rtype: str
         """
-        if (
-            "journal" not in paper_data
-            or "volume" not in paper_data
-            or "year" not in paper_data
-            or "pages" not in paper_data
-            or "title" not in paper_data
-        ):
-            raise KeyError()
         # otherwise, we have the info we need. First, parse the pages attribute so that
         # it's just the first page, not the range. That makes checks easier
-        paper_data["pages"] = paper_data["pages"].split("-")[0]
+        if "pages" in paper_data:
+            paper_data["pages"] = paper_data["pages"].split("-")[0]
         # This function may raise errors, but those
         # are good for the user to see
-        return ads_call.get_bibcode_from_journal(
-            paper_data["year"],
-            paper_data["journal"],
-            paper_data["volume"],
-            paper_data["pages"],
-            paper_data["title"],
-        )
+        return ads_call.get_bibcode_from_journal(**paper_data)

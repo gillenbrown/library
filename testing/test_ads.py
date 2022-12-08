@@ -154,74 +154,117 @@ def test_raises_error_for_adsurl_with_bad_bibcode():
 #
 # ======================================================================================
 def test_get_paper_from_journal_details():
-    assert (
-        ads_call.get_bibcode_from_journal(
-            u.mine.year, u.mine.journal, u.mine.volume, u.mine.page, u.mine.title
-        )
-        == u.mine.bibcode
+    bibcode = ads_call.get_bibcode_from_journal(
+        year=u.mine.year,
+        journal=u.mine.journal,
+        volume=u.mine.volume,
+        page=u.mine.page,
+        title=u.mine.title,
     )
+    assert bibcode == u.mine.bibcode
 
 
 def test_get_paper_from_journal_details_short_journal():
-    assert (
-        ads_call.get_bibcode_from_journal(
-            u.mine.year,
-            "\\apj",
-            u.mine.volume,
-            u.mine.page,
-            u.mine.title,
-        )
-        == u.mine.bibcode
+    bibcode = ads_call.get_bibcode_from_journal(
+        year=u.mine.year,
+        journal="\\apj",
+        volume=u.mine.volume,
+        page=u.mine.page,
+        title=u.mine.title,
     )
+    assert bibcode == u.mine.bibcode
 
 
 def test_get_paper_from_journal_details_validates_title_correct():
-    assert (
-        ads_call.get_bibcode_from_journal(
-            u.mine.year, u.mine.journal, u.mine.volume, u.mine.page, u.mine.title
-        )
-        == u.mine.bibcode
+    bibcode = ads_call.get_bibcode_from_journal(
+        year=u.mine.year,
+        journal=u.mine.journal,
+        volume=u.mine.volume,
+        page=u.mine.page,
+        title=u.mine.title,
     )
+    assert bibcode == u.mine.bibcode
 
 
 def test_get_paper_from_journal_details_validates_title_lowercase_correct():
-    assert (
-        ads_call.get_bibcode_from_journal(
-            u.mine.year,
-            u.mine.journal,
-            u.mine.volume,
-            u.mine.page,
-            u.mine.title.lower(),
-        )
-        == u.mine.bibcode
+    bibcode = ads_call.get_bibcode_from_journal(
+        year=u.mine.year,
+        journal=u.mine.journal,
+        volume=u.mine.volume,
+        page=u.mine.page,
+        title=u.mine.title.lower(),
     )
+    assert bibcode == u.mine.bibcode
+
+
+def test_get_paper_from_journal_details_sparse_works():
+    bibcode = ads_call.get_bibcode_from_journal(
+        title="High-resolution simulations of structure formation in the universe",
+        year=1999,
+        authors="{Kravtsov}, Andrey V.",
+    )
+    assert bibcode == u.kravtsov.bibcode
+
+
+def test_get_paper_from_journal_details_sparse_works_2():
+    bibcode = ads_call.get_bibcode_from_journal(
+        year=2018,
+        authors="{Brown}, Gillen and {Gnedin}, Oleg Y. and {Li}, Hui",
+    )
+    assert bibcode == u.mine.bibcode
+
+
+def test_get_paper_from_journal_details_too_sparse_raises_error():
+    with pytest.raises(ValueError):
+        ads_call.get_bibcode_from_journal(year="2018")
+
+
+def test_get_paper_from_journal_details_too_sparse_raises_error_2():
+    with pytest.raises(ValueError):
+        ads_call.get_bibcode_from_journal()
 
 
 def test_get_paper_from_journal_details_not_found_raises_error():
     with pytest.raises(ValueError):
         ads_call.get_bibcode_from_journal(
-            u.mine.year, u.mine.journal, u.mine.volume, u.mine.page, "nonsense"
+            year=u.mine.year,
+            journal=u.mine.journal,
+            volume=u.mine.volume,
+            page=u.mine.page,
+            title="nonsense",
         )
 
 
 def test_get_paper_from_journal_details_not_found_raises_error_2():
     with pytest.raises(ValueError):
         ads_call.get_bibcode_from_journal(
-            "2035", u.mine.journal, u.mine.volume, u.mine.page, u.mine.title
+            year="2035",
+            journal=u.mine.journal,
+            volume=u.mine.volume,
+            page=u.mine.page,
+            title=u.mine.title,
         )
 
 
 def test_get_paper_from_journal_details_not_found_raises_error_3():
     with pytest.raises(ValueError):
         ads_call.get_bibcode_from_journal(
-            u.mine.year, u.mine.journal, u.mine.volume, -100, u.mine.title
+            year=u.mine.year,
+            journal=u.mine.journal,
+            volume=u.mine.volume,
+            page=-100,
+            title=u.mine.title,
         )
 
 
 def test_get_paper_from_journal_could_not_recognize_error():
     with pytest.raises(ValueError) as e:
         ads_call.get_bibcode_from_journal(
-            u.mine.year, "nonsense", u.mine.volume, u.mine.page, u.mine.title
+            year=u.mine.year,
+            journal="nonsense",
+            volume=u.mine.volume,
+            page=u.mine.page,
+            title=u.mine.title,
         )
     assert str(e.value) == "could not match journal to an ADS bibstem"
 
