@@ -294,10 +294,6 @@ class Paper(QWidget):
         self.bibcode = bibcode
         self.main = main
 
-        # make sure this paper is actually in the database. This should never happen, but
-        # might if I do something dumb in tests
-        assert self.bibcode in self.main.db.get_all_bibcodes()
-
         # Then set up the layout this uses. It will be vertical with the title (for now)
         vBox = QVBoxLayout()
         self.titleText = QLabel(self.main.db.get_paper_attribute(self.bibcode, "title"))
@@ -1301,8 +1297,6 @@ class PapersListScrollArea(ScrollArea):
         :type click: bool
         :return: None
         """
-        # check if this paper is already in the list. This should never happen
-        assert bibcode not in [p.bibcode for p in self.getPapers()]
 
         # create the paper object, than add to the list and center panel
         paper = Paper(bibcode, self.main)

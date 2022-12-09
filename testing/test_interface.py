@@ -1408,13 +1408,6 @@ def test_paper_cannot_be_added_twice(qtbot, db_empty):
     assert len(widget.papersList.getPapers()) == 1
 
 
-def test_duplicate_in_internal_paper_list_raises_error(qtbot, db):
-    widget = cInitialize(qtbot, db)
-    new_paper = Paper(u.mine.bibcode, widget)
-    with pytest.raises(AssertionError):
-        widget.papersList.addPaper(new_paper)
-
-
 # =============
 # update system
 # =============
@@ -4055,12 +4048,6 @@ def test_paper_initialization_has_accents_in_author_list(qtbot, db_empty):
     db_empty.add_paper(u.juan.bibcode)
     new_paper = Paper(u.juan.bibcode, widget)
     assert "á" in new_paper.citeText.text()
-
-
-def test_cannot_initialize_paper_thats_not_in_database(qtbot, db_empty):
-    widget = cInitialize(qtbot, db_empty)
-    with pytest.raises(AssertionError):
-        Paper(u.mine.bibcode, widget)
 
 
 def test_all_papers_in_database_are_in_the_paper_list_at_beginning(qtbot, db):
