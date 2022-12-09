@@ -1872,6 +1872,7 @@ journal_bad_journal = (
     "year = 2018,\nvolume = {864},\npages = {94},\njournal = {lsdflskdjf},\n"
     'title = "{' + u.mine.title + '}",\n'
 )
+journal_bad_format = 'year = 2018,\ntitle = "{}"'
 
 
 def test_import_single_good_paper_with_journal_details_adds_to_database(db_empty):
@@ -1919,6 +1920,15 @@ def test_import_journal_details_failure_paper_nonspecific(db_empty):
 
 def test_import_journal_details_failure_bad_journal(db_empty):
     entry = "@ARTICLE{key,\n" + journal_bad_journal + "}"
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    results[3].unlink()
+    assert results[:3] == (0, 0, 1)
+
+
+def test_import_journal_details_failure_bad_format(db_empty):
+    entry = "@ARTICLE{key,\n" + journal_bad_format + "}"
     file_loc = create_bibtex(entry)
     results = db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
@@ -2223,3 +2233,17 @@ def test_import_bad_journal_bad_journal(db_empty):
     results[3].unlink()
     assert results[:3] == (0, 0, 1)
     assert "% could not match journal to an ADS bibstem\n" + entry in f_output
+
+
+def test_import_bad_journal_bad_format(db_empty):
+    entry = "@ARTICLE{key\n" + journal_bad_format + "}"
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    assert results[:3] == (0, 0, 1)
+    assert (
+        "% something appears wrong with the format of this entry\n" + entry in f_output
+    )

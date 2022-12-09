@@ -294,6 +294,14 @@ def test_get_paper_from_journal_could_not_recognize_error():
     assert str(e.value) == "could not match journal to an ADS bibstem"
 
 
+def test_get_paper_from_journal_bad_attribute_raises_error():
+    with pytest.raises(Exception):
+        ads_call.get_bibcode_from_journal(
+            year=u.mine.year,
+            title="{}",
+        )
+
+
 # ======================================================================================
 #
 # Test getting various paper attributes from bibcodes

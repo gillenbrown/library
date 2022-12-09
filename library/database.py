@@ -873,6 +873,8 @@ class Database(object):
                     "ADS has cut you off, you have sent too many requests today. "
                     "Try again in ~24 hours"
                 )
+            elif "INVALID_SYNTAX_CANNOT_PARSE" in e:
+                e = "something appears wrong with the format of this entry"
             failure_file.write(f"% {e}\n")
             failure_file.write(entry + "\n")
             return "failure"

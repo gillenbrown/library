@@ -156,6 +156,7 @@ forbes = PaperDict(
     url="https://ui.adsabs.harvard.edu/abs/2020arXiv200314327F/abstract",
     bibcode="2020arXiv200314327F",
     arxiv_id="2003.14327",
+    year=2020,
     title=(
         "A PDF PSA, or Never gonna set_xscale again -- guilty feats with logarithms"
     ),
