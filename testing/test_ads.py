@@ -222,11 +222,21 @@ def test_get_paper_from_journal_details_doesnt_work_for_different_titles():
         )
 
 
+def test_get_paper_from_journal_details_works_when_bibstem_not_found():
+    bibcode = ads_call.get_bibcode_from_journal(
+        title=u.williams.title,
+        year=u.williams.year,
+        authors=u.williams.authors_bibtex,
+        journal=u.williams.journal,
+    )
+    assert bibcode == u.williams.bibcode
+
+
 def test_get_paper_from_journal_details_sparse_works():
     bibcode = ads_call.get_bibcode_from_journal(
-        title="High-resolution simulations of structure formation in the universe",
-        year=1999,
-        authors="{Kravtsov}, Andrey V.",
+        title=u.kravtsov.title,
+        year=u.kravtsov.year,
+        authors=u.kravtsov.authors_bibtex,
     )
     assert bibcode == u.kravtsov.bibcode
 
@@ -240,17 +250,19 @@ def test_get_paper_from_journal_details_sparse_works_2():
 
 
 def test_get_paper_from_journal_details_too_sparse_raises_error():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError) as e:
         ads_call.get_bibcode_from_journal(year="2018")
+    assert str(e.value) == "multiple papers found that match this info"
 
 
 def test_get_paper_from_journal_details_too_sparse_raises_error_2():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError) as e:
         ads_call.get_bibcode_from_journal()
+    assert str(e.value) == "not enough publication details to uniquely identify paper"
 
 
 def test_get_paper_from_journal_details_not_found_raises_error():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError) as e:
         ads_call.get_bibcode_from_journal(
             year=u.mine.year,
             journal=u.mine.journal,
@@ -258,10 +270,11 @@ def test_get_paper_from_journal_details_not_found_raises_error():
             page=u.mine.page,
             title="nonsense",
         )
+    assert str(e.value) == "couldn't find paper with an exact match to this info on ADS"
 
 
 def test_get_paper_from_journal_details_not_found_raises_error_2():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError) as e:
         ads_call.get_bibcode_from_journal(
             year="2035",
             journal=u.mine.journal,
@@ -269,10 +282,11 @@ def test_get_paper_from_journal_details_not_found_raises_error_2():
             page=u.mine.page,
             title=u.mine.title,
         )
+    assert str(e.value) == "couldn't find paper with an exact match to this info on ADS"
 
 
 def test_get_paper_from_journal_details_not_found_raises_error_3():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError) as e:
         ads_call.get_bibcode_from_journal(
             year=u.mine.year,
             journal=u.mine.journal,
@@ -280,9 +294,10 @@ def test_get_paper_from_journal_details_not_found_raises_error_3():
             page=-100,
             title=u.mine.title,
         )
+    assert str(e.value) == "couldn't find paper with an exact match to this info on ADS"
 
 
-def test_get_paper_from_journal_could_not_recognize_error():
+def test_get_paper_from_journal_nonsense_journal_is_checked():
     with pytest.raises(ValueError) as e:
         ads_call.get_bibcode_from_journal(
             year=u.mine.year,
@@ -291,7 +306,18 @@ def test_get_paper_from_journal_could_not_recognize_error():
             page=u.mine.page,
             title=u.mine.title,
         )
-    assert str(e.value) == "could not match journal to an ADS bibstem"
+    assert str(e.value) == "couldn't find paper with an exact match to this info on ADS"
+
+
+def test_get_paper_from_journal_journal_without_bibstem_not_specific():
+    # do a quick thing to remove ApJ from the dictionary, then we'll add it back
+    apj = "The Astrophysical Journal"
+    original_value = ads_call.bibstems[apj]
+    del ads_call.bibstems[apj]
+    with pytest.raises(ValueError) as e:
+        ads_call.get_bibcode_from_journal(year=2000, journal=apj, authors="Brown")
+    assert str(e.value) == "multiple papers found that match this info"
+    ads_call.bibstems[apj] = original_value
 
 
 def test_get_paper_from_journal_bad_attribute_raises_error():

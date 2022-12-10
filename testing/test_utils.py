@@ -374,6 +374,9 @@ behroozi = PaperDict(
 
 kravtsov = PaperDict(
     bibcode="1999PhDT........25K",
+    authors_bibtex="{Kravtsov}, Andrey V.",
+    title="High-resolution simulations of structure formation in the universe",
+    year=1999,
     bibtex=(
         "@PHDTHESIS{1999PhDT........25K,\n"
         "       author = {{Kravtsov}, Andrey V.},\n"
@@ -385,6 +388,29 @@ kravtsov = PaperDict(
         "        month = jan,\n"
         "       adsurl = {https://ui.adsabs.harvard.edu/abs/1999PhDT........25K},\n"
         "      adsnote = {Provided by the SAO/NASA Astrophysics Data System}\n"
+        "}"
+    ),
+)
+
+williams = PaperDict(
+    bibcode="2000prpl.conf...97W",
+    authors_bibtex="{Williams}, J.~P. and {Blitz}, L. and {McKee}, C.~F.",
+    title=(
+        "The Structure and Evolution of Molecular Clouds: "
+        "from Clumps to Cores to the IMF"
+    ),
+    journal="Protostars and Planets IV",
+    year=2000,
+    page=97,
+    bibtex=(
+        "@ARTICLE{williams_etal00,\n"
+        "   author = {{Williams}, J.~P. and {Blitz}, L. and {McKee}, C.~F.},\n"
+        '    title = "{The Structure and Evolution of Molecular Clouds: '
+        'from Clumps to Cores to the IMF}",\n'
+        "  journal = {Protostars and Planets IV},\n"
+        "     year = 2000,\n"
+        "    month = may,\n"
+        "    pages = {97-120}\n"
         "}"
     ),
 )

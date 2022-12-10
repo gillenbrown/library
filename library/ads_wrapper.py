@@ -321,14 +321,16 @@ class ADSWrapper(object):
         for attribute in ["year", "title", "volume", "page"]:
             if attribute in kwargs:
                 query += f'{attribute}:"{kwargs[attribute]}" '
-        # handle bibstem separately
+        # handle bibstem separately. If we don't find the bibstem at the beginning
+        # we'll require that we check it again at the end
+        check_journal = False
         if "journal" in kwargs:
             # then use those to get the bibstem of this journal
             try:
                 bibstem = self.bibstems[kwargs["journal"]]
                 query += f'bibstem:"{bibstem}" '
             except KeyError:
-                raise ValueError("could not match journal to an ADS bibstem")
+                check_journal = True
         # authors are a bit trickier, those need to be parsed separately
         # We'll assume the author list is in BibTeX format. The list of authors is
         # separated with "and"
@@ -351,8 +353,20 @@ class ADSWrapper(object):
             )
 
         # then we can do this query. Since we included all the available information
-        # in the query, there's no extra checking we need to do on the results.
-        query_results = list(ads.SearchQuery(q=query, fl=["bibcode"]))
+        # in the query, except for the journal, that's all we need to check afterwards
+        query_results = list(ads.SearchQuery(q=query, fl=["bibcode", "pub"]))
+
+        if check_journal:
+            # make a list of the papers that match the journal passed in
+            good_papers = []
+            for p in query_results:
+                if p.pub == kwargs["journal"]:
+                    good_papers.append(p)
+                    # if we have more than that matches, we already know we have errors
+                    if len(good_papers) > 1:
+                        break
+            # set this back to the original variable name so we can reuse it
+            query_results = good_papers
 
         # then see what kind of results we got
         if len(query_results) == 0:

@@ -1962,6 +1962,14 @@ def test_import_journal_page_range_double_dash(db_empty):
     assert db_empty.get_all_bibcodes() == [u.mine.bibcode]
 
 
+def test_import_journal_works_if_journal_not_recognized(db_empty):
+    file_loc = create_bibtex(u.williams.bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[:3] == (1, 0, 0)
+    assert db_empty.get_all_bibcodes() == [u.williams.bibcode]
+
+
 # =======================================================
 # test robustness of import system and its error messages
 # =======================================================
@@ -2232,7 +2240,10 @@ def test_import_bad_journal_bad_journal(db_empty):
         f_output = f_file.read()
     results[3].unlink()
     assert results[:3] == (0, 0, 1)
-    assert "% could not match journal to an ADS bibstem\n" + entry in f_output
+    assert (
+        "% couldn't find paper with an exact match to this info on ADS\n" + entry
+        in f_output
+    )
 
 
 def test_import_bad_journal_bad_format(db_empty):
