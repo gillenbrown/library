@@ -232,6 +232,20 @@ def test_get_paper_from_journal_details_works_when_bibstem_not_found():
     assert bibcode == u.williams.bibcode
 
 
+def test_get_paper_from_journal_details_works_with_punctuation():
+    bibcode = ads_call.get_bibcode_from_journal(
+        title=u.carney.title, year=u.carney.year
+    )
+    assert bibcode == u.carney.bibcode
+
+
+def test_get_paper_from_journal_details_works_with_punctuation_2():
+    bibcode = ads_call.get_bibcode_from_journal(
+        title=u.meylan.title, year=u.meylan.year
+    )
+    assert bibcode == u.meylan.bibcode
+
+
 def test_get_paper_from_journal_details_sparse_works():
     bibcode = ads_call.get_bibcode_from_journal(
         title=u.kravtsov.title,

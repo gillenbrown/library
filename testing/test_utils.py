@@ -414,3 +414,20 @@ williams = PaperDict(
         "}"
     ),
 )
+
+carney = PaperDict(
+    bibcode="1996PASP..108..900C",
+    title=(
+        "The Constancy of [alpha/Fe] in Globular Clusters of Differing [Fe/H] and Age"
+    ),
+    year=1996,
+)
+
+meylan = PaperDict(
+    bibcode="2001AJ....122..830M",
+    title=(
+        "Mayall II=G1 in M31: Giant Globular Cluster or Core of a "
+        "Dwarf Elliptical Galaxy?"
+    ),
+    year=2001,
+)
