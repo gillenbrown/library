@@ -4,6 +4,7 @@ test_interface.py
 Perform tests on the GUI using pytest-qt
 """
 import os
+import sys
 from pathlib import Path
 import random
 import shutil
@@ -1838,11 +1839,10 @@ def test_import_results_shown_file_location_shorthand(qtbot, db_empty, monkeypat
     file_loc.unlink()  # delete before tests may fail
     fail_file = db_empty._failure_file_loc(file_loc)
     fail_file.unlink()  # remove failure files
-    shown_path = Path(widget.importResultText.text().split()[-1])
+    shown_path = widget.importResultText.text().split()[-1]
     # ~ isn't part of Windows, so we need to be careful about how we check
-    expanded_path = str(shown_path.expanduser())
-    if str(expanded_path).startswith(str(Path.home())):  # pragma: no cover
-        assert str(shown_path).startswith("~/")
+    if sys.platform != "win32":
+        assert shown_path.startswith("~/")
 
 
 def test_import_after_finished_adds_new_tag_to_interface(qtbot, db_empty, monkeypatch):
@@ -2426,8 +2426,10 @@ def test_paper_pdf_text_has_correct_text_with_local_file(qtbot, db_empty):
     widget = cInitialize(qtbot, db_empty)
     cClick(widget.papersList.getPapers()[0], qtbot)
     # check that the shown path uses ~ and resolves to the correct location
+    # ~ isn't part of Windows, so we need to be careful about how we check
     shown_path = widget.rightPanel.pdfText.text().replace("PDF Location: ", "")
-    assert shown_path.startswith("~/")
+    if sys.platform != "win32":
+        assert shown_path.startswith("~/")
     assert Path(shown_path).expanduser() == Path(__file__).resolve()
 
 
@@ -2507,7 +2509,8 @@ def test_paper_pdf_add_local_file_updates_text(qtbot, db_temp, monkeypatch):
     cClick(widget.rightPanel.pdfChooseLocalFileButton, qtbot)
     # check that the shown path uses ~ and resolves to the correct location
     shown_path = widget.rightPanel.pdfText.text().replace("PDF Location: ", "")
-    assert shown_path.startswith("~/")
+    if sys.platform != "win32":
+        assert shown_path.startswith("~/")
     assert Path(shown_path).expanduser() == Path(__file__).resolve()
 
 
@@ -2811,7 +2814,8 @@ def test_download_pdf_button_updates_text(qtbot, db_temp, monkeypatch):
     cClick(widget.rightPanel.pdfDownloadButton, qtbot)
     # check that the shown path uses ~ and resolves to the correct location
     shown_path = widget.rightPanel.pdfText.text().replace("PDF Location: ", "")
-    assert shown_path.startswith("~/")
+    if sys.platform != "win32":
+        assert shown_path.startswith("~/")
     assert Path(shown_path).expanduser() == mSaveLocPDF
     mSaveLocPDF.unlink()
 
