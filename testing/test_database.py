@@ -1799,7 +1799,7 @@ def test_import_failure_file_full_format(db_empty):
         "% format of the entry that breaks my code parser.\n\n"
     )
     reason = "% couldn't find paper with an exact match to this info on ADS\n"
-    assert f_output == header + reason + bad + "\n\n\n"
+    assert f_output == header + reason + bad + "\n\n"
 
 
 def test_import_citation_keyword_is_kept_if_present(db_empty):

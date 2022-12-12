@@ -781,6 +781,12 @@ class Database(object):
         current_entry = ""
         line_number = 0
         for line in bibfile:
+            # update progressbar first. We do this so it is updated before we continue
+            # over empty lines or comments
+            if update_progress_bar is not None:
+                line_number += 1
+                update_progress_bar(line_number)
+
             # skip comments and empty lines
             if line.startswith("%") or line.strip() == "":
                 continue
@@ -796,10 +802,6 @@ class Database(object):
                 current_entry = line
             else:
                 current_entry += line
-
-            if update_progress_bar is not None:
-                line_number += 1
-                update_progress_bar(line_number)
 
         # handle the final entry
         if current_entry.strip() != "":
