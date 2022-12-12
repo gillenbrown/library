@@ -1841,8 +1841,9 @@ def test_import_results_shown_file_location_shorthand(qtbot, db_empty, monkeypat
     shown_path = Path(widget.importResultText.text().split()[-1])
     # ~ isn't part of Windows, so we need to be careful about how we check
     expanded_path = str(shown_path.expanduser())
-    if str(expanded_path).startswith(str(Path.home())): # pragma: no cover
+    if str(expanded_path).startswith(str(Path.home())):  # pragma: no cover
         assert str(shown_path).startswith("~/")
+
 
 def test_import_after_finished_adds_new_tag_to_interface(qtbot, db_empty, monkeypatch):
     file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex, u.tremonti.bibtex)
