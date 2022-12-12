@@ -1696,7 +1696,7 @@ def test_import_results_text_one_error(qtbot, db_empty, monkeypatch):
     fail_file.unlink()  # remove failure files
     shown_text = widget.importResultText.text()
     assert shown_text.startswith(
-        "Import results: 1 paper found, 1 failure\nFailed entries written to ~/"
+        "Import results: 1 paper found, 1 failure\nFailed entries written to "
     )
     assert Path(shown_text.split()[-1]).expanduser() == fail_file
 
@@ -1725,7 +1725,7 @@ def test_import_results_text_two_errors(qtbot, db_empty, monkeypatch):
     fail_file.unlink()  # remove failure files
     shown_text = widget.importResultText.text()
     assert shown_text.startswith(
-        "Import results: 2 papers found, 2 failures\n" f"Failed entries written to ~/"
+        "Import results: 2 papers found, 2 failures\n" f"Failed entries written to "
     )
     assert Path(shown_text.split()[-1]).expanduser() == fail_file
 
@@ -1764,7 +1764,7 @@ def test_import_results_text_one_success_one_failure(qtbot, db_empty, monkeypatc
     shown_text = widget.importResultText.text()
     assert shown_text.startswith(
         "Import results: 2 papers found, 1 added successfully, 1 failure\n"
-        f"Failed entries written to ~/"
+        f"Failed entries written to "
     )
     assert Path(shown_text.split()[-1]).expanduser() == fail_file
 
@@ -1790,7 +1790,7 @@ def test_import_results_text_one_duplicate_one_failure(qtbot, db_empty, monkeypa
     shown_text = widget.importResultText.text()
     assert shown_text.startswith(
         "Import results: 2 papers found, 1 duplicate skipped, 1 failure\n"
-        f"Failed entries written to ~/"
+        f"Failed entries written to "
     )
     assert Path(shown_text.split()[-1]).expanduser() == fail_file
 
@@ -1817,10 +1817,32 @@ def test_import_results_text_one_success_one_dup_one_fail(qtbot, db_empty, monke
     assert shown_text.startswith(
         "Import results: "
         "3 papers found, 1 added successfully, 1 duplicate skipped, 1 failure\n"
-        f"Failed entries written to ~/"
+        f"Failed entries written to "
     )
     assert Path(shown_text.split()[-1]).expanduser() == fail_file
 
+
+def test_import_results_shown_file_location_shorthand(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(
+        "@ARTICLE{1957RvMP...29..547B,\n"
+        " author = {{Burbidge}, E. Margaret},\n"
+        '  title = "{Synthesis of the Elements in Stars}",\n'
+        "journal = {Reviews of Modern Physics},\n"
+        "   year = 1959,\n"  # edited to be incorrect
+        "}"
+    )
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    fail_file = db_empty._failure_file_loc(file_loc)
+    fail_file.unlink()  # remove failure files
+    shown_path = Path(widget.importResultText.text().split()[-1])
+    # ~ isn't part of Windows, so we need to be careful about how we check
+    expanded_path = str(shown_path.expanduser())
+    if str(expanded_path).startswith(str(Path.home())): # pragma: no cover
+        assert str(shown_path).startswith("~/")
 
 def test_import_after_finished_adds_new_tag_to_interface(qtbot, db_empty, monkeypatch):
     file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex, u.tremonti.bibtex)
