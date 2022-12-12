@@ -814,6 +814,16 @@ class Database(object):
         if failure_file_loc.stat().st_size == 388:
             failure_file_loc.unlink()
             failure_file_loc = None
+        else:
+            print(
+                "\n\n",
+                "=" * 80,
+                "\nsize = ",
+                failure_file_loc.stat().st_size,
+                "\n",
+                "=" * 80,
+                "\n\n\n",
+            )
 
         return (
             results["success"],
