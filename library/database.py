@@ -1,7 +1,9 @@
 import sqlite3
+import sys
 import time
 import contextlib
 from pathlib import Path
+from collections import defaultdict
 
 from library import ads_wrapper
 
@@ -810,20 +812,13 @@ class Database(object):
         bibfile.close()
         failure_file.close()
         # if there were no failures, remove the failure file. I got the exact size of
-        # just the header, which is what we compare to here
-        if failure_file_loc.stat().st_size == 388:
+        # just the header, which is what we compare to here. It's different on
+        # different platforms, annoyingly
+        empty_size = defaultdict(lambda: 388)  # default value for linux and macos
+        empty_size["win32"] = 395
+        if failure_file_loc.stat().st_size == empty_size[sys.platform]:
             failure_file_loc.unlink()
             failure_file_loc = None
-        else:
-            print(
-                "\n\n",
-                "=" * 80,
-                "\nsize = ",
-                failure_file_loc.stat().st_size,
-                "\n",
-                "=" * 80,
-                "\n\n\n",
-            )
 
         return (
             results["success"],
