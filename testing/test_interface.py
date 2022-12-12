@@ -632,7 +632,7 @@ def test_renaming_long_tag_resizes_splitter(qtbot, db_temp):
 
 
 def test_showing_delete_tag_confirm_resizes_splitter(qtbot, db_temp):
-    tag_name = "this is a very long tag, too long to realistically use"
+    tag_name = "this is a very long tag"
     db_temp.add_new_tag(tag_name)
     widget = cInitialize(qtbot, db_temp)
     original_sizes = widget.splitter.sizes()
