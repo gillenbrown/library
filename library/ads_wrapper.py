@@ -317,7 +317,7 @@ class ADSWrapper(object):
             kwargs["page"] = kwargs["pages"]
         # get rid of some punctuation in the title that messes up queries
         if "title" in kwargs:
-            for p in ["[", "]", "/", "?"]:
+            for p in ["[", "]", "/", "?", "$"]:
                 kwargs["title"] = kwargs["title"].replace(p, " ")
 
         # then create the query. We'll use the information that's available
