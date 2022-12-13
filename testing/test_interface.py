@@ -4,6 +4,7 @@ test_interface.py
 Perform tests on the GUI using pytest-qt
 """
 import os
+import sys
 from pathlib import Path
 import random
 import shutil
@@ -631,7 +632,7 @@ def test_renaming_long_tag_resizes_splitter(qtbot, db_temp):
 
 
 def test_showing_delete_tag_confirm_resizes_splitter(qtbot, db_temp):
-    tag_name = "this is a very long tag, too long to realistically use"
+    tag_name = "this is a very long tag"
     db_temp.add_new_tag(tag_name)
     widget = cInitialize(qtbot, db_temp)
     original_sizes = widget.splitter.sizes()
@@ -1696,7 +1697,7 @@ def test_import_results_text_one_error(qtbot, db_empty, monkeypatch):
     fail_file.unlink()  # remove failure files
     shown_text = widget.importResultText.text()
     assert shown_text.startswith(
-        "Import results: 1 paper found, 1 failure\nFailed entries written to ~/"
+        "Import results: 1 paper found, 1 failure\nFailed entries written to "
     )
     assert Path(shown_text.split()[-1]).expanduser() == fail_file
 
@@ -1725,7 +1726,7 @@ def test_import_results_text_two_errors(qtbot, db_empty, monkeypatch):
     fail_file.unlink()  # remove failure files
     shown_text = widget.importResultText.text()
     assert shown_text.startswith(
-        "Import results: 2 papers found, 2 failures\n" f"Failed entries written to ~/"
+        "Import results: 2 papers found, 2 failures\n" f"Failed entries written to "
     )
     assert Path(shown_text.split()[-1]).expanduser() == fail_file
 
@@ -1764,7 +1765,7 @@ def test_import_results_text_one_success_one_failure(qtbot, db_empty, monkeypatc
     shown_text = widget.importResultText.text()
     assert shown_text.startswith(
         "Import results: 2 papers found, 1 added successfully, 1 failure\n"
-        f"Failed entries written to ~/"
+        f"Failed entries written to "
     )
     assert Path(shown_text.split()[-1]).expanduser() == fail_file
 
@@ -1790,7 +1791,7 @@ def test_import_results_text_one_duplicate_one_failure(qtbot, db_empty, monkeypa
     shown_text = widget.importResultText.text()
     assert shown_text.startswith(
         "Import results: 2 papers found, 1 duplicate skipped, 1 failure\n"
-        f"Failed entries written to ~/"
+        f"Failed entries written to "
     )
     assert Path(shown_text.split()[-1]).expanduser() == fail_file
 
@@ -1817,9 +1818,31 @@ def test_import_results_text_one_success_one_dup_one_fail(qtbot, db_empty, monke
     assert shown_text.startswith(
         "Import results: "
         "3 papers found, 1 added successfully, 1 duplicate skipped, 1 failure\n"
-        f"Failed entries written to ~/"
+        f"Failed entries written to "
     )
     assert Path(shown_text.split()[-1]).expanduser() == fail_file
+
+
+def test_import_results_shown_file_location_shorthand(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(
+        "@ARTICLE{1957RvMP...29..547B,\n"
+        " author = {{Burbidge}, E. Margaret},\n"
+        '  title = "{Synthesis of the Elements in Stars}",\n'
+        "journal = {Reviews of Modern Physics},\n"
+        "   year = 1959,\n"  # edited to be incorrect
+        "}"
+    )
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    fail_file = db_empty._failure_file_loc(file_loc)
+    fail_file.unlink()  # remove failure files
+    shown_path = widget.importResultText.text().split()[-1]
+    # ~ isn't part of Windows, so we need to be careful about how we check
+    if sys.platform != "win32":
+        assert shown_path.startswith("~/")
 
 
 def test_import_after_finished_adds_new_tag_to_interface(qtbot, db_empty, monkeypatch):
@@ -2403,8 +2426,10 @@ def test_paper_pdf_text_has_correct_text_with_local_file(qtbot, db_empty):
     widget = cInitialize(qtbot, db_empty)
     cClick(widget.papersList.getPapers()[0], qtbot)
     # check that the shown path uses ~ and resolves to the correct location
+    # ~ isn't part of Windows, so we need to be careful about how we check
     shown_path = widget.rightPanel.pdfText.text().replace("PDF Location: ", "")
-    assert shown_path.startswith("~/")
+    if sys.platform != "win32":
+        assert shown_path.startswith("~/")
     assert Path(shown_path).expanduser() == Path(__file__).resolve()
 
 
@@ -2484,7 +2509,8 @@ def test_paper_pdf_add_local_file_updates_text(qtbot, db_temp, monkeypatch):
     cClick(widget.rightPanel.pdfChooseLocalFileButton, qtbot)
     # check that the shown path uses ~ and resolves to the correct location
     shown_path = widget.rightPanel.pdfText.text().replace("PDF Location: ", "")
-    assert shown_path.startswith("~/")
+    if sys.platform != "win32":
+        assert shown_path.startswith("~/")
     assert Path(shown_path).expanduser() == Path(__file__).resolve()
 
 
@@ -2788,7 +2814,8 @@ def test_download_pdf_button_updates_text(qtbot, db_temp, monkeypatch):
     cClick(widget.rightPanel.pdfDownloadButton, qtbot)
     # check that the shown path uses ~ and resolves to the correct location
     shown_path = widget.rightPanel.pdfText.text().replace("PDF Location: ", "")
-    assert shown_path.startswith("~/")
+    if sys.platform != "win32":
+        assert shown_path.startswith("~/")
     assert Path(shown_path).expanduser() == mSaveLocPDF
     mSaveLocPDF.unlink()
 

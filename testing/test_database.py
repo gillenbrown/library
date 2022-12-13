@@ -1554,11 +1554,13 @@ def test_import_created_tags_are_incremented_where_available(db_empty):
     file_loc3 = create_bibtex(u.mine_recent.bibtex)
     db_empty.import_bibtex(file_loc1)
     # move file 2 to 1 so the import will have the same name
+    file_loc1.unlink()
     file_loc2.rename(file_loc1)
     db_empty.import_bibtex(file_loc1)
     # delete tag 1, so it should be available
     db_empty.delete_tag(f"Import {file_loc1.name}")
     # then move 3 to 1 for import
+    file_loc1.unlink()
     file_loc3.rename(file_loc1)
     db_empty.import_bibtex(file_loc1)
     file_loc1.unlink()  # delete before tests may fail
