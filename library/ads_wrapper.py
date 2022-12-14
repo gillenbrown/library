@@ -28,6 +28,8 @@ class ADSWrapper(object):
 
         # have a object to keep track of rate limits
         self.rate = ads.RateLimits("SearchQuery")
+        # I do need to make one dummy query to initialize the data in the rate object
+        list(ads.SearchQuery(bibcode="2018ApJ...864...94B", fl="bibcode"))
 
     def num_queries(self):
         """
