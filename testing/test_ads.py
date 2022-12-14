@@ -13,11 +13,11 @@ def test_cache_no_extra_queries_with_same_arxiv_to_bibcode_query():
     # the caching is working as expected. I first have to make sure everything is in
     # the cache, so I need to do all needed searches, then I can duplicate them
     _ = ads_call.get_bibcode(u.mine.arxiv_url)
-    queries_start = ads_call.num_queries
+    queries_start = ads_call.num_queries()
     _ = ads_call.get_bibcode(u.mine.ads_url)
     _ = ads_call.get_bibcode(u.mine.arxiv_url)
     _ = ads_call.get_bibcode(u.mine.arxiv_pdf_url)
-    queries_new = ads_call.num_queries
+    queries_new = ads_call.num_queries()
 
     assert queries_new == queries_start
 
@@ -27,10 +27,10 @@ def test_cache_no_extra_queries_with_same_doi():
     # the caching is working as expected. I first have to make sure everything is in
     # the cache, so I need to do all needed searches, then I can duplicate them
     _ = ads_call.get_bibcode(u.mine.doi)
-    queries_start = ads_call.num_queries
+    queries_start = ads_call.num_queries()
     _ = ads_call.get_bibcode(u.mine.doi)
 
-    assert ads_call.num_queries == queries_start
+    assert ads_call.num_queries() == queries_start
 
 
 def test_cache_no_extra_queries_for_same_full_info_from_bibcode_query():
@@ -38,9 +38,9 @@ def test_cache_no_extra_queries_for_same_full_info_from_bibcode_query():
     # is working as expected. I first have to make sure everything is in the cache,
     # so I need to do all needed searches, then I can duplicate them
     _ = ads_call.get_info(u.mine.bibcode)
-    queries_start = ads_call.num_queries
+    queries_start = ads_call.num_queries()
     _ = ads_call.get_info(u.mine.bibcode)
-    queries_new = ads_call.num_queries
+    queries_new = ads_call.num_queries()
 
     assert queries_new == queries_start
 

@@ -22,10 +22,21 @@ class ADSWrapper(object):
         self._info_from_bibcode = dict()
         self._bibcode_from_arxiv_id = dict()
         self._bibcode_from_doi = dict()
-        self.num_queries = 0  # track this for debugging/testing purposes
 
         # read in the file of bibcodes
         self.bibstems = dict()
+
+        # have a object to keep track of rate limits
+        self.rate = ads.RateLimits("SearchQuery")
+
+    def num_queries(self):
+        """
+        Get the number of queries used
+
+        :returns: How many search queries have been used
+        :rtype: int
+        """
+        return int(self.rate.limits["limit"]) - int(self.rate.limits["remaining"])
 
     def _build_bibstems(self):
         resources_dir = Path(__file__).parent / "resources"
@@ -76,7 +87,6 @@ class ADSWrapper(object):
         try:  # try to get it from the cache
             return self._info_from_bibcode[bibcode]
         except KeyError:  # not found, need to do an actual query
-            self.num_queries += 1
             # To reduce the number of queries we need to request everything ahead of
             # time with the `fl` parameter.
             quantities = [
@@ -150,8 +160,6 @@ class ADSWrapper(object):
         try:
             return self._bibcode_from_arxiv_id[arxiv_id]
         except KeyError:
-            self.num_queries += 1
-
             # we do need to be careful about arXiv papers that are not yet on ADS. This
             # can be malformed arXiv IDs, but also today's set of papers that are not
             # yet on ADS
@@ -179,8 +187,6 @@ class ADSWrapper(object):
         try:
             return self._bibcode_from_doi[doi]
         except KeyError:
-            self.num_queries += 1
-
             # we'll need to double check that the DOI exists
             try:
                 query = ads.SearchQuery(q="doi:{}".format(doi), fl=["bibcode"])
