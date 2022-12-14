@@ -1385,6 +1385,45 @@ def test_import_single_good_paper_with_arxivid_adds_to_database(db_empty):
     assert db_empty.get_all_bibcodes() == [u.mine.bibcode]
 
 
+def test_import_with_multiline_authors_parses_correctly(db_empty, monkeypatch):
+    parsed_values = dict()
+
+    def store_kwargs(**kwargs):
+        for k, v in kwargs.items():
+            parsed_values[k] = v
+        # return the proper bibcode so the rest of the code works
+        return "2003ApJ...591..499A"
+
+    monkeypatch.setattr(ads_call, "get_bibcode_from_journal", store_kwargs)
+    bibtex = (
+        "@ARTICLE{abadi_etal03,\n"
+        "   author = {{Abadi}, M.~G. and {Navarro}, J.~F. and {Steinmetz}, M. and\n"
+        "	{Eke}, V.~R.},\n"
+        '    title = "{Simulations of Galaxy Formation in a {$\\Lambda$}\n'
+        "Cold Dark Matter Universe. I. Dynamical and Photometric\n"
+        'Properties of a Simulated Disk Galaxy}",\n'
+        "  journal = {\\apj},\n"
+        " keywords = {Cosmology: Theory, Cosmology: Dark Matter, "
+        "Galaxies: Formation, Galaxies: Structure, Methods: Numerical},\n"
+        "     year = 2003,\n"
+        "    month = jul,\n"
+        "   volume = 591,\n"
+        "    pages = {499-514},\n"
+        "}"
+    )
+    file_loc = create_bibtex(bibtex)
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert parsed_values["author"] == (
+        "Abadi, M.~G. and Navarro, J.~F. and Steinmetz, M. and Eke, V.~R."
+    )
+    assert parsed_values["title"] == (
+        "Simulations of Galaxy Formation in a $\\Lambda$ "
+        "Cold Dark Matter Universe. I. Dynamical and Photometric "
+        "Properties of a Simulated Disk Galaxy"
+    )
+
+
 def test_import_with_multiline_authors_adds_to_db(db_empty):
     bibtex = (
         "@ARTICLE{abadi_etal03,\n"
@@ -1394,15 +1433,12 @@ def test_import_with_multiline_authors_adds_to_db(db_empty):
         "Cold Dark Matter Universe. I. Dynamical and Photometric "
         'Properties of a Simulated Disk Galaxy}",\n'
         "  journal = {\\apj},\n"
-        "   eprint = {arXiv:astro-ph/0211331},\n"
         " keywords = {Cosmology: Theory, Cosmology: Dark Matter, "
         "Galaxies: Formation, Galaxies: Structure, Methods: Numerical},\n"
         "     year = 2003,\n"
         "    month = jul,\n"
         "   volume = 591,\n"
         "    pages = {499-514},\n"
-        "      doi = {10.1086/375512},\n"
-        "   adsurl = {http://adsabs.harvard.edu/abs/2003ApJ...591..499A}\n"
         "}"
     )
     file_loc = create_bibtex(bibtex)
@@ -1464,8 +1500,8 @@ def test_import_ignores_comments(db_empty):
         "% this is a comment\n"
         "@ARTICLE{test,\n"
         "% comment inside the entry\n"
-        f"       adsurl = {u.mine.ads_url},\n"
-        "}"
+        "       adsurl = {" + u.mine.ads_url + "},\n"
+        "}\n"
     )
     file_loc = create_bibtex(bibtex)
     db_empty.import_bibtex(file_loc)
@@ -1864,7 +1900,7 @@ journal_good = (
     "year = 2018,\nvolume = {864},\npages = {94},\njournal = {\\apj},\n"
     'title = "{' + u.mine.title + '}",\n'
 )
-journal_bad_not_enough = ""
+journal_bad_not_enough = "month = jun\n"
 journal_bad_not_found = (
     "year = 2016,\nvolume = {864},\npages = {94},\njournal = {\\apj},\n"
     'title = "{' + u.mine.title + '}",\n'
@@ -2144,7 +2180,7 @@ def test_import_bad_doi(db_empty):
 
 
 def test_import_bad_eprint(db_empty):
-    entry = "@ARTICLE{key\n" + eprint_bad + "}"
+    entry = "@ARTICLE{key,\n" + eprint_bad + "}"
     file_loc = create_bibtex(entry)
     results = db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
@@ -2160,7 +2196,7 @@ def test_import_bad_eprint(db_empty):
 
 
 def test_import_bad_adsurl(db_empty):
-    entry = "@ARTICLE{key\n" + adsurl_bad + "}"
+    entry = "@ARTICLE{key,\n" + adsurl_bad + "}"
     file_loc = create_bibtex(entry)
     results = db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
@@ -2176,7 +2212,7 @@ def test_import_bad_adsurl(db_empty):
 
 
 def test_import_bad_adsurl_2(db_empty):
-    entry = "@ARTICLE{key\n" + adsurl_bad_2 + "}"
+    entry = "@ARTICLE{key,\n" + adsurl_bad_2 + "}"
     file_loc = create_bibtex(entry)
     results = db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
@@ -2192,7 +2228,7 @@ def test_import_bad_adsurl_2(db_empty):
 
 
 def test_import_bad_journal_not_enough(db_empty):
-    entry = "@ARTICLE{key\n" + journal_bad_not_enough + "}"
+    entry = "@ARTICLE{key,\n" + journal_bad_not_enough + "}"
     file_loc = create_bibtex(entry)
     results = db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
@@ -2207,7 +2243,7 @@ def test_import_bad_journal_not_enough(db_empty):
 
 
 def test_import_bad_journal_not_found(db_empty):
-    entry = "@ARTICLE{key\n" + journal_bad_not_found + "}"
+    entry = "@ARTICLE{key,\n" + journal_bad_not_found + "}"
     file_loc = create_bibtex(entry)
     results = db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
@@ -2222,7 +2258,7 @@ def test_import_bad_journal_not_found(db_empty):
 
 
 def test_import_bad_journal_duplicate(db_empty):
-    entry = "@ARTICLE{key\n" + journal_bad_multiple + "}"
+    entry = "@ARTICLE{key,\n" + journal_bad_multiple + "}"
     file_loc = create_bibtex(entry)
     results = db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
@@ -2234,7 +2270,7 @@ def test_import_bad_journal_duplicate(db_empty):
 
 
 def test_import_bad_journal_bad_journal(db_empty):
-    entry = "@ARTICLE{key\n" + journal_bad_journal + "}"
+    entry = "@ARTICLE{key,\n" + journal_bad_journal + "}"
     file_loc = create_bibtex(entry)
     results = db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
@@ -2249,7 +2285,7 @@ def test_import_bad_journal_bad_journal(db_empty):
 
 
 def test_import_bad_journal_bad_format(db_empty):
-    entry = "@ARTICLE{key\n" + journal_bad_format + "}"
+    entry = "@ARTICLE{key,\n" + journal_bad_format + "}"
     file_loc = create_bibtex(entry)
     results = db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail

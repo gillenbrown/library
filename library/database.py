@@ -5,6 +5,8 @@ import contextlib
 from pathlib import Path
 from collections import defaultdict
 
+import bibtexparser
+
 from library import ads_wrapper
 
 # set up the ADS wrapper object that will be used by the Library
@@ -880,7 +882,7 @@ class Database(object):
                     "ADS has cut you off, you have sent too many requests today. "
                     "Try again in ~24 hours"
                 )
-            elif "INVALID_SYNTAX_CANNOT_PARSE" in e:
+            elif "INVALID_SYNTAX_CANNOT_PARSE" in e or "list index out of range" in e:
                 e = "something appears wrong with the format of this entry"
             failure_file.write(f"% {e}\n")
             failure_file.write(entry + "\n")
@@ -898,29 +900,16 @@ class Database(object):
         """
         # Start by parsing the entry to get paper data. We'll then use this to find
         # the paper
-        paper_data = dict()
-        for line in entry.split("\n"):
-            if line.startswith("@"):
-                # get the citation keyword
-                idx_1 = line.find("{")
-                idx_2 = line.find(",")
-                paper_data["cite_key"] = line[idx_1 + 1 : idx_2]
-                continue
-            # only look at lines that are interesting to us
-            elif " = " in line:
-                # the key and value are separated by an equals sign surrounded by
-                # spaces. But we need to be careful, since sometimes titles can
-                # have the same pattern
-                split_line = line.split(" = ")
-                key = split_line[0]
-                value = " = ".join(split_line[1:])
-                paper_data[key.strip()] = (
-                    value.strip()
-                    .rstrip(",")
-                    .replace("{", "")
-                    .replace("}", "")
-                    .replace('"', "")
-                )
+
+        paper_data = bibtexparser.loads(entry).entries[0]
+        # replace some punctuation in the entries
+        for key, value in paper_data.items():
+            paper_data[key] = (
+                value.replace("\n", " ")
+                .replace("{", "")
+                .replace("}", "")
+                .replace('"', "")
+            )
 
         # now that we have the info, try to find the paper. I'll keep track of what was
         # tried, then use that to construct an error message if needed. I try the ADS
@@ -976,11 +965,9 @@ class Database(object):
         # Also add the citation keyword for new papers. Again, if the paper is already
         # in the library, we don't mess with its cite key
         # don't bother changing it if there would be no change
-        if paper_data["cite_key"] != bibcode:
+        if paper_data["ID"] != bibcode:
             try:
-                self.set_paper_attribute(
-                    bibcode, "citation_keyword", paper_data["cite_key"]
-                )
+                self.set_paper_attribute(bibcode, "citation_keyword", paper_data["ID"])
             except RuntimeError:  # duplicate citation key
                 pass  # just leave as the bibcode
 
