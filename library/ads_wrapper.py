@@ -312,9 +312,13 @@ class ADSWrapper(object):
         if len(self.bibstems) == 0:
             self._build_bibstems()
 
-        # sometimes both page and pages can be used. I'll use page as my default
+        # sometimes both page and pages can be used. I'll use page as my default. Same
+        # with authors and author
         if "pages" in kwargs:
             kwargs["page"] = kwargs["pages"]
+        if "authors" in kwargs:
+            kwargs["author"] = kwargs["authors"]
+
         # get rid of some punctuation in the title that messes up queries
         if "title" in kwargs:
             for p in ["[", "]", "/", "?", "$"]:
@@ -335,11 +339,11 @@ class ADSWrapper(object):
                 query += f'bibstem:"{bibstem}" '
             except KeyError:
                 check_journal = True
-        # authors are a bit trickier, those need to be parsed separately
+        # authors are a bit trickier, those need to be parsed separately.
         # We'll assume the author list is in BibTeX format. The list of authors is
         # separated with "and"
-        if "authors" in kwargs:
-            authors_list = kwargs["authors"].split("and")
+        if "author" in kwargs:
+            authors_list = kwargs["author"].split("and")
             for idx, a in enumerate(authors_list):
                 a = a.strip().replace("{", "").replace("}", "")
                 last_name = a.split(",")[0]

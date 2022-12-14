@@ -258,7 +258,7 @@ def test_get_paper_from_journal_details_sparse_works():
 def test_get_paper_from_journal_details_sparse_works_2():
     bibcode = ads_call.get_bibcode_from_journal(
         year=2018,
-        authors="{Brown}, Gillen and {Gnedin}, Oleg Y. and {Li}, Hui",
+        author="{Brown}, Gillen and {Gnedin}, Oleg Y. and {Li}, Hui",
     )
     assert bibcode == u.mine.bibcode
 

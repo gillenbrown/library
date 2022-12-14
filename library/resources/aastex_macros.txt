@@ -18,6 +18,7 @@
    cjaa         Chinese Journal of Astronomy and Astrophysics
    icarus       Icarus
    jcap         Journal of Cosmology and Astroparticle Physics
+   jcph         Journal of Computational Physics
    jrasc        Journal of the Royal Astronomical Society of Canada
    memras       Memoirs of the Royal Astronomical Society
    mnras        Monthly Notices of the Royal Astronomical Society

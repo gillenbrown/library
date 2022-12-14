@@ -1393,7 +1393,7 @@ def test_import_with_multiline_authors_adds_to_db(db_empty):
         '    title = "{Simulations of Galaxy Formation in a {$\\Lambda$} '
         "Cold Dark Matter Universe. I. Dynamical and Photometric "
         'Properties of a Simulated Disk Galaxy}",\n'
-        "  journal = {\apj},\n"
+        "  journal = {\\apj},\n"
         "   eprint = {arXiv:astro-ph/0211331},\n"
         " keywords = {Cosmology: Theory, Cosmology: Dark Matter, "
         "Galaxies: Formation, Galaxies: Structure, Methods: Numerical},\n"
