@@ -28,8 +28,6 @@ class ADSWrapper(object):
 
         # have a object to keep track of rate limits
         self.rate = ads.RateLimits("SearchQuery")
-        # I do need to make one dummy query to initialize the data in the rate object
-        list(ads.SearchQuery(bibcode="2018ApJ...864...94B", fl="bibcode"))
 
     def num_queries(self):
         """
@@ -38,7 +36,14 @@ class ADSWrapper(object):
         :returns: How many search queries have been used
         :rtype: int
         """
-        return int(self.rate.limits["limit"]) - int(self.rate.limits["remaining"])
+        # the three fields in self.rate.limits are "limit", "remaining", and "reset"
+        # If we haven't made a query yet these fields will not be sed
+        try:
+            return int(self.rate.limits["limit"]) - int(self.rate.limits["remaining"])
+        except KeyError:
+            # make a dummy query to set the fields
+            list(ads.SearchQuery(bibcode="2018ApJ...864...94B", fl="bibcode"))
+            return self.num_queries()
 
     def _build_bibstems(self):
         resources_dir = Path(__file__).parent / "resources"

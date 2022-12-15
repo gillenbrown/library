@@ -8,6 +8,11 @@ import test_utils as u
 ads_call = ADSWrapper()
 
 
+def test_num_queries():
+    # must be done first, to test that the dummy query system works
+    assert 0 <= ads_call.num_queries() <= 5000
+
+
 def test_cache_no_extra_queries_with_same_arxiv_to_bibcode_query():
     # here I'll query the same pre-existing paper with multiple URLs to ensure that
     # the caching is working as expected. I first have to make sure everything is in
