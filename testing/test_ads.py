@@ -251,6 +251,17 @@ def test_get_paper_from_journal_details_works_with_punctuation_2():
     assert bibcode == u.meylan.bibcode
 
 
+def test_get_paper_from_journal_details_works_with_accent_in_author():
+    bibcode = ads_call.get_bibcode_from_journal(
+        authors=u.juan.bibtex_authors,
+        year=u.juan.year,
+        pages=u.juan.page,
+        volume=u.juan.volume,
+        journal=u.juan.journal,
+    )
+    assert bibcode == u.juan.bibcode
+
+
 def test_get_paper_from_journal_details_sparse_works():
     bibcode = ads_call.get_bibcode_from_journal(
         title=u.kravtsov.title,

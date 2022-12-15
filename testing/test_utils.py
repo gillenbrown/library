@@ -256,6 +256,27 @@ juan = PaperDict(
     url="https://ui.adsabs.harvard.edu/abs/2018ApJ...863...60R/abstract",
     bibcode="2018ApJ...863...60R",
     authors=["Remolina González, J. D.", "Sharon, K.", "Mahler, G."],
+    bibtex_authors="{Remolina Gonz{'a}lez}, J.~D. and {Sharon}, K. and {Mahler}, G.",
+    journal="\\apj",
+    volume=863,
+    page=60,
+    year=2018,
+    short_bibtex="@ARTICLE{2018ApJ...863...60R,\n"
+    "       author = {{Remolina Gonz{'a}lez}, J.~D. and {Sharon}, K. "
+    "and {Mahler}, G.},\n"
+    '        title = "{An Evaluation of 10 Lensing Models of the Frontier '
+    'Fields Cluster MACS J0416.1-2403}",\n'
+    "      journal = {\\apj},\n"
+    "     keywords = {galaxies: clusters: individual: MACS J0416.1-2403, "
+    "gravitational lensing: strong, Astrophysics - "
+    "Cosmology and Nongalactic Astrophysics},\n"
+    "         year = 2018,\n"
+    "        month = aug,\n"
+    "       volume = {863},\n"
+    "       number = {1},\n"
+    "          eid = {60},\n"
+    "        pages = {60},\n"
+    "}",
 )
 
 used_for_no_ads_key = PaperDict(

@@ -358,8 +358,9 @@ class ADSWrapper(object):
         if "author" in kwargs:
             authors_list = kwargs["author"].split("and")
             for idx, a in enumerate(authors_list):
-                a = a.strip().replace("{", "").replace("}", "")
-                last_name = a.split(",")[0]
+                last_name = a.strip().split(",")[0]
+                # Don't remove the {}, since those are important for making accents
+                # work in author search
 
                 # Then add to the query. Treat the first author differently.
                 if idx == 0:

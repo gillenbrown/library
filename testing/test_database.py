@@ -1415,12 +1415,12 @@ def test_import_with_multiline_authors_parses_correctly(db_empty, monkeypatch):
     db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
     assert parsed_values["author"] == (
-        "Abadi, M.~G. and Navarro, J.~F. and Steinmetz, M. and Eke, V.~R."
+        "{Abadi}, M.~G. and {Navarro}, J.~F. and {Steinmetz}, M. and {Eke}, V.~R."
     )
     assert parsed_values["title"] == (
-        "Simulations of Galaxy Formation in a $\\Lambda$ "
+        "{Simulations of Galaxy Formation in a {$\\Lambda$} "
         "Cold Dark Matter Universe. I. Dynamical and Photometric "
-        "Properties of a Simulated Disk Galaxy"
+        "Properties of a Simulated Disk Galaxy}"
     )
 
 
@@ -2006,6 +2006,14 @@ def test_import_journal_works_if_journal_not_recognized(db_empty):
     file_loc.unlink()  # delete before tests may fail
     assert results[:3] == (1, 0, 0)
     assert db_empty.get_all_bibcodes() == [u.williams.bibcode]
+
+
+def test_import_journal_works_if_accents_in_authors_lits(db_empty):
+    file_loc = create_bibtex(u.juan.short_bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[:3] == (1, 0, 0)
+    assert db_empty.get_all_bibcodes() == [u.juan.bibcode]
 
 
 # =======================================================

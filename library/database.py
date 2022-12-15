@@ -902,14 +902,10 @@ class Database(object):
         # the paper
 
         paper_data = bibtexparser.loads(entry).entries[0]
-        # replace some punctuation in the entries
+        # # replace newlines. Also replace quotes, since those mess up the query
+        # syntax. I keep curly braces to properly handle accents in author names
         for key, value in paper_data.items():
-            paper_data[key] = (
-                value.replace("\n", " ")
-                .replace("{", "")
-                .replace("}", "")
-                .replace('"', "")
-            )
+            paper_data[key] = value.replace("\n", " ").strip().replace('"', "")
 
         # now that we have the info, try to find the paper. I'll keep track of what was
         # tried, then use that to construct an error message if needed. I try the ADS
