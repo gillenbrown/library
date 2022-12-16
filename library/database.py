@@ -931,6 +931,8 @@ class Database(object):
             # need to replace accents before removing other formatting, so there isn't
             # any accidental overlap between the two
             for c in accents:
+                # first replace times where there is a space after the accent character
+                value = value.replace(c + " ", "")
                 value = value.replace(c, "")
             value = (
                 value.replace("\n", " ")

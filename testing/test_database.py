@@ -2016,6 +2016,14 @@ def test_import_journal_works_if_accents_in_authors_list(db_empty):
     assert db_empty.get_all_bibcodes() == [u.juan.bibcode]
 
 
+def test_import_journal_works_if_accents_with_space_in_authors_list(db_empty):
+    file_loc = create_bibtex(u.juan.short_bibtex.replace("\\'", "\\' "))
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[:3] == (1, 0, 0)
+    assert db_empty.get_all_bibcodes() == [u.juan.bibcode]
+
+
 def test_import_journal_works_if_quote_accents_in_authors_list(db_empty):
     file_loc = create_bibtex(u.bohringer.bibtex)
     results = db_empty.import_bibtex(file_loc)
