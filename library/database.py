@@ -908,16 +908,39 @@ class Database(object):
         paper_data = bibtexparser.loads(entry).entries[0]
         # replace newlines and nonbreaking spaces.
         # Also replace quotes, since those mess up the query syntax.
-        # I keep curly braces to properly handle accents in author names
+        # I do keep curly braces
+        # Also remove all accents, since they cause problems
+        accents = [
+            "\\`",
+            "\\'",
+            "\\^",
+            '\\"',
+            "\\~",
+            "\\=",
+            "\\.",
+            "\\u",
+            "\\v",
+            "\\H",
+            "\\t",
+            "\\c",
+            "\\d",
+            "\\b",
+            "\\k",
+        ]
         for key, value in paper_data.items():
-            paper_data[key] = (
+            # need to replace accents before removing other formatting, so there isn't
+            # any accidental overlap between the two
+            for c in accents:
+                value = value.replace(c, "")
+            value = (
                 value.replace("\n", " ")
                 .strip()
-                .replace('\\"', "")  # accent that messes up queries
-                .replace('"', "")
                 .replace("~", " ")
+                .replace('"', "")
+                .replace("{", "")
+                .replace("}", "")
             )
-
+            paper_data[key] = value
         # now that we have the info, try to find the paper. I'll keep track of what was
         # tried, then use that to construct an error message if needed. I try the ADS
         # url first, since that results in less queries to ADS, speeding up this
