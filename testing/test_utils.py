@@ -452,3 +452,43 @@ meylan = PaperDict(
     ),
     year=2001,
 )
+
+anders = PaperDict(
+    bibtex="@ARTICLE{anders_etal04,\n"
+    "   author = {{Anders}, P. and {de Grijs}, R. and {Fritze-v.~Alvensleben}, U. and\n"
+    "   {Bissantz}, N.},\n"
+    '    title = "{Star cluster formation and evolution in the dwarf '
+    'starburst galaxy NGC 1569}",\n'
+    "  journal = {\\mnras},\n"
+    "     year = 2004,\n"
+    "    month = jan,\n"
+    "   volume = 347,\n"
+    "    pages = {17-28}\n"
+    "}",
+    bibtex_authors="{Anders}, P. and {de Grijs}, R. and {Fritze-v.~Alvensleben}, U. and"
+    " {Bissantz}, N.",
+    title="Star cluster formation and evolution in the dwarf starburst galaxy NGC 1569",
+    year=2004,
+    journal="\\mnras",
+    bibcode="2004MNRAS.347...17A",
+)
+
+chandar = PaperDict(
+    bibcode="2002ApJ...564..712C",
+    bibtex_authors="{Chandar}, R. and {Bianchi}, L. "
+    "and {Ford}, H.~C. and {Sarajedini}, A.",
+    year=2002,
+    journal="\\apj",
+    volume=564,
+    page=712,
+    bibtex="@ARTICLE{chandar_etal02,\n"
+    "   author = {{Chandar}, R. and {Bianchi}, L. and {Ford}, H.~C.\n"
+    "            and {Sarajedini}, A.},\n"
+    '    title = "{Kinematics of Star Clusters in M33: Distinct Populations}",\n'
+    "  journal = {\\apj},\n"
+    "     year = 2002,\n"
+    "    month = jan,\n"
+    "   volume = 564,\n"
+    "    pages = {712-735}\n"
+    "}",
+)

@@ -262,6 +262,26 @@ def test_get_paper_from_journal_details_works_with_accent_in_author():
     assert bibcode == u.juan.bibcode
 
 
+def test_get_paper_from_journal_details_works_with_nonbreaking_space_in_author():
+    bibcode = ads_call.get_bibcode_from_journal(
+        authors=u.anders.bibtex_authors,
+        year=u.anders.year,
+        journal=u.anders.journal,
+        title=u.anders.title,
+    )
+    assert bibcode == u.anders.bibcode
+
+
+def test_get_paper_from_journal_works_with_and_in_author_name():
+    bibcode = ads_call.get_bibcode_from_journal(
+        authors=u.chandar.bibtex_authors,
+        year=u.chandar.year,
+        volume=u.chandar.volume,
+        page=u.chandar.page,
+    )
+    assert bibcode == u.chandar.bibcode
+
+
 def test_get_paper_from_journal_details_sparse_works():
     bibcode = ads_call.get_bibcode_from_journal(
         title=u.kravtsov.title,

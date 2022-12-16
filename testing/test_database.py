@@ -2008,12 +2008,28 @@ def test_import_journal_works_if_journal_not_recognized(db_empty):
     assert db_empty.get_all_bibcodes() == [u.williams.bibcode]
 
 
-def test_import_journal_works_if_accents_in_authors_lits(db_empty):
+def test_import_journal_works_if_accents_in_authors_list(db_empty):
     file_loc = create_bibtex(u.juan.short_bibtex)
     results = db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
     assert results[:3] == (1, 0, 0)
     assert db_empty.get_all_bibcodes() == [u.juan.bibcode]
+
+
+def test_import_journal_works_if_nonbreaking_space_in_authors_list(db_empty):
+    file_loc = create_bibtex(u.anders.bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[:3] == (1, 0, 0)
+    assert db_empty.get_all_bibcodes() == [u.anders.bibcode]
+
+
+def test_import_journal_works_if_and_in_authors_list(db_empty):
+    file_loc = create_bibtex(u.chandar.bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[:3] == (1, 0, 0)
+    assert db_empty.get_all_bibcodes() == [u.chandar.bibcode]
 
 
 # =======================================================

@@ -882,7 +882,11 @@ class Database(object):
                     "ADS has cut you off, you have sent too many requests today. "
                     "Try again in ~24 hours"
                 )
-            elif "INVALID_SYNTAX_CANNOT_PARSE" in e or "list index out of range" in e:
+            elif (
+                "INVALID_SYNTAX_CANNOT_PARSE" in e
+                or "list index out of range" in e
+                or "SolrException" in e
+            ):
                 e = "something appears wrong with the format of this entry"
             failure_file.write(f"% {e}\n")
             failure_file.write(entry + "\n")
@@ -902,10 +906,13 @@ class Database(object):
         # the paper
 
         paper_data = bibtexparser.loads(entry).entries[0]
-        # # replace newlines. Also replace quotes, since those mess up the query
-        # syntax. I keep curly braces to properly handle accents in author names
+        # replace newlines and nonbreaking spaces.
+        # Also replace quotes, since those mess up the query syntax.
+        # I keep curly braces to properly handle accents in author names
         for key, value in paper_data.items():
-            paper_data[key] = value.replace("\n", " ").strip().replace('"', "")
+            paper_data[key] = (
+                value.replace("\n", " ").strip().replace('"', "").replace("~", " ")
+            )
 
         # now that we have the info, try to find the paper. I'll keep track of what was
         # tried, then use that to construct an error message if needed. I try the ADS

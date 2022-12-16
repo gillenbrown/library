@@ -334,7 +334,7 @@ class ADSWrapper(object):
 
         # get rid of some punctuation in the title that messes up queries
         if "title" in kwargs:
-            for p in ["[", "]", "/", "?", "$"]:
+            for p in ["[", "]", "/", "?", "$", "~"]:
                 kwargs["title"] = kwargs["title"].replace(p, " ")
 
         # then create the query. We'll use the information that's available
@@ -356,11 +356,16 @@ class ADSWrapper(object):
         # We'll assume the author list is in BibTeX format. The list of authors is
         # separated with "and"
         if "author" in kwargs:
-            authors_list = kwargs["author"].split("and")
+            # split on "and", which is used to separate the authors. But I need to put
+            # the spaces around "and", so it doesn't split if "and" is part of an
+            # author's name
+            authors_list = kwargs["author"].split(" and ")
             for idx, a in enumerate(authors_list):
                 last_name = a.strip().split(",")[0]
                 # Don't remove the {}, since those are important for making accents
                 # work in author search
+                # but do remove any nonbreaking spaces
+                last_name = last_name.replace("~", " ")
 
                 # Then add to the query. Treat the first author differently.
                 if idx == 0:
