@@ -1415,7 +1415,7 @@ def test_import_with_multiline_authors_parses_correctly(db_empty, monkeypatch):
     db_empty.import_bibtex(file_loc)
     file_loc.unlink()  # delete before tests may fail
     assert parsed_values["author"] == (
-        "{Abadi}, M.~G. and {Navarro}, J.~F. and {Steinmetz}, M. and {Eke}, V.~R."
+        "{Abadi}, M. G. and {Navarro}, J. F. and {Steinmetz}, M. and {Eke}, V. R."
     )
     assert parsed_values["title"] == (
         "{Simulations of Galaxy Formation in a {$\\Lambda$} "
