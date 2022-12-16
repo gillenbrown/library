@@ -262,6 +262,17 @@ def test_get_paper_from_journal_details_works_with_accent_in_author():
     assert bibcode == u.juan.bibcode
 
 
+def test_get_paper_from_journal_details_works_with_quote_accent_in_author():
+    bibcode = ads_call.get_bibcode_from_journal(
+        authors=u.bohringer.bibtex_authors,
+        year=u.bohringer.year,
+        pages=u.bohringer.pages,
+        volume=u.bohringer.volume,
+        journal=u.bohringer.journal,
+    )
+    assert bibcode == u.bohringer.bibcode
+
+
 def test_get_paper_from_journal_details_works_with_nonbreaking_space_in_author():
     bibcode = ads_call.get_bibcode_from_journal(
         authors=u.anders.bibtex_authors,

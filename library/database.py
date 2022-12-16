@@ -911,7 +911,11 @@ class Database(object):
         # I keep curly braces to properly handle accents in author names
         for key, value in paper_data.items():
             paper_data[key] = (
-                value.replace("\n", " ").strip().replace('"', "").replace("~", " ")
+                value.replace("\n", " ")
+                .strip()
+                .replace('\\"', "")  # accent that messes up queries
+                .replace('"', "")
+                .replace("~", " ")
             )
 
         # now that we have the info, try to find the paper. I'll keep track of what was

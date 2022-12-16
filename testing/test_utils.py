@@ -492,3 +492,24 @@ chandar = PaperDict(
     "    pages = {712-735}\n"
     "}",
 )
+
+bohringer = PaperDict(
+    bibtex="@ARTICLE{bohringer_etal94,\n"
+    '   author = {{B{\\"o}hringer}, H. and {Briel}, U.~G. and {Schwarz}, R.~A. and\n'
+    '   {Voges}, W. and {Hartner}, G. and {Tr{\\"u}mper}, J.},\n'
+    '    title = "{The structure of the Virgo cluster of galaxies from Rosat '
+    'X-ray images}",\n'
+    "  journal = {\\nat},\n"
+    "     year = 1994,\n"
+    "    month = apr,\n"
+    "   volume = 368,\n"
+    "    pages = {828-831},\n"
+    "}",
+    bibcode="1994Natur.368..828B",
+    bibtex_authors='{B{\\"o}hringer}, H. and {Briel}, U.~G. and {Schwarz}, R.~A. and\n'
+    '   {Voges}, W. and {Hartner}, G. and {Tr{\\"u}mper}, J.',
+    volume=368,
+    pages=828,
+    year=1994,
+    journal="\\nat",
+)
