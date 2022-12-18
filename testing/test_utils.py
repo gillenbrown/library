@@ -513,3 +513,30 @@ bohringer = PaperDict(
     year=1994,
     journal="\\nat",
 )
+
+schiavon = PaperDict(
+    bibcode="2017MNRAS.466.1010S",
+    short_bibtex="@ARTICLE{schiavon_etal16,\n"
+    "   author = {{Schiavon}, R.~P. and {Johnson}, J.~A. and {Frinchaboy}, P.~M. and\n"
+    "	{Zasowski}, G. and {M{\\'e}sz{\\'a}ros}, S. and \n"
+    "	{Garc{\\'{\\i}}a-Hern{\\'a}ndez}, D.~A. and {Cohen}, R.~E. and {Tang}, B.  \n"
+    "	and {Villanova}, S. and {Geisler}, D. and {Beers}, T.~C. and \n"
+    "{Fern{\\'a}ndez-Trincado}, J.~G. and \n"
+    "	{Garc{\\'{\\i}}a P{\\'e}rez}, A.~E. and {Lucatello}, S. \n"
+    "and {Majewski}, S.~R. \n"
+    "	and {Martell}, S.~L. and {O'Connell}, R.~W. and {Allende Prieto}, C.~A. and \n"
+    "	{Bizyaev}, D. and {Carrera}, R. and {Lane}, R.~R. and {Malanushenko}, E. \n"
+    "	and {Malanushenko}, V. and {Mu{\\~n}oz}, R.~R. and {Nitschelm}, C. and \n"
+    "	{Oravetz}, D. and {Pan}, K. and {Roman-Lopes}, A. and {Schultheis}, M. \n"
+    "	and {Simmons}, A.},\n"
+    '    title = "{APOGEE chemical abundances of globular cluster giants '
+    'in the inner Galaxy}",\n'
+    "  journal = {\mnras},\n"
+    'archivePrefix = "arXiv",\n'
+    " keywords = {stars: abundances, Galaxy: bulge, globular clusters: general},\n"
+    "     year = 2017,\n"
+    "    month = apr,\n"
+    "   volume = 466,\n"
+    "    pages = {1010-1018},\n"
+    "}",
+)
