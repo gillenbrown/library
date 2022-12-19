@@ -8,11 +8,12 @@
 This simple Python application is designed to make it easy to keep track of the astronomy literature. Some key features include:
 - Add papers with the URL of the paper's page on either ADS or the arXiv
 - Automatic queries to ADS to get all the paper's details, including the bibtex entry
+- Import papers from a BibTeX file
 - Automatic downloading of the paper PDF
 - Open the paper PDF using your preferred local PDF viewer
 - Papers on the arXiv that do not have full journal information will be automatically updated as soon as that information is available on ADS
 - Papers can be organized into different groups using tags
-- Export the bibtex entries for all papers, all papers belonging to a given tag, or just a single paper
+- Export the BibTeX entries for all papers, all papers belonging to a given tag, or just a single paper
 - Space for notes on each paper
 
 https://user-images.githubusercontent.com/12191474/201559494-a0fcbef5-cccf-4bb1-9cb1-a2d23dee25e5.mp4
@@ -81,7 +82,9 @@ No matter which of the three links you use, the full paper details will be obtai
 
 One final note here is that sometimes ADS takes a bit of time to get the daily arXiv papers into its system. Since my code relies on ADS, sometimes the most recent arXiv papers will fail when you try to add them. You may need to try to add them later that day or tomorrow. 
 
-Importing papers from a BibTeX file is relatively straightforward. You'll be prompted to select a BibTeX file, then the code will parse the file. Currently, the code will successfully identify papers that have either the `adsurl`, `doi`, or `eprint` attributes in the BibTeX entries. Entries that were not successfully imported are written to a file with the reason that the import failed for each paper. During the import, a new tag will be created and all papers from this BibTeX file will be added to the new tag. This tag can be renamed like any other.
+Importing papers from a BibTeX file is relatively straightforward. You'll be prompted to select a BibTeX file, then the code will parse the file. Entries that were not successfully imported are written to a file with the reason that the import failed for each paper. During the import, a new tag will be created and all papers from this BibTeX file will be added to the new tag. This tag can be renamed like any other.
+
+When parsing BibTeX entries, the code will first look for the `adsurl`, `doi`, or `eprint` attributes, as these can be easily used to uniquely identify a paper. If none of those are present, the code will use the publication details to search for the paper on ADS. Specifically, it uses the `author`, `journal`, `year`, `volume`, `page`, and `title` fields. These fields will be used to create an ADS query. If ADS finds a paper that exactly matches these details, it will added to the database. This generally works great to uniquely identify papers. However, ADS often struggles with papers with math in the title. Those papers frequently fail, as the LaTeX formatting doesn't match how ADS has formatted the title. 
 
 ### Paper Details
 
@@ -118,6 +121,7 @@ All the data used in this application (including the list of papers, your user n
 This application is a work in progress, and so far has only been tested by me, so there are likely bugs I haven't found yet. If you find that something doesn't work how you expect, or you have suggestions on how to make the application more functional or easier to use, please [email me](mailto:gillenbrown@gmail.com)! In particular, here are some things that I suspect may still need work:
 - Occasionally I found papers with atypical attributes that break my code. I fixed all the issues with papers I've tried to add, but if you find that adding a certain paper fails, send me a link to that paper and I'll fix it.
 - In the interface, I abbreviate some journal (e.g. MNRAS, ApJ). I got all the journals commonly used in the papers I've cited in my work, but of course that's not a representative sample. Let me know if there are any abbreviations I'm missing.
+- Similarly, the system to import papers from a BibTeX file was tested using the BibTeX files from my papers. There may be some edge cases that my small sample didn't test for.
 - I've written a system that updates arXiv papers with the full publication details once those are available. But my testing for this has been mostly contrived examples that may or may not be totally realistic, so keep an eye on your arXiv-only papers to see if the publication details are correctly updated.
 - Downloading the paper PDFs works okay, but not great. It first tries to download the PDF from the publisher, but in my testing the publisher often blocks the download since it thinks it's a bot (which it really is, to be fair). The application uses the arXiv PDF as a fallback. But the publishers may block me in particular since I sent a lot of requests when testing. So I'd be interested in seeing how many publisher PDFs regular users are able to download.
 - On a lighter note, I need a better name for this! "Library" has been a placeholder, so if you have any ideas for a name let me know.
