@@ -531,7 +531,7 @@ schiavon = PaperDict(
     "	and {Simmons}, A.},\n"
     '    title = "{APOGEE chemical abundances of globular cluster giants '
     'in the inner Galaxy}",\n'
-    "  journal = {\mnras},\n"
+    "  journal = {\\mnras},\n"
     'archivePrefix = "arXiv",\n'
     " keywords = {stars: abundances, Galaxy: bulge, globular clusters: general},\n"
     "     year = 2017,\n"

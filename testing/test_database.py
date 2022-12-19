@@ -1752,9 +1752,11 @@ def test_import_failure_file_contains_header(db_empty):
         "% This file contains BibTeX entries that the library could not add.\n"
         "% The reason for the failure is given above each entry.\n"
         '% When importing a given entry, the code looks for the "doi", "ads_url",\n'
-        '% or "eprint" attributes. If none of these are present, the code cannot\n'
-        "% add the paper. In addition, there may be something wrong with the\n"
-        "% format of the entry that breaks my code parser.\n\n"
+        '% or "eprint" attributes. If none of these are present, the code tries\n'
+        '% to use the publication details (using the "author", "journal", "year"\n'
+        '% "volume", "page", "title" fields, as available) to identify the\n'
+        "% paper's entry in ADS. When using this journal info, the code requires\n"
+        "% an exact match to any attributes present in the BibTeX entry. \n\n"
     )
     assert header in f_output
 
@@ -1832,9 +1834,11 @@ def test_import_failure_file_full_format(db_empty):
         "% This file contains BibTeX entries that the library could not add.\n"
         "% The reason for the failure is given above each entry.\n"
         '% When importing a given entry, the code looks for the "doi", "ads_url",\n'
-        '% or "eprint" attributes. If none of these are present, the code cannot\n'
-        "% add the paper. In addition, there may be something wrong with the\n"
-        "% format of the entry that breaks my code parser.\n\n"
+        '% or "eprint" attributes. If none of these are present, the code tries\n'
+        '% to use the publication details (using the "author", "journal", "year"\n'
+        '% "volume", "page", "title" fields, as available) to identify the\n'
+        "% paper's entry in ADS. When using this journal info, the code requires\n"
+        "% an exact match to any attributes present in the BibTeX entry. \n\n"
     )
     reason = "% couldn't find paper with an exact match to this info on ADS\n"
     assert f_output == header + reason + bad + "\n\n"

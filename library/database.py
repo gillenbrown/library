@@ -759,11 +759,13 @@ class Database(object):
             "% This file contains BibTeX entries that the library could not add.\n"
             "% The reason for the failure is given above each entry.\n"
             '% When importing a given entry, the code looks for the "doi", "ads_url",\n'
-            '% or "eprint" attributes. If none of these are present, the code cannot\n'
-            "% add the paper. In addition, there may be something wrong with the\n"
-            "% format of the entry that breaks my code parser."
+            '% or "eprint" attributes. If none of these are present, the code tries\n'
+            '% to use the publication details (using the "author", "journal", "year"\n'
+            '% "volume", "page", "title" fields, as available) to identify the\n'
+            "% paper's entry in ADS. When using this journal info, the code requires\n"
+            "% an exact match to any attributes present in the BibTeX entry. \n\n"
         )
-        failure_file.write(header + "\n\n")
+        failure_file.write(header)
 
         # figure out what tag to give this paper. It will be of the format
         # "Import [import_filename] X", where X is an optional integer that will be
@@ -815,9 +817,10 @@ class Database(object):
         failure_file.close()
         # if there were no failures, remove the failure file. I got the exact size of
         # just the header, which is what we compare to here. It's different on
-        # different platforms, annoyingly
-        empty_size = defaultdict(lambda: 388)  # default value for linux and macos
-        empty_size["win32"] = 395
+        # different platforms, annoyingly. On windows, it's different because
+        # newlines have different size.
+        empty_size = defaultdict(lambda: 544)  # default value for linux and macos
+        empty_size["win32"] = empty_size["darwin"] + header.count("\n")
         if failure_file_loc.stat().st_size == empty_size[sys.platform]:
             failure_file_loc.unlink()
             failure_file_loc = None
