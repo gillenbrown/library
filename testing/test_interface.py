@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 import random
 import shutil
+import subprocess
 
 # make sure tests do not appear on screen
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
@@ -517,6 +518,50 @@ def test_title_is_lobster_font(qtbot, db_empty):
 def test_title_is_correct_font_size(qtbot, db_empty):
     widget = cInitialize(qtbot, db_empty)
     assert widget.title.font().pointSize() == 40
+
+
+# ===================
+# update notification
+# ===================
+def test_import_notification_normally_disabled(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    assert widget.updateText.isHidden() is True
+
+
+def test_import_notification_shown_when_needed(qtbot, db, monkeypatch):
+    class dummy(object):
+        stderr = "some text here"
+
+    monkeypatch.setattr(subprocess, "run", lambda cmd, capture_output: dummy())
+    widget = cInitialize(qtbot, db)
+    assert widget.updateText.isHidden() is False
+
+
+def test_import_notification_text(qtbot, db, monkeypatch):
+    class dummy(object):
+        stderr = "some text here"
+
+    monkeypatch.setattr(subprocess, "run", lambda cmd, capture_output: dummy())
+    widget = cInitialize(qtbot, db)
+    assert widget.updateText.text().startswith(
+        "An update is available! To update, navigate to "
+    )
+    assert widget.updateText.text().endswith(
+        "in the terminal, run `git pull`, then restart this application."
+    )
+
+
+def test_import_notification_text_path(qtbot, db, monkeypatch):
+    class dummy(object):
+        stderr = "some text here"
+
+    monkeypatch.setattr(subprocess, "run", lambda cmd, capture_output: dummy())
+    widget = cInitialize(qtbot, db)
+    shown_path = widget.updateText.text().split()[8]
+    # ~ isn't part of Windows, so we need to be careful about how we check
+    if sys.platform != "win32":
+        assert shown_path.startswith("~/")
+    assert Path(shown_path).expanduser() == Path(__file__).parent.parent.resolve()
 
 
 # ==========================

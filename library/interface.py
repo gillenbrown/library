@@ -1,5 +1,6 @@
 from pathlib import Path
 import requests
+import subprocess
 
 import ads.exceptions
 import darkdetect
@@ -2120,6 +2121,20 @@ class MainWindow(QMainWindow):
         # also allow the reset after an error
         self.searchBar.cursorPositionChanged.connect(self.resetSearchBarError)
         self.searchBar.textChanged.connect(self.resetSearchBarError)
+        # and some text that's shown when an update is available
+        self.updateText = QLabel(
+            "An update is available! To update, navigate to "
+            f"{str(Path(__file__).parent.parent).replace(str(Path.home()), '~')}"
+            "\nin the terminal, run `git pull`, then restart this application."
+        )
+        qss_trigger(self.updateText, "error_text", True)
+        # only show this if there is an update available. We'll use git fetch for this,
+        # which will return an empty string if we're current, and some text if there
+        # is an update available.
+        process = subprocess.run(["git", "fetch", "--dry-run"], capture_output=True)
+        if len(process.stderr) == 0:
+            self.updateText.hide()
+
         # have these quantities have a fixed height. These values are chosen to
         # make it look nice.
         self.searchBar.setFixedHeight(30)
@@ -2130,6 +2145,7 @@ class MainWindow(QMainWindow):
         # Then add these to the layouts
         hBoxSearchBar = QHBoxLayout()
         hBoxSearchBar.addWidget(self.title)
+        hBoxSearchBar.addWidget(self.updateText)
         hBoxSearchBar.addWidget(self.searchBar)
         hBoxSearchBar.addWidget(self.searchBarErrorText)
         hBoxSearchBar.addWidget(self.addButton)
