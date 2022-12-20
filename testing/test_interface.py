@@ -922,7 +922,6 @@ def test_rename_tag_second_text_is_transparent_once_cleared(qtbot, db_empty):
 
 
 def test_cite_key_placeholder_text_is_transparent(qtbot, db_temp):
-    # click on a paper with no cite key set
     widget = cInitialize(qtbot, db_temp)
     cClick(widget.papersList.getPapers()[0], qtbot)
     cClick(widget.rightPanel.editCiteKeyButton, qtbot)
