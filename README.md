@@ -18,8 +18,6 @@ This simple Python application is designed to make it easy to keep track of the 
 
 https://user-images.githubusercontent.com/12191474/201559494-a0fcbef5-cccf-4bb1-9cb1-a2d23dee25e5.mp4
 
-
-
 # Installation
 
 Before doing anything, please know that this application is a work in progress. If you find a bug or have a feature you'd like to be added, please [email me](mailto:gillenbrown@gmail.com)! I'll be more than happy to work with you to fix any issues you're having. 
