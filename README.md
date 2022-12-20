@@ -8,11 +8,12 @@
 This simple Python application is designed to make it easy to keep track of the astronomy literature. Some key features include:
 - Add papers with the URL of the paper's page on either ADS or the arXiv
 - Automatic queries to ADS to get all the paper's details, including the bibtex entry
+- Import papers from a BibTeX file
 - Automatic downloading of the paper PDF
 - Open the paper PDF using your preferred local PDF viewer
 - Papers on the arXiv that do not have full journal information will be automatically updated as soon as that information is available on ADS
 - Papers can be organized into different groups using tags
-- Export the bibtex entries for all papers, all papers belonging to a given tag, or just a single paper
+- Export the BibTeX entries for all papers, all papers belonging to a given tag, or just a single paper
 - Space for notes on each paper
 
 https://user-images.githubusercontent.com/12191474/201559494-a0fcbef5-cccf-4bb1-9cb1-a2d23dee25e5.mp4
@@ -68,7 +69,11 @@ You'll probably want to run this in a screen session or just move the process to
 
 # User Guide
 
-To add papers to the database, you'll need copy a link to the paper from either ADS or the arXiv into the search bar at the top of the interface. For example, the following three links will all add the same paper: 
+### Adding Papers
+
+There are two ways to add papers. You can import many papers from a BibTeX file, or add them one at a time. 
+
+To add a single paper to the database, you'll need copy a link to the paper from either ADS or the arXiv into the search bar at the top of the interface. For example, the following three links will all add the same paper: 
 - https://ui.adsabs.harvard.edu/abs/2021MNRAS.508.5935B/abstract
 - https://arxiv.org/abs/2106.12420
 - https://arxiv.org/pdf/2106.12420.pdf
@@ -76,6 +81,10 @@ To add papers to the database, you'll need copy a link to the paper from either 
 No matter which of the three links you use, the full paper details will be obtained from ADS. The one exception is papers on the arXiv that are not yet published. In this case, the code will keep an eye out for the full paper details on ADS. This means you can add a paper you find in the daily arXiv email, and the code will pull the full paper details once those are available without any input from you. Note that this check happens at launch no more than once every 24 hours. This check can take a slight bit of time (in my testing about 0.5 seconds per paper), so if there's a delay in opening the interface this may be the reason. 
 
 One final note here is that sometimes ADS takes a bit of time to get the daily arXiv papers into its system. Since my code relies on ADS, sometimes the most recent arXiv papers will fail when you try to add them. You may need to try to add them later that day or tomorrow. 
+
+Importing papers from a BibTeX file is relatively straightforward. You'll be prompted to select a BibTeX file, then the code will parse the file. Entries that were not successfully imported are written to a file with the reason that the import failed for each paper. During the import, a new tag will be created and all papers from this BibTeX file will be added to the new tag. This tag can be renamed like any other.
+
+When parsing BibTeX entries, the code will first look for the `adsurl`, `doi`, or `eprint` attributes, as these can be easily used to uniquely identify a paper. If none of those are present, the code will use the publication details to search for the paper on ADS. Specifically, it uses the `author`, `journal`, `year`, `volume`, `page`, and `title` fields. These fields will be used to create an ADS query. If ADS finds a paper that exactly matches these details, it will added to the database. This generally works great to uniquely identify papers. However, ADS often struggles with papers with math in the title. Those papers frequently fail, as the LaTeX formatting doesn't match how ADS has formatted the title. 
 
 ### Paper Details
 
@@ -95,7 +104,7 @@ Finally, there is a button to open the paper's page in ADS, and a button to dele
 
 The tag system allows you to organize your papers into groups. Each paper can have multiple tags. The left panel shows the list of tags. To show only the papers with a given tag, click on the name of the tag. When you add a new paper when a given tag is selected, the tag will be automatically applied to that paper.
 
-As discussed above, you can edit the tags a given paper has after clicking it.  In the left panel you can also add new tags or delete existing ones. When entering the name of the tag to add or delete, you can exit without adding/deleting by pressing Escape or pressing backspace when the text field is empty. 
+As discussed above, you can edit the tags a given paper has after clicking it.  In the left panel you can also add new tags, rename them, and delete existing ones. When entering the name of the tag to add, rename, or delete, you can exit without adding/deleting by pressing Escape or pressing backspace when the text field is empty. 
 
 Whenever you have a tag selected in the left panel, there is an export button shown. When pressed, this saves a `.bib` file containing all the BibTeX entries for papers with this tag. This file can then be used directly in a LaTeX document.
 
@@ -112,6 +121,7 @@ All the data used in this application (including the list of papers, your user n
 This application is a work in progress, and so far has only been tested by me, so there are likely bugs I haven't found yet. If you find that something doesn't work how you expect, or you have suggestions on how to make the application more functional or easier to use, please [email me](mailto:gillenbrown@gmail.com)! In particular, here are some things that I suspect may still need work:
 - Occasionally I found papers with atypical attributes that break my code. I fixed all the issues with papers I've tried to add, but if you find that adding a certain paper fails, send me a link to that paper and I'll fix it.
 - In the interface, I abbreviate some journal (e.g. MNRAS, ApJ). I got all the journals commonly used in the papers I've cited in my work, but of course that's not a representative sample. Let me know if there are any abbreviations I'm missing.
+- Similarly, the system to import papers from a BibTeX file was tested using the BibTeX files from my papers. There may be some edge cases that my small sample didn't test for.
 - I've written a system that updates arXiv papers with the full publication details once those are available. But my testing for this has been mostly contrived examples that may or may not be totally realistic, so keep an eye on your arXiv-only papers to see if the publication details are correctly updated.
 - Downloading the paper PDFs works okay, but not great. It first tries to download the PDF from the publisher, but in my testing the publisher often blocks the download since it thinks it's a bot (which it really is, to be fair). The application uses the arXiv PDF as a fallback. But the publishers may block me in particular since I sent a lot of requests when testing. So I'd be interested in seeing how many publisher PDFs regular users are able to download.
 - On a lighter note, I need a better name for this! "Library" has been a placeholder, so if you have any ideas for a name let me know.

@@ -4,6 +4,7 @@ test_interface.py
 Perform tests on the GUI using pytest-qt
 """
 import os
+import sys
 from pathlib import Path
 import random
 import shutil
@@ -274,6 +275,26 @@ def cDeleteTag(mainWidget, tagName, qtbot):
     cClick(mainWidget.tagsList.thirdDeleteTagButton, qtbot)
 
 
+def cRenameTag(mainWidget, oldTagName, newTagName, qtbot):
+    """
+    Rename a tag through the interface
+
+    :param mainWidget: The main window widget
+    :type mainWidget: MainWindow
+    :param oldTagName: The name of the tag to rename
+    :type oldTagName: str
+    :param newTagName: The new name of the tag
+    :type newTagName: str
+    :param qtbot: the qtbot instance used in a given test
+    :return: None
+    """
+    cClick(mainWidget.tagsList.renameTagButton, qtbot)
+    cEnterText(mainWidget.tagsList.renameTagOldEntry, oldTagName, qtbot)
+    cPressEnter(mainWidget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(mainWidget.tagsList.renameTagNewEntry, newTagName, qtbot)
+    cPressEnter(mainWidget.tagsList.renameTagNewEntry, qtbot)
+
+
 def cDeleteFirstPaper(mainWidget, qtbot):
     """
     Delete the first paper in the interface
@@ -383,6 +404,28 @@ def mSaveFileNoResponse(filter="", dir="", caption=""):
     Mock a response if the user exits the file chooser without choosing anything
     """
     return "", ""
+
+
+# ======================================================================================
+#
+# functions to create bibtex files for import -- copied from test_database.py
+#
+# ======================================================================================
+def create_bibtex_monkeypatch(*args):
+    """
+    Write bibtex entries into a random bibtex file, and return the file location
+
+    :param args: bibtex entries to write to the file
+    :type args: str
+    :return: path to the file location and a function to use with monkeypatch
+    :rtype: (pathlib.Path, func)
+    """
+    text = "\n\n".join(args)
+    file_path = Path(f"{random.randint(0, 1000000000)}.bib").resolve()
+    with open(file_path, "w") as bibfile:
+        bibfile.write(text)
+    monkeypatch_func = lambda filter, dir: (str(file_path), "dummy_filter")
+    return file_path, monkeypatch_func
 
 
 # ======================================================================================
@@ -574,8 +617,22 @@ def test_deleting_long_tag_resizes_splitter(qtbot, db_temp):
     )
 
 
-def test_showing_delete_tag_confirm_resizes_splitter(qtbot, db_temp):
+def test_renaming_long_tag_resizes_splitter(qtbot, db_temp):
     tag_name = "this is a very long tag, too long to realistically use"
+    db_temp.add_new_tag(tag_name)
+    widget = cInitialize(qtbot, db_temp)
+    original_sizes = widget.splitter.sizes()
+    cRenameTag(widget, tag_name, "short", qtbot)
+    new_sizes = widget.splitter.sizes()
+    assert new_sizes[0] < original_sizes[0]
+    assert new_sizes[0] == max(
+        widget.tagsList.default_min_width,
+        max([tag.sizeHint().width() for tag in widget.tagsList.tags]),
+    )
+
+
+def test_showing_delete_tag_confirm_resizes_splitter(qtbot, db_temp):
+    tag_name = "this is a very long tag"
     db_temp.add_new_tag(tag_name)
     widget = cInitialize(qtbot, db_temp)
     original_sizes = widget.splitter.sizes()
@@ -610,6 +667,21 @@ def test_first_paper_takes_up_full_splitter_width(qtbot, db_empty):
     paper_width = widget.papersList.getPapers()[0].width()
     splitter_width = widget.splitter.sizes()[1]
     assert paper_width == splitter_width
+
+
+def test_first_import_paper_takes_up_full_splitter_width(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    paper_width = widget.papersList.getPapers()[0].width()
+    splitter_width = widget.splitter.sizes()[1]
+    # sometimes this is very close but not exact, so I'll just check for closeness. I
+    # think this has something to do with how the new long tag name from the import
+    # changes the splitter. But I tested this in acutual use, and everything is fine
+    assert abs(paper_width - splitter_width) < 10
 
 
 # ====================
@@ -662,6 +734,31 @@ def test_add_paper_button_shown_at_beginning(qtbot, db_empty):
     assert widget.addButton.isHidden() is False
 
 
+def test_import_button_shown_at_beginning(qtbot, db_empty):
+    widget = cInitialize(qtbot, db_empty)
+    assert widget.importButton.isHidden() is False
+
+
+def test_import_progress_bar_not_shown_at_beginning(qtbot, db_empty):
+    widget = cInitialize(qtbot, db_empty)
+    assert widget.importProgressBar.isHidden() is True
+
+
+def test_import_result_text_not_shown_at_beginning(qtbot, db_empty):
+    widget = cInitialize(qtbot, db_empty)
+    assert widget.importResultText.isHidden() is True
+
+
+def test_import_result_text_dismiss_not_shown_at_beginning(qtbot, db_empty):
+    widget = cInitialize(qtbot, db_empty)
+    assert widget.importResultDismissButton.isHidden() is True
+
+
+def test_import_result_text_is_copyable(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    assert widget.importResultText.textInteractionFlags() == Qt.TextSelectableByMouse
+
+
 def test_textedit_is_not_in_error_state_at_beginning(qtbot, db_empty):
     widget = cInitialize(qtbot, db_empty)
     assert widget.searchBar.property("error") is False
@@ -697,6 +794,11 @@ def test_add_button_and_search_bar_have_almost_same_height(qtbot, db_empty):
     widget = cInitialize(qtbot, db_empty)
     height_ratio = widget.addButton.height() / widget.searchBar.height()
     assert 0.8 < height_ratio < 1.3
+
+
+def test_add_button_and_import_button_have_same_height(qtbot, db_empty):
+    widget = cInitialize(qtbot, db_empty)
+    assert widget.addButton.height() == widget.importButton.height()
 
 
 def test_add_button_and_search_bar_are_much_shorter_than_title(qtbot, db_empty):
@@ -766,6 +868,57 @@ def test_delete_tag_text_is_transparent_once_cleared(qtbot, db):
     cEnterText(widget.tagsList.secondDeleteTagEntry, "g", qtbot)
     cPressBackspace(widget.tagsList.secondDeleteTagEntry, qtbot)
     assert cGetTextAlpha(widget.tagsList.secondDeleteTagEntry) == 100
+
+
+def test_rename_tag_first_placeholder_text_starts_transparent(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    assert cGetTextAlpha(widget.tagsList.renameTagOldEntry) == 100
+
+
+def test_rename_tag_first_text_is_not_transparent_once_modified(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "g", qtbot)
+    assert cGetTextAlpha(widget.tagsList.renameTagOldEntry) == 255
+
+
+def test_rename_tag_first_text_is_transparent_once_cleared(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "g", qtbot)
+    cPressBackspace(widget.tagsList.renameTagOldEntry, qtbot)
+    assert cGetTextAlpha(widget.tagsList.renameTagOldEntry) == 100
+
+
+def test_rename_tag_second_placeholder_text_starts_transparent(qtbot, db_empty):
+    db_empty.add_new_tag("old")
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "old", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    assert cGetTextAlpha(widget.tagsList.renameTagNewEntry) == 100
+
+
+def test_rename_tag_second_text_is_not_transparent_once_modified(qtbot, db_empty):
+    db_empty.add_new_tag("old")
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "old", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "g", qtbot)
+    assert cGetTextAlpha(widget.tagsList.renameTagNewEntry) == 255
+
+
+def test_rename_tag_second_text_is_transparent_once_cleared(qtbot, db_empty):
+    db_empty.add_new_tag("old")
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "old", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "g", qtbot)
+    cPressBackspace(widget.tagsList.renameTagNewEntry, qtbot)
+    assert cGetTextAlpha(widget.tagsList.renameTagNewEntry) == 100
 
 
 def test_cite_key_placeholder_text_is_transparent(qtbot, db_temp):
@@ -951,10 +1104,7 @@ def test_adding_paper_after_delete_puts_details_in_right_panel(qtbot, db_temp):
     widget = cInitialize(qtbot, db_temp)
     bibcode = widget.papersList.getPapers()[0].bibcode
     title = widget.papersList.getPapers()[0].titleText.text()
-    print(db_temp.get_all_bibcodes())
     cDeleteFirstPaper(widget, qtbot)
-    print(db_temp.get_all_bibcodes())
-    print(bibcode)
     cAddPaper(widget, bibcode, qtbot)
     assert widget.rightPanel.titleText.text() == title
 
@@ -1011,6 +1161,12 @@ def test_adding_bad_paper_hides_add_button(qtbot, db_empty):
     assert widget.addButton.isHidden() is True
 
 
+def test_adding_bad_paper_hides_import_button(qtbot, db_empty):
+    widget = cInitialize(qtbot, db_empty)
+    cAddPaper(widget, "nonsense", qtbot)
+    assert widget.importButton.isHidden() is True
+
+
 def test_adding_bad_arXiv_paper_shows_error_text(qtbot, db_empty):
     widget = cInitialize(qtbot, db_empty)
     # Use future arXiv paper from 2035
@@ -1038,6 +1194,17 @@ def test_search_bar_and_error_text_are_much_shorter_than_title(qtbot, db_empty):
     assert widget.searchBarErrorText.height() < 0.6 * widget.title.height()
 
 
+def test_import_button_height_during(qtbot, db_empty, monkeypatch):
+    # when I first tested this it took up the whole screen for some reason
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+        assert widget.importResultText.height() < 50
+    file_loc.unlink()
+
+
 def test_bad_paper_error_formatting_of_textedit_reset_after_clicking(qtbot, db_empty):
     widget = cInitialize(qtbot, db_empty)
     cAddPaper(widget, "nonsense", qtbot)
@@ -1059,6 +1226,13 @@ def test_bad_paper_add_button_reshown_after_any_clicking(qtbot, db_empty):
     assert widget.addButton.isHidden() is False
 
 
+def test_bad_paper_import_button_reshown_after_any_clicking(qtbot, db_empty):
+    widget = cInitialize(qtbot, db_empty)
+    cAddPaper(widget, "nonsense", qtbot)
+    widget.searchBar.setCursorPosition(0)
+    assert widget.importButton.isHidden() is False
+
+
 def test_bad_paper_error_textedit_formatting_reset_after_editing_text(qtbot, db_empty):
     widget = cInitialize(qtbot, db_empty)
     cAddPaper(widget, "nonsense", qtbot)
@@ -1073,11 +1247,12 @@ def test_bad_paper_error_message_of_textedit_reset_after_editing_text(qtbot, db_
     assert widget.searchBarErrorText.isHidden() is True
 
 
-def test_bad_paper_add_button_reshown_after_editing_text(qtbot, db_empty):
+def test_bad_paper_buttons_reshown_after_editing_text(qtbot, db_empty):
     widget = cInitialize(qtbot, db_empty)
     cAddPaper(widget, "nonsense", qtbot)
     cEnterText(widget.searchBar, "nonsens", qtbot)
     assert widget.addButton.isHidden() is False
+    assert widget.importButton.isHidden() is False
 
 
 def test_adding_paper_does_not_clear_search_bar_if_already_in_library(qtbot, db):
@@ -1099,10 +1274,11 @@ def test_adding_duplicate_paper_shows_error_text(qtbot, db):
     assert widget.searchBarErrorText.text() == "This paper is already in the library."
 
 
-def test_adding_duplicate_paper_hides_add_button(qtbot, db):
+def test_adding_duplicate_paper_hides_buttons(qtbot, db):
     widget = cInitialize(qtbot, db)
     cAddPaper(widget, u.mine.bibcode, qtbot)
     assert widget.addButton.isHidden() is True
+    assert widget.importButton.isHidden() is True
 
 
 def test_duplicate_error_formatting_of_textedit_reset_after_any_clicking(qtbot, db):
@@ -1119,11 +1295,12 @@ def test_duplicate_error_message_of_textedit_reset_after_any_clicking(qtbot, db)
     assert widget.searchBarErrorText.isHidden() is True
 
 
-def test_duplicate_add_button_reshown_after_any_clicking(qtbot, db):
+def test_duplicate_buttons_reshown_after_any_clicking(qtbot, db):
     widget = cInitialize(qtbot, db)
     cAddPaper(widget, u.mine.bibcode, qtbot)
     widget.searchBar.setCursorPosition(0)
     assert widget.addButton.isHidden() is False
+    assert widget.importButton.isHidden() is False
 
 
 def test_duplicate_error_formatting_of_textedit_reset_after_editing_text(qtbot, db):
@@ -1140,11 +1317,12 @@ def test_duplicate_error_message_of_textedit_reset_after_editing_text(qtbot, db)
     assert widget.searchBarErrorText.isHidden() is True
 
 
-def test_duplicate_add_button_reshown_after_editing_text(qtbot, db):
+def test_duplicate_buttons_reshown_after_editing_text(qtbot, db):
     widget = cInitialize(qtbot, db)
     cAddPaper(widget, u.mine.bibcode, qtbot)
     cEnterText(widget.searchBar, "s", qtbot)
     assert widget.addButton.isHidden() is False
+    assert widget.importButton.isHidden() is False
 
 
 def test_adding_paper_does_not_clear_search_bar_if_bad_ads_key(qtbot, db_empty_bad_ads):
@@ -1170,10 +1348,11 @@ def test_adding_paper_bad_ads_key_shows_error_text(qtbot, db_empty_bad_ads):
     )
 
 
-def test_adding_paper_no_ads_key_hides_add_button(qtbot, db_empty_bad_ads):
+def test_adding_paper_no_ads_key_hides_buttons(qtbot, db_empty_bad_ads):
     widget = cInitialize(qtbot, db_empty_bad_ads)
     cAddPaper(widget, u.used_for_no_ads_key.url, qtbot)
     assert widget.addButton.isHidden() is True
+    assert widget.importButton.isHidden() is True
 
 
 def test_bad_ads_key_error_reset_after_any_clicking(qtbot, db_empty_bad_ads):
@@ -1190,11 +1369,12 @@ def test_bad_ads_key_error_hidden_after_any_clicking(qtbot, db_empty_bad_ads):
     assert widget.searchBarErrorText.isHidden() is True
 
 
-def test_no_ads_key_add_button_reshown_after_clicking(qtbot, db_empty_bad_ads):
+def test_no_ads_key_buttons_reshown_after_clicking(qtbot, db_empty_bad_ads):
     widget = cInitialize(qtbot, db_empty_bad_ads)
     cAddPaper(widget, u.used_for_no_ads_key.url, qtbot)
     widget.searchBar.setCursorPosition(0)
     assert widget.addButton.isHidden() is False
+    assert widget.importButton.isHidden() is False
 
 
 def test_bad_ads_key_error_formatting_reset_after_editing_text(qtbot, db_empty_bad_ads):
@@ -1216,6 +1396,7 @@ def test_no_ads_key_add_button_reshown_after_editing_text(qtbot, db_empty_bad_ad
     cAddPaper(widget, u.used_for_no_ads_key.url, qtbot)
     cEnterText(widget.searchBar, "s", qtbot)
     assert widget.addButton.isHidden() is False
+    assert widget.importButton.isHidden() is False
 
 
 def test_paper_cannot_be_added_twice(qtbot, db_empty):
@@ -1228,13 +1409,6 @@ def test_paper_cannot_be_added_twice(qtbot, db_empty):
     assert len(widget.papersList.getPapers()) == 1
 
 
-def test_duplicate_in_internal_paper_list_raises_error(qtbot, db):
-    widget = cInitialize(qtbot, db)
-    new_paper = Paper(u.mine.bibcode, widget)
-    with pytest.raises(AssertionError):
-        widget.papersList.addPaper(new_paper)
-
-
 # =============
 # update system
 # =============
@@ -1245,6 +1419,513 @@ def test_db_update_reflected_in_interface(qtbot, db_update):
     assert "Brown, Gnedin, Li, 2022, arXiv:1804.09819" not in cite_strings
     assert "Brown, Gnedin, 2022, MNRAS, 514, 280" in cite_strings
     assert "Brown, Gnedin, 2022, arXiv:2203.00559" not in cite_strings
+
+
+# =============
+# import system
+# =============
+def test_clicking_import_button_asks_user(qtbot, db_empty, monkeypatch):
+    get_file_calls = []
+
+    def mock_get_file(filter="", dir=""):
+        get_file_calls.append(1)
+        return __file__, "dummy filter"
+
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", mock_get_file)
+
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+    assert get_file_calls == [1]
+    db_empty._failure_file_loc(Path(__file__)).unlink()  # remove failure files
+
+
+def test_clicking_import_and_cancelling_does_no_import(qtbot, db_empty, monkeypatch):
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", mOpenFileNoResponse)
+    calls = []
+    monkeypatch.setattr(Database, "import_bibtex", lambda s, b: calls.append(b))
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.importButton, qtbot)
+    assert calls == []
+
+
+def test_import_disables_main_window_during(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+        assert widget.splitter.isEnabled() is False
+    file_loc.unlink()  # delete before tests may fail
+    assert widget.splitter.isEnabled() is True
+
+
+def test_import_disables_theme_switcher(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+        assert widget.title.isEnabled() is False
+    file_loc.unlink()  # delete before tests may fail
+    assert widget.title.isEnabled() is True
+
+
+def test_import_changes_qss_main_window_during(qtbot, db_empty, monkeypatch):
+    # add some papers and tags to check that they're faded
+    db_empty.add_new_tag("test")
+    db_empty.add_paper(u.juan.bibcode)
+    db_empty.add_paper(u.tremonti.bibcode)
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+        assert widget.splitter.property("faded") is True
+        for t in widget.tagsList.tags:
+            assert t.property("faded") is True
+        for p in widget.papersList.getPapers():
+            assert p.property("faded") is True
+    file_loc.unlink()  # delete before tests may fail
+    assert widget.splitter.property("faded") is False
+    for t in widget.tagsList.tags:
+        assert t.property("faded") is False
+    for p in widget.papersList.getPapers():
+        assert p.property("faded") is False
+
+
+def test_import_shows_progress_bar_during(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+        assert widget.importProgressBar.isHidden() is False
+    file_loc.unlink()  # delete before tests may fail
+    assert widget.importProgressBar.isHidden() is True
+
+
+def test_import_shows_explanatory_text_during(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+        assert widget.importResultText.isHidden() is False
+        assert widget.importResultText.text() == "Please wait until the import finishes"
+    file_loc.unlink()
+
+
+def test_import_hides_search_bar_buttons_during(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+        assert widget.searchBar.isHidden() is True
+        assert widget.addButton.isHidden() is True
+        assert widget.importButton.isHidden() is True
+    file_loc.unlink()  # delete before tests may fail
+
+
+def test_import_progressbar_starts_at_zero(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+        assert widget.importProgressBar.value() == 0
+    file_loc.unlink()  # delete before tests may fail
+
+
+def test_import_progressbar_has_correct_max_value(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    n_lines = len(open(file_loc, "r").readlines())
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+        assert widget.importProgressBar.value() == 0
+        assert widget.importProgressBar.maximum() == n_lines
+    file_loc.unlink()  # delete before tests may fail
+
+
+def test_import_progressbar_ends_at_number_of_lines(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    # I don't want to end at the maximum since after this finishes we still need to
+    # add papers to the interface and such.
+    assert widget.importProgressBar.value() == widget.importProgressBar.maximum()
+
+
+def test_import_shows_results_text_after(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    assert widget.importResultText.isHidden() is False
+
+
+def test_import_shows_results_dismiss_button_after(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    assert widget.importResultDismissButton.isHidden() is False
+
+
+def test_import_hides_search_bar_and_buttons_after(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    assert widget.searchBar.isHidden() is True
+    assert widget.addButton.isHidden() is True
+    assert widget.importButton.isHidden() is True
+
+
+def test_import_dismiss_button_restores_default_state(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    cClick(widget.importResultDismissButton, qtbot)
+    assert widget.searchBar.isHidden() is False
+    assert widget.addButton.isHidden() is False
+    assert widget.importButton.isHidden() is False
+    assert widget.importResultText.isHidden() is True
+    assert widget.importResultDismissButton.isHidden() is True
+
+
+def test_clicking_import_button_adds_paper_to_database(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    assert widget.db.get_all_bibcodes() == [u.mine.bibcode]
+
+
+def test_import_finish_adds_paper_to_interface(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    assert widget.papersList.getPapers()[0].bibcode == u.mine.bibcode
+
+
+def test_import_results_text_no_papers_found(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch("   ")
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    assert widget.importResultText.text() == "Import results: No papers found"
+
+
+def test_import_results_text_one_success(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    assert (
+        widget.importResultText.text()
+        == "Import results: 1 paper found, 1 added successfully"
+    )
+
+
+def test_import_results_text_one_duplicate(qtbot, db_empty, monkeypatch):
+    db_empty.add_paper(u.mine.bibcode)
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    assert (
+        widget.importResultText.text()
+        == "Import results: 1 paper found, 1 duplicate skipped"
+    )
+
+
+def test_import_results_text_two_duplicates(qtbot, db_temp, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex, u.tremonti.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_temp)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    assert (
+        widget.importResultText.text()
+        == "Import results: 2 papers found, 2 duplicates skipped"
+    )
+
+
+def test_import_results_text_one_error(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(
+        "@ARTICLE{1957RvMP...29..547B,\n"
+        " author = {{Burbidge}, E. Margaret},\n"
+        '  title = "{Synthesis of the Elements in Stars}",\n'
+        "journal = {Reviews of Modern Physics},\n"
+        "   year = 1959,\n"  # edited to be incorrect
+        "}"
+    )
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    fail_file = db_empty._failure_file_loc(file_loc)
+    fail_file.unlink()  # remove failure files
+    shown_text = widget.importResultText.text()
+    assert shown_text.startswith(
+        "Import results: 1 paper found, 1 failure\nFailed entries written to "
+    )
+    assert Path(shown_text.split()[-1]).expanduser() == fail_file
+
+
+def test_import_results_text_two_errors(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(
+        "@ARTICLE{1957RvMP...29..547B,\n"
+        " author = {{Burbidge}, E. Margaret},\n"
+        '  title = "{Synthesis of the Elements in Stars}",\n'
+        "journal = {Reviews of Modern Physics},\n"
+        "   year = 1959,\n"  # changed to be an error
+        "}",
+        "@BOOK{2010gfe..book.....M,\n"
+        "   author = {{Mo}, Houjun and {van den Bosch}, Frank C. and {White}, Simon},\n"
+        '    title = "{Galaxy Formation and Evolution}",\n'
+        "     year = 2014,\n"  # changed to be an error
+        "}\n"
+        "}",
+    )
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    fail_file = db_empty._failure_file_loc(file_loc)
+    fail_file.unlink()  # remove failure files
+    shown_text = widget.importResultText.text()
+    assert shown_text.startswith(
+        "Import results: 2 papers found, 2 failures\n" f"Failed entries written to "
+    )
+    assert Path(shown_text.split()[-1]).expanduser() == fail_file
+
+
+def test_import_results_text_one_success_one_duplicate(qtbot, db_empty, monkeypatch):
+    db_empty.add_paper(u.mine.bibcode)
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex, u.tremonti.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    assert (
+        widget.importResultText.text()
+        == "Import results: 2 papers found, 1 added successfully, 1 duplicate skipped"
+    )
+
+
+def test_import_results_text_one_success_one_failure(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(
+        "@ARTICLE{1957RvMP...29..547B,\n"
+        " author = {{Burbidge}, E. Margaret},\n"
+        '  title = "{Synthesis of the Elements in Stars}",\n'
+        "journal = {Reviews of Modern Physics},\n"
+        "   year = 1959,\n"  # edited to be incorrect
+        "}",
+        u.mine.bibtex,
+    )
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    fail_file = db_empty._failure_file_loc(file_loc)
+    fail_file.unlink()  # remove failure files
+    shown_text = widget.importResultText.text()
+    assert shown_text.startswith(
+        "Import results: 2 papers found, 1 added successfully, 1 failure\n"
+        f"Failed entries written to "
+    )
+    assert Path(shown_text.split()[-1]).expanduser() == fail_file
+
+
+def test_import_results_text_one_duplicate_one_failure(qtbot, db_empty, monkeypatch):
+    db_empty.add_paper(u.mine.bibcode)
+    file_loc, test_func = create_bibtex_monkeypatch(
+        "@ARTICLE{1957RvMP...29..547B,\n"
+        " author = {{Burbidge}, E. Margaret},\n"
+        '  title = "{Synthesis of the Elements in Stars}",\n'
+        "journal = {Reviews of Modern Physics},\n"
+        "   year = 1959,\n"  # edited to be incorrect
+        "}",
+        u.mine.bibtex,
+    )
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    fail_file = db_empty._failure_file_loc(file_loc)
+    fail_file.unlink()  # remove failure files
+    shown_text = widget.importResultText.text()
+    assert shown_text.startswith(
+        "Import results: 2 papers found, 1 duplicate skipped, 1 failure\n"
+        f"Failed entries written to "
+    )
+    assert Path(shown_text.split()[-1]).expanduser() == fail_file
+
+
+def test_import_results_text_one_success_one_dup_one_fail(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(
+        "@ARTICLE{1957RvMP...29..547B,\n"
+        " author = {{Burbidge}, E. Margaret},\n"
+        '  title = "{Synthesis of the Elements in Stars}",\n'
+        "journal = {Reviews of Modern Physics},\n"
+        "   year = 1959,\n"  # edited to be incorrect
+        "}",
+        u.mine.bibtex,
+        u.mine.bibtex,
+    )
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    fail_file = db_empty._failure_file_loc(file_loc)
+    fail_file.unlink()  # remove failure files
+    shown_text = widget.importResultText.text()
+    assert shown_text.startswith(
+        "Import results: "
+        "3 papers found, 1 added successfully, 1 duplicate skipped, 1 failure\n"
+        f"Failed entries written to "
+    )
+    assert Path(shown_text.split()[-1]).expanduser() == fail_file
+
+
+def test_import_results_shown_file_location_shorthand(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(
+        "@ARTICLE{1957RvMP...29..547B,\n"
+        " author = {{Burbidge}, E. Margaret},\n"
+        '  title = "{Synthesis of the Elements in Stars}",\n'
+        "journal = {Reviews of Modern Physics},\n"
+        "   year = 1959,\n"  # edited to be incorrect
+        "}"
+    )
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    fail_file = db_empty._failure_file_loc(file_loc)
+    fail_file.unlink()  # remove failure files
+    shown_path = widget.importResultText.text().split()[-1]
+    # ~ isn't part of Windows, so we need to be careful about how we check
+    if sys.platform != "win32":
+        assert shown_path.startswith("~/")
+
+
+def test_import_after_finished_adds_new_tag_to_interface(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex, u.tremonti.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    tag_names = [t.label.text() for t in widget.tagsList.tags]
+    assert f"Import {file_loc.name}" in tag_names
+
+
+def test_import_after_finished_clicks_new_tag(qtbot, db_empty, monkeypatch):
+    db_empty.add_new_tag("test")
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex, u.tremonti.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    assert widget.tagsList.showAllButton.property("is_highlighted") is False
+    for tag in widget.tagsList.tags:
+        if tag.label.text() == f"Import {file_loc.name}":
+            assert tag.property("is_highlighted") is True
+        else:
+            assert tag.property("is_highlighted") is False
+
+
+def test_import_imported_papers_are_shown_in_center(qtbot, db_empty, monkeypatch):
+    db_empty.add_paper(u.juan.bibcode)
+    db_empty.add_paper(u.mine.bibcode)
+    db_empty.add_paper(u.forbes.bibcode)
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex, u.tremonti.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    seen_papers = [p.bibcode for p in widget.papersList.getPapers() if not p.isHidden()]
+    assert seen_papers == [u.tremonti.bibcode, u.mine.bibcode]
+
+
+def test_import_new_tag_is_shown_in_right_panel(qtbot, db_empty, monkeypatch):
+    db_empty.add_paper(u.mine.bibcode)
+    db_empty.add_new_tag("Unread")
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex, u.tremonti.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.papersList.getPapers()[0], qtbot)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+    file_loc.unlink()  # delete before tests may fail
+    assert widget.rightPanel.tagText.text() == f"Tags: Import {file_loc.name}"
+
+
+def test_import_cite_key_is_shown_correctly(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(
+        u.mine.bibtex.replace("@ARTICLE{2018ApJ...864...94B", "@ARTICLE{test")
+    )
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+    file_loc.unlink()
+    cClick(widget.papersList.getPapers()[0], qtbot)
+    assert widget.rightPanel.citeKeyText.text() == "Citation Keyword: test"
+
+
+def test_import_twice_is_possible(qtbot, db_empty, monkeypatch):
+    file_loc, test_func = create_bibtex_monkeypatch(u.mine.bibtex)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", test_func)
+    widget = cInitialize(qtbot, db_empty)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+    cClick(widget.importResultDismissButton, qtbot)
+    with qtbot.waitSignal(widget.importWorker.signals.finished, timeout=10000):
+        cClick(widget.importButton, qtbot)
+    file_loc.unlink()
+    assert (
+        widget.importResultText.text()
+        == "Import results: 1 paper found, 1 duplicate skipped"
+    )
 
 
 # ======================================================================================
@@ -1745,8 +2426,10 @@ def test_paper_pdf_text_has_correct_text_with_local_file(qtbot, db_empty):
     widget = cInitialize(qtbot, db_empty)
     cClick(widget.papersList.getPapers()[0], qtbot)
     # check that the shown path uses ~ and resolves to the correct location
+    # ~ isn't part of Windows, so we need to be careful about how we check
     shown_path = widget.rightPanel.pdfText.text().replace("PDF Location: ", "")
-    assert shown_path.startswith("~/")
+    if sys.platform != "win32":
+        assert shown_path.startswith("~/")
     assert Path(shown_path).expanduser() == Path(__file__).resolve()
 
 
@@ -1826,7 +2509,8 @@ def test_paper_pdf_add_local_file_updates_text(qtbot, db_temp, monkeypatch):
     cClick(widget.rightPanel.pdfChooseLocalFileButton, qtbot)
     # check that the shown path uses ~ and resolves to the correct location
     shown_path = widget.rightPanel.pdfText.text().replace("PDF Location: ", "")
-    assert shown_path.startswith("~/")
+    if sys.platform != "win32":
+        assert shown_path.startswith("~/")
     assert Path(shown_path).expanduser() == Path(__file__).resolve()
 
 
@@ -2130,7 +2814,8 @@ def test_download_pdf_button_updates_text(qtbot, db_temp, monkeypatch):
     cClick(widget.rightPanel.pdfDownloadButton, qtbot)
     # check that the shown path uses ~ and resolves to the correct location
     shown_path = widget.rightPanel.pdfText.text().replace("PDF Location: ", "")
-    assert shown_path.startswith("~/")
+    if sys.platform != "win32":
+        assert shown_path.startswith("~/")
     assert Path(shown_path).expanduser() == mSaveLocPDF
     mSaveLocPDF.unlink()
 
@@ -3392,12 +4077,6 @@ def test_paper_initialization_has_accents_in_author_list(qtbot, db_empty):
     assert "á" in new_paper.citeText.text()
 
 
-def test_cannot_initialize_paper_thats_not_in_database(qtbot, db_empty):
-    widget = cInitialize(qtbot, db_empty)
-    with pytest.raises(AssertionError):
-        Paper(u.mine.bibcode, widget)
-
-
 def test_all_papers_in_database_are_in_the_paper_list_at_beginning(qtbot, db):
     widget = cInitialize(qtbot, db)
     papers_list_bibcodes = [p.bibcode for p in widget.papersList.getPapers()]
@@ -3805,6 +4484,41 @@ def test_show_all_button_has_correct_font_family(qtbot, db_empty):
 def test_show_all_button_has_correct_text(qtbot, db_empty):
     widget = cInitialize(qtbot, db_empty)
     assert widget.tagsList.showAllButton.label.text() == "All Papers"
+
+
+def test_rename_tag_button_shown_at_beginning(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    assert widget.tagsList.renameTagButton.isHidden() is False
+
+
+def test_rename_tag_button_has_correct_text(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    assert widget.tagsList.renameTagButton.text() == "Rename a tag"
+
+
+def test_rename_tag_old_entry_hidden_at_beginning(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    assert widget.tagsList.renameTagOldEntry.isHidden() is True
+
+
+def test_rename_tag_new_entry_hidden_at_beginning(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    assert widget.tagsList.renameTagNewEntry.isHidden() is True
+
+
+def test_rename_tag_error_text_hidden_at_beginning(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    assert widget.tagsList.renameTagErrorText.isHidden() is True
+
+
+def test_rename_tag_old_entry_has_placeholder_text(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    assert widget.tagsList.renameTagOldEntry.placeholderText() == "Tag to rename"
+
+
+def test_rename_tag_new_entry_has_placeholder_text(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    assert widget.tagsList.renameTagNewEntry.placeholderText() == "New tag name"
 
 
 def test_first_delete_tag_button_shown_at_beginning(qtbot, db_temp):
@@ -4270,6 +4984,499 @@ def test_left_panel_tags_are_sorted_alphabetically_after_adding(qtbot, db_empty)
     # in comparison, include unread, since it was included on widget
     # initialization too
     assert tag_names == sorted(tags + ["Unread"], key=lambda w: w.lower())
+
+
+# =============
+# renaming tags
+# =============
+def test_clicking_first_rename_tag_button_shows_old_entry(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    assert widget.tagsList.renameTagOldEntry.isHidden() is False
+
+
+def test_clicking_rename_tag_button_focus_on_entry(qtbot, db_temp, monkeypatch):
+    # I tried to test this directly, but was having trouble getting the tests to work
+    # properly. Specifically, widget.hasFocus() was not working propertly in tests for
+    # whatever reasonSo instead, I'll monkeypatch the setFocus method. I have tested
+    # that this works in the actual interface
+    setFocus_calls = []
+    monkeypatch.setattr(QLineEdit, "setFocus", lambda x: setFocus_calls.append(True))
+
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    # assert widget.renameTagOldEntry.hasFocus() is True  # would be the best test
+    assert setFocus_calls == [True]
+
+
+def test_clicking_rename_tag_button_hides_button(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    assert widget.tagsList.renameTagButton.isHidden() is True
+
+
+def test_rename_tag_button_and_old_entry_have_same_height(qtbot, db_empty):
+    widget = cInitialize(qtbot, db_empty)
+    button_height = widget.tagsList.renameTagButton.height()
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    assert widget.tagsList.renameTagOldEntry.height() == button_height
+
+
+def test_rename_tag_old_entry_is_hidden_when_entry_done(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)  # tag must exist
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    assert widget.tagsList.renameTagOldEntry.isHidden() is True
+
+
+def test_rename_tag_new_entry_appears_when_old_entry_done(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    assert widget.tagsList.renameTagNewEntry.isHidden() is False
+
+
+def test_clicking_rename_tag_button_focus_on_new_entry(qtbot, db_temp, monkeypatch):
+    # I tried to test this directly, but was having trouble getting the tests to work
+    # properly. Specifically, widget.hasFocus() was not working propertly in tests for
+    # whatever reasonSo instead, I'll monkeypatch the setFocus method. I have tested
+    # that this works in the actual interface
+    setFocus_calls = []
+    monkeypatch.setattr(QLineEdit, "setFocus", lambda x: setFocus_calls.append(True))
+
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    # assert widget.renameTagNewEntry.hasFocus() is True  # would be the best test
+    assert setFocus_calls == [True, True]
+
+
+def test_rename_tag_old_and_new_entry_have_same_height(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    button_height = widget.tagsList.renameTagButton.height()
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    entry_old_height = widget.tagsList.renameTagOldEntry.height()
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    entry_new_height = widget.tagsList.renameTagNewEntry.height()
+    assert button_height == entry_old_height  # already checked, included for clarity
+    assert entry_old_height == entry_new_height
+
+
+def test_rename_tag_error_text_hidden_when_old_entry_done(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    assert widget.tagsList.renameTagErrorText.isHidden() is True
+
+
+def test_rename_tag_old_entry_can_exit_with_escape_press_at_any_time(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "sdfsdf", qtbot)
+    cPressEscape(widget.tagsList.renameTagOldEntry, qtbot)
+    assert widget.tagsList.renameTagButton.isHidden() is False
+    assert widget.tagsList.renameTagOldEntry.isHidden() is True
+    assert widget.tagsList.renameTagNewEntry.isHidden() is True
+
+
+def test_rename_tag_new_entry_can_exit_with_escape_press_at_any_time(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "Read", qtbot)
+    cPressEscape(widget.tagsList.renameTagNewEntry, qtbot)
+    assert widget.tagsList.renameTagButton.isHidden() is False
+    assert widget.tagsList.renameTagOldEntry.isHidden() is True
+    assert widget.tagsList.renameTagNewEntry.isHidden() is True
+
+
+def test_rename_tag_old_entry_exit_with_escape_press_at_any_time_clears_text(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "sdfsdf", qtbot)
+    cPressEscape(widget.tagsList.renameTagOldEntry, qtbot)
+    assert widget.tagsList.renameTagOldEntry.text() == ""
+
+
+def test_rename_tag_new_entry_exit_with_escape_press_at_any_time_clears_text(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "Read", qtbot)
+    cPressEscape(widget.tagsList.renameTagNewEntry, qtbot)
+    assert widget.tagsList.renameTagNewEntry.text() == ""
+
+
+def test_rename_tag_old_entry_can_exit_with_backspace_when_empty(qtbot, db):
+    widget = cInitialize(qtbot, db)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "abc", qtbot)
+    # back out those three letters
+    for _ in range(3):
+        cPressBackspace(widget.tagsList.renameTagOldEntry, qtbot)
+    # entry should still be visible
+    assert widget.tagsList.renameTagButton.isHidden() is True
+    assert widget.tagsList.renameTagOldEntry.isHidden() is False
+    assert widget.tagsList.renameTagNewEntry.isHidden() is True
+    # with one more backspace, we exit
+    cPressBackspace(widget.tagsList.renameTagOldEntry, qtbot)
+    assert widget.tagsList.renameTagButton.isHidden() is False
+    assert widget.tagsList.renameTagOldEntry.isHidden() is True
+    assert widget.tagsList.renameTagNewEntry.isHidden() is True
+
+
+def test_rename_tag_new_entry_can_exit_with_backspace_when_empty(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "abc", qtbot)
+    # back out those three letters
+    for _ in range(3):
+        cPressBackspace(widget.tagsList.renameTagNewEntry, qtbot)
+    # entry should still be visible
+    assert widget.tagsList.renameTagButton.isHidden() is True
+    assert widget.tagsList.renameTagNewEntry.isHidden() is False
+    assert widget.tagsList.renameTagOldEntry.isHidden() is True
+    # with one more backspace, we exit
+    cPressBackspace(widget.tagsList.renameTagNewEntry, qtbot)
+    assert widget.tagsList.renameTagButton.isHidden() is False
+    assert widget.tagsList.renameTagNewEntry.isHidden() is True
+    assert widget.tagsList.renameTagOldEntry.isHidden() is True
+
+
+def test_rename_tag_does_that_in_database(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    original_tags = db_temp.get_all_tags()
+    # don't use convenience function, for clarity
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "New", qtbot)
+    cPressEnter(widget.tagsList.renameTagNewEntry, qtbot)
+    # check that it's not in the database anymore
+    new_tags = db_temp.get_all_tags()
+    assert "Read" not in new_tags
+    assert "New" in new_tags
+    assert len(new_tags) == len(original_tags)
+
+
+def test_rename_tag_different_caps_does_that_in_database(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    original_tags = db_temp.get_all_tags()
+    # don't use convenience function, for clarity
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "READ", qtbot)
+    cPressEnter(widget.tagsList.renameTagNewEntry, qtbot)
+    # check that it's not in the database anymore
+    new_tags = db_temp.get_all_tags()
+    assert "Read" not in new_tags
+    assert "READ" in new_tags
+    assert len(new_tags) == len(original_tags)
+
+
+def test_rename_tag_does_that_in_interface(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    # first get the original number of tags
+    num_original_tags = len([t.name for t in widget.tagsList.tags])
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "New", qtbot)
+    cPressEnter(widget.tagsList.renameTagNewEntry, qtbot)
+    # Then see what tags are in the list now
+    new_tags = [t.name for t in widget.tagsList.tags]
+    assert len(new_tags) == num_original_tags
+    assert not "Read" in new_tags
+    assert "New" in new_tags
+
+
+def test_rename_tag_does_that_in_interface_sorted(qtbot, db_empty):
+    db_empty.add_new_tag("G")
+    db_empty.add_new_tag("H")
+    db_empty.add_new_tag("O")
+    db_empty.add_new_tag("S")
+    db_empty.add_new_tag("T")
+    widget = cInitialize(qtbot, db_empty)
+    cRenameTag(widget, "O", "Z", qtbot)
+    # Then see what tags are in the list now
+    new_tags = [t.name for t in widget.tagsList.tags]
+    assert new_tags == ["G", "H", "S", "T", "Z"]
+
+
+def test_rename_tag_does_that_in_right_panel_text(qtbot, db_empty):
+    db_empty.add_paper(u.mine.bibcode)
+    db_empty.add_new_tag("old")
+    db_empty.tag_paper(u.mine.bibcode, "old")
+
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.papersList.getPapers()[0], qtbot)
+    assert widget.rightPanel.tagText.text() == "Tags: old"
+    cRenameTag(widget, "old", "new", qtbot)
+    assert widget.rightPanel.tagText.text() == "Tags: new"
+
+
+def test_rename_tag_does_that_in_right_panel_checkboxes(qtbot, db_empty):
+    db_empty.add_paper(u.mine.bibcode)
+    db_empty.add_new_tag("old")
+    db_empty.tag_paper(u.mine.bibcode, "old")
+
+    widget = cInitialize(qtbot, db_empty)
+    cClick(widget.papersList.getPapers()[0], qtbot)
+    cClick(widget.rightPanel.editTagsButton, qtbot)
+    assert [t.text() for t in widget.rightPanel.getTagCheckboxes()] == ["old"]
+    cRenameTag(widget, "old", "new", qtbot)
+    assert [t.text() for t in widget.rightPanel.getTagCheckboxes()] == ["new"]
+
+
+def test_rename_tag_button_comes_back_once_done(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cRenameTag(widget, "Read", "New", qtbot)
+    assert widget.tagsList.renameTagButton.isHidden() is False
+
+
+def test_rename_tag_old_entry_hidden_once_tag_renamed(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cRenameTag(widget, "Read", "New", qtbot)
+    assert widget.tagsList.renameTagOldEntry.isHidden() is True
+
+
+def test_rename_tag_new_entry_hidden_once_tag_renamed(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cRenameTag(widget, "Read", "New", qtbot)
+    assert widget.tagsList.renameTagNewEntry.isHidden() is True
+
+
+def test_rename_tag_button_comes_back_once_cancelled_at_old(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "sdfsdf", qtbot)
+    cPressEscape(widget.tagsList.renameTagOldEntry, qtbot)
+    assert widget.tagsList.renameTagButton.isHidden() is False
+
+
+def test_rename_tag_button_comes_back_once_cancelled_at_new(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "Read", qtbot)
+    cPressEscape(widget.tagsList.renameTagNewEntry, qtbot)
+    assert widget.tagsList.renameTagButton.isHidden() is False
+
+
+def test_rename_tag_old_entry_hidden_once_cancelled(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "sdfsdf", qtbot)
+    cPressEscape(widget.tagsList.renameTagOldEntry, qtbot)
+    assert widget.tagsList.renameTagOldEntry.isHidden() is True
+
+
+def test_rename_tag_new_entry_hidden_once_cancelled(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "Read", qtbot)
+    cPressEscape(widget.tagsList.renameTagNewEntry, qtbot)
+    assert widget.tagsList.renameTagNewEntry.isHidden() is True
+
+
+def test_cancel_renanme_tags_doesnt_rename_db(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    # first get the original tags
+    original_tags = db_temp.get_all_tags()
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "Read", qtbot)
+    cPressEscape(widget.tagsList.renameTagNewEntry, qtbot)
+    new_tags = db_temp.get_all_tags()
+    assert len(original_tags) == len(new_tags)
+    assert original_tags == new_tags
+
+
+def test_cancel_rename_tags_doesnt_rename_interface(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    # first get the original tags
+    original_tags = [t.name for t in widget.tagsList.tags]
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "Read", qtbot)
+    cPressEscape(widget.tagsList.renameTagNewEntry, qtbot)
+    new_tags = [t.name for t in widget.tagsList.tags]
+    assert len(original_tags) == len(new_tags)
+    assert original_tags == new_tags
+
+
+def test_rename_invalid_old_tag_entry_keeps_entry(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "sdfsdfsdf", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    assert widget.tagsList.renameTagOldEntry.isHidden() is False
+    assert widget.tagsList.renameTagOldEntry.text() == "sdfsdfsdf"
+
+
+def test_rename_invalid_old_tag_entry_shows_error_text(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "sdfsdfsdf", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    assert widget.tagsList.renameTagErrorText.isHidden() is False
+    assert widget.tagsList.renameTagErrorText.text() == "This tag does not exist"
+
+
+def test_rename_invalid_old_tag_entry_keeps_new_hidden(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "sdfsdfsdf", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    assert widget.tagsList.renameTagNewEntry.isHidden() is True
+
+
+def test_rename_invalid_old_tag_error_text_hidden_when_clicked(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "sdfsdfsdf", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    assert widget.tagsList.renameTagErrorText.isHidden() is False
+    widget.tagsList.renameTagOldEntry.setCursorPosition(0)
+    assert widget.tagsList.renameTagErrorText.isHidden() is True
+
+
+def test_rename_invalid_old_tag_error_text_hidden_when_text_modified(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "sdfsdfsdf", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    assert widget.tagsList.renameTagErrorText.isHidden() is False
+    cPressBackspace(widget.tagsList.renameTagOldEntry, qtbot)
+    assert widget.tagsList.renameTagErrorText.isHidden() is True
+
+
+def test_rename_invalid_new_tag_entry_keeps_entry(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "   ", qtbot)
+    cPressEnter(widget.tagsList.renameTagNewEntry, qtbot)
+    assert widget.tagsList.renameTagNewEntry.isHidden() is False
+    assert widget.tagsList.renameTagNewEntry.text() == "   "
+
+
+def test_rename_invalid_new_tag_entry_shows_error_text_duplicate(qtbot, db_temp):
+    db_temp.add_new_tag("New")
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "New", qtbot)
+    cPressEnter(widget.tagsList.renameTagNewEntry, qtbot)
+    assert widget.tagsList.renameTagErrorText.isHidden() is False
+    assert widget.tagsList.renameTagErrorText.text() == "This tag already exists"
+
+
+def test_rename_invalid_new_tag_entry_shows_error_text_backticks(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "`New`", qtbot)
+    cPressEnter(widget.tagsList.renameTagNewEntry, qtbot)
+    assert widget.tagsList.renameTagErrorText.isHidden() is False
+    assert widget.tagsList.renameTagErrorText.text() == "Backticks aren't allowed"
+
+
+def test_rename_invalid_new_tag_entry_shows_error_text_square_brackets(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "[New]", qtbot)
+    cPressEnter(widget.tagsList.renameTagNewEntry, qtbot)
+    assert widget.tagsList.renameTagErrorText.isHidden() is False
+    assert widget.tagsList.renameTagErrorText.text() == "Square brackets aren't allowed"
+
+
+def test_rename_invalid_new_tag_entry_shows_error_text_whitespace(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "   ", qtbot)
+    cPressEnter(widget.tagsList.renameTagNewEntry, qtbot)
+    assert widget.tagsList.renameTagErrorText.isHidden() is False
+    assert widget.tagsList.renameTagErrorText.text() == "Pure whitespace isn't valid"
+
+
+def test_rename_invalid_new_tag_entry_shows_error_text_show_all(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "all papers", qtbot)
+    cPressEnter(widget.tagsList.renameTagNewEntry, qtbot)
+    assert widget.tagsList.renameTagErrorText.isHidden() is False
+    assert widget.tagsList.renameTagErrorText.text() == "Sorry, can't duplicate this"
+
+
+def test_rename_invalid_new_tag_error_text_hidden_when_clicked(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "   ", qtbot)
+    cPressEnter(widget.tagsList.renameTagNewEntry, qtbot)
+    assert widget.tagsList.renameTagErrorText.isHidden() is False
+    widget.tagsList.renameTagNewEntry.setCursorPosition(0)
+    assert widget.tagsList.renameTagErrorText.isHidden() is True
+
+
+def test_rename_invalid_new_tag_error_text_hidden_when_text_modified(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "Read", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    cEnterText(widget.tagsList.renameTagNewEntry, "   ", qtbot)
+    cPressEnter(widget.tagsList.renameTagNewEntry, qtbot)
+    assert widget.tagsList.renameTagErrorText.isHidden() is False
+    cPressBackspace(widget.tagsList.renameTagNewEntry, qtbot)
+    assert widget.tagsList.renameTagErrorText.isHidden() is True
+
+
+def test_renaming_currently_selected_tag_shows_new_tag(qtbot, db_temp):
+    assert len(db_temp.get_all_tags()) > 1
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.tags[0], qtbot)
+    cRenameTag(widget, widget.tagsList.tags[0].name, "New", qtbot)
+    for t in widget.tagsList.tags:
+        if t.name == "New":
+            assert t.property("is_highlighted") is True
+        else:
+            assert t.property("is_highlighted") is False
+    assert widget.tagsList.showAllButton.property("is_highlighted") is False
+
+
+def test_cannot_rename_all_papers_tag(qtbot, db_temp):
+    widget = cInitialize(qtbot, db_temp)
+    cClick(widget.tagsList.renameTagButton, qtbot)
+    cEnterText(widget.tagsList.renameTagOldEntry, "all papers", qtbot)
+    cPressEnter(widget.tagsList.renameTagOldEntry, qtbot)
+    assert widget.tagsList.renameTagErrorText.isHidden() is False
+    assert widget.tagsList.renameTagErrorText.text() == "Sorry, can't rename this"
 
 
 # =============

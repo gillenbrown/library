@@ -1,6 +1,11 @@
 import sqlite3
+import sys
 import time
 import contextlib
+from pathlib import Path
+from collections import defaultdict
+
+import bibtexparser
 
 from library import ads_wrapper
 
@@ -136,39 +141,43 @@ class Database(object):
         """
         # call ADS to get the details
         bibcode = ads_call.get_bibcode(identifier)
+        # before we get all the info, see if the paper is already in the database. This
+        # saves us from needing slow queries to ADS
+        result = self._execute("SELECT 1 FROM papers WHERE bibcode = ?", [bibcode])
+        # if this paper is already in the database, exit
+        if len(result) > 0:
+            raise PaperAlreadyInDatabaseError("Already in Library.")
+        # otherwise, get the data and add the paper
         paper_data = ads_call.get_info(bibcode)
 
         # handle the authors - this should be passed in as a list, but we can't store it
         # as a list. Just join it all together with the unique value held above.
         authors_write = self._author_sep.join(paper_data["authors"])
-        try:  # will catch papers that are already in the library
-            # the formatting of this is kinda ugly
-            # put these into the comma separated column names
-            joined_colnames = ",".join(self.colnames_set_on_paper_add)
-            # also make the appropriate amount of question marks based on the number of
-            # column names. This is needed for safe parameter entry
-            question_marks = ",".join(["?"] * len(self.colnames_set_on_paper_add))
-            # combine this together into the SQL query
-            sql = f"INSERT INTO papers({joined_colnames}) VALUES({question_marks})"
-            # then put the values as a tuple before passing it in, for formatting nicely
-            parameters = (
-                bibcode,
-                paper_data["title"],
-                authors_write,
-                paper_data["pubdate"],
-                paper_data["journal"],
-                paper_data["volume"],
-                paper_data["page"],
-                paper_data["abstract"],
-                paper_data["bibtex"],
-                paper_data["arxiv_id"],
-                bibcode,  # citation keyword
-                time.time(),  # update time
-            )
-            # then run this SQL
-            self._execute(sql, parameters)
-        except sqlite3.IntegrityError:
-            raise PaperAlreadyInDatabaseError("Already in Library.")
+        # the formatting of this is kinda ugly
+        # put these into the comma separated column names
+        joined_colnames = ",".join(self.colnames_set_on_paper_add)
+        # also make the appropriate amount of question marks based on the number of
+        # column names. This is needed for safe parameter entry
+        question_marks = ",".join(["?"] * len(self.colnames_set_on_paper_add))
+        # combine this together into the SQL query
+        sql = f"INSERT INTO papers({joined_colnames}) VALUES({question_marks})"
+        # then put the values as a tuple before passing it in, for formatting nicely
+        parameters = (
+            bibcode,
+            paper_data["title"],
+            authors_write,
+            paper_data["pubdate"],
+            paper_data["journal"],
+            paper_data["volume"],
+            paper_data["page"],
+            paper_data["abstract"],
+            paper_data["bibtex"],
+            paper_data["arxiv_id"],
+            bibcode,  # citation keyword
+            time.time(),  # update time
+        )
+        # then run this SQL
+        self._execute(sql, parameters)
 
         # Add the unread tag if it's in the database
         for t in self.get_all_tags():
@@ -529,6 +538,34 @@ class Database(object):
         self._execute("DROP TABLE papers")
         self._execute("ALTER TABLE new_papers RENAME TO papers")
 
+    def rename_tag(self, old_tag_name, new_tag_name):
+        """
+        Rename a tag, while keeping it applied to the appropriate papers
+
+        :param old_tag_name: The current name of the tag to rename. Must be a tag
+                             present in the database
+        :type old_tag_name: str
+        :param new_tag_name: The new name of the tag
+        :type new_tag_name: str
+        :return: None
+        """
+        # first check if the new tag name is just the old tag name but different in
+        # capitalization. This causes issues, as sqlite is case-insensitive. So we'll
+        # need to first rename it to something unique, then rename that
+        if old_tag_name.lower() == new_tag_name.lower():
+            temp_colname = "abczyx" * 10
+            self.rename_tag(old_tag_name, temp_colname)
+            old_tag_name = temp_colname
+
+        # add the new tag
+        self.add_new_tag(new_tag_name)
+        # transfer tags
+        for bibcode in self.get_all_bibcodes():
+            if self.paper_has_tag(bibcode, old_tag_name):
+                self.tag_paper(bibcode, new_tag_name)
+        # then delete the old paper
+        self.delete_tag(old_tag_name)
+
     def paper_has_tag(self, bibcode, tag_name):
         """
         See if a paper has a given tag.
@@ -691,3 +728,377 @@ class Database(object):
                 if tag_name == "all" or self.paper_has_tag(bibcode, tag_name):
                     out_file.write(self.get_paper_attribute(bibcode, "bibtex"))
                     out_file.write("\n")
+
+    def import_bibtex(self, file_name, update_progress_bar=None):
+        """
+        Import papers from a bibtex file into the database
+
+        :param file_name: The location of the bibtex file to import
+        :type file_name: pathlib.Path
+        :param update_progress_bar: A function that can be called to update a progress
+                                    bar. This must be previously initialized to be the
+                                    number of lines in the file. In this function, we
+                                    will call the function passed in here with the line
+                                    number of the current line to update the progressbar
+        :type update_progress_bar: func
+        :return: A tuple indicating the results of what happened. First is the number
+                 of papers added successfully, then the number of papers that were
+                 already in the database (this can include duplicate papers within the
+                 bibtex file), then the bibtex entries I could not successfully add to
+                 the database for whatever reason. The next element is the path of a
+                 file where I write the failed bibtex entries for the user to inspect.
+                 Finally, there is the name of the tag applied to the added papers.
+        """
+        bibfile = open(file_name, "r")
+        # We'll create a file holding the bibtex entries that I could not identify.
+        # We'll delete this later if it has nothing in it
+        failure_file_loc = self._failure_file_loc(file_name)
+        failure_file = open(failure_file_loc, "w")
+        # write the header to this file
+        header = (
+            "% This file contains BibTeX entries that the library could not add.\n"
+            "% The reason for the failure is given above each entry.\n"
+            '% When importing a given entry, the code looks for the "doi", "ads_url",\n'
+            '% or "eprint" attributes. If none of these are present, the code tries\n'
+            '% to use the publication details (using the "author", "journal", "year"\n'
+            '% "volume", "page", "title" fields, as available) to identify the\n'
+            "% paper's entry in ADS. When using this journal info, the code requires\n"
+            "% an exact match to any attributes present in the BibTeX entry. \n\n"
+        )
+        failure_file.write(header)
+
+        # figure out what tag to give this paper. It will be of the format
+        # "Import [import_filename] X", where X is an optional integer that will be
+        # present if this file is imported more than once, and will
+        base_tag = f"Import {file_name.name}"
+        import_tags = [t for t in self.get_all_tags() if t.startswith(base_tag)]
+        if len(import_tags) == 0:
+            new_tag = base_tag
+        # check the case that there's just one tag
+        elif import_tags == [base_tag]:
+            new_tag = base_tag + " 2"
+        # there are multiple of these tags already present, so we need to increment
+        else:
+            tag_nums = [int(t.split()[-1]) for t in import_tags if t != base_tag]
+            new_tag = base_tag + f" {max(tag_nums) + 1}"
+        self.add_new_tag(new_tag)
+
+        results = {"success": 0, "duplicate": 0, "failure": 0}
+        current_entry = ""
+        line_number = 0
+        for line in bibfile:
+            # update progressbar first. We do this so it is updated before we continue
+            # over empty lines or comments
+            if update_progress_bar is not None:
+                line_number += 1
+                update_progress_bar(line_number)
+
+            # skip comments and empty lines
+            if line.startswith("%") or line.strip() == "":
+                continue
+            # once we get to the beginning of a new entry, add the current entry to
+            # the database. Otherwise, keep track of the current entry
+            if line.startswith("@") and current_entry.strip() != "":
+                this_result = self._parse_bibtex_entry(
+                    current_entry, new_tag, failure_file
+                )
+                results[this_result] += 1
+
+                # once we have parsed the previous entry, start the new one
+                current_entry = line
+            else:
+                current_entry += line
+
+        # handle the final entry
+        if current_entry.strip() != "":
+            results[self._parse_bibtex_entry(current_entry, new_tag, failure_file)] += 1
+
+        bibfile.close()
+        failure_file.close()
+        # if there were no failures, remove the failure file. I got the exact size of
+        # just the header, which is what we compare to here. It's different on
+        # different platforms, annoyingly. On windows, it's different because
+        # newlines have different size.
+        empty_size = defaultdict(lambda: 544)  # default value for linux and macos
+        empty_size["win32"] = empty_size["darwin"] + header.count("\n")
+        if failure_file_loc.stat().st_size == empty_size[sys.platform]:
+            failure_file_loc.unlink()
+            failure_file_loc = None
+
+        return (
+            results["success"],
+            results["duplicate"],
+            results["failure"],
+            failure_file_loc,
+            new_tag,
+        )
+
+    def _failure_file_loc(self, bibtex_file_loc):
+        """
+        Parse the name of the import bibtex file into the file to write the failures
+
+        I considered writing this to the same directory as the import directory, but
+        since users may not want this writing files to what could be shared directories,
+        so I'll write it in this directory
+
+        :param bibtex_file_loc: Path to the original bibtex entry
+        :type: pathlib.Path
+        :return: path to the place to write failures
+        :rtype: pathlib.Path
+        """
+        directory = Path(__file__).parent.parent
+        name = bibtex_file_loc.stem + ".failures" + bibtex_file_loc.suffix
+        return directory / name
+
+    def _parse_bibtex_entry(self, entry, tag_name, failure_file):
+        """
+        Wrapper around the function to parse a single bibtex entry and add it to the db
+
+        This also identifies what happened with success vs failure by returning one of
+        three strings: "success", "failure", or "duplicate"
+
+        :param entry: the bibtex entry to add
+        :type entry: str
+        :param tag_name: tag to apply to the paper if added successfully
+        :type tag_name: str
+        :param failure_file: file object to write any failed bibtex entries to
+        :type failure_file: io.TextIO
+        :return: String indicating what happened
+        :rtype: str
+        """
+        try:
+            self._parse_bibtex_entry_inner(entry, tag_name)
+            return "success"
+        except PaperAlreadyInDatabaseError:
+            return "duplicate"
+        except Exception as e:  # any other error
+            # add to failure file, with the error
+            # make non useful errors more useful
+            e = str(e)
+            if "Bad Gateway" in e:
+                e = (
+                    "Connection lost when querying ADS for this paper. "
+                    "This may work if you try again"
+                )
+            elif "Too many requests" in e:
+                e = (
+                    "ADS has cut you off, you have sent too many requests today. "
+                    "Try again in ~24 hours"
+                )
+            elif (
+                "INVALID_SYNTAX_CANNOT_PARSE" in e
+                or "list index out of range" in e
+                or "SolrException" in e
+            ):
+                e = "something appears wrong with the format of this entry"
+            failure_file.write(f"% {e}\n")
+            failure_file.write(entry + "\n")
+            return "failure"
+
+    def _parse_bibtex_entry_inner(self, entry, tag_name):
+        """
+        Handle a single bibtex entry and add it to the database
+
+        :param entry: the bibtex entry to add
+        :type entry: str
+        :param tag_name: tag to apply to the paper if added successfully
+        :type tag_name: str
+        :return: None
+        """
+        # Start by parsing the entry to get paper data. We'll then use this to find
+        # the paper
+
+        paper_data = bibtexparser.loads(entry).entries[0]
+        # replace newlines and nonbreaking spaces.
+        # Also replace quotes, since those mess up the query syntax.
+        # I do keep curly braces
+        # Also remove all accents, since they cause problems
+        accents = [
+            "\\`",
+            "\\'",
+            "\\^",
+            '\\"',
+            "\\~",
+            "\\=",
+            "\\.",
+            "\\u",
+            "\\v",
+            "\\H",
+            "\\t",
+            "\\c",
+            "\\d",
+            "\\b",
+            "\\k",
+        ]
+        for key, value in paper_data.items():
+            # need to replace accents before removing other formatting, so there isn't
+            # any accidental overlap between the two. But first, need to fix the
+            # dotless i
+            value = value.replace("\\i", "i")
+            for c in accents:
+                # first replace times where there is a space after the accent character
+                value = value.replace(c + " ", "")
+                value = value.replace(c, "")
+            value = (
+                value.replace("\n", " ")
+                .strip()
+                .replace("~", " ")
+                .replace('"', "")
+                .replace("{", "")
+                .replace("}", "")
+            )
+            paper_data[key] = value
+        # now that we have the info, try to find the paper. I'll keep track of what was
+        # tried, then use that to construct an error message if needed. I try the ADS
+        # url first, since that results in less queries to ADS, speeding up this
+        # process
+        error_message = ""
+        for bibcode_func in [
+            self._get_bibcode_from_adsurl,
+            self._get_bibcode_from_doi,
+            self._get_bibcode_from_eprint,
+            self._get_bibcode_from_journal,
+        ]:
+            try:
+                bibcode = bibcode_func(paper_data)
+                break
+            except Exception as e:
+                # add this to the error message
+                if error_message != "" and str(e) != "":
+                    error_message += ", "
+                error_message += str(e)
+        else:  # no break, so the bibcode was not found
+            # the bibcode_from_journal function always gives an error message, so we
+            # so not need a default error message
+            raise ValueError(error_message)
+
+        try:
+            self.add_paper(bibcode)
+        except PaperAlreadyInDatabaseError:
+            # catch this just to add the tag, then raise it again so the parent function
+            # can catch this esception
+            self.tag_paper(bibcode, tag_name)
+            raise PaperAlreadyInDatabaseError
+
+        # I attempted to validate that the properties in the bibtex entry matched
+        # what the query returned, but I gave up on this. The journal often has
+        # abbreviations that make it very difficult to compare. And the page entry in
+        # BibTeX is sometimes just the first page, while sometimes its the range. So
+        # I just gave up on this. To add a paper, we need either the ADS link, the DOI,
+        # or the arXiv ID from the bibtex entry. With one of those, we assume that the
+        # paper details are correct.
+
+        # if we got here, the paper was added successfully. Remove unread, if present.
+        # I'm assuming that if they're importing from a bibtex file, they've already
+        # read the paper, while if they're adding from ADS, that may not be the case.
+        # Not that duplicates already exited, so if they were unread that stays.
+        # Also add the special tag
+        current_tags = self.get_paper_tags(bibcode)
+        for c_tag in current_tags:
+            if c_tag.lower() == "unread":
+                self.untag_paper(bibcode, c_tag)
+        self.tag_paper(bibcode, tag_name)
+
+        # Also add the citation keyword for new papers. Again, if the paper is already
+        # in the library, we don't mess with its cite key
+        # don't bother changing it if there would be no change
+        if paper_data["ID"] != bibcode:
+            try:
+                self.set_paper_attribute(bibcode, "citation_keyword", paper_data["ID"])
+            except RuntimeError:  # duplicate citation key
+                pass  # just leave as the bibcode
+
+    def _get_bibcode_from_adsurl(self, paper_data):
+        """
+        Query ADS to get a bibcode from the adsurl, or tell if it didn't work
+
+        This will return the bibcode, or raise an error. If the adsurl is not in
+        the dictionary, this will raise an error with an empty message string, since
+        the user doesn't need to know that we checked this. Otherwise, the error will
+        be appropriate to send to the user
+
+        :param paper_data: the dictionary with attributes of the bibtex entry
+        :type paper_data: dict
+        :return: the bibcode
+        :rtype: str
+        """
+        if "adsurl" not in paper_data:
+            raise KeyError()
+        try:
+            bibcode = ads_call.get_bibcode(paper_data["adsurl"])
+            # validate that this bibcode is valid by querying ADS for the paper
+            # details. We'd do this later, but the results are cached, so we're not
+            # wasting a query
+            ads_call.get_info(bibcode)
+            return bibcode
+        except Exception as e:  # anything else
+            e = str(e)
+            if e == "list index out of range" or (
+                e.startswith("Identifier") and e.endswith("not recognized")
+            ):
+                e = "adsurl not recognized"
+            raise ValueError(str(e))
+
+    def _get_bibcode_from_doi(self, paper_data):
+        """
+        Query ADS to get a bibcode from the doi, or tell if it didn't work
+
+        This will return the bibcode, or raise an error. If the doi is not in
+        the dictionary, this will raise an error with an empty message string, since
+        the user doesn't need to know that we checked this. Otherwise, the error will
+        be appropriate to send to the user
+
+        :param paper_data: the dictionary with attributes of the bibtex entry
+        :type paper_data: dict
+        :return: the bibcode
+        :rtype: str
+        """
+        if "doi" not in paper_data:
+            raise KeyError()
+        try:
+            return ads_call.get_bibcode(paper_data["doi"])
+        except Exception as e:  # anything else
+            raise ValueError(str(e))
+
+    def _get_bibcode_from_eprint(self, paper_data):
+        """
+        Query ADS to get a bibcode from the eprint, or tell if it didn't work
+
+        This will return the bibcode, or raise an error. If the eprint is not in
+        the dictionary, this will raise an error with an empty message string, since
+        the user doesn't need to know that we checked this. Otherwise, the error will
+        be appropriate to send to the user
+
+        :param paper_data: the dictionary with attributes of the bibtex entry
+        :type paper_data: dict
+        :return: the bibcode
+        :rtype: str
+        """
+        if "eprint" not in paper_data:
+            raise KeyError()
+        try:
+            return ads_call.get_bibcode(paper_data["eprint"])
+        except Exception as e:  # anything else
+            raise ValueError(str(e))
+
+    def _get_bibcode_from_journal(self, paper_data):
+        """
+        Query ADS to get a bibcode from the full paper info, or tell if it didn't work
+
+        This will return the bibcode, or raise an error. If the required details are
+        not in the dictionary, this will raise an error with an empty message string,
+        since the user doesn't need to know that we checked this. Otherwise, the
+        error will be appropriate to send to the user
+
+        :param paper_data: the dictionary with attributes of the bibtex entry
+        :type paper_data: dict
+        :return: the bibcode
+        :rtype: str
+        """
+        # otherwise, we have the info we need. First, parse the pages attribute so that
+        # it's just the first page, not the range. That makes checks easier
+        if "pages" in paper_data:
+            paper_data["pages"] = paper_data["pages"].split("-")[0]
+        # This function may raise errors, but those
+        # are good for the user to see
+        return ads_call.get_bibcode_from_journal(**paper_data)

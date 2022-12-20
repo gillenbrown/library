@@ -13,7 +13,9 @@ class PaperDict(dict):
 # Use my paper as the main testing paper.
 mine = PaperDict(
     bibcode="2018ApJ...864...94B",
+    bibcode_old="2018arXiv180409819B",
     ads_url="https://ui.adsabs.harvard.edu/abs/2018ApJ...864...94B/abstract",
+    ads_url_old="https://ui.adsabs.harvard.edu/abs/2018arXiv180409819B",
     arxiv_id="1804.09819",
     arxiv_url=f"https://arxiv.org/abs/1804.09819",
     arxiv_url_v2=f"https://arxiv.org/abs/1804.09819v2",
@@ -22,9 +24,11 @@ mine = PaperDict(
     title="Nuclear Star Clusters in Cosmological Simulations",
     authors=["Brown, Gillen", "Gnedin, Oleg Y.", "Li, Hui"],
     pubdate="2018-09-00",
+    year=2018,
     journal="The Astrophysical Journal",
     volume=864,
     page=94,
+    doi="10.3847/1538-4357/aad595",
     abstract=(
         "We investigate the possible connection between the most massive globular "
         "clusters, such as ω Cen and M54, and nuclear star clusters (NSCs) of "
@@ -75,6 +79,8 @@ mine = PaperDict(
 # Also use Tremonti et al. 2004 as a test paper
 tremonti = PaperDict(
     bibcode="2004ApJ...613..898T",
+    arxiv_url="https://arxiv.org/abs/astro-ph/0405537",
+    arxiv_id="astro-ph/0405537",
     title=(
         "The Origin of the Mass-Metallicity Relation: Insights from 53,000 "
         "Star-forming Galaxies in the Sloan Digital Sky Survey"
@@ -150,6 +156,7 @@ forbes = PaperDict(
     url="https://ui.adsabs.harvard.edu/abs/2020arXiv200314327F/abstract",
     bibcode="2020arXiv200314327F",
     arxiv_id="2003.14327",
+    year=2020,
     title=(
         "A PDF PSA, or Never gonna set_xscale again -- guilty feats with logarithms"
     ),
@@ -233,7 +240,9 @@ krumholz = PaperDict(
 # Marks Kroupa 2012 is one paper that has has a non-numeric page number
 marks = PaperDict(
     url="https://ui.adsabs.harvard.edu/abs/2012A%26A...543A...8M/abstract",
+    url_old="https://ui.adsabs.harvard.edu/abs/2012arXiv1205.1508M/abstract",
     bibcode="2012A&A...543A...8M",
+    bibcode_old="2012arXiv1205.1508M",
     page="A8",
 )
 
@@ -247,6 +256,27 @@ juan = PaperDict(
     url="https://ui.adsabs.harvard.edu/abs/2018ApJ...863...60R/abstract",
     bibcode="2018ApJ...863...60R",
     authors=["Remolina González, J. D.", "Sharon, K.", "Mahler, G."],
+    bibtex_authors="{Remolina Gonz{\\'a}lez}, J.~D. and {Sharon}, K. and {Mahler}, G.",
+    journal="\\apj",
+    volume=863,
+    page=60,
+    year=2018,
+    short_bibtex="@ARTICLE{2018ApJ...863...60R,\n"
+    "       author = {{Remolina Gonz{\\'a}lez}, J.~D. and {Sharon}, K. "
+    "and {Mahler}, G.},\n"
+    '        title = "{An Evaluation of 10 Lensing Models of the Frontier '
+    'Fields Cluster MACS J0416.1-2403}",\n'
+    "      journal = {\\apj},\n"
+    "     keywords = {galaxies: clusters: individual: MACS J0416.1-2403, "
+    "gravitational lensing: strong, Astrophysics - "
+    "Cosmology and Nongalactic Astrophysics},\n"
+    "         year = 2018,\n"
+    "        month = aug,\n"
+    "       volume = {863},\n"
+    "       number = {1},\n"
+    "          eid = {60},\n"
+    "        pages = {60},\n"
+    "}",
 )
 
 used_for_no_ads_key = PaperDict(
@@ -328,4 +358,185 @@ mvdbw_book = PaperDict(
         "\n"
         ""
     ),
+)
+larsen = PaperDict(
+    doi="10.1051/aas:1999509",
+    bibcode="1999A&AS..139..393L",
+)
+
+sellwood_binney = PaperDict(
+    doi="10.1046/j.1365-8711.2002.05806.x",
+    bibcode="2002MNRAS.336..785S",
+)
+
+behroozi = PaperDict(
+    bibcode="2013ApJ...770...57B",
+    bibtex=(
+        "@ARTICLE{behroozi_etal13,\n"
+        "   author = {{Behroozi}, P.~S. and {Wechsler}, R.~H. and {Conroy}, C.},\n"
+        '    title = "{The Average Star Formation Histories of Galaxies in '
+        'Dark Matter Halos from z = 0-8}",\n'
+        "  journal = {\\apj},\n"
+        'archivePrefix = "arXiv",\n'
+        "   eprint = {1207.6105},\n"
+        ' primaryClass = "astro-ph.CO",\n'
+        " keywords = {dark matter, galaxies: abundances, galaxies: evolution, "
+        "methods: numerical },\n"
+        "     year = 2013,\n"
+        "    month = jun,\n"
+        "   volume = 770,\n"
+        "      eid = {57},\n"
+        "    pages = {57},\n"
+        "      doi = {10.1088/0004-637X/770/1/57},\n"
+        "   adsurl = {http://adsabs.harvard.edu/abs/2013ApJ...770...57B}\n"
+        "}"
+    ),
+)
+
+kravtsov = PaperDict(
+    bibcode="1999PhDT........25K",
+    authors_bibtex="{Kravtsov}, Andrey V.",
+    title="High-resolution simulations of structure formation in the universe",
+    year=1999,
+    bibtex=(
+        "@PHDTHESIS{1999PhDT........25K,\n"
+        "       author = {{Kravtsov}, Andrey V.},\n"
+        '        title = "{High-resolution simulations of structure '
+        'formation in the universe}",\n'
+        "     keywords = {Physics: Astronomy and Astrophysics},\n"
+        "       school = {New Mexico State University},\n"
+        "         year = 1999,\n"
+        "        month = jan,\n"
+        "       adsurl = {https://ui.adsabs.harvard.edu/abs/1999PhDT........25K},\n"
+        "      adsnote = {Provided by the SAO/NASA Astrophysics Data System}\n"
+        "}"
+    ),
+)
+
+williams = PaperDict(
+    bibcode="2000prpl.conf...97W",
+    authors_bibtex="{Williams}, J.~P. and {Blitz}, L. and {McKee}, C.~F.",
+    title=(
+        "The Structure and Evolution of Molecular Clouds: "
+        "from Clumps to Cores to the IMF"
+    ),
+    journal="Protostars and Planets IV",
+    year=2000,
+    page=97,
+    bibtex=(
+        "@ARTICLE{williams_etal00,\n"
+        "   author = {{Williams}, J.~P. and {Blitz}, L. and {McKee}, C.~F.},\n"
+        '    title = "{The Structure and Evolution of Molecular Clouds: '
+        'from Clumps to Cores to the IMF}",\n'
+        "  journal = {Protostars and Planets IV},\n"
+        "     year = 2000,\n"
+        "    month = may,\n"
+        "    pages = {97-120}\n"
+        "}"
+    ),
+)
+
+carney = PaperDict(
+    bibcode="1996PASP..108..900C",
+    title=(
+        "The Constancy of [alpha/Fe] in Globular Clusters of Differing [Fe/H] and Age"
+    ),
+    year=1996,
+)
+
+meylan = PaperDict(
+    bibcode="2001AJ....122..830M",
+    title=(
+        "Mayall II=G1 in M31: Giant Globular Cluster or Core of a "
+        "Dwarf Elliptical Galaxy?"
+    ),
+    year=2001,
+)
+
+anders = PaperDict(
+    bibtex="@ARTICLE{anders_etal04,\n"
+    "   author = {{Anders}, P. and {de Grijs}, R. and {Fritze-v.~Alvensleben}, U. and\n"
+    "   {Bissantz}, N.},\n"
+    '    title = "{Star cluster formation and evolution in the dwarf '
+    'starburst galaxy NGC 1569}",\n'
+    "  journal = {\\mnras},\n"
+    "     year = 2004,\n"
+    "    month = jan,\n"
+    "   volume = 347,\n"
+    "    pages = {17-28}\n"
+    "}",
+    bibtex_authors="{Anders}, P. and {de Grijs}, R. and {Fritze-v.~Alvensleben}, U. and"
+    " {Bissantz}, N.",
+    title="Star cluster formation and evolution in the dwarf starburst galaxy NGC 1569",
+    year=2004,
+    journal="\\mnras",
+    bibcode="2004MNRAS.347...17A",
+)
+
+chandar = PaperDict(
+    bibcode="2002ApJ...564..712C",
+    bibtex_authors="{Chandar}, R. and {Bianchi}, L. "
+    "and {Ford}, H.~C. and {Sarajedini}, A.",
+    year=2002,
+    journal="\\apj",
+    volume=564,
+    page=712,
+    bibtex="@ARTICLE{chandar_etal02,\n"
+    "   author = {{Chandar}, R. and {Bianchi}, L. and {Ford}, H.~C.\n"
+    "            and {Sarajedini}, A.},\n"
+    '    title = "{Kinematics of Star Clusters in M33: Distinct Populations}",\n'
+    "  journal = {\\apj},\n"
+    "     year = 2002,\n"
+    "    month = jan,\n"
+    "   volume = 564,\n"
+    "    pages = {712-735}\n"
+    "}",
+)
+
+bohringer = PaperDict(
+    bibtex="@ARTICLE{bohringer_etal94,\n"
+    '   author = {{B{\\"o}hringer}, H. and {Briel}, U.~G. and {Schwarz}, R.~A. and\n'
+    '   {Voges}, W. and {Hartner}, G. and {Tr{\\"u}mper}, J.},\n'
+    '    title = "{The structure of the Virgo cluster of galaxies from Rosat '
+    'X-ray images}",\n'
+    "  journal = {\\nat},\n"
+    "     year = 1994,\n"
+    "    month = apr,\n"
+    "   volume = 368,\n"
+    "    pages = {828-831},\n"
+    "}",
+    bibcode="1994Natur.368..828B",
+    bibtex_authors='{B{\\"o}hringer}, H. and {Briel}, U.~G. and {Schwarz}, R.~A. and\n'
+    '   {Voges}, W. and {Hartner}, G. and {Tr{\\"u}mper}, J.',
+    volume=368,
+    pages=828,
+    year=1994,
+    journal="\\nat",
+)
+
+schiavon = PaperDict(
+    bibcode="2017MNRAS.466.1010S",
+    short_bibtex="@ARTICLE{schiavon_etal16,\n"
+    "   author = {{Schiavon}, R.~P. and {Johnson}, J.~A. and {Frinchaboy}, P.~M. and\n"
+    "	{Zasowski}, G. and {M{\\'e}sz{\\'a}ros}, S. and \n"
+    "	{Garc{\\'{\\i}}a-Hern{\\'a}ndez}, D.~A. and {Cohen}, R.~E. and {Tang}, B.  \n"
+    "	and {Villanova}, S. and {Geisler}, D. and {Beers}, T.~C. and \n"
+    "{Fern{\\'a}ndez-Trincado}, J.~G. and \n"
+    "	{Garc{\\'{\\i}}a P{\\'e}rez}, A.~E. and {Lucatello}, S. \n"
+    "and {Majewski}, S.~R. \n"
+    "	and {Martell}, S.~L. and {O'Connell}, R.~W. and {Allende Prieto}, C.~A. and \n"
+    "	{Bizyaev}, D. and {Carrera}, R. and {Lane}, R.~R. and {Malanushenko}, E. \n"
+    "	and {Malanushenko}, V. and {Mu{\\~n}oz}, R.~R. and {Nitschelm}, C. and \n"
+    "	{Oravetz}, D. and {Pan}, K. and {Roman-Lopes}, A. and {Schultheis}, M. \n"
+    "	and {Simmons}, A.},\n"
+    '    title = "{APOGEE chemical abundances of globular cluster giants '
+    'in the inner Galaxy}",\n'
+    "  journal = {\\mnras},\n"
+    'archivePrefix = "arXiv",\n'
+    " keywords = {stars: abundances, Galaxy: bulge, globular clusters: general},\n"
+    "     year = 2017,\n"
+    "    month = apr,\n"
+    "   volume = 466,\n"
+    "    pages = {1010-1018},\n"
+    "}",
 )

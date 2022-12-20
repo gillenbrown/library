@@ -5,6 +5,9 @@ QWidget{
     font-size: 14pt;
     color: black;
 }
+QWidget[faded=true]{
+    color: rgba(0, 0, 0, 50);  /* #EEEEEE into RGB */
+}
 
 QScrollArea{
     border: 1px solid #BBBBBB;
@@ -37,13 +40,21 @@ QPushButton:hover {
   border: 1px solid black;
 }
 
-/* make the add button even more obvious */
+/* make the add and import buttons even more obvious */
 QPushButton#add_button{
     border: 2px solid #777777;
     padding-left: 1em;
     padding-right: 1em;
 }
 QPushButton#add_button:hover {
+    border: 2px solid black;
+}
+QPushButton#import_button{
+    border: 2px solid #777777;
+    padding-left: 0.2em;
+    padding-right: 0.2em;
+}
+QPushButton#import_button:hover {
     border: 2px solid black;
 }
 

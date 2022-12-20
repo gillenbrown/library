@@ -3,7 +3,16 @@ import requests
 
 import ads.exceptions
 import darkdetect
-from PySide6.QtCore import Qt, QEvent, QTimer
+from PySide6.QtCore import (
+    Qt,
+    QEvent,
+    QRunnable,
+    QThreadPool,
+    QTimer,
+    QObject,
+    Slot,
+    Signal,
+)
 from PySide6.QtGui import (
     QFontDatabase,
     QDesktopServices,
@@ -26,17 +35,46 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QFrame,
     QComboBox,
+    QProgressBar,
 )
 
 from library.database import PaperAlreadyInDatabaseError
 
 
-def qss_trigger(object, property, value):
+def qss_trigger_recursive(widget, property, value):
     """
-    Trigger a change in QSS by setting a property and redrawing the object.
+    Trigger a change in QSS for a widget and all the widgets in its layout
 
-    :param object: Qt object to change the properties of
-    :type object: QWidget
+    :param widget: Qt widget to change the properties of
+    :type widget: QWidget
+    :param property: The name of the property to set. This needs to match what is
+                     set in the QSS file (e.g. Paper[is_highlighted=false]{...}
+                     would use `is_highlighted` here and False for `value`
+    :type property: str
+    :param value: The value to set for the given property
+    :return: None
+    """
+    # can only apply to widget
+    if not issubclass(type(widget), QWidget):
+        return
+    # apply to widget itself
+    qss_trigger(widget, property, value)
+    # apply to all widgets in the layout.
+    if widget.layout() is not None:
+        for i in range(widget.layout().count()):
+            item = widget.layout().itemAt(i).widget()
+            qss_trigger_recursive(item, property, value)
+    # also go through and change the child widgets
+    for w in widget.children():
+        qss_trigger_recursive(w, property, value)
+
+
+def qss_trigger(widget, property, value):
+    """
+    Trigger a change in QSS by setting a property and redrawing the widget.
+
+    :param widget: Qt widget to change the properties of
+    :type widget: QWidget
     :param property: The name of the property to set. This needs to match what is
                      set in the QSS file (e.g. Paper[is_highlighted=false]{...}
                      would use `is_highlighted` here and False for `value`
@@ -46,10 +84,52 @@ def qss_trigger(object, property, value):
     """
     # first check whether or not the property is already set. If it is, we won't do
     # any changes, to avoid unnecessary polish and unpolish calls, which are slow.
-    if object.property(property) != value:
-        object.setProperty(property, value)
-        object.style().unpolish(object)
-        object.style().polish(object)
+    if widget.property(property) != value:
+        widget.setProperty(property, value)
+        widget.style().unpolish(widget)
+        widget.style().polish(widget)
+
+
+# Make classes to use threading, inspired by:
+# https://www.pythonguis.com/tutorials/multithreading-pyside6-applications-qthreadpool/
+# I tried to make the signals be just in the Worker object, but due to the way Qt is
+# implemented that doesn't work. So they need a separate class
+class WorkerSignals(QObject):
+    finished = Signal(tuple)
+    progress = Signal(int)
+
+
+class Worker(QRunnable):
+    """
+    Class to run a function in a separate thread
+    """
+
+    def __init__(self, func, *args, **kwargs):
+        """
+        Set up the function to be called and its arguments
+
+        :param func: The function
+        :type func: func
+        :param args: arguments
+        :param kwargs: keyword arguments
+        """
+        super().__init__()
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
+        self.signals = WorkerSignals()
+        self.setAutoDelete(False)  # allows us to reuse a worker
+
+    @Slot()  # QtCore.Slot
+    def run(self):  # pragma: no cover
+        """
+        run the function
+
+        This is excluded from coverage because the coverage module does not detect that
+        this is covered, when in reality it is. I think this is because it's a thread
+        """
+        result = self.func(*self.args, **self.kwargs)
+        self.signals.finished.emit(result)
 
 
 class LeftPanelTag(QWidget):
@@ -214,10 +294,6 @@ class Paper(QWidget):
         self.bibcode = bibcode
         self.main = main
 
-        # make sure this paper is actually in the database. This should never happen, but
-        # might if I do something dumb in tests
-        assert self.bibcode in self.main.db.get_all_bibcodes()
-
         # Then set up the layout this uses. It will be vertical with the title (for now)
         vBox = QVBoxLayout()
         self.titleText = QLabel(self.main.db.get_paper_attribute(self.bibcode, "title"))
@@ -350,7 +426,7 @@ class TagCheckBox(QCheckBox):
 
 class HorizontalLine(QFrame):
     def __init__(self):
-        super(HorizontalLine, self).__init__()
+        super().__init__()
         self.setFrameShape(QFrame.HLine)
 
 
@@ -373,13 +449,12 @@ class ScrollArea(QScrollArea):
 
         # Have a central widget with a vertical box layout
         self.container = QWidget()
-        self.layout = QVBoxLayout()
+        # Then add these layouts and widgets
+        self.container.setLayout(QVBoxLayout())
         # the widgets should have their fixed size, no modification. This is also
         # needed to get them to show up, I believe to stop this from having zero size?
-        self.layout.setSizeConstraint(QLayout.SetFixedSize)
+        self.layout().setSizeConstraint(QLayout.SetFixedSize)
 
-        # Then add these layouts and widgets
-        self.container.setLayout(self.layout)
         self.setWidget(self.container)
 
         # have a minimum allowed width. This makes the splitter know to not decrease
@@ -388,6 +463,15 @@ class ScrollArea(QScrollArea):
         # store the difference between the splitter size and what we want to set the
         # widget widths 10
         self.offset = offset
+
+    def layout(self):
+        """
+        Get the layout of the underlying container
+
+        :return: the layout of the underlying container
+        :rtype: QLayout
+        """
+        return self.container.layout()
 
     def addWidget(self, widget):
         """
@@ -398,7 +482,17 @@ class ScrollArea(QScrollArea):
         :return: None
         """
         # add the widget to the layout
-        self.layout.addWidget(widget)
+        self.layout().addWidget(widget)
+
+    def addLayout(self, layout):
+        """
+        Add a layout to the list of vertical objects
+
+        :param layout: The layout to be added
+        :type layout: QLayout
+        :return: None
+        """
+        self.layout().addLayout(layout)
 
     def resizeEvent(self, resize_event):
         """
@@ -411,7 +505,7 @@ class ScrollArea(QScrollArea):
         # get the new size, and apply it to all widgets in the layout. Have some
         # padding on either size to avoid horizontal scroll bars
         new_width = resize_event.size().width() - self.offset
-        self.resize_items_in_layout(self.layout, new_width)
+        self.resize_items_in_layout(self.layout(), new_width)
 
         # Then do the normal resizing
         super().resizeEvent(resize_event)
@@ -560,7 +654,7 @@ class RightPanel(ScrollArea):
         self.addWidget(self.tagText)
         self.addWidget(self.editTagsButton)
         self.addWidget(self.doneEditingTagsButton)
-        self.layout.addLayout(self.vBoxTags)
+        self.addLayout(self.vBoxTags)
         self.addWidget(self.spacers[3])
         self.addWidget(self.citeKeyText)
         self.addWidget(self.editCiteKeyButton)
@@ -1153,7 +1247,7 @@ class PapersListScrollArea(ScrollArea):
         super().__init__(min_width=300, offset=6)  # match offset to scrollbar width
         # add space for top sortChooser, then matching space at the bottom so the
         # last paper doesn't get cut off.
-        self.layout.setContentsMargins(0, 35, 0, 35)
+        self.layout().setContentsMargins(0, 35, 0, 35)
 
         self.main = main
 
@@ -1185,7 +1279,7 @@ class PapersListScrollArea(ScrollArea):
         :return: List of paper widgets
         :rtype: list[Paper]
         """
-        return [self.layout.itemAt(i).widget() for i in range(self.layout.count())]
+        return [self.layout().itemAt(i).widget() for i in range(self.layout().count())]
 
     def addPaper(self, bibcode, click=True):
         """
@@ -1203,8 +1297,6 @@ class PapersListScrollArea(ScrollArea):
         :type click: bool
         :return: None
         """
-        # check if this paper is already in the list. This should never happen
-        assert bibcode not in [p.bibcode for p in self.getPapers()]
 
         # create the paper object, than add to the list and center panel
         paper = Paper(bibcode, self.main)
@@ -1239,7 +1331,7 @@ class PapersListScrollArea(ScrollArea):
         for paper in self.getPapers():
             if paper.bibcode == bibcode:
                 paper.hide()  # just to be safe
-                self.layout.removeWidget(paper)
+                self.layout().removeWidget(paper)
                 del paper
 
     def sortPapers(self):
@@ -1253,11 +1345,11 @@ class PapersListScrollArea(ScrollArea):
         # add them back
         papers = self.getPapers()
         for paper in papers:
-            self.layout.removeWidget(paper)
+            self.layout().removeWidget(paper)
         # sort by publication date
         papers = sorted(papers, key=self.sortKey)
         for paper in papers:
-            self.layout.addWidget(paper)
+            self.layout().addWidget(paper)
 
     def changeSort(self):
         """
@@ -1344,6 +1436,32 @@ class TagsListScrollArea(ScrollArea):
         self.addTagBar.cursorPositionChanged.connect(self.addTagErrorText.hide)
         self.addTagBar.textChanged.connect(self.addTagErrorText.hide)
 
+        # set up buttons to rename tags
+        self.renameTagButton = QPushButton("Rename a tag")
+        self.renameTagButton.clicked.connect(self.revealRenameTagOldEntry)
+        self.renameTagOldEntry = EasyExitLineEdit(
+            self.cancelRenameTag, self.revealRenameTagNewEntry
+        )
+        self.renameTagOldEntry.hide()
+        self.renameTagOldEntry.setPlaceholderText("Tag to rename")
+        self.renameTagNewEntry = EasyExitLineEdit(
+            self.cancelRenameTag, self.finishRenameTag
+        )
+        self.renameTagNewEntry.hide()
+        self.renameTagNewEntry.setPlaceholderText("New tag name")
+        self.renameTagErrorText = QLabel("")
+        self.renameTagErrorText.setProperty("error_text", True)
+        self.renameTagErrorText.hide()
+        # also allow the reset after an error
+        self.renameTagOldEntry.cursorPositionChanged.connect(
+            self.renameTagErrorText.hide
+        )
+        self.renameTagOldEntry.textChanged.connect(self.renameTagErrorText.hide)
+        self.renameTagNewEntry.cursorPositionChanged.connect(
+            self.renameTagErrorText.hide
+        )
+        self.renameTagNewEntry.textChanged.connect(self.renameTagErrorText.hide)
+
         # Then set up the buttons to remove tags. We'll have four buttons. The first
         # will be a button to click to start the process of deleting a tag. Next
         # will be a text entry box for the user to specify which tag to delete, then
@@ -1380,6 +1498,9 @@ class TagsListScrollArea(ScrollArea):
         tag_button_height = 28
         self.addTagButton.setFixedHeight(tag_button_height)
         self.addTagBar.setFixedHeight(tag_button_height)
+        self.renameTagButton.setFixedHeight(tag_button_height)
+        self.renameTagOldEntry.setFixedHeight(tag_button_height)
+        self.renameTagNewEntry.setFixedHeight(tag_button_height)
         self.firstDeleteTagButton.setFixedHeight(tag_button_height)
         self.secondDeleteTagEntry.setFixedHeight(tag_button_height)
         self.thirdDeleteTagButton.setFixedHeight(tag_button_height)
@@ -1392,6 +1513,10 @@ class TagsListScrollArea(ScrollArea):
         self.addWidget(self.addTagButton)  # calls ScrollArea addWidget
         self.addWidget(self.addTagBar)
         self.addWidget(self.addTagErrorText)
+        self.addWidget(self.renameTagButton)
+        self.addWidget(self.renameTagOldEntry)
+        self.addWidget(self.renameTagNewEntry)
+        self.addWidget(self.renameTagErrorText)
         self.addWidget(self.firstDeleteTagButton)
         self.addWidget(self.secondDeleteTagEntry)
         self.addWidget(self.secondDeleteTagErrorText)
@@ -1406,10 +1531,14 @@ class TagsListScrollArea(ScrollArea):
         # adjust the spacing between elements (i.e. tags). To compensate, increase the
         # margins around the buttons at the top, so they're not right on top of each
         # other. I do this with QSS
-        self.layout.setSpacing(0)
+        self.layout().setSpacing(0)
         self.addTagErrorText.setProperty("is_left_panel_item", True)
         self.addTagButton.setProperty("is_left_panel_item", True)
         self.addTagBar.setProperty("is_left_panel_item", True)
+        self.renameTagButton.setProperty("is_left_panel_item", True)
+        self.renameTagOldEntry.setProperty("is_left_panel_item", True)
+        self.renameTagNewEntry.setProperty("is_left_panel_item", True)
+        self.renameTagErrorText.setProperty("is_left_panel_item", True)
         self.firstDeleteTagButton.setProperty("is_left_panel_item", True)
         self.secondDeleteTagEntry.setProperty("is_left_panel_item", True)
         self.secondDeleteTagErrorText.setProperty("is_left_panel_item", True)
@@ -1439,6 +1568,34 @@ class TagsListScrollArea(ScrollArea):
         self.addTagButton.show()
         self.triggerResize()
 
+    def _validateNewTag(self, tagName):
+        """
+        Validate that a user-generated tag name is valid.
+
+        Will return an empty string if this tag is valid, otherwise will return a
+        message explaining what's wrong
+
+        :param tagName: The proposed tag name
+        :type tagName: str
+        :return: Error message describing what is wrong with the given tag, or an empty
+                 string if the tag is valid
+        :rtype: str
+        """
+
+        if "`" in tagName:
+            return "Backticks aren't allowed"
+        elif "[" in tagName or "]" in tagName:
+            return "Square brackets aren't allowed"
+        elif tagName.lower() == "all papers":
+            return "Sorry, can't duplicate this"
+        elif tagName.strip() == "":
+            return "Pure whitespace isn't valid"
+        elif tagName.lower() in [t.lower() for t in self.main.db.get_all_tags()]:
+            return "This tag already exists"
+        else:
+            # no issues
+            return ""
+
     def addTagInternal(self, tagName):
         """
         Add a tag to the tags scroll area.
@@ -1459,7 +1616,7 @@ class TagsListScrollArea(ScrollArea):
         # we do is remove all tags from the layout, figure out the sort order, then add
         # everything back
         for tag in self.tags:
-            self.layout.removeWidget(tag)
+            self.layout().removeWidget(tag)
         # then add the new tag to this list. (we don't do this first because we don't
         # need to remove it
         self.tags.append(new_tag)
@@ -1467,7 +1624,7 @@ class TagsListScrollArea(ScrollArea):
         self.tags = sorted(self.tags, key=lambda tag: tag.name.lower())
         # then add them to the layout in this order
         for tag in self.tags:
-            self.layout.addWidget(tag)
+            self.layout().addWidget(tag)
 
         # resize
         self.triggerResize()
@@ -1481,39 +1638,136 @@ class TagsListScrollArea(ScrollArea):
 
         :return: None
         """
-        # check for pure whitespace
         tagName = self.addTagBar.text()
-        if (
-            tagName.strip() == ""
-            or "`" in tagName
-            or "[" in tagName
-            or "]" in tagName
-            or tagName.lower() == "all papers"
-        ):
-            if "`" in tagName:
-                self.addTagErrorText.setText("Backticks aren't allowed")
-            elif "[" in tagName or "]" in tagName:
-                self.addTagErrorText.setText("Square brackets aren't allowed")
-            elif tagName.lower() == "all papers":
-                self.addTagErrorText.setText("Sorry, can't duplicate this")
-            else:
-                self.addTagErrorText.setText("Pure whitespace isn't valid")
+        error_message = self._validateNewTag(tagName)
+        if error_message != "":
+            self.addTagErrorText.setText(error_message)
             self.addTagErrorText.show()
             return
-        # otherwise, try to add it to the database
-        try:
-            self.main.db.add_new_tag(tagName)
-            self.addTagInternal(tagName)
-            # add this checkbox to the right panel
-            self.main.rightPanel.populate_tags()
-        except ValueError:  # this tag is already in the database
-            self.addTagErrorText.setText("This tag already exists")
-            self.addTagErrorText.show()
-            return
-
+        # otherwise, it should work
+        self.main.db.add_new_tag(tagName)
+        self.addTagInternal(tagName)
+        # add this checkbox to the right panel
+        self.main.rightPanel.populate_tags()
         # if we got here we had no error, so it was successfully added and we should
         # clear the text box and reset the buttons
         self.resetAddTag()
+
+    def _validateDeleteTag(self, tagName):
+        """
+        Validate whether a tag can be deleted.
+
+        Will return an empty string if this is valid, or an error message if this
+        doesn't work
+
+        :param tagName: the proposed tag to be deleted
+        :type tagName: str
+        :return: An error message describing why this cannot be deleted, or an empty
+                 string if this can be deleted
+        :rtype: str
+        """
+        if tagName.lower() == "all papers":
+            return "Sorry, can't delete this"
+        elif tagName not in self.main.db.get_all_tags():
+            return "This tag does not exist"
+        else:
+            # can be deleted
+            return ""
+
+    def revealRenameTagOldEntry(self):
+        """
+        Reveal the text entry for the user to enter their tag to rename
+
+        :return: None
+        """
+        self.renameTagButton.hide()
+        self.renameTagOldEntry.show()
+        self.renameTagOldEntry.setFocus()
+
+    def revealRenameTagNewEntry(self):
+        """
+        Validate the user's entered tag name to rename, then reveal the entry for new
+
+        :return: None
+        """
+        tag_to_rename = self.renameTagOldEntry.text()
+        error_message = self._validateDeleteTag(tag_to_rename)
+        if error_message != "":
+            self.renameTagErrorText.setText(error_message.replace("delete", "rename"))
+            self.renameTagErrorText.show()
+            return
+
+        # if we got here, things are fine
+        self.renameTagOldEntry.hide()
+        self.renameTagNewEntry.show()
+        self.renameTagNewEntry.setFocus()
+
+    def finishRenameTag(self):
+        """
+        Once the user has entered both the old and new names, complete the tag renaming
+
+        :return: None
+        """
+        # The old tag name should still be in the entry
+        old_tag_name = self.renameTagOldEntry.text()
+        new_tag_name = self.renameTagNewEntry.text()
+        error_message = self._validateNewTag(new_tag_name)
+        # that function does check if this already exists, but does so in a case
+        # insensitive way. I want to allow changing the case, so do some more
+        # checking here
+        if (
+            (error_message == "This tag already exists")
+            and (new_tag_name.lower() == old_tag_name.lower())
+            and (new_tag_name != old_tag_name)
+        ):
+            error_message = ""
+        if error_message != "":
+            self.renameTagErrorText.setText(error_message)
+            self.renameTagErrorText.show()
+            return
+
+        # do the actual tag renaming. The old tag name should still be in the entry
+        self.main.db.rename_tag(old_tag_name, new_tag_name)
+        # then handle the interface. first add the new tag name
+        self.addTagInternal(new_tag_name)
+        # find the tag to remove it from the interface
+        for tag in self.tags:
+            if tag.label.text() == old_tag_name:
+                # if this tag was highlighted, show all papers
+                if tag.property("is_highlighted"):
+                    # send a dummy mouse click. The argument here would normally be a
+                    # mouse click event, but since I don't use that in the function,
+                    # I can send a dummy parameter.
+                    for tag_2 in self.tags:
+                        if tag_2.label.text() == new_tag_name:
+                            tag_2.mousePressEvent(None)
+                # then handle deletion
+                tag.hide()  # just to be safe
+                self.tags.remove(tag)
+                del tag
+
+        # add this checkbox to the right panel
+        self.main.rightPanel.populate_tags()
+        # if there is a paper visible, update the tags
+        if not self.main.rightPanel.abstractText.text().startswith("Click on a paper"):
+            self.main.rightPanel.update_tag_text()
+
+        # cleanup
+        self.cancelRenameTag()
+
+    def cancelRenameTag(self):
+        """
+        Cancel tag renaming and return to default state
+
+        :return: None
+        """
+        self.renameTagButton.show()
+        self.renameTagNewEntry.hide()
+        self.renameTagOldEntry.hide()
+        self.renameTagErrorText.hide()
+        self.renameTagOldEntry.setText("")
+        self.renameTagNewEntry.setText("")
+        self.triggerResize()
 
     def revealSecondTagDeleteEntry(self):
         """
@@ -1534,14 +1788,9 @@ class TagsListScrollArea(ScrollArea):
         """
         # check that the entered text is valid. If not, show error message
         tag_to_delete = self.secondDeleteTagEntry.text()
-        if (
-            tag_to_delete == "All Papers"
-            or tag_to_delete not in self.main.db.get_all_tags()
-        ):
-            if tag_to_delete == "All Papers":
-                self.secondDeleteTagErrorText.setText("Sorry, can't delete this")
-            else:
-                self.secondDeleteTagErrorText.setText("This tag does not exist")
+        error_message = self._validateDeleteTag(tag_to_delete)
+        if error_message != "":
+            self.secondDeleteTagErrorText.setText(error_message)
             self.secondDeleteTagErrorText.show()
             return
         # if it is valid, show the next button and put the appropriate text on them
@@ -1813,6 +2062,9 @@ class MainWindow(QMainWindow):
         """
         super().__init__()
 
+        # set up threading
+        self.threadpool = QThreadPool()
+
         self.db = db
 
         # add read and unread tags if there is nothing in the database
@@ -1840,6 +2092,27 @@ class MainWindow(QMainWindow):
         # We'll also have an add button
         self.addButton = QPushButton("Add")
         self.addButton.setObjectName("add_button")
+        # and a button to import from Bibtex
+        self.importButton = QPushButton("Import from BibTeX")
+        self.importButton.setObjectName("import_button")
+        self.importButton.clicked.connect(self.importBibtex)
+        # also the progressbar
+        self.importProgressBar = QProgressBar()
+        self.importProgressBar.hide()
+        # set up the worker that will be used to put the import into a new thread
+        self.importWorker = Worker(self.db.import_bibtex)
+        self.importWorker.signals.finished.connect(self.finishImportBibtex)
+        self.importWorker.signals.progress.connect(self.importProgressBar.setValue)
+        # and some text to show the result of the import and a button to dismiss that
+        # these will be hidden to start
+        self.importResultText = QLabel()
+        self.importResultText.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.importResultText.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.importResultText.hide()
+        self.importResultDismissButton = QPushButton("Dismiss")
+        self.importResultDismissButton.clicked.connect(self.importResultsDismiss)
+        self.importResultDismissButton.hide()
+        self.importResultDismissButton.setFixedWidth(100)
         # Define what to do when these things are activated. The user can either hit
         # enter or hit the add button
         self.searchBar.returnPressed.connect(self.addPaper)
@@ -1852,12 +2125,18 @@ class MainWindow(QMainWindow):
         self.searchBar.setFixedHeight(30)
         self.searchBarErrorText.setFixedHeight(30)
         self.addButton.setFixedHeight(30)
+        self.importButton.setFixedHeight(30)
+        self.importResultText.setFixedHeight(40)
         # Then add these to the layouts
         hBoxSearchBar = QHBoxLayout()
         hBoxSearchBar.addWidget(self.title)
         hBoxSearchBar.addWidget(self.searchBar)
         hBoxSearchBar.addWidget(self.searchBarErrorText)
         hBoxSearchBar.addWidget(self.addButton)
+        hBoxSearchBar.addWidget(self.importButton)
+        hBoxSearchBar.addWidget(self.importResultText)
+        hBoxSearchBar.addWidget(self.importResultDismissButton)
+        hBoxSearchBar.addWidget(self.importProgressBar)
         vBoxMain.addLayout(hBoxSearchBar)
 
         # Then we have the main body. This is a bit more complex. We'll start by just
@@ -1941,9 +2220,22 @@ class MainWindow(QMainWindow):
         # I also need to touch the splitter, to make sure the paper size of the
         # first paper is set appropriately
         if len(self.papersList.getPapers()) == 1:
-            self.papersList.resize_items_in_layout(
-                self.papersList.layout, self.splitter.sizes()[1]
-            )
+            self.resizePapers()
+
+    def resizePapers(self):
+        """
+        Resize all papers to take up the full splitter width.
+
+        This is only needed to be called when we add papers for the first time, so the
+        papersList doesn't know how wide it should be.
+
+        :return: None
+        """
+        # I also need to touch the splitter, to make sure the paper size of the
+        # first paper is set appropriately
+        self.papersList.resize_items_in_layout(
+            self.papersList.layout(), self.splitter.sizes()[1]
+        )
 
     def formatSearchBarError(self, error_text):
         """
@@ -1956,6 +2248,7 @@ class MainWindow(QMainWindow):
         self.searchBarErrorText.setText(error_text)
         self.searchBarErrorText.show()
         self.addButton.hide()
+        self.importButton.hide()
         qss_trigger(self.searchBar, "error", True)
 
     def resetSearchBarError(self):
@@ -1967,6 +2260,161 @@ class MainWindow(QMainWindow):
         qss_trigger(self.searchBar, "error", False)
         self.searchBarErrorText.hide()
         self.addButton.show()
+        self.importButton.show()
+
+    def importBibtex(self):
+        """
+        Handle the import of papers from a bibtex file
+
+        Most of this is handled by the database, here we handle how that manifests
+        itself in the interface
+
+        :return: None
+        """
+        # ask the user for the file to import
+        file_loc = QFileDialog.getOpenFileName(
+            filter="Bibfile(*.bib *.txt)",
+            dir=str(Path.home()),
+        )[0]
+
+        # if the user cancelled, exit
+        if file_loc == "":
+            return
+
+        # show/hide the appropriate buttons before we start the import
+        self.searchBar.hide()
+        self.addButton.hide()
+        self.importButton.hide()
+        self.importResultText.setText("Please wait until the import finishes")
+        self.importResultText.show()
+        # disable the main parts of the interface so the user just waits
+        self.splitter.setEnabled(False)
+        self.title.setEnabled(False)
+        qss_trigger_recursive(self.splitter, "faded", True)
+
+        # handle the initial state of the progressbar, including setting the maximum val
+        self.importProgressBar.setValue(0)
+        n_lines = 0
+        with open(file_loc, "r") as in_file:
+            for line in in_file:
+                n_lines += 1
+        self.importProgressBar.setMaximum(n_lines)
+        self.importProgressBar.show()
+
+        # then import this file
+        # Need to use a worker for this to put it in the background. When it finishes,
+        # it will pass the result to the finishImportBibtex function (as defined in the
+        # mainWindow __init__)
+        self.importWorker.kwargs = {  # set the arguments for the db.import_bibtex
+            "file_name": Path(file_loc),
+            "update_progress_bar": self.importWorker.signals.progress.emit,
+            # this signal was connected to the progress bar setValue in the mainWindow
+            # init where the importWorker was created
+        }
+        self.threadpool.start(self.importWorker)
+
+    def finishImportBibtex(self, results):
+        """
+        One the database import is done, handle the interface processes that result
+
+        This is a separate function so I can connect it to happen once the database
+        finishes rather than locking up the interface
+
+        :param results: Output of db.import_bibtex
+        :type results: tuple
+        :return: None
+        """
+        # this just adds papers to the database, and doesn't add them to the interface.
+        # We must figure out which papers are new and add them
+        current_bibcodes = set([p.bibcode for p in self.papersList.getPapers()])
+        for bibcode in self.db.get_all_bibcodes():
+            if bibcode not in current_bibcodes:
+                self.papersList.addPaper(bibcode)
+
+        # once we're done, show the results
+        # first parse the results into the message shown to the user
+        self.importResultText.setText(self.parseImportResults(results[:4]))
+
+        # show and hide the appropriate buttons (some already shown/hidden before
+        # import started)
+        self.splitter.setEnabled(True)
+        self.title.setEnabled(True)
+        self.importResultDismissButton.show()
+        self.importProgressBar.hide()
+        # and resize the papers to make sure they take up the correct width. When
+        # importing into an empty database, they don't look right without this
+        self.resizePapers()
+
+        # We also need to handle the tags, since we just added a new one
+        self.tagsList.addTagInternal(results[4])
+        # add this checkbox to the right panel
+        self.rightPanel.populate_tags()
+        if not self.rightPanel.abstractText.text().startswith("Click on a paper"):
+            self.rightPanel.update_tag_text()
+        # then click this tag
+        for tag in self.tagsList.tags:
+            if tag.label.text() == results[4]:
+                tag.mousePressEvent("")
+        # finally, unfade everything
+        qss_trigger_recursive(self.splitter, "faded", False)
+
+    def parseImportResults(self, results):
+        """
+        Parse the results of the import into a message for the user
+
+        :param results: The results tuple returned by db.import_bibtex()
+        :type results: tuple(int, int, int, pathlib.Path)
+        :return: string showing the message to the user
+        :rtype: str
+        """
+        assert len(results) == 4
+        message = "Import results: "
+        if sum(results[:3]) == 0:
+            return message + "No papers found"
+        # otherwise, start creating the message
+        message += self.pluralize("{} paper found", "paper", sum(results[:3]))
+        # then add each of the different types, if applicable
+        if results[0] > 0:
+            message += f", {results[0]} added successfully"
+        if results[1] > 0:
+            message += self.pluralize(", {} duplicate skipped", "duplicate", results[1])
+        if results[2] > 0:
+            message += self.pluralize(", {} failure", "failure", results[2])
+            shown_path = str(results[3]).replace(str(Path.home()), "~")
+            message += f"\nFailed entries written to {shown_path}"
+
+        return message
+
+    @staticmethod
+    def pluralize(message, word, n):
+        """
+        Make a message have a plural if needed
+
+        :param message: The entire message
+        :type message: str
+        :param word: The specific word to pluralize if n > 1
+        :type word: str
+        :param n: The number of `word`. Word will be pluralized if n > 1
+        :type n: int
+        :return: the message, may be pluralized
+        :rtype: str
+        """
+        if n > 1:
+            message = message.replace(word, word + "s")
+        return message.format(n)
+
+    def importResultsDismiss(self):
+        """
+        Dismiss the results of the import process once the user is done with it
+
+        :return: None
+        """
+        # rest all the search related buttons to their original state
+        self.searchBar.show()
+        self.addButton.show()
+        self.importButton.show()
+        self.importResultText.hide()
+        self.importResultDismissButton.hide()
 
 
 def get_fonts(directory, current_list):

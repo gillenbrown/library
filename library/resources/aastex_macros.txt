@@ -1,0 +1,56 @@
+# aastex journal abbreviations, copied from http://cdsads.u-strasbg.fr/abs_doc/aas_macros.html
+# and modified so that journal names exactly match those in ads_bibstems.txt
+# some were also removed that I couldn't match
+   aj           The Astronomical Journal
+   actaa        Acta Astronomica
+   araa         Annual Review of Astronomy and Astrophysics
+   apj          The Astrophysical Journal
+   apjl         The Astrophysical Journal Letters
+   apjs         The Astrophysical Journal Supplement Series
+   ao           Applied Optics
+   apss         Astrophysics and Space Science
+   aap          Astronomy and Astrophysics
+   aapr         Astronomy and Astrophysics Review
+   aaps         Astronomy and Astrophysics Supplement Series
+   azh          Astronomicheskii Zhurnal
+   baas         Bulletin of the American Astronomical Society
+   caa          Chinese Astronomy and Astrophysics
+   cjaa         Chinese Journal of Astronomy and Astrophysics
+   icarus       Icarus
+   jcap         Journal of Cosmology and Astroparticle Physics
+   jcph         Journal of Computational Physics
+   jrasc        Journal of the Royal Astronomical Society of Canada
+   memras       Memoirs of the Royal Astronomical Society
+   mnras        Monthly Notices of the Royal Astronomical Society
+   na           New Astronomy
+   nar          New Astronomy Reviews
+   pra          Physical Review A
+   prb          Physical Review B
+   prc          Physical Review C
+   prd          Physical Review D
+   pre          Physical Review E
+   prl          Physical Review Letters
+   pasa         Publications of the Astronomical Society of Australia
+   pasp         Publications of the Astronomical Society of the Pacific
+   pasj         Publications of the Astronomical Society of Japan
+   rmxaa        Revista Mexicana de Astronomia y Astrofisica
+   qjras        Quarterly Journal of the Royal Astronomical Society
+   skytel       Sky and Telescope
+   solphys      Solar Physics
+   sovast       Soviet Astronomy
+   ssr          Space Science Reviews
+   zap          Zeitschrift fur Astrophysik
+   nat          Nature
+   iaucirc      International Astronomical Union Circular
+   bain         Bulletin of the Astronomical Institutes of the Netherlands
+   fcp          Fundamentals of Cosmic Physics
+   gca          Geochimica et Cosmochimica Acta
+   grl          Geophysical Research Letters
+   jcp          Journal of Chemical Physics
+   jgr          Journal of Geophysical Research
+   jqsrt        Journal of Quantitative Spectroscopy and Radiative Transfer
+   memsai       Memorie della Societa Astronomica Italiana
+   nphysa       Nuclear Physics A
+   physrep      Physics Reports
+   physscr      Physica Scripta
+   planss       Planetary and Space Science

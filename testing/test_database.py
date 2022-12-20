@@ -7,7 +7,8 @@ import contextlib
 
 import pytest
 
-from library.database import Database, PaperAlreadyInDatabaseError
+from library.database import Database, PaperAlreadyInDatabaseError, ads_call
+from library import ads_wrapper
 import test_utils as u
 
 # define some tags that include punctuation, which can mess up SQL. I'll use these
@@ -86,6 +87,27 @@ def temporary_db_with_old_arxiv_paper():
     db = Database(file_path)
     yield db
     file_path.unlink()  # removes this file
+
+
+# ======================================================================================
+#
+# convenience function for creating import bibtex files
+#
+# ======================================================================================
+def create_bibtex(*args):
+    """
+    Write the given text into a random bibtex file, and return the file location
+
+    :param args: bibtex entries to write to the file
+    :type args: str
+    :return: path to the file location
+    :rtype: pathlib.Path
+    """
+    text = "\n\n".join(args)
+    file_path = Path(f"{random.randint(0, 1000000000)}.bib").resolve()
+    with open(file_path, "w") as bibfile:
+        bibfile.write(text)
+    return file_path
 
 
 # ======================================================================================
@@ -350,6 +372,18 @@ def test_raise_custom_error_if_paper_is_already_in_database(db_empty):
     with pytest.raises(PaperAlreadyInDatabaseError):
         db_empty.add_paper(u.mine.bibcode)
     assert db_empty.num_papers() == 1
+
+
+def test_no_extra_queries_if_paper_already_in_database(db_empty, monkeypatch):
+    # add one paper before we nerf the code to add papers
+    db_empty.add_paper(u.mine.bibcode)
+    # monkeypatch the ads_call, so we can see if we are ever quering ADS
+    calls = []
+    monkeypatch.setattr(ads_call, "get_info", lambda x: calls.append(x))
+
+    with pytest.raises(PaperAlreadyInDatabaseError):
+        db_empty.add_paper(u.mine.bibcode)
+    assert calls == []
 
 
 def test_raises_errror_if_attribute_does_not_exist(db):
@@ -897,6 +931,73 @@ def test_delete_tag_doesnt_mess_up_citation_keyword(db):
     assert db.get_paper_attribute(u.mine.bibcode, "citation_keyword") == "brown_etal_18"
 
 
+# =============
+# renaming tags
+# =============
+def test_renamed_tag_gone_from_database(db_empty):
+    db_empty.add_new_tag("old")
+    db_empty.rename_tag("old", "new")
+    assert "old" not in db_empty.get_all_tags()
+
+
+def test_renamed_tag_new_name_is_in_database(db_empty):
+    db_empty.add_new_tag("old")
+    db_empty.rename_tag("old", "new")
+    assert "new" in db_empty.get_all_tags()
+
+
+def test_can_rename_to_different_capitalization(db_empty):
+    db_empty.add_new_tag("old")
+    db_empty.rename_tag("old", "OLD")
+    assert "OLD" in db_empty.get_all_tags()
+    assert "old" not in db_empty.get_all_tags()
+
+
+def test_rename_tag_transfers_tagged_papers(db_empty):
+    db_empty.add_paper(u.mine.bibcode)
+    db_empty.add_paper(u.tremonti.bibcode)
+    db_empty.add_paper(u.juan.bibcode)
+    db_empty.add_paper(u.bbfh.bibcode)
+    db_empty.add_new_tag("old")
+    db_empty.tag_paper(u.mine.bibcode, "old")
+    db_empty.tag_paper(u.tremonti.bibcode, "old")
+    db_empty.rename_tag("old", "new")
+    assert db_empty.paper_has_tag(u.mine.bibcode, "new")
+    assert db_empty.paper_has_tag(u.tremonti.bibcode, "new")
+    assert not db_empty.paper_has_tag(u.juan.bibcode, "new")
+    assert not db_empty.paper_has_tag(u.bbfh.bibcode, "new")
+
+
+def test_rename_tag_raises_error_if_old_tag_not_in_db(db_empty):
+    with pytest.raises(ValueError):
+        db_empty.rename_tag("does not exist", "new")
+
+
+def test_rename_tag_raises_error_if_new_tag_not_valid_duplicate(db_empty):
+    db_empty.add_new_tag("old")
+    db_empty.add_new_tag("new")
+    with pytest.raises(ValueError):
+        db_empty.rename_tag("old", "new")
+
+
+def test_rename_tag_raises_error_if_new_tag_not_valid_backticks(db_empty):
+    db_empty.add_new_tag("old")
+    with pytest.raises(ValueError):
+        db_empty.rename_tag("old", "`new`")
+
+
+def test_rename_tag_raises_error_if_new_tag_not_valid_square_brackets(db_empty):
+    db_empty.add_new_tag("old")
+    with pytest.raises(ValueError):
+        db_empty.rename_tag("old", "[new]")
+
+
+def test_rename_tag_raises_error_if_new_tag_not_valid_empty(db_empty):
+    db_empty.add_new_tag("old")
+    with pytest.raises(ValueError):
+        db_empty.rename_tag("old", "   ")
+
+
 # ======================================================================================
 #
 # deleting papers
@@ -1155,7 +1256,6 @@ def test_update_system_does_not_run_soon_after_last_check(db_update, monkeypatch
     # are actually called to update
     updates = []
     monkeypatch.setattr(Database, "update_paper", lambda _, b: updates.append(b))
-    print(db_update.db_file)
     Database(db_update.db_file)
     assert updates == []
 
@@ -1230,3 +1330,1021 @@ def test_bibtex_export_reflects_citation_keywords_for_book(db):
         ""
     )
     assert true_bibtex == test_bibtex
+
+
+# ======================================================================================
+#
+# import system
+#
+# ======================================================================================
+def test_import_malformed_bibtex_fails(db_empty):
+    file_loc = create_bibtex("@ARTICLE{\nsldkfjsldkfj\n}")
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    results[3].unlink()  # remove failure file
+    assert db_empty.get_all_bibcodes() == []
+
+
+def test_import_single_good_paper_with_adsurl_adds_to_database(db_empty):
+    bibtex = u.mine.bibtex
+    for to_replace in [
+        "          doi = {10.3847/1538-4357/aad595},\n",
+        "       eprint = {1804.09819},\n",
+    ]:
+        bibtex = bibtex.replace(to_replace, "")
+
+    file_loc = create_bibtex(bibtex)
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert db_empty.get_all_bibcodes() == [u.mine.bibcode]
+
+
+def test_import_single_good_paper_with_doi_adds_to_database(db_empty):
+    bibtex = u.mine.bibtex
+    for to_replace in [
+        "       adsurl = {https://ui.adsabs.harvard.edu/abs/2018ApJ...864...94B},\n",
+        "       eprint = {1804.09819},\n",
+    ]:
+        bibtex = bibtex.replace(to_replace, "")
+    file_loc = create_bibtex(bibtex)
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert db_empty.get_all_bibcodes() == [u.mine.bibcode]
+
+
+def test_import_single_good_paper_with_arxivid_adds_to_database(db_empty):
+    bibtex = u.mine.bibtex
+    for to_replace in [
+        "          doi = {10.3847/1538-4357/aad595},\n",
+        "       adsurl = {https://ui.adsabs.harvard.edu/abs/2018ApJ...864...94B},\n",
+    ]:
+        bibtex = bibtex.replace(to_replace, "")
+    file_loc = create_bibtex(bibtex)
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert db_empty.get_all_bibcodes() == [u.mine.bibcode]
+
+
+def test_import_with_multiline_authors_parses_correctly(db_empty, monkeypatch):
+    parsed_values = dict()
+
+    def store_kwargs(**kwargs):
+        for k, v in kwargs.items():
+            parsed_values[k] = v
+        # return the proper bibcode so the rest of the code works
+        return "2003ApJ...591..499A"
+
+    monkeypatch.setattr(ads_call, "get_bibcode_from_journal", store_kwargs)
+    bibtex = (
+        "@ARTICLE{abadi_etal03,\n"
+        "   author = {{Abadi}, M.~G. and {Navarro}, J.~F. and {Steinmetz}, M. and\n"
+        "	{Eke}, V.~R.},\n"
+        '    title = "{Simulations of Galaxy Formation in a {$\\Lambda$}\n'
+        "Cold Dark Matter Universe. I. Dynamical and Photometric\n"
+        'Properties of a Simulated Disk Galaxy}",\n'
+        "  journal = {\\apj},\n"
+        " keywords = {Cosmology: Theory, Cosmology: Dark Matter, "
+        "Galaxies: Formation, Galaxies: Structure, Methods: Numerical},\n"
+        "     year = 2003,\n"
+        "    month = jul,\n"
+        "   volume = 591,\n"
+        "    pages = {499-514},\n"
+        "}"
+    )
+    file_loc = create_bibtex(bibtex)
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert parsed_values["author"] == (
+        "Abadi, M. G. and Navarro, J. F. and Steinmetz, M. and Eke, V. R."
+    )
+    assert parsed_values["title"] == (
+        "Simulations of Galaxy Formation in a $\\Lambda$ "
+        "Cold Dark Matter Universe. I. Dynamical and Photometric "
+        "Properties of a Simulated Disk Galaxy"
+    )
+
+
+def test_import_with_multiline_authors_adds_to_db(db_empty):
+    bibtex = (
+        "@ARTICLE{abadi_etal03,\n"
+        "   author = {{Abadi}, M.~G. and {Navarro}, J.~F. and {Steinmetz}, M. and\n"
+        "	{Eke}, V.~R.},\n"
+        '    title = "{Simulations of Galaxy Formation in a {$\\Lambda$} '
+        "Cold Dark Matter Universe. I. Dynamical and Photometric "
+        'Properties of a Simulated Disk Galaxy}",\n'
+        "  journal = {\\apj},\n"
+        " keywords = {Cosmology: Theory, Cosmology: Dark Matter, "
+        "Galaxies: Formation, Galaxies: Structure, Methods: Numerical},\n"
+        "     year = 2003,\n"
+        "    month = jul,\n"
+        "   volume = 591,\n"
+        "    pages = {499-514},\n"
+        "}"
+    )
+    file_loc = create_bibtex(bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[:3] == (1, 0, 0)
+    assert db_empty.get_all_bibcodes() == ["2003ApJ...591..499A"]
+
+
+def test_import_with_equals_sign_in_title_adds_to_db(db_empty):
+    file_loc = create_bibtex(u.behroozi.bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[:3] == (1, 0, 0)
+    assert db_empty.get_all_bibcodes() == [u.behroozi.bibcode]
+
+
+def test_import_old_ads_url_added_to_db(db_empty):
+    bibtex = (
+        "@ARTICLE{meng_gnedin21,\n"
+        "       author = {{Meng}, Xi and {Gnedin}, Oleg Y.},\n"
+        '        title = "{Evolution of Disc Thickness in High-Redshift Galaxies}",\n'
+        "      journal = {\\mnras, submitted},\n"
+        "     keywords = {Astrophysics - Astrophysics of Galaxies},\n"
+        "         year = 2021,\n"
+        "        month = jun,\n"
+        "          eid = {arXiv:2006.10642},\n"
+        "        pages = {arXiv:2006.10642},\n"
+        "archivePrefix = {arXiv},\n"
+        "       eprint = {2006.10642},\n"
+        " primaryClass = {astro-ph.GA},\n"
+        "       adsurl = {https://ui.adsabs.harvard.edu/abs/2020arXiv200610642M},\n"
+        "      adsnote = {Provided by the SAO/NASA Astrophysics Data System}\n"
+        "}"
+    )
+    file_loc = create_bibtex(bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[:3] == (1, 0, 0)
+    assert db_empty.get_all_bibcodes() == ["2021MNRAS.502.1433M"]
+
+
+def test_import_paper_old_arxiv_id_correctly_added(db_empty):
+    # remove other stuff from tremonti
+    bibtex = u.tremonti.bibtex.replace(
+        "          doi = {10.1086/423264},\n", ""
+    ).replace(
+        "       adsurl = {https://ui.adsabs.harvard.edu/abs/2004ApJ...613..898T},\n", ""
+    )
+    file_loc = create_bibtex(bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[:3] == (1, 0, 0)
+    assert db_empty.get_all_bibcodes() == [u.tremonti.bibcode]
+
+
+def test_import_ignores_comments(db_empty):
+    bibtex = (
+        "% this is a comment\n"
+        "@ARTICLE{test,\n"
+        "% comment inside the entry\n"
+        "       adsurl = {" + u.mine.ads_url + "},\n"
+        "}\n"
+    )
+    file_loc = create_bibtex(bibtex)
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert db_empty.get_all_bibcodes() == [u.mine.bibcode]
+
+
+def test_import_two_good_papers_with_adsurl_adds_to_database(db_empty):
+    file_loc = create_bibtex(u.mine.bibtex, u.tremonti.bibtex)
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert db_empty.get_all_bibcodes() == [u.tremonti.bibcode, u.mine.bibcode]
+
+
+def test_import_papers_are_not_unread(db_empty):
+    db_empty.add_new_tag("uNrEad")  # use weird capitalization to check that part
+    papers = [u.mine, u.tremonti]
+    file_loc = create_bibtex(*[p.bibtex for p in papers])
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    for p in papers:
+        assert not db_empty.paper_has_tag(p.bibcode, "uNrEad")
+
+
+def test_import_papers_duplicates_that_were_unread_stay_unread(db_empty):
+    db_empty.add_new_tag("Unread")
+    db_empty.add_paper(u.mine.bibcode)
+    db_empty.tag_paper(u.mine.bibcode, "Unread")
+    file_loc = create_bibtex(u.mine.bibtex, u.tremonti.bibtex)
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert db_empty.paper_has_tag(u.mine.bibcode, "Unread")
+    assert not db_empty.paper_has_tag(u.tremonti.bibcode, "Unread")
+
+
+def test_import_papers_have_a_new_tag(db_empty):
+    file_loc = create_bibtex(u.mine.bibtex, u.tremonti.bibtex)
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert db_empty.paper_has_tag(u.mine.bibcode, f"Import {file_loc.name}")
+    assert db_empty.paper_has_tag(u.tremonti.bibcode, f"Import {file_loc.name}")
+
+
+def test_import_preexisting_papers_dont_have_new_tag(db_empty):
+    db_empty.add_paper(u.juan.bibcode)
+    file_loc = create_bibtex(u.mine.bibtex, u.tremonti.bibtex)
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert not db_empty.paper_has_tag(u.juan.bibcode, f"Import {file_loc.name}")
+
+
+def test_import_new_tag_added_to_duplicates(db_empty):
+    db_empty.add_paper(u.mine.bibcode)
+    file_loc = create_bibtex(u.mine.bibtex, u.tremonti.bibtex)
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert db_empty.paper_has_tag(u.mine.bibcode, f"Import {file_loc.name}")
+    assert db_empty.paper_has_tag(u.tremonti.bibcode, f"Import {file_loc.name}")
+
+
+def test_import_created_tags_are_incremented_if_duplicates(db_empty):
+    file_loc = create_bibtex(u.mine.bibtex)
+    db_empty.import_bibtex(file_loc)
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert db_empty.get_paper_tags(u.mine.bibcode) == [
+        f"Import {file_loc.name}",
+        f"Import {file_loc.name} 2",
+    ]
+
+
+def test_import_created_tags_are_not_incremented_if_not_duplicates(db_empty):
+    file_loc1 = create_bibtex(u.mine.bibtex)
+    file_loc2 = create_bibtex(u.tremonti.bibtex)
+    db_empty.import_bibtex(file_loc1)
+    db_empty.import_bibtex(file_loc2)
+    file_loc1.unlink()  # delete before tests may fail
+    file_loc2.unlink()  # delete before tests may fail
+    assert db_empty.get_paper_tags(u.mine.bibcode) == [f"Import {file_loc1.name}"]
+    assert db_empty.get_paper_tags(u.tremonti.bibcode) == [f"Import {file_loc2.name}"]
+
+
+def test_import_created_tags_are_incremented_where_available(db_empty):
+    file_loc1 = create_bibtex(u.mine.bibtex)
+    file_loc2 = create_bibtex(u.tremonti.bibtex)
+    file_loc3 = create_bibtex(u.mine_recent.bibtex)
+    db_empty.import_bibtex(file_loc1)
+    # move file 2 to 1 so the import will have the same name
+    file_loc1.unlink()
+    file_loc2.rename(file_loc1)
+    db_empty.import_bibtex(file_loc1)
+    # delete tag 1, so it should be available
+    db_empty.delete_tag(f"Import {file_loc1.name}")
+    # then move 3 to 1 for import
+    file_loc1.unlink()
+    file_loc3.rename(file_loc1)
+    db_empty.import_bibtex(file_loc1)
+    file_loc1.unlink()  # delete before tests may fail
+    assert db_empty.get_paper_tags(u.mine.bibcode) == []
+    assert db_empty.get_paper_tags(u.tremonti.bibcode) == [f"Import {file_loc1.name} 2"]
+    assert db_empty.get_paper_tags(u.mine_recent.bibcode) == [
+        f"Import {file_loc1.name} 3"
+    ]
+
+
+def test_import_created_tags_work_correctly_beyond_10(db_empty):
+    # found this bug by accident
+    file_loc = create_bibtex(u.mine.bibtex)
+    for _ in range(11):
+        db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert sorted(db_empty.get_paper_tags(u.mine.bibcode)) == sorted(
+        [f"Import {file_loc.name}"]
+        + [f"Import {file_loc.name} {n}" for n in range(2, 12)]
+    )
+
+
+def test_import_return_tuple_tag_name(db_empty):
+    file_loc = create_bibtex(u.mine.bibtex, u.tremonti.bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[4] == f"Import {file_loc.name}"
+
+
+def test_import_return_tuple_file_bad_entry(db_empty):
+    file_loc = create_bibtex("@ARTICLE{\nsldkfjsldkfj\n}")
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    f_file = Path(__file__).parent.parent / (file_loc.stem + ".failures.bib")
+    f_file.unlink()  # remove failure file
+    assert results[3] == f_file
+
+
+def test_import_return_tuple_bad_entry(db_empty):
+    file_loc = create_bibtex("@ARTICLE{\nsldkfjsldkfj\n}")
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    results[3].unlink()  # remove failure file
+    assert results[:3] == (0, 0, 1)
+
+
+def test_import_return_tuple_one_good_paper(db_empty):
+    file_loc = create_bibtex(u.mine.bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[:3] == (1, 0, 0)
+
+
+def test_import_return_tuple_two_good_papers(db_empty):
+    file_loc = create_bibtex(u.mine.bibtex, u.tremonti.bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[:3] == (2, 0, 0)
+
+
+def test_import_return_tuple_duplicate(db_empty):
+    db_empty.add_paper(u.mine.bibcode)
+    file_loc = create_bibtex(u.mine.bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[:3] == (0, 1, 0)
+
+
+def test_import_return_tuple_internal_duplicate(db_empty):
+    file_loc = create_bibtex(u.mine.bibtex, u.mine.bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[:3] == (1, 1, 0)
+
+
+def test_import_return_tuple_one_good_one_duplicate(db_empty):
+    db_empty.add_paper(u.mine.bibcode)
+    file_loc = create_bibtex(u.mine.bibtex, u.tremonti.bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[:3] == (1, 1, 0)
+
+
+def test_import_return_tuple_failure_file_one_good_one_duplicate(db_empty):
+    db_empty.add_paper(u.mine.bibcode)
+    file_loc = create_bibtex(u.mine.bibtex, u.tremonti.bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[3] is None
+
+
+def test_import_return_tuple_two_good_one_failure(db_empty):
+    file_loc = create_bibtex(
+        u.mine.bibtex, "@ARTICLE{\nsldkfjsldkfj\n}", u.tremonti.bibtex
+    )
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    results[3].unlink()  # remove failure file
+    assert results[:3] == (2, 0, 1)
+
+
+def test_import_return_tuple_two_good_one_failure_one_duplicate(db_empty):
+    file_loc = create_bibtex(
+        u.mine.bibtex, "@ARTICLE{\nsldkfjsldkfj\n}", u.tremonti.bibtex, u.mine.bibtex
+    )
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    results[3].unlink()  # remove failure file
+    assert results[:3] == (2, 1, 1)
+
+
+def test_import_return_tuple_could_not_identify_paper(db_empty):
+    bibtex = "@ARTICLE{2004ApJ...613..898T,\n        pages = {898-913},\n" "}"
+    file_loc = create_bibtex(bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    results[3].unlink()  # remove failure file
+    assert results[:3] == (0, 0, 1)
+    assert db_empty.get_all_bibcodes() == []
+
+
+def test_import_failure_file_created_for_failure_in_correct_location(db_empty):
+    file_loc = create_bibtex("@ARTICLE{\nsldkfjsldkfj\n}")
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    f_path = Path(__file__).parent.parent / (file_loc.stem + ".failures.bib")
+    assert f_path.is_file()
+    f_path.unlink()
+
+
+def test_import_failure_file_not_created_if_no_failures(db_empty):
+    file_loc = create_bibtex(u.mine.bibtex)
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert not db_empty._failure_file_loc(file_loc).is_file()
+
+
+def test_import_failure_file_not_created_for_duplicates(db_empty):
+    file_loc = create_bibtex(u.mine.bibtex)
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert not db_empty._failure_file_loc(file_loc).is_file()
+
+
+def test_import_failure_file_contains_header(db_empty):
+    file_loc = create_bibtex("@ARTICLE{\nsldkfjsldkfj\n}")
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    header = (
+        "% This file contains BibTeX entries that the library could not add.\n"
+        "% The reason for the failure is given above each entry.\n"
+        '% When importing a given entry, the code looks for the "doi", "ads_url",\n'
+        '% or "eprint" attributes. If none of these are present, the code tries\n'
+        '% to use the publication details (using the "author", "journal", "year"\n'
+        '% "volume", "page", "title" fields, as available) to identify the\n'
+        "% paper's entry in ADS. When using this journal info, the code requires\n"
+        "% an exact match to any attributes present in the BibTeX entry. \n\n"
+    )
+    assert header in f_output
+
+
+def test_import_failure_file_contains_failed_bibtex_entries(db_empty):
+    bad_1 = "@ARTICLE{\nsldkfjsldkfj\n}"
+    bad_2 = (
+        "@ARTICLE{1957RvMP...29..547B,\n"
+        " author = {{Burbidge}, E. Margaret},\n"
+        '  title = "{Synthesis of the Elements in Stars},"\n'
+        "journal = {Reviews of Modern Physics},\n"
+        "   year = 1959,\n"  # editied to be incorrect
+        "}"
+    )
+    file_loc = create_bibtex(u.mine.bibtex, bad_1, u.tremonti.bibtex, bad_2)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    assert bad_1 in f_output
+    assert bad_2 in f_output
+
+
+def test_import_failure_file_contains_reason_bad_gateway(db_empty, monkeypatch):
+    def func(x, y):
+        raise ValueError("<html stuff>502 Bad Gateway<\\html stuff>")
+
+    monkeypatch.setattr(ads_wrapper.ADSWrapper, "get_bibcode", func)
+    file_loc = create_bibtex(u.mine.bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    assert (
+        "% Connection lost when querying ADS for this paper. "
+        "This may work if you try again" in f_output
+    )
+
+
+def test_import_failure_file_contains_reason_out_of_queries(db_empty, monkeypatch):
+    def func(x, y):
+        raise ValueError("Too many requests")
+
+    monkeypatch.setattr(ads_wrapper.ADSWrapper, "get_bibcode", func)
+    file_loc = create_bibtex(u.mine.bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    assert (
+        "% ADS has cut you off, you have sent too many requests today. "
+        "Try again in ~24 hours" in f_output
+    )
+
+
+def test_import_failure_file_full_format(db_empty):
+    bad = (
+        "@ARTICLE{1957RvMP...29..547B,\n"
+        " author = {{Burbidge}, E. Margaret},\n"
+        '  title = "{Synthesis of the Elements in Stars}",\n'
+        "journal = {Reviews of Modern Physics},\n"
+        "   year = 1959,\n"  # edited to be incorrect
+        "}"
+    )
+    file_loc = create_bibtex(u.mine.bibtex, bad, u.tremonti.bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    header = (
+        "% This file contains BibTeX entries that the library could not add.\n"
+        "% The reason for the failure is given above each entry.\n"
+        '% When importing a given entry, the code looks for the "doi", "ads_url",\n'
+        '% or "eprint" attributes. If none of these are present, the code tries\n'
+        '% to use the publication details (using the "author", "journal", "year"\n'
+        '% "volume", "page", "title" fields, as available) to identify the\n'
+        "% paper's entry in ADS. When using this journal info, the code requires\n"
+        "% an exact match to any attributes present in the BibTeX entry. \n\n"
+    )
+    reason = "% couldn't find paper with an exact match to this info on ADS\n"
+    assert f_output == header + reason + bad + "\n\n"
+
+
+def test_import_citation_keyword_is_kept_if_present(db_empty):
+    file_loc = create_bibtex(
+        u.mine.bibtex.replace("@ARTICLE{2018ApJ...864...94B", "@ARTICLE{test")
+    )
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert db_empty.get_paper_attribute(u.mine.bibcode, "citation_keyword") == "test"
+
+
+def test_import_citation_keyword_is_kept_if_present_in_book(db_empty):
+    file_loc = create_bibtex(
+        u.mvdbw_book.bibtex.replace("@BOOK{2010gfe..book.....M", "@BOOK{test")
+    )
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert (
+        db_empty.get_paper_attribute(u.mvdbw_book.bibcode, "citation_keyword") == "test"
+    )
+
+
+def test_import_citation_keyword_is_the_bibcode_if_not_present(db_empty):
+    file_loc = create_bibtex(u.mine.bibtex)
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert (
+        db_empty.get_paper_attribute(u.mine.bibcode, "citation_keyword")
+        == u.mine.bibcode
+    )
+
+
+def test_import_citation_keyword_is_bibcode_if_user_gives_duplicate_key(db_empty):
+    db_empty.add_paper(u.tremonti.bibcode)
+    db_empty.set_paper_attribute(u.tremonti.bibcode, "citation_keyword", "test")
+    file_loc = create_bibtex(
+        u.mine.bibtex.replace("@ARTICLE{2018ApJ...864...94B", "@ARTICLE{test")
+    )
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert (
+        db_empty.get_paper_attribute(u.mine.bibcode, "citation_keyword")
+        == u.mine.bibcode
+    )
+
+
+def test_import_progress_bar_is_updated(db_empty):
+    file_loc = create_bibtex(u.mine.bibtex)
+    update_calls = []
+    db_empty.import_bibtex(file_loc, lambda x: update_calls.append(x))
+    file_loc.unlink()  # delete before tests may fail
+    assert update_calls == list(range(1, 20))
+
+
+# ==============================================
+# test identifying papers with just journal info
+# ==============================================
+# convenience text info to check with
+journal_good = (
+    "year = 2018,\nvolume = {864},\npages = {94},\njournal = {\\apj},\n"
+    'title = "{' + u.mine.title + '}",\n'
+)
+journal_bad_not_enough = "month = jun\n"
+journal_bad_not_found = (
+    "year = 2016,\nvolume = {864},\npages = {94},\njournal = {\\apj},\n"
+    'title = "{' + u.mine.title + '}",\n'
+)
+journal_bad_multiple = "year = 2018"
+journal_bad_journal = (
+    "year = 2018,\nvolume = {864},\npages = {94},\njournal = {lsdflskdjf},\n"
+    'title = "{' + u.mine.title + '}",\n'
+)
+journal_bad_format = 'year = 2018,\ntitle = "{}"'
+
+
+def test_import_single_good_paper_with_journal_details_adds_to_database(db_empty):
+    entry = "@ARTICLE{key,\n" + journal_good + "}"
+    file_loc = create_bibtex(entry)
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert db_empty.get_all_bibcodes() == [u.mine.bibcode]
+
+
+def test_import_single_good_paper_title_diff_case_with_journal_details_adds(db_empty):
+    entry = "@ARTICLE{key,\n" + journal_good.lower() + "}"
+    file_loc = create_bibtex(entry)
+    db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert db_empty.get_all_bibcodes() == [u.mine.bibcode]
+
+
+def test_import_journal_details_failure_not_enough_info(db_empty):
+    entry = "@ARTICLE{key,\n" + journal_bad_not_enough + "}"
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    results[3].unlink()
+    assert results[:3] == (0, 0, 1)
+
+
+def test_import_journal_details_failure_paper_not_found(db_empty):
+    entry = "@ARTICLE{key,\n" + journal_bad_not_found + "}"
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fai
+    results[3].unlink()  # l
+    assert results[:3] == (0, 0, 1)
+
+
+def test_import_journal_details_failure_paper_nonspecific(db_empty):
+    entry = "@ARTICLE{key,\n" + journal_bad_multiple + "}"
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    results[3].unlink()
+    assert results[:3] == (0, 0, 1)
+
+
+def test_import_journal_details_failure_bad_journal(db_empty):
+    entry = "@ARTICLE{key,\n" + journal_bad_journal + "}"
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    results[3].unlink()
+    assert results[:3] == (0, 0, 1)
+
+
+def test_import_journal_details_failure_bad_format(db_empty):
+    entry = "@ARTICLE{key,\n" + journal_bad_format + "}"
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    results[3].unlink()
+    assert results[:3] == (0, 0, 1)
+
+
+def test_import_journal_page_range(db_empty):
+    entry = (
+        "@ARTICLE{key,\n"
+        + journal_good.replace("pages = {94}", "pages = {94-100}")
+        + "}"
+    )
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[:3] == (1, 0, 0)
+    assert db_empty.get_all_bibcodes() == [u.mine.bibcode]
+
+
+def test_import_journal_page_range_double_dash(db_empty):
+    entry = (
+        "@ARTICLE{key,\n"
+        + journal_good.replace("pages = {94}", "pages = {94--100}")
+        + "}"
+    )
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[:3] == (1, 0, 0)
+    assert db_empty.get_all_bibcodes() == [u.mine.bibcode]
+
+
+def test_import_journal_works_if_journal_not_recognized(db_empty):
+    file_loc = create_bibtex(u.williams.bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[:3] == (1, 0, 0)
+    assert db_empty.get_all_bibcodes() == [u.williams.bibcode]
+
+
+def test_import_journal_works_if_accents_in_authors_list(db_empty):
+    file_loc = create_bibtex(u.juan.short_bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[:3] == (1, 0, 0)
+    assert db_empty.get_all_bibcodes() == [u.juan.bibcode]
+
+
+def test_import_journal_works_with_dotless_i_in_authors_list(db_empty):
+    file_loc = create_bibtex(u.schiavon.short_bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[:3] == (1, 0, 0)
+    assert db_empty.get_all_bibcodes() == [u.schiavon.bibcode]
+
+
+def test_import_journal_works_if_accents_with_space_in_authors_list(db_empty):
+    file_loc = create_bibtex(u.juan.short_bibtex.replace("\\'", "\\' "))
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[:3] == (1, 0, 0)
+    assert db_empty.get_all_bibcodes() == [u.juan.bibcode]
+
+
+def test_import_journal_works_if_quote_accents_in_authors_list(db_empty):
+    file_loc = create_bibtex(u.bohringer.bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[:3] == (1, 0, 0)
+    assert db_empty.get_all_bibcodes() == [u.bohringer.bibcode]
+
+
+def test_import_journal_works_if_nonbreaking_space_in_authors_list(db_empty):
+    file_loc = create_bibtex(u.anders.bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[:3] == (1, 0, 0)
+    assert db_empty.get_all_bibcodes() == [u.anders.bibcode]
+
+
+def test_import_journal_works_if_and_in_authors_list(db_empty):
+    file_loc = create_bibtex(u.chandar.bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[:3] == (1, 0, 0)
+    assert db_empty.get_all_bibcodes() == [u.chandar.bibcode]
+
+
+# =======================================================
+# test robustness of import system and its error messages
+# =======================================================
+# this sort of duplicates what is above, but in a more systematic way that checks
+# what happens when there are errors in a bibtex entry. Set up some bad entries
+doi_bad = "doi = {10.1000/182},\n"
+doi_good = "doi = {" + u.mine.doi + "},\n"
+adsurl_bad = "adsurl = {https://ui.adsabs.harvard.edu/abs/2018ApJ...864...94X},\n"
+adsurl_bad_2 = "adsurl = {https://ui.adsabs.harvard.edu/abs/2007ARA\\&A..45..565M},\n"
+adsurl_good = "adsurl = {" + u.mine.ads_url + "},\n"
+eprint_bad = "eprint = {3501.00001},\n"
+eprint_good = "eprint = {" + u.mine.arxiv_id + "},\n"
+
+
+def test_import_good_doi_bad_eprint_bad_adsurl_bad_journal(db_empty):
+    entry = (
+        "@ARTICLE{key,\n"
+        + doi_good
+        + eprint_bad
+        + adsurl_bad
+        + journal_bad_not_found
+        + "}"
+    )
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[:3] == (1, 0, 0)
+
+
+def test_import_bad_doi_good_eprint_bad_adsurl_bad_journal(db_empty):
+    entry = (
+        "@ARTICLE{key,\n"
+        + doi_bad
+        + eprint_good
+        + adsurl_bad
+        + journal_bad_not_found
+        + "}"
+    )
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[:3] == (1, 0, 0)
+
+
+def test_import_bad_doi_bad_eprint_good_adsurl_bad_journal(db_empty):
+    entry = (
+        "@ARTICLE{key,\n"
+        + doi_bad
+        + eprint_bad
+        + adsurl_good
+        + journal_bad_not_found
+        + "}"
+    )
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[:3] == (1, 0, 0)
+
+
+def test_import_bad_doi_bad_eprint_bad_adsurl_good_journal(db_empty):
+    entry = "@ARTICLE{key,\n" + doi_bad + eprint_bad + adsurl_bad + journal_good + "}"
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    assert results[:3] == (1, 0, 0)
+
+
+def test_import_bad_doi_bad_eprint_bad_adsurl_bad_journal(db_empty):
+    entry = (
+        "@ARTICLE{key,\n"
+        + doi_bad
+        + eprint_bad
+        + adsurl_bad
+        + journal_bad_not_found
+        + "}"
+    )
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    assert results[:3] == (0, 0, 1)
+    assert (
+        "% adsurl not recognized, DOI 10.1000/182 not on ADS, "
+        "arXiv ID 3501.00001 not on ADS, "
+        "couldn't find paper with an exact match to this info on ADS\n" + entry
+        in f_output
+    )
+
+
+def test_import_bad_doi_bad_eprint(db_empty):
+    entry = "@ARTICLE{key,\n" + doi_bad + eprint_bad + "}"
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    assert results[:3] == (0, 0, 1)
+    assert (
+        "% DOI 10.1000/182 not on ADS, arXiv ID 3501.00001 not on ADS, "
+        "not enough publication details to uniquely identify paper\n" + entry
+        in f_output
+    )
+
+
+def test_import_bad_doi_bad_adsurl(db_empty):
+    entry = "@ARTICLE{key,\n" + doi_bad + adsurl_bad + "}"
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    assert results[:3] == (0, 0, 1)
+    assert (
+        "% adsurl not recognized, DOI 10.1000/182 not on ADS, "
+        "not enough publication details to uniquely identify paper\n" + entry
+        in f_output
+    )
+
+
+def test_import_bad_eprint_bad_adsurl(db_empty):
+    entry = "@ARTICLE{key,\n" + eprint_bad + adsurl_bad + "}"
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    assert results[:3] == (0, 0, 1)
+    assert (
+        "% adsurl not recognized, arXiv ID 3501.00001 not on ADS, "
+        "not enough publication details to uniquely identify paper\n" + entry
+        in f_output
+    )
+
+
+def test_import_bad_doi_bad_journal(db_empty):
+    entry = "@ARTICLE{key,\n" + doi_bad + journal_bad_not_found + "}"
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    assert results[:3] == (0, 0, 1)
+    assert (
+        "% DOI 10.1000/182 not on ADS, "
+        "couldn't find paper with an exact match to this info on ADS\n" + entry
+        in f_output
+    )
+
+
+def test_import_bad_doi(db_empty):
+    entry = "@ARTICLE{key,\n" + doi_bad + "}"
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    assert results[:3] == (0, 0, 1)
+    assert (
+        "% DOI 10.1000/182 not on ADS, "
+        "not enough publication details to uniquely identify paper\n" + entry
+        in f_output
+    )
+
+
+def test_import_bad_eprint(db_empty):
+    entry = "@ARTICLE{key,\n" + eprint_bad + "}"
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    assert results[:3] == (0, 0, 1)
+    assert (
+        "% arXiv ID 3501.00001 not on ADS, "
+        "not enough publication details to uniquely identify paper\n" + entry
+        in f_output
+    )
+
+
+def test_import_bad_adsurl(db_empty):
+    entry = "@ARTICLE{key,\n" + adsurl_bad + "}"
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    assert results[:3] == (0, 0, 1)
+    assert (
+        "% adsurl not recognized, "
+        "not enough publication details to uniquely identify paper\n" + entry
+        in f_output
+    )
+
+
+def test_import_bad_adsurl_2(db_empty):
+    entry = "@ARTICLE{key,\n" + adsurl_bad_2 + "}"
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    assert results[:3] == (0, 0, 1)
+    assert (
+        "% adsurl not recognized, "
+        "not enough publication details to uniquely identify paper\n" + entry
+        in f_output
+    )
+
+
+def test_import_bad_journal_not_enough(db_empty):
+    entry = "@ARTICLE{key,\n" + journal_bad_not_enough + "}"
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    assert results[:3] == (0, 0, 1)
+    assert (
+        "% not enough publication details to uniquely identify paper\n" + entry
+        in f_output
+    )
+
+
+def test_import_bad_journal_not_found(db_empty):
+    entry = "@ARTICLE{key,\n" + journal_bad_not_found + "}"
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    assert results[:3] == (0, 0, 1)
+    assert (
+        "% couldn't find paper with an exact match to this info on ADS\n" + entry
+        in f_output
+    )
+
+
+def test_import_bad_journal_duplicate(db_empty):
+    entry = "@ARTICLE{key,\n" + journal_bad_multiple + "}"
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    assert results[:3] == (0, 0, 1)
+    assert "% multiple papers found that match this info\n" + entry in f_output
+
+
+def test_import_bad_journal_bad_journal(db_empty):
+    entry = "@ARTICLE{key,\n" + journal_bad_journal + "}"
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    assert results[:3] == (0, 0, 1)
+    assert (
+        "% couldn't find paper with an exact match to this info on ADS\n" + entry
+        in f_output
+    )
+
+
+def test_import_bad_journal_bad_format(db_empty):
+    entry = "@ARTICLE{key,\n" + journal_bad_format + "}"
+    file_loc = create_bibtex(entry)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    assert results[:3] == (0, 0, 1)
+    assert (
+        "% something appears wrong with the format of this entry\n" + entry in f_output
+    )
