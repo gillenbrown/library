@@ -19,6 +19,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QFontDatabase, QDesktopServices, QGuiApplication, QPalette
 from PySide6.QtWidgets import QFileDialog, QLineEdit, QTextEdit, QScrollArea
 import darkdetect
+import ads
 
 from library.interface import MainWindow, get_fonts, set_up_fonts, Paper
 from library.database import Database
@@ -1389,7 +1390,7 @@ def test_adding_paper_bad_ads_key_shows_error_text(qtbot, db_empty_bad_ads):
     assert widget.searchBarErrorText.isHidden() is False
     assert (
         widget.searchBarErrorText.text() == "You don't have an ADS key set. "
-        "See this repository readme for more, then restart this application."
+        "See this repository readme for more, then restart this application"
     )
 
 
@@ -1442,6 +1443,60 @@ def test_no_ads_key_add_button_reshown_after_editing_text(qtbot, db_empty_bad_ad
     cEnterText(widget.searchBar, "s", qtbot)
     assert widget.addButton.isHidden() is False
     assert widget.importButton.isHidden() is False
+
+
+def test_adding_paper_doesnt_clear_search_bar_no_queries(qtbot, db_empty, monkeypatch):
+    def out_of_queries_dummy(**kwargs):
+        raise ads.exceptions.APIResponseError("Too many requests")
+
+    monkeypatch.setattr(ads, "SearchQuery", out_of_queries_dummy)
+    widget = cInitialize(qtbot, db_empty)
+    # need to use a paper that's not already stored in my ADS cache
+    cAddPaper(widget, u.used_for_no_ads_key.url, qtbot)
+    assert widget.searchBar.text() == u.used_for_no_ads_key.url
+
+
+def test_adding_paper_no_queries_shows_error_in_textedit(qtbot, db_empty, monkeypatch):
+    def out_of_queries_dummy(**kwargs):
+        raise ads.exceptions.APIResponseError("Too many requests")
+
+    monkeypatch.setattr(ads, "SearchQuery", out_of_queries_dummy)
+    widget = cInitialize(qtbot, db_empty)
+    # need to use a paper that's not already stored in my ADS cache
+    cAddPaper(widget, u.used_for_no_ads_key.url, qtbot)
+    assert widget.searchBar.property("error") is True
+
+
+def test_adding_paper_no_queries_shows_error_text(qtbot, db_empty, monkeypatch):
+    def out_of_queries_dummy(**kwargs):
+        raise ads.exceptions.APIResponseError("Too many requests")
+
+    monkeypatch.setattr(ads, "SearchQuery", out_of_queries_dummy)
+    widget = cInitialize(qtbot, db_empty)
+    # need to use a paper that's not already stored in my ADS cache
+    cAddPaper(widget, u.used_for_no_ads_key.url, qtbot)
+    assert widget.searchBarErrorText.isHidden() is False
+    assert (
+        widget.searchBarErrorText.text()
+        == "ADS has cut you off, you have sent too many requests today. "
+        "Try again in ~24 hours"
+    )
+
+
+def test_adding_paper_other_ads_error_shows_error_text(qtbot, db_empty, monkeypatch):
+    def error_dummy(**kwargs):
+        raise ads.exceptions.APIResponseError("Something weird")
+
+    monkeypatch.setattr(ads, "SearchQuery", error_dummy)
+    widget = cInitialize(qtbot, db_empty)
+    # need to use a paper that's not already stored in my ADS cache
+    cAddPaper(widget, u.used_for_no_ads_key.url, qtbot)
+    assert widget.searchBarErrorText.isHidden() is False
+    assert (
+        widget.searchBarErrorText.text()
+        == "Something has gone wrong with the connection to ADS. Full error:\n"
+        "'Something weird'"
+    )
 
 
 def test_paper_cannot_be_added_twice(qtbot, db_empty):

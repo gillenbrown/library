@@ -2216,12 +2216,25 @@ class MainWindow(QMainWindow):
         except PaperAlreadyInDatabaseError:
             self.formatSearchBarError("This paper is already in the library.")
             return
-        except ads.exceptions.APIResponseError:
-            # ADS key not set
-            self.formatSearchBarError(
-                "You don't have an ADS key set. "
-                "See this repository readme for more, then restart this application."
-            )
+        except ads.exceptions.APIResponseError as e:
+            e = str(e)
+            if "unauthorized" in e.lower():
+                # ADS key not set
+                self.formatSearchBarError(
+                    "You don't have an ADS key set. "
+                    "See this repository readme for more, then restart this application"
+                )
+            elif "too many requests" in e.lower():
+                # ADS key not set
+                self.formatSearchBarError(
+                    "ADS has cut you off, you have sent too many requests today. "
+                    "Try again in ~24 hours"
+                )
+            else:
+                self.formatSearchBarError(
+                    "Something has gone wrong with the connection to ADS. Full error:\n"
+                    f"{e}"
+                )
             return
 
         # we only get here if the addition to the database worked.
