@@ -875,12 +875,7 @@ class Database(object):
             # add to failure file, with the error
             # make non useful errors more useful
             e = str(e)
-            if "Bad Gateway" in e:
-                e = (
-                    "Connection lost when querying ADS for this paper. "
-                    "This may work if you try again"
-                )
-            elif "Too many requests" in e:
+            if "Too many requests" in e:
                 e = (
                     "ADS has cut you off, you have sent too many requests today. "
                     "Try again in ~24 hours"

@@ -1781,23 +1781,6 @@ def test_import_failure_file_contains_failed_bibtex_entries(db_empty):
     assert bad_2 in f_output
 
 
-def test_import_failure_file_contains_reason_bad_gateway(db_empty, monkeypatch):
-    def func(x, y):
-        raise ValueError("<html stuff>502 Bad Gateway<\\html stuff>")
-
-    monkeypatch.setattr(ads_wrapper.ADSWrapper, "get_bibcode", func)
-    file_loc = create_bibtex(u.mine.bibtex)
-    results = db_empty.import_bibtex(file_loc)
-    file_loc.unlink()  # delete before tests may fail
-    with open(results[3], "r") as f_file:
-        f_output = f_file.read()
-    results[3].unlink()
-    assert (
-        "% Connection lost when querying ADS for this paper. "
-        "This may work if you try again" in f_output
-    )
-
-
 def test_import_failure_file_contains_reason_out_of_queries(db_empty, monkeypatch):
     def func(x, y):
         raise ValueError("Too many requests")

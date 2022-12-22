@@ -1,6 +1,7 @@
 import datetime
 
 import pytest
+import ads
 
 from library.ads_wrapper import ADSWrapper
 import test_utils as u
@@ -547,3 +548,80 @@ def test_get_correct_page_when_no_page():
 def test_ensure_accents_on_letters():
     results = ads_call.get_info(u.juan.bibcode)
     assert results["authors"] == u.juan.authors
+
+
+# ======================================================================================
+#
+# Test retrying if there's a gateway error
+#
+# ======================================================================================
+def test_retry_search_query_if_gateway_error(monkeypatch):
+    # need to reset cache so the code can't cheat
+    ads_call._bibcode_from_arxiv_id = dict()
+
+    calls = []
+
+    class dummy_query(object):
+        bibcode = u.mine.bibcode
+
+    def gateway_simulation_search_query(**kwargs):
+        calls.append(1)
+        if len(calls) == 1:
+            raise ValueError("<html stuff>502 Bad Gateway<\\html stuff>")
+        else:
+            return [dummy_query()]
+
+    monkeypatch.setattr(ads, "SearchQuery", gateway_simulation_search_query)
+
+    assert ads_call.get_bibcode(u.mine.arxiv_url) == u.mine.bibcode
+    assert calls == [1, 1]
+
+
+def test_search_query_gateway_error_raises_other_errors(monkeypatch):
+    # need to reset cache so the code can't cheat
+    ads_call._bibcode_from_arxiv_id = dict()
+
+    def gateway_simulation_search_query(**kwargs):
+        raise ValueError("Something else went wrong")
+
+    monkeypatch.setattr(ads, "SearchQuery", gateway_simulation_search_query)
+
+    with pytest.raises(ValueError) as e:
+        ads_call.get_bibcode(u.mine.arxiv_url)
+    assert str(e.value) == "Something else went wrong"
+
+
+def test_retry_export_query_if_gateway_error(monkeypatch):
+    # need to reset cache so the code can't cheat
+    ads_call._info_from_bibcode = dict()
+    calls = []
+
+    class dummy_query(object):
+        def execute(self):
+            return u.mine.bibtex
+
+    def gateway_simulation_export_query(**kwargs):
+        calls.append(1)
+        if len(calls) == 1:
+            raise ValueError("<html stuff>502 Bad Gateway<\\html stuff>")
+        else:
+            return dummy_query()
+
+    monkeypatch.setattr(ads, "ExportQuery", gateway_simulation_export_query)
+
+    assert ads_call.get_info(u.mine.bibcode)["bibtex"] == u.mine.bibtex
+    assert calls == [1, 1]
+
+
+def test_export_query_gateway_error_raises_other_errors(monkeypatch):
+    # need to reset cache so the code can't cheat
+    ads_call._info_from_bibcode = dict()
+
+    def gateway_simulation_export_query(**kwargs):
+        raise ValueError("Something else went wrong")
+
+    monkeypatch.setattr(ads, "ExportQuery", gateway_simulation_export_query)
+
+    with pytest.raises(ValueError) as e:
+        ads_call.get_info(u.mine.bibcode)
+    assert str(e.value) == "Something else went wrong"
