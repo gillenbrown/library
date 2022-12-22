@@ -2480,6 +2480,6 @@ def set_up_fonts():
     """
     # we need to initialize this list to start, as fonts found will be appended to this
     fonts = []
-    get_fonts(Path(__file__).parent.parent / "fonts", fonts)
+    get_fonts(Path(__file__).parent / "resources" / "fonts", fonts)
     for font in fonts:
         QFontDatabase.addApplicationFont(font)

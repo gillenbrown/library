@@ -463,7 +463,9 @@ def test_testing_database_has_each_tag_on_at_least_one_paper(db):
 #
 # ======================================================================================
 def test_all_fonts_are_found_by_get_fonts():
-    font_dir = (Path(__file__).parent.parent / "fonts").absolute()
+    font_dir = (
+        Path(__file__).parent.parent / "library" / "resources" / "fonts"
+    ).absolute()
     true_fonts = [
         font_dir / "Bungee_Shade" / "BungeeShade-Regular.ttf",
         font_dir / "Cabin" / "Cabin-Bold.ttf",
