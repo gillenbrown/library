@@ -42,7 +42,7 @@ class ADSWrapper(object):
             return int(self.rate.limits["limit"]) - int(self.rate.limits["remaining"])
         except KeyError:
             # make a dummy query to set the fields
-            list(self.search_query(bibcode="2018ApJ...864...94B", fl="bibcode"))
+            self.search_query(bibcode="2018ApJ...864...94B", fl="bibcode")
             return self.num_queries()
 
     def search_query(self, **kwargs):
@@ -56,7 +56,8 @@ class ADSWrapper(object):
         :return: The result of that query
         """
         try:
-            return ads.SearchQuery(**kwargs)
+            # converting to list actually executes the query
+            return list(ads.SearchQuery(**kwargs))
         except ValueError as e:
             if "502 Bad Gateway" in str(e):
                 return self.search_query(**kwargs)
@@ -74,7 +75,7 @@ class ADSWrapper(object):
         :return: The result of that query
         """
         try:
-            return ads.ExportQuery(**kwargs)
+            return ads.ExportQuery(**kwargs).execute()
         except ValueError as e:
             if "502 Bad Gateway" in str(e):
                 return self.export_query(**kwargs)
@@ -142,9 +143,9 @@ class ADSWrapper(object):
                 "page",
                 "identifier",
             ]
-            paper = list(self.search_query(bibcode=bibcode, fl=quantities))[0]
+            paper = self.search_query(bibcode=bibcode, fl=quantities)[0]
             # Recommended to do the bibtex separately, according to the ADS library
-            bibtex = self.export_query(bibcodes=bibcode).execute()
+            bibtex = self.export_query(bibcodes=bibcode)
             # parse the list of identifiers to get the arXiv id. The default value is
             # a message that the paper is not on the arXiv
             arxiv_id = "Not on the arXiv"
@@ -208,7 +209,7 @@ class ADSWrapper(object):
             # yet on ADS
             try:
                 query = self.search_query(q="arXiv:{}".format(arxiv_id), fl=["bibcode"])
-                bibcode = list(query)[0].bibcode
+                bibcode = query[0].bibcode
             except IndexError:  # no papers found
                 raise ValueError(f"arXiv ID {arxiv_id} not on ADS")
 
@@ -233,7 +234,7 @@ class ADSWrapper(object):
             # we'll need to double check that the DOI exists
             try:
                 query = self.search_query(q="doi:{}".format(doi), fl=["bibcode"])
-                bibcode = list(query)[0].bibcode
+                bibcode = query[0].bibcode
             except IndexError:  # not found on ADS
                 # get rid of quotes in error message
                 doi = doi.replace('"', "")
@@ -417,7 +418,7 @@ class ADSWrapper(object):
 
         # then we can do this query. Since we included all the available information
         # in the query, except for the journal, that's all we need to check afterwards
-        query_results = list(self.search_query(q=query, fl=["bibcode", "pub"]))
+        query_results = self.search_query(q=query, fl=["bibcode", "pub"])
 
         if check_journal:
             # make a list of the papers that match the journal passed in
