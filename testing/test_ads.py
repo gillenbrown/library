@@ -598,14 +598,14 @@ def test_retry_export_query_if_gateway_error(monkeypatch):
 
     class dummy_query(object):
         def execute(self):
-            return u.mine.bibtex
+            calls.append(1)
+            if len(calls) == 1:
+                raise ValueError("<html stuff>502 Bad Gateway<\\html stuff>")
+            else:
+                return u.mine.bibtex
 
     def gateway_simulation_export_query(**kwargs):
-        calls.append(1)
-        if len(calls) == 1:
-            raise ValueError("<html stuff>502 Bad Gateway<\\html stuff>")
-        else:
-            return dummy_query()
+        return dummy_query()
 
     monkeypatch.setattr(ads, "ExportQuery", gateway_simulation_export_query)
 
