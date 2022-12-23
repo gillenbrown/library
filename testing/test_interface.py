@@ -526,7 +526,15 @@ def test_title_is_correct_font_size(qtbot, db_empty):
 # ===================
 # update notification
 # ===================
-def test_import_notification_normally_disabled(qtbot, db):
+def test_import_notification_normally_disabled(qtbot, db, monkeypatch):
+    # I'm not exactly sure of the state of the git repository when doing the GitHub
+    # actions tests, but the git fetch was returning something. So it looks like I
+    # can't assume that the repo is in the most recent state. So monkeypatch this to
+    # make sure it works as expected.
+    class dummy(object):
+        stderr = ""
+
+    monkeypatch.setattr(subprocess, "run", lambda cmd, capture_output: dummy())
     widget = cInitialize(qtbot, db)
     assert widget.updateText.isHidden() is True
 
