@@ -6,6 +6,7 @@ from pathlib import Path
 from collections import defaultdict
 
 import bibtexparser
+import requests.exceptions
 
 from library import ads_wrapper
 
@@ -886,6 +887,8 @@ class Database(object):
                 or "SolrException" in e
             ):
                 e = "something appears wrong with the format of this entry"
+            elif "Max retries exceeded with url" in e:
+                e = "No internet connection"
             failure_file.write(f"% {e}\n")
             failure_file.write(entry + "\n")
             return "failure"

@@ -2216,6 +2216,9 @@ class MainWindow(QMainWindow):
         except PaperAlreadyInDatabaseError:
             self.formatSearchBarError("This paper is already in the library.")
             return
+        except requests.exceptions.ConnectionError:
+            self.formatSearchBarError("No internet connection")
+            return
         except ads.exceptions.APIResponseError as e:
             e = str(e)
             if "unauthorized" in e.lower():

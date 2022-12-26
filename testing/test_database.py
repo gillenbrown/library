@@ -2,6 +2,7 @@ import random
 import time
 from pathlib import Path
 import shutil
+import requests
 import sqlite3
 import contextlib
 
@@ -1796,6 +1797,20 @@ def test_import_failure_file_contains_reason_out_of_queries(db_empty, monkeypatc
         "% ADS has cut you off, you have sent too many requests today. "
         "Try again in ~24 hours" in f_output
     )
+
+
+def test_import_failure_file_contains_reason_no_internet(db_empty, monkeypatch):
+    def func(x, y):
+        raise requests.exceptions.ConnectionError("Max retries exceeded with url")
+
+    monkeypatch.setattr(ads_wrapper.ADSWrapper, "get_bibcode", func)
+    file_loc = create_bibtex(u.mine.bibtex)
+    results = db_empty.import_bibtex(file_loc)
+    file_loc.unlink()  # delete before tests may fail
+    with open(results[3], "r") as f_file:
+        f_output = f_file.read()
+    results[3].unlink()
+    assert "% No internet connection" in f_output
 
 
 def test_import_failure_file_full_format(db_empty):
