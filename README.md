@@ -59,11 +59,7 @@ Whenever you're done with the library (either just the tests or the actual usage
 
 # Launching the Application
 
-To run the application, simply run the `run.py` script: 
-```
-python run.py
-```
-You'll probably want to run this in a screen session or just move the process to the background to get your terminal back. 
+When you install the application with `pip`, it also installs a command line script named `library` that runs the application. You'll probably want to run this in the background to get your terminal prompt back: `library &`. 
 
 # User Guide
 

@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["library"]
+
+[project]
+name = "library"
+version = "0.1.0"
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [{name = "Gillen Brown", email="gillenbrown@gmail.com"}]
+requires-python = ">=3.7"
+dependencies = ["ads", "pyside6", "darkdetect", "bibtexparser"]
+
+[project.optional-dependencies]
+test = ["pytest", "pytest-qt", "coverage"]
+
+[project.gui-scripts]
+library = "library:run"
