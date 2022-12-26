@@ -16,3 +16,6 @@ dependencies = ["ads", "pyside6", "darkdetect", "bibtexparser"]
 
 [project.optional-dependencies]
 test = ["pytest", "pytest-qt", "coverage"]
+
+[project.gui-scripts]
+library = "library:run"

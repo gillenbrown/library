@@ -1,6 +1,7 @@
 # user's data
 USER_DATA_DO_NOT_DELETE.db
-test_pdfs
+update_version.py
+run.py
 
 # pycharm and vscode junk
 .idea
