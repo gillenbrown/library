@@ -567,7 +567,9 @@ def test_retry_search_query_if_gateway_error(monkeypatch):
     def gateway_simulation_search_query(**kwargs):
         calls.append(1)
         if len(calls) == 1:
-            raise ValueError("<html stuff>502 Bad Gateway<\\html stuff>")
+            raise ads.exceptions.APIResponseError(
+                "<html stuff>502 Bad Gateway<\\html stuff>"
+            )
         else:
             return [dummy_query()]
 
@@ -582,7 +584,7 @@ def test_search_query_gateway_error_raises_other_errors(monkeypatch):
     ads_call._bibcode_from_arxiv_id = dict()
 
     def gateway_simulation_search_query(**kwargs):
-        raise ValueError("Something else went wrong")
+        raise ads.exceptions.APIResponseError("Something else went wrong")
 
     monkeypatch.setattr(ads, "SearchQuery", gateway_simulation_search_query)
 
@@ -600,7 +602,9 @@ def test_retry_export_query_if_gateway_error(monkeypatch):
         def execute(self):
             calls.append(1)
             if len(calls) == 1:
-                raise ValueError("<html stuff>502 Bad Gateway<\\html stuff>")
+                raise ads.exceptions.APIResponseError(
+                    "<html stuff>502 Bad Gateway<\\html stuff>"
+                )
             else:
                 return u.mine.bibtex
 
@@ -618,7 +622,7 @@ def test_export_query_gateway_error_raises_other_errors(monkeypatch):
     ads_call._info_from_bibcode = dict()
 
     def gateway_simulation_export_query(**kwargs):
-        raise ValueError("Something else went wrong")
+        raise ads.exceptions.APIResponseError("Something else went wrong")
 
     monkeypatch.setattr(ads, "ExportQuery", gateway_simulation_export_query)
 

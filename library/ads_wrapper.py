@@ -58,7 +58,7 @@ class ADSWrapper(object):
         try:
             # converting to list actually executes the query
             return list(ads.SearchQuery(**kwargs))
-        except ValueError as e:
+        except ads.exceptions.APIResponseError as e:
             if "502 Bad Gateway" in str(e):
                 return self.search_query(**kwargs)
             else:
@@ -76,7 +76,7 @@ class ADSWrapper(object):
         """
         try:
             return ads.ExportQuery(**kwargs).execute()
-        except ValueError as e:
+        except ads.exceptions.APIResponseError as e:
             if "502 Bad Gateway" in str(e):
                 return self.export_query(**kwargs)
             else:
