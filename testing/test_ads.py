@@ -584,7 +584,7 @@ def test_search_query_gateway_error_raises_other_errors(monkeypatch):
     ads_call._bibcode_from_arxiv_id = dict()
 
     def gateway_simulation_search_query(**kwargs):
-        raise ads.exceptions.APIResponseError("Something else went wrong")
+        raise ValueError("Something else went wrong")
 
     monkeypatch.setattr(ads, "SearchQuery", gateway_simulation_search_query)
 
@@ -622,7 +622,7 @@ def test_export_query_gateway_error_raises_other_errors(monkeypatch):
     ads_call._info_from_bibcode = dict()
 
     def gateway_simulation_export_query(**kwargs):
-        raise ads.exceptions.APIResponseError("Something else went wrong")
+        raise ValueError("Something else went wrong")
 
     monkeypatch.setattr(ads, "ExportQuery", gateway_simulation_export_query)
 
