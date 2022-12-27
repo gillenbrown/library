@@ -76,11 +76,11 @@ class ADSWrapper(object):
         """
         try:
             return ads.ExportQuery(**kwargs).execute()
-        except ads.exceptions.APIResponseError as e:
+        except Exception as e:
             if "502 Bad Gateway" in str(e):
                 return self.export_query(**kwargs)
             else:
-                raise ValueError(str(e))
+                raise e
 
     def _build_bibstems(self):
         resources_dir = Path(__file__).parent / "resources"
