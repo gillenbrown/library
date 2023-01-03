@@ -2131,8 +2131,7 @@ class MainWindow(QMainWindow):
         # only show this if there is an update available. We'll use git fetch for this,
         # which will return an empty string if we're current, and some text if there
         # is an update available.
-        process = subprocess.run(["git", "fetch", "--dry-run"], capture_output=True)
-        if len(process.stderr) == 0:
+        if not self.updateAvailable():
             self.updateText.hide()
 
         # have these quantities have a fixed height. These values are chosen to
@@ -2447,6 +2446,22 @@ class MainWindow(QMainWindow):
         self.importButton.show()
         self.importResultText.hide()
         self.importResultDismissButton.hide()
+
+    def updateAvailable(self):
+        """
+        Return True if an update for this code is available
+
+        :return: True if an update is available, False if not.
+        :rtype: bool
+        """
+        process = subprocess.run(["git", "fetch", "--dry-run"], capture_output=True)
+        stderr = process.stderr.decode()  # turn bytestring into regular string
+        if len(stderr) == 0 or stderr == (
+            "fatal: unable to access 'https://github.com/gillenbrown/library.git/': "
+            "Could not resolve host: github.com\n"
+        ):
+            return False
+        return True
 
 
 def get_fonts(directory, current_list):

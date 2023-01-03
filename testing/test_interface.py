@@ -533,7 +533,7 @@ def test_import_notification_normally_disabled(qtbot, db, monkeypatch):
     # can't assume that the repo is in the most recent state. So monkeypatch this to
     # make sure it works as expected.
     class dummy(object):
-        stderr = ""
+        stderr = b""
 
     monkeypatch.setattr(subprocess, "run", lambda cmd, capture_output: dummy())
     widget = cInitialize(qtbot, db)
@@ -542,7 +542,7 @@ def test_import_notification_normally_disabled(qtbot, db, monkeypatch):
 
 def test_import_notification_shown_when_needed(qtbot, db, monkeypatch):
     class dummy(object):
-        stderr = "some text here"
+        stderr = b"some text here"
 
     monkeypatch.setattr(subprocess, "run", lambda cmd, capture_output: dummy())
     widget = cInitialize(qtbot, db)
@@ -551,7 +551,7 @@ def test_import_notification_shown_when_needed(qtbot, db, monkeypatch):
 
 def test_import_notification_text(qtbot, db, monkeypatch):
     class dummy(object):
-        stderr = "some text here"
+        stderr = b"some text here"
 
     monkeypatch.setattr(subprocess, "run", lambda cmd, capture_output: dummy())
     widget = cInitialize(qtbot, db)
@@ -565,7 +565,7 @@ def test_import_notification_text(qtbot, db, monkeypatch):
 
 def test_import_notification_text_path(qtbot, db, monkeypatch):
     class dummy(object):
-        stderr = "some text here"
+        stderr = b"some text here"
 
     monkeypatch.setattr(subprocess, "run", lambda cmd, capture_output: dummy())
     widget = cInitialize(qtbot, db)
@@ -574,6 +574,19 @@ def test_import_notification_text_path(qtbot, db, monkeypatch):
     if sys.platform != "win32":
         assert shown_path.startswith("~/")
     assert Path(shown_path).expanduser() == Path(__file__).parent.parent.resolve()
+
+
+def test_import_notification_disabled_if_no_internet(qtbot, db, monkeypatch):
+    class dummy(object):
+        stderr = (
+            b"fatal: unable to access "
+            b"'https://github.com/gillenbrown/library.git/': "
+            b"Could not resolve host: github.com\n"
+        )
+
+    monkeypatch.setattr(subprocess, "run", lambda cmd, capture_output: dummy())
+    widget = cInitialize(qtbot, db)
+    assert widget.updateText.isHidden() is True
 
 
 # ==========================
