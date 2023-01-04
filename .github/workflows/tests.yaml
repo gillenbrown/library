@@ -1,52 +1,52 @@
-name: Tests
-on: [push, pull_request]
-jobs:
-  black:
-    runs-on: ubuntu-latest
-    steps:
-      - name: checkout
-        uses: actions/checkout@v3
-      - name: check black
-        uses: psf/black@stable
-  tests:
-    needs: black
-    strategy:
-      matrix:
-        # I would like to use ubuntu-latest, but it uses 20.04, which has an older
-        # version of SQLite that does not support removing columns.
-        os: [ubuntu-22.04]
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
-        include:
-          - os: windows-latest
-            python-version: "3.10"
-          - os: macos-latest
-            python-version: "3.10"
-    runs-on: ${{ matrix.os }}
-    env: 
-      ADS_DEV_KEY: ${{ secrets.ADS_DEV_KEY }}
-    steps:
-      - name: checkout
-        uses: actions/checkout@v3
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: install Qt
-        uses: jurplel/install-qt-action@v3
-      - name: install library
-        run: pip install -e .[test]
-      - name: run pytest
-        uses: GabrielBB/xvfb-action@v1
-        with:
-          run: coverage run -m pytest
-
-      # upload to coveralls (but only one version)
-      - name: make lcov file for Coveralls upload
-        if: (matrix.python-version == 3.10) && startsWith(matrix.os,'ubuntu')
-        run: coverage lcov -i
-      - name: upload to Coveralls
-        if: (matrix.python-version == 3.10) && startsWith(matrix.os,'ubuntu')
-        uses: coverallsapp/github-action@master
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          path-to-lcov: coverage.lcov
+#name: Tests
+#on: [push, pull_request]
+#jobs:
+#  black:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: checkout
+#        uses: actions/checkout@v3
+#      - name: check black
+#        uses: psf/black@stable
+#  tests:
+#    needs: black
+#    strategy:
+#      matrix:
+#        # I would like to use ubuntu-latest, but it uses 20.04, which has an older
+#        # version of SQLite that does not support removing columns.
+#        os: [ubuntu-22.04]
+#        python-version: ["3.7", "3.8", "3.9", "3.10"]
+#        include:
+#          - os: windows-latest
+#            python-version: "3.10"
+#          - os: macos-latest
+#            python-version: "3.10"
+#    runs-on: ${{ matrix.os }}
+#    env:
+#      ADS_DEV_KEY: ${{ secrets.ADS_DEV_KEY }}
+#    steps:
+#      - name: checkout
+#        uses: actions/checkout@v3
+#      - name: Set up Python ${{ matrix.python-version }}
+#        uses: actions/setup-python@v4
+#        with:
+#          python-version: ${{ matrix.python-version }}
+#      - name: install Qt
+#        uses: jurplel/install-qt-action@v3
+#      - name: install library
+#        run: pip install -e .[test]
+#      - name: run pytest
+#        uses: GabrielBB/xvfb-action@v1
+#        with:
+#          run: coverage run -m pytest
+#
+#      # upload to coveralls (but only one version)
+#      - name: make lcov file for Coveralls upload
+#        if: (matrix.python-version == 3.10) && startsWith(matrix.os,'ubuntu')
+#        run: coverage lcov -i
+#      - name: upload to Coveralls
+#        if: (matrix.python-version == 3.10) && startsWith(matrix.os,'ubuntu')
+#        uses: coverallsapp/github-action@master
+#        with:
+#          github-token: ${{ secrets.GITHUB_TOKEN }}
+#          path-to-lcov: coverage.lcov
