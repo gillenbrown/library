@@ -533,7 +533,10 @@ def test_import_notification_normally_disabled(qtbot, db, monkeypatch):
     # can't assume that the repo is in the most recent state. So monkeypatch this to
     # make sure it works as expected.
     class dummy(object):
-        stderr = b""
+        stdout = (
+            b"On branch master\nYour branch is up to date with 'origin/master'."
+            b"\n\nnothing to commit (use -u to show untracked files)"
+        )
 
     monkeypatch.setattr(subprocess, "run", lambda cmd, capture_output: dummy())
     widget = cInitialize(qtbot, db)
@@ -542,7 +545,13 @@ def test_import_notification_normally_disabled(qtbot, db, monkeypatch):
 
 def test_import_notification_shown_when_needed(qtbot, db, monkeypatch):
     class dummy(object):
-        stderr = b"some text here"
+        stdout = (
+            b"On branch master\n"
+            b"Your branch is behind 'origin/master' by 1 commit, "
+            b"and can be fast-forwarded.\n"
+            b'    (use "git pull" to update your local branch)\n\n'
+            b"nothing to commit (use -u to show untracked files)"
+        )
 
     monkeypatch.setattr(subprocess, "run", lambda cmd, capture_output: dummy())
     widget = cInitialize(qtbot, db)
@@ -551,7 +560,13 @@ def test_import_notification_shown_when_needed(qtbot, db, monkeypatch):
 
 def test_import_notification_text(qtbot, db, monkeypatch):
     class dummy(object):
-        stderr = b"some text here"
+        stdout = (
+            b"On branch master\n"
+            b"Your branch is behind 'origin/master' by 1 commit, "
+            b"and can be fast-forwarded.\n"
+            b'    (use "git pull" to update your local branch)\n\n'
+            b"nothing to commit (use -u to show untracked files)"
+        )
 
     monkeypatch.setattr(subprocess, "run", lambda cmd, capture_output: dummy())
     widget = cInitialize(qtbot, db)
@@ -565,7 +580,13 @@ def test_import_notification_text(qtbot, db, monkeypatch):
 
 def test_import_notification_text_path(qtbot, db, monkeypatch):
     class dummy(object):
-        stderr = b"some text here"
+        stdout = (
+            b"On branch master\n"
+            b"Your branch is behind 'origin/master' by 1 commit, "
+            b"and can be fast-forwarded.\n"
+            b'    (use "git pull" to update your local branch)\n\n'
+            b"nothing to commit (use -u to show untracked files)"
+        )
 
     monkeypatch.setattr(subprocess, "run", lambda cmd, capture_output: dummy())
     widget = cInitialize(qtbot, db)
@@ -583,6 +604,7 @@ def test_import_notification_disabled_if_no_internet(qtbot, db, monkeypatch):
             b"'https://github.com/gillenbrown/library.git/': "
             b"Could not resolve host: github.com\n"
         )
+        stdout = b"dummy"
 
     monkeypatch.setattr(subprocess, "run", lambda cmd, capture_output: dummy())
     widget = cInitialize(qtbot, db)

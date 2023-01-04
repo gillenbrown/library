@@ -2454,14 +2454,14 @@ class MainWindow(QMainWindow):
         :return: True if an update is available, False if not.
         :rtype: bool
         """
-        process = subprocess.run(["git", "fetch", "--dry-run"], capture_output=True)
-        stderr = process.stderr.decode()  # turn bytestring into regular string
-        if len(stderr) == 0 or stderr == (
-            "fatal: unable to access 'https://github.com/gillenbrown/library.git/': "
-            "Could not resolve host: github.com\n"
-        ):
-            return False
-        return True
+        # do a get fetch, then see if there are available updates
+        subprocess.run(["git", "fetch"], capture_output=True)
+        status = subprocess.run(
+            ["git", "status", "origin", "-uno"], capture_output=True
+        ).stdout.decode()  # turn bytestring into regular string
+        if "your branch is behind" in status.lower():
+            return True
+        return False
 
 
 def get_fonts(directory, current_list):
