@@ -12,7 +12,9 @@ jobs:
     needs: black
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        # ubuntu-latest fails on installation of the xvfb-action used below, but
+        # 22.04 works
+        os: [ubuntu-22.04]
         python-version: ["3.7", "3.8", "3.9", "3.10"]
         include:
           - os: windows-latest
