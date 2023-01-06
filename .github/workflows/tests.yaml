@@ -12,9 +12,7 @@ jobs:
     needs: black
     strategy:
       matrix:
-        # I would like to use ubuntu-latest, but it uses 20.04, which has an older
-        # version of SQLite that does not support removing columns.
-        os: [ubuntu-22.04]
+        os: [ubuntu-latest]
         python-version: ["3.7", "3.8", "3.9", "3.10"]
         include:
           - os: windows-latest
