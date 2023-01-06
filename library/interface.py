@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 import requests
 import subprocess
@@ -2454,11 +2455,17 @@ class MainWindow(QMainWindow):
         :return: True if an update is available, False if not.
         :rtype: bool
         """
+        # first make sure we're in the working directory where the git repo is
+        original_dir = os.getcwd()
+        os.chdir(Path(__file__).parent.parent)
         # do a get fetch, then see if there are available updates
         subprocess.run(["git", "fetch"], capture_output=True)
         status = subprocess.run(
             ["git", "status", "origin", "-uno"], capture_output=True
         ).stdout.decode()  # turn bytestring into regular string
+        # reset the working directory
+        os.chdir(original_dir)
+        # then figure out if we need an update
         if "your branch is behind" in status.lower():
             return True
         return False

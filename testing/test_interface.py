@@ -611,6 +611,13 @@ def test_import_notification_disabled_if_no_internet(qtbot, db, monkeypatch):
     assert widget.updateText.isHidden() is True
 
 
+def test_import_notification_run_from_right_directory(qtbot, db, monkeypatch):
+    chdir_calls = []
+    monkeypatch.setattr(os, "chdir", lambda x: chdir_calls.append(x))
+    widget = cInitialize(qtbot, db)
+    assert chdir_calls == [Path(__file__).parent.parent, os.getcwd()]
+
+
 # ==========================
 # sizing of the three panels
 # ==========================
