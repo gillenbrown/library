@@ -31,12 +31,12 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: install Qt
         uses: jurplel/install-qt-action@v4
-        with:
-          setup-python: false
       - name: install library
         run: pip install -e .[test]
       - name: run pytest
-        run: coverage run -m pytest
+        uses: GabrielBB/xvfb-action@v1
+        with:
+          run: coverage run -m pytest
 
       # upload to coveralls (but only one version)
       - name: make lcov file for Coveralls upload
