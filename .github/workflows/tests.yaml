@@ -34,9 +34,7 @@ jobs:
       - name: install library
         run: pip install -e .[test]
       - name: run pytest
-        uses: GabrielBB/xvfb-action@v1
-        with:
-          run: coverage run -m pytest
+        run: coverage run -m pytest
 
       # upload to coveralls (but only one version)
       - name: make lcov file for Coveralls upload
