@@ -2221,7 +2221,7 @@ class MainWindow(QMainWindow):
             return
         except ads.exceptions.APIResponseError as e:
             e = str(e)
-            if "unauthorized" in e.lower():
+            if "token" in e.lower():
                 # ADS key not set
                 self.formatSearchBarError(
                     "You don't have an ADS key set. "

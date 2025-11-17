@@ -3,6 +3,7 @@ test_interface.py
 
 Perform tests on the GUI using pytest-qt
 """
+
 import os
 import sys
 from pathlib import Path
@@ -800,14 +801,16 @@ def test_initial_theme_matches_os_theme_dark(qtbot, db, monkeypatch):
     assert color == (238, 238, 238, 255)
 
 
-def test_dark_theme_activated_when_title_clicked(qtbot, db):
+def test_dark_theme_activated_when_title_clicked(qtbot, db, monkeypatch):
+    monkeypatch.setattr(darkdetect, "theme", lambda: "Light")
     widget = cInitialize(qtbot, db)
     cClick(widget.title, qtbot)
     color = widget.title.palette().color(QPalette.WindowText).toRgb().toTuple()
     assert color == (238, 238, 238, 255)
 
 
-def test_theme_switches_each_click(qtbot, db):
+def test_theme_switches_each_click(qtbot, db, monkeypatch):
+    monkeypatch.setattr(darkdetect, "theme", lambda: "Light")
     widget = cInitialize(qtbot, db)
     cClick(widget.title, qtbot)
     cClick(widget.title, qtbot)

@@ -13,12 +13,12 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
         include:
           - os: windows-latest
-            python-version: "3.10"
+            python-version: "3.13"
           - os: macos-latest
-            python-version: "3.10"
+            python-version: "3.13"
     runs-on: ${{ matrix.os }}
     env: 
       ADS_DEV_KEY: ${{ secrets.ADS_DEV_KEY }}
@@ -40,10 +40,10 @@ jobs:
 
       # upload to coveralls (but only one version)
       - name: make lcov file for Coveralls upload
-        if: (matrix.python-version == 3.10) && startsWith(matrix.os,'ubuntu')
+        if: (matrix.python-version == 3.13) && startsWith(matrix.os,'ubuntu')
         run: coverage lcov -i
       - name: upload to Coveralls
-        if: (matrix.python-version == 3.10) && startsWith(matrix.os,'ubuntu')
+        if: (matrix.python-version == 3.13) && startsWith(matrix.os,'ubuntu')
         uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}

@@ -29,6 +29,7 @@ punctuation_tags = [
     ":",
 ]
 
+
 # ======================================================================================
 #
 # Fixtures to use as temporary database
@@ -1324,6 +1325,7 @@ def test_bibtex_export_reflects_citation_keywords_for_book(db):
         "Frank C. and {White}, Simon},\n"
         '        title = "{Galaxy Formation and Evolution}",\n'
         "         year = 2010,\n"
+        "          doi = {10.1017/CBO9780511807244},\n"
         "       adsurl = {https://ui.adsabs.harvard.edu/abs/2010gfe..book.....M},\n"
         "      adsnote = {Provided by the SAO/NASA Astrophysics Data System}\n"
         "}\n"

@@ -11,7 +11,7 @@ version = "0.1.0"
 readme = "README.md"
 license = {file = "LICENSE"}
 authors = [{name = "Gillen Brown", email="gillenbrown@gmail.com"}]
-requires-python = ">=3.7"
+requires-python = ">=3.10,<3.14"
 dependencies = ["ads", "pyside6", "darkdetect", "bibtexparser"]
 
 [project.optional-dependencies]
