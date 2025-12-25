@@ -25,9 +25,6 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v5
-      - name: set ADS_DEV_KEY on Windows
-        if: matrix.os == 'windows-latest'
-        run: echo "ADS_DEV_KEY=${{ secrets.ADS_DEV_KEY }}" >> $env:GITHUB_ENV
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
         with:
