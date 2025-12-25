@@ -20,11 +20,11 @@ jobs:
           - os: macos-latest
             python-version: "3.13"
     runs-on: ${{ matrix.os }}
-    env: 
-      ADS_DEV_KEY: ${{ secrets.ADS_DEV_KEY }}
     steps:
       - name: checkout
         uses: actions/checkout@v5
+      - name: set ADS_DEV_KEY
+        run: echo "ADS_DEV_KEY=${{ secrets.ADS_DEV_KEY }}" >> $GITHUB_ENV
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
         with:
