@@ -75,7 +75,7 @@ class ADSWrapper(object):
         :return: The result of that query
         """
         # I think this is broken on Windows. The ads.ExportQuery.execute() method uses
-        # os.path.join for a URL, which is incorrect. I suspect this is the problem, 
+        # os.path.join for a URL, which is incorrect. I suspect this is the problem,
         # but have not confirmed it as a problem since I don't have For now I removed Windows from
         # my github action tests, since I'm unlikely to have Windows users. But if I
         # ever come back to this and find problems on Windows, they are likely here.
