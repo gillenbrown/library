@@ -1,4 +1,5 @@
 import datetime
+import os
 
 import pytest
 import ads
@@ -7,6 +8,10 @@ from library.ads_wrapper import ADSWrapper
 import test_utils as u
 
 ads_call = ADSWrapper()
+
+
+def test_env_var_is_present():
+    assert len(os.environ["ADS_DEV_KEY"]) == 40
 
 
 def test_num_queries():

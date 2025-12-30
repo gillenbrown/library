@@ -13,38 +13,36 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
         include:
-          - os: windows-latest
-            python-version: "3.10"
           - os: macos-latest
-            python-version: "3.10"
+            python-version: "3.13"
+          # removed windows, see comment in ads_wrapper.py export_query method
     runs-on: ${{ matrix.os }}
     env: 
       ADS_DEV_KEY: ${{ secrets.ADS_DEV_KEY }}
     steps:
       - name: checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
-      - name: install Qt
-        uses: jurplel/install-qt-action@v3
+      - name: install qt dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get install -y libegl1
       - name: install library
         run: pip install -e .[test]
       - name: run pytest
-        uses: GabrielBB/xvfb-action@v1
-        with:
-          run: coverage run -m pytest
+        run: coverage run -m pytest
 
       # upload to coveralls (but only one version)
       - name: make lcov file for Coveralls upload
-        if: (matrix.python-version == 3.10) && startsWith(matrix.os,'ubuntu')
+        if: (matrix.python-version == 3.13) && startsWith(matrix.os,'ubuntu')
         run: coverage lcov -i
       - name: upload to Coveralls
-        if: (matrix.python-version == 3.10) && startsWith(matrix.os,'ubuntu')
-        uses: coverallsapp/github-action@master
+        if: (matrix.python-version == 3.13) && startsWith(matrix.os,'ubuntu')
+        uses: coverallsapp/github-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path-to-lcov: coverage.lcov

@@ -172,6 +172,7 @@ forbes = PaperDict(
         "        month = mar,\n"
         "          eid = {arXiv:2003.14327},\n"
         "        pages = {arXiv:2003.14327},\n"
+        "          doi = {10.48550/arXiv.2003.14327},\n"
         "archivePrefix = {arXiv},\n"
         "       eprint = {2003.14327},\n"
         " primaryClass = {astro-ph.CO},\n"
@@ -208,7 +209,7 @@ bbfh = PaperDict(
         '        title = "{Synthesis of the Elements in Stars}",\n'
         "      journal = {Reviews of Modern Physics},\n"
         "         year = 1957,\n"
-        "        month = jan,\n"
+        "        month = oct,\n"
         "       volume = {29},\n"
         "       number = {4},\n"
         "        pages = {547-650},\n"
@@ -223,7 +224,7 @@ bbfh = PaperDict(
         "Fowler, William A.",
         "Hoyle, F.",
     ],
-    pubdate="1957-00-00",
+    pubdate="1957-10-00",
     abstract="",
     journal="Reviews of Modern Physics",
     volume=29,
@@ -352,6 +353,7 @@ mvdbw_book = PaperDict(
         "       author = {{Mo}, Houjun and {van den Bosch}, Frank C. and {White}, Simon},\n"
         '        title = "{Galaxy Formation and Evolution}",\n'
         "         year = 2010,\n"
+        "          doi = {10.1017/CBO9780511807244},\n"
         "       adsurl = {https://ui.adsabs.harvard.edu/abs/2010gfe..book.....M},\n"
         "      adsnote = {Provided by the SAO/NASA Astrophysics Data System}\n"
         "}\n"
